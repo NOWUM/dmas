@@ -6,7 +6,7 @@ Install Gurobi
 $ wget http://packages.gurobi.com/VERSION.tar.gz
 $ tar xzvf gurobi9.0.1_linux64.tar.gz
 $ cd gurobi_VERSION/linux64
-$ sudo python3 setup.py install
+$ sudo python3 setup.py install (needs to be done for every user)
 
 Add Gurobi to PATH (execute for every user):
 $ export GUROBI_HOME="/home/flo/MAS/gurobi901/linux64"
@@ -17,7 +17,9 @@ register gurobi with key
 $ grbgetkey KEY
 
 
-Install python modules
+Install python modules (requirements.txt in /home/flo/MAS/)
+$ pip3 install -r requirements.txt
+includes:
 - pandas
 - requests
 - numba
