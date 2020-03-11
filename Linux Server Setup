@@ -40,12 +40,6 @@ includes:
 - xlrd
 
 
-*Change syspath for files (Still needed) or make a package from MAS
-Actual workaround change .py files:
-import sys
-sys.path.append('/home/flo/MAS')
-
-
 In apps/portfolio.py auf Groß und Kleinschreibung achten unter:
 # SLP Power & Heat Data
 self.G0Ref = self.df = pd.read_pickle(r'./data/profile_**g**0.pkl')
