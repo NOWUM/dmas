@@ -9,9 +9,15 @@ $ cd gurobi_VERSION/linux64
 $ sudo python3 setup.py install (needs to be done for every user)
 
 Add Gurobi to PATH (execute for every user):
-$ export GUROBI_HOME="/home/flo/MAS/gurobi901/linux64"
-$ export PATH="${PATH}:${GUROBI_HOME}/bin"
-$ export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib"
+nano ~/.bashrc (add to the end)
+
+export GUROBI_HOME="/home/flo/MAS/gurobi901/linux64"
+export PATH="${PATH}:${GUROBI_HOME}/bin"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib"
+
+and for Python Path finding
+export PYTHONPATH="home/rieke/MAS" 
+or the Path to your installation
 
 register gurobi with key
 $ grbgetkey KEY
@@ -31,6 +37,7 @@ includes:
 - sklearn
 - keras
 - pyswarm
+- xlrd
 
 
 *Change syspath for files (Still needed) or make a package from MAS
