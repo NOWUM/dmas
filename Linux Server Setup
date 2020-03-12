@@ -45,3 +45,7 @@ In apps/portfolio.py auf Groß und Kleinschreibung achten unter:
 self.G0Ref = self.df = pd.read_pickle(r'./data/profile_**g**0.pkl')
 self.RLMRef = self.df = pd.read_pickle(r'./data/profile_**rlm**.pkl')
 
+kill python agents
+$ pkill -2 "python3"
+
+
