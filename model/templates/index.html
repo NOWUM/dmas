@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <link href="{{ url_for('static', filename='favicon.ico') }}" rel="shortcut icon">
+    <title>MAS FH Aachen</title>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/67f790f34e.js" crossorigin="anonymous"></script>
+    <link href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <!--Style Elements-->
+    <style>
+        .nopadding {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .solid {
+            border-style: solid;
+        }
+         .scrollable-menu {
+            height: auto;
+            max-height: 200px;
+            overflow-x: hidden;
+        }
+        .navChart {
+            width: 100px;
+        }
+        body { margin: 0; padding: 10; }
+	    #map { position: absolute; top: 0; bottom: 0; width: 90%; }
+    </style>
+
+    <!--Script Elements-->
+    <script>
+        $(document).ready(function(){
+            $("#run").click(function(){$.post("http://149.201.88.150:5010/run",{start: $("#start").val(),end: $("#end").val()},function(data){});});
+            var dem = false
+            var pwp = false
+            var res = false
+
+            $(function(){
+                $("#slider-range").slider({
+                    range: true,
+                    min: 0,
+                    max: 99,
+                    values: [ 40, 45 ],
+                    slide: function(event, ui){$( "#amount" ).val(ui.values[ 0 ] + " - " + ui.values[ 1 ]);}
+                });
+            $("#amount").val($("#slider-range").slider("values", 0) +" - " + $("#slider-range").slider("values", 1));});
+
+            $("#start_area").click(function(){
+                if($("#dem").prop("checked")==true){
+                    dem = true
+                }
+                 if($("#pwp").prop("checked")==true){
+                    pwp = true
+                }
+                 if($("#res").prop("checked")==true){
+                    res = true
+                }
+            });
+
+            $("#start_area").click(function(){$.post("http://localhost:5010/build/start",
+                {start: $("#slider-range").slider("values", 0),
+                 end:   $("#slider-range").slider("values", 1),
+                 dem:   dem,
+                 pwp:   pwp,
+                 res:   res},
+                 function(data){});});
+
+        });
+    </script>
+
+</head>
+<body>
+    <!--Container for Header-->
+	<div class="container-fluid bg-dark text-light">
+		<div class="row">
+            <div class="col-11">
+                <br>
+                <div class="row">
+                    <div class="col"><h3>MAS zur Anlayse des Energieversorgungssystems</h3></div>
+                </div>
+                <div class="row">
+                    <div class="col"> <p>Fachhochschule Aachen</p> </div>
+                </div>
+                <div class="row">
+                    <div class="col-3"></div>
+                    <div class="col">
+                        <font color="#f8f9fa"> <label>Start:</label><br></font>
+                        <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" value="2019-01-01">
+                    </div>
+                    <div class="col">
+                        <font color="#f8f9fa"><label>End:</label><br></font>
+                        <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" value="2019-01-10">
+                    </div>
+                    <div class="col">
+                        <font color="#f8f9fa"><label></label><br></font>
+                        <input class="btn btn-warning btn-sm" id="run" type="submit" value="Run Simulation">
+                    </div>
+                </div>
+            </div>
+            <div class="col-1 nopadding">
+                <img class="border-white" src="../static/fh_logo.png" height="175" align="right">
+            </div>
+        </div>
+    </div>
+    <!--Container for Content-->
+    <div class="container-fluid bg-light text-dark">
+        <!-- First Row -->
+        <div class="row bg-light" id="content">
+            <div class="col bg-dark" id="left-menu1">
+                <nav class="navbar-dark">
+                  <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <center id="nav-powerplant">
+                            <a class="nav-link">
+                                <img class="img-thumbnail" height="50" src="../static/power-plant.png" width="50">
+                                <input type="checkbox" class="form-check-input" id="pwp" value="" checked>
+                                <p>Power Plants</p>
+                            </a>
+                        </center>
+                    </li>
+                    <li class="nav-item">
+                        <center id="nav-solar">
+                            <a class="nav-link">
+                                <img class="img-thumbnail" height="50" src="../static/res-energy.png" width="50">
+                                <input type="checkbox" class="form-check-input" id="res" value="" checked>
+                                <p>Renewable Energy</p>
+                            </a>
+                        </center>
+                    </li>
+                    <li class="nav-item">
+                        <center id="nav-demand">
+                            <a class="nav-link">
+                                <img class="img-thumbnail" height="50" src="../static/socket.png" width="50">
+                                <input type="checkbox" class="form-check-input" id="dem" value="1" checked>
+                                <p>Demand</p>
+                            </a>
+                        </center>
+                    </li>
+                    <li class="nav-item">
+                        <center id="nav-build">
+                            <a class="nav-link">
+                                <input class="btn btn-warning btn-sm" id="start_area" type="submit" value="Build Areas">
+                            </a>
+                        </center>
+                    </li>
+                      <li class="nav-item">
+                        <center id="nav-stop">
+                            <a class="nav-link">
+                                <input class="btn btn-danger btn-sm" id="stop_area" type="submit" value="Stop Areas">
+                            </a>
+                        </center>
+                    </li>
+                  </ul>
+                </nav>
+            </div>
+            <div class="col-9" id="middle">
+                <br>
+                <div class="row">
+                    <div class="col-4">
+                        <label for="amount">Start Areas:</label><br><br>
+                        <input id="amount" readonly style="border:0; color:#04B4AE; font-weight:bold;" type="text">
+                        <div id="slider-range"></div>
+                    </div>
+                    <div class="col">
+                        <a href=""> <input class="btn btn-danger btn-sm" id="reload" type="submit" value="Reload"></a>
+                    </div>
+                </div>
+                <br>
+                <img class="img-thumbnail" height="75" src="../static/power-plant.png" width="75"> <b>Agents: {{num[0]}}</b> <br><br>
+                <img class="img-thumbnail" height="75" src="../static/solar-energy.png" width="75"> <b>Agents: {{num[1]}}</b> <br><br>
+                <img class="img-thumbnail" height="75" src="../static/socket.png" width="75"> <b>Agents: {{num[2]}}</b> <br><br>
+
+            </div>
+            <div class="col-1" id="right"></div>
+        </div>
+
+        <div class="row bg-light"><p></p></div>
+    </div>
+</body>
+</html>
