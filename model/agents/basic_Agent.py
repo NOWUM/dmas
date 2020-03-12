@@ -1,4 +1,7 @@
 # Importe
+import os
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+print(os.getcwd())
 from interfaces.interface_rest import restInferace
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface

@@ -1,6 +1,6 @@
 # Importe
-import sys
-sys.path.append(r'C:\Program Files\SimEnv')
+import os
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
 import argparse
 import pandas as pd
 import numpy as np

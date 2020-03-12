@@ -1,4 +1,6 @@
 # Importe
+import os
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
 import argparse
 import pandas as pd
 import numpy as np
