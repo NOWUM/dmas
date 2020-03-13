@@ -48,4 +48,4 @@ self.RLMRef = self.df = pd.read_pickle(r'./data/profile_**rlm**.pkl')
 kill python agents
 $ pkill -2 "python3"
 
-
+bash auswählen!
