@@ -20,7 +20,7 @@ Requirements:
 - Gurobi 8 or newer
 
 Install python modules:
-pip3 install -r requirements.txt
+$ pip3 install -r requirements.txt
 
 # Install Gurobi in /usr/local
 $ wget http://packages.gurobi.com/VERSION.tar.gz
