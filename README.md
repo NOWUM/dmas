@@ -15,8 +15,8 @@ Requirements:
     - pyswarm
     - xlrd
 
-Install python modules
-$ pip3 install -r requirements.txt
+Install python modules:
+pip3 install -r requirements.txt
 
 - Gurobi 8 or newer
 
