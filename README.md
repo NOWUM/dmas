@@ -42,7 +42,7 @@ register gurobi with key
 $ grbgetkey KEY
 
 # Bash-Screen 
-Informationen:      https://wiki.ubuntuusers.de/Screen/ 
-Screen beenden:     screen -X -S NAME quit
-Alle beenden:       sudo pkill -2 python
-                    sudo pkill screen
+- Informationen:      https://wiki.ubuntuusers.de/Screen/ 
+- Screen beenden:     screen -X -S NAME quit
+- Alle beenden:       sudo pkill -2 python
+                      sudo pkill screen
