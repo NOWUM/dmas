@@ -49,3 +49,6 @@ kill python agents
 $ pkill -2 "python3"
 
 bash auswählen!
+
+
+screen -X -S NAME quit
