@@ -19,7 +19,7 @@
 **Install python modules:**
 $ pip install -r requirements.txt
 
-** Install Gurobi **
+**Install Gurobi**
 ToDo
 
 
@@ -45,7 +45,7 @@ ToDo
 **Install python modules:**
 $ pip3 install -r requirements.txt
 
-** Install Gurobi in /usr/local**
+**Install Gurobi in /usr/local**
 $ wget http://packages.gurobi.com/VERSION.tar.gz
 $ tar xzvf gurobi9.0.1_linux64.tar.gz
 $ cd gurobi_VERSION/linux64
@@ -70,7 +70,7 @@ Add Pythonpath for your user (Only till logout - find permanent solution )
 export PYTHONPATH="home/%USERNAME/MAS"
 
 
-** Bash-Screen **
+**Bash-Screen**
 - Informationen:      [Wiki](https://wiki.ubuntuusers.de/Screen/ )
 - Screen beenden:     screen -X -S NAME quit
 - Alle beenden:       
