@@ -12,6 +12,9 @@ $ pip install -r requirements.txt
 ToDo
 
 
+**Wichtige Befehle** <br>
+taskkill /F /IM python.exe /T /fi "USERNAME eq Rieke"
+
 # Linux Server
 **Requirements:**
 - Python 3.5 or newer includes: pandas, requests, numba, tensorflow, influxDB, 
