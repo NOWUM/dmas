@@ -50,18 +50,19 @@ $ sudo tar xzvf gurobi9.0.1_linux64.tar.gz <br>
 $ cd gurobi_VERSION/linux64 <br>
 $ sudo python3 setup.py install <br>
 
-**Register gurobi with key**<br>
-$ grbgetkey KEY <br>
-choose /opt/gurobi as file location, create if directory doesn't exist or copy file later if you can only create it in your home directory <br>
-
 **Add Gurobi Variables Globally:**<br>
 $ nano /etc/bash.bashrc (add the export lines to the end) <br>
 export GUROBI_HOME="/usr/local/gurobi901/linux64" <br>
 export PATH="${PATH}:${GUROBI_HOME}/bin" <br>
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib" <br>
-export $GRB_LICENSE_FILE=/opt/gurobi/gurobi.lic
+export $GRB_LICENSE_FILE=/opt/gurobi/gurobi.lic <br>
+source /etc/bash.bashrc <br>
 
-Test by calling $ gurobi_cl <br>
+**Register gurobi with key**<br>
+$ grbgetkey KEY <br>
+choose /opt/gurobi as file location, create if directory doesn't exist or copy file later if you can only create it in your home directory <br>
+
+Test if gurobi and links are working by calling $ gurobi_cl <br>
 
 
 **Add Pythonpath for your user [Needs to be done for every user, TODO add dynamic path adding to /etc/bash.bashrc]**  <br>
