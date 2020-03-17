@@ -19,11 +19,15 @@ for ((i=$1; i <= $2; i++ ))
 
                 if [ "${args[2]}" = "DEM" ]; then
                          screen -dmS DEM_$i
-                         screen -S DEM_$i -X stuff $'python3 dmas/model/agents/dem_Agent.py --plz "'$i'" \n'
+                         screen -S DEM_$i -X stuff $'python3 dmas/model/agents/dem_Agent.py --plz "'$i'" --mongo "'${args[3]:-149.201.150.88}'"
+                                                                                                         --influx "'${args[4]:-149.201.150.88}'"
+                                                                                                         --market "'${args[5]:-149.201.150.88}'" \n'
                 fi
 
                 if [ "${args[2]}" = "PWP" ]; then
                          screen -dmS PWP_$i
-                         screen -S PWP_$i -X stuff $'python3 dmas/model/agents/pwp_Agent.py --plz "'$i'" \n'
+                         screen -S PWP_$i -X stuff $'python3 dmas/model/agents/pwp_Agent.py --plz "'$i'" --mongo "'${args[3]:-149.201.150.88}'"
+                                                                                                         --influx "'${args[4]:-149.201.150.88}'"
+                                                                                                         --market "'${args[5]:-149.201.150.88}'" \n'
                 fi
         done
