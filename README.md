@@ -23,7 +23,7 @@ ToDo
 $ pip3 install -r requirements.txt
 
 **Install Gurobi in /usr/local** <br>
-$ wget http://packages.gurobi.com/VERSION.tar.gz <br>
+$ wget http://packages.gurobi.com/VERSION.tar.gz (gurobi9.0.1_linux64.tar.gz) <br>
 $ tar xzvf gurobi9.0.1_linux64.tar.gz <br>
 $ cd gurobi_VERSION/linux64 <br>
 $ sudo python3 setup.py install (needs to be done for every user) <br>
