@@ -64,9 +64,9 @@ export $GRB_LICENSE_FILE=/opt/gurobi/gurobi.lic
 Test by calling $ gurobi_cl <br>
 
 
-**Add Pythonpath for your user**  <br>
-export PYTHONPATH="home/%USERNAME/MAS" <br>
-ToDo: (Only till logout - find permanent solution )
+**Add Pythonpath for your user [Needs to be done for every user, TODO add dynamic path adding to /etc/bash.bashrc]**  <br>
+nano .profile <br>
+export PYTHONPATH="home/%USERNAME/dmas/model" <br>
 
 **Bash-Screen** <br>
 Informationen: [Wiki](https://wiki.ubuntuusers.de/Screen/ ) <br> <br>
