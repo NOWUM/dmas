@@ -55,8 +55,10 @@ $ nano /etc/bash.bashrc (add the export lines to the end) <br>
 export GUROBI_HOME="/usr/local/gurobi901/linux64" <br>
 export PATH="${PATH}:${GUROBI_HOME}/bin" <br>
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib" <br>
-export $GRB_LICENSE_FILE=/opt/gurobi/gurobi.lic <br>
-source /etc/bash.bashrc <br>
+export GRB_LICENSE_FILE="/opt/gurobi/gurobi.lic" <br>
+
+refresh your bash
+$ source /etc/bash.bashrc <br>
 
 **Register gurobi with key**<br>
 $ grbgetkey KEY <br>
