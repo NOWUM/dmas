@@ -1,9 +1,18 @@
 # Windows Server
-**Requirements:** 
+**Agents Requirements:** 
 - Python 3.5 or newer includes: pandas, requests, numba, tensorflow, influxDB, 
                                 pika, pymongo, geohash2, sklearn, keras, pyswarm,
                                 xlrd
 - Gurobi 8 or newer
+
+**Plattform Requirements:**
+- Python 3.5 or newer includes: pandas, requests, influxDB, pymongo, xlrd, flask, flask_cors, pika
+- InfluxDB v1.5 or newer (https://www.influxdata.com/get-influxdb/)
+- MongoDB (https://www.mongodb.com/download-center/community)
+- SQLite (https://www.sqlitetutorial.net/sqlite-python/)
+- Grafana v 6.4 or newer (https://grafana.com/grafana/download)
+- RabbitMQ (https://www.rabbitmq.com/download.html)
+- Erlang Server (see RabbitMQ Introduction // https://www.rabbitmq.com/which-erlang.html) 
 
 **Install python modules:** <br>
 $ pip install -r requirements.txt
@@ -11,16 +20,24 @@ $ pip install -r requirements.txt
 **Install Gurobi** <br>
 ToDo
 
-
 **Wichtige Befehle** <br>
 taskkill /F /IM python.exe /T /fi "USERNAME eq Rieke"
 
 # Linux Server
-**Requirements:**
+**Agents Requirements:**
 - Python 3.5 or newer includes: pandas, requests, numba, tensorflow, influxDB, 
                                 pika, pymongo, geohash2, sklearn, keras, pyswarm,
                                 xlrd
 - Gurobi 8 or newer
+
+**Plattform Requirements:**
+- Python 3.5 or newer includes: pandas, requests, influxDB, pymongo, xlrd, flask, flask_cors, pika
+- InfluxDB v1.5 or newer (https://www.influxdata.com/get-influxdb/)
+- MongoDB (https://www.mongodb.com/download-center/community)
+- SQLite (https://www.sqlitetutorial.net/sqlite-python/)
+- Grafana v 6.4 or newer (https://grafana.com/grafana/download)
+- RabbitMQ (https://www.rabbitmq.com/download.html)
+- Erlang Server (see RabbitMQ Introduction // https://www.rabbitmq.com/which-erlang.html) 
 
 **Install python modules:** <br>
 $ pip3 install -r requirements.txt
