@@ -8,14 +8,18 @@ from interfaces.interface_Influx import influxInterface as influxCon
 from apps.routine_DayAhead import dayAheadClearing
 from apps.routine_Balancing import balPowerClearing, balEnergyClearing
 import time as tm
+import configparser
+
+config = configparser.ConfigParser()
+config.read('app.cfg')
 
 sqliteCon = sqliteCon()
 sqliteCon.createTables()
-influxCon = influxCon()
+influxCon = influxCon(config['InfluxDB']['host'])
 
 credentials = pika.PlainCredentials('Plattform', 'Hallo123')
 connection = pika.BlockingConnection(
-pika.ConnectionParameters(host='149.201.88.150', heartbeat=0, credentials=credentials))
+pika.ConnectionParameters(host=config['Market']['host'], heartbeat=0))#, credentials=credentials))
 send = connection.channel()
 send.exchange_declare(exchange='DayAhead', exchange_type='fanout')
 
@@ -52,15 +56,19 @@ def buildAreas():
     end = int(request.form['end'])
 
     for i in range(start, end + 1):
+        influx = config['InfluxDB']['host']
+        mongo = config['MongoDB']['host']
+        market = config['Market']['host']
+
         if request.form['res'] == 'true':       # -- if true build RES
-            subprocess.Popen([path + r'\venv\Scripts\python.exe', path + r'\agents\res_Agent.py', '--plz', str(i)],
-                             cwd=path, stdout=subprocess.DEVNULL)
+            subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
+                             %(i, mongo, influx, market), cwd=path, shell=True)
         if request.form['dem'] == 'true':       # -- if true build DEM
-            subprocess.Popen([path + r'\venv\Scripts\python.exe', path + r'\agents\dem_Agent.py', '--plz', str(i)],
-                             cwd=path, stdout=subprocess.DEVNULL)
+            subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
+                             %(i, mongo, influx, market), cwd=path, shell=True)
         if request.form['pwp']  == 'true':      # -- if true build PWP
-            subprocess.Popen([path + r'\venv\Scripts\python.exe', path + r'\agents\pwp_Agent.py', '--plz', str(i)],
-                             cwd=path, stdout=subprocess.DEVNULL)
+            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
+                             %(i, mongo, influx, market), cwd=path, shell=True)
     return 'OK'
 
 # ----- Day Ahead Orders -----
@@ -139,15 +147,15 @@ def simulation(start, end):
 
 if __name__ == "__main__":
     # ----- InfluxDB -----
-    cmd = subprocess.Popen([r'C:\Program Files\SimEnv\database\influxdb\influxd.exe'],
-                           cwd=r'C:\Program Files\SimEnv\database\influxdb\\', shell=False,
-                           stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    sqliteCon.startServices(name='influx', pid=cmd.pid)
+    if config.getboolean('InfluxDB','Local'):
+        influxPath = config['InfluxDB']['Path']
+        cmd = subprocess.Popen([influxPath], shell=False, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        sqliteCon.startServices(name='influx', pid=cmd.pid)
+    if config.getboolean('MongoDB', 'Local'):
     # ----- MongoDB -----
-    cmd = subprocess.Popen([r'C:\Program Files\SimEnv\database\mongodb\bin\mongod.exe', '-bind_ip', '149.201.88.150'],
-                           cwd=r'C:\Program Files\SimEnv\database\mongodb\\', shell=False,
-                           stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-    sqliteCon.startServices(name='mongo', pid=cmd.pid)
+        mongoPath = config['MongoDB']['Path']
+        cmd = subprocess.Popen([mongoPath, '-bind_ip', config['MongoDB']['host']], shell=False, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        sqliteCon.startServices(name='mongo', pid=cmd.pid)
 
     tm.sleep(2)
     influxCon.influx.drop_database('MAS_2019')
