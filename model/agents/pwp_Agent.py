@@ -12,12 +12,15 @@ from agents.basic_Agent import agent as basicAgent
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--plz', type=int, required=False, default=33, help='PLZ-Agent')
+    parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
+    parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
+    parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='Market')
     return parser.parse_args()
 
 class pwpAgent(basicAgent):
 
-    def __init__(self, date, plz, host='149.201.88.150'):
-        super().__init__(date=date, plz=plz, host=host, exchange='DayAhead', typ='PWP')
+    def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150'):
+        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='DayAhead', typ='PWP')
 
         print('Start Building PWP %s \n' %plz)
         self.portfolio = pwpPort(typ='PWP', gurobi=True)
@@ -292,7 +295,7 @@ class pwpAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = pwpAgent(date='2019-01-01', plz=args.plz)
+    agent = pwpAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
     agent.restCon.login(agent.name, agent.typ)
     try:
         agent.run_agent()

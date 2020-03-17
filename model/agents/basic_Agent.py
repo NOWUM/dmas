@@ -17,7 +17,7 @@ import pymongo
 
 class agent:
 
-    def __init__(self, date, plz, typ='RES', host='149.201.88.150', exchange='DayAhead'):
+    def __init__(self, date, plz, typ='RES', mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', exchange='DayAhead'):
 
         self.name = typ + '_%i' %plz                                             # -- Agent name
         self.area = plz
@@ -25,21 +25,17 @@ class agent:
         self.typ = typ                                                           # -- Typ (RES,PWP,DEM,...)
         self.error_counter = 0                                                   # -- Error Counter
 
-        self.restCon = restInferace()
-        self.influxCon = influxInterface()
-        self. mongoCon = mongoInterface()
+        self.restCon = restInferace(host=market)
+        self.influxCon = influxInterface(host=influx)
+        self. mongoCon = mongoInterface(host=mongo)
 
         credentials = pika.PlainCredentials('MAS_2019', 'FHAACHEN!')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=host,heartbeat=0,credentials=credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0,credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue='', exclusive=True)
         self.queue_name = self.result.method.queue
         self.receive.queue_bind(exchange=exchange, queue=self.queue_name)
-
-        self.mongo = pymongo.MongoClient('mongodb://' + host + ':27017/')
-        self.mongodb = self.mongo["MAS_2019"]
-        self.mongoTable = self.mongodb["system_data"]
 
         self.forecasts = {
             'demand': demandForecast(self.influxCon.influx),

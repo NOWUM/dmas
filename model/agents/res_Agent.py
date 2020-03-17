@@ -12,12 +12,15 @@ from agents.basic_Agent import agent as basicAgent
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--plz', type=int, required=False, default=25, help='PLZ-Agent')
+    parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
+    parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
+    parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
     return parser.parse_args()
 
 class resAgent(basicAgent):
 
-    def __init__(self, date, plz, host='149.201.88.150'):
-        super().__init__(date=date, plz=plz, host=host, exchange='DayAhead', typ='RES')
+    def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150'):
+        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='DayAhead', typ='RES')
 
         print('Start Building RES %s \n' %plz)
         self.portfolio = resPort(typ='RES', gurobi=False)
@@ -242,7 +245,7 @@ class resAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = resAgent(date='2019-01-01', plz=args.plz)
+    agent = resAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
     agent.restCon.login(agent.name, agent.typ)
     try:
         agent.run_agent()
