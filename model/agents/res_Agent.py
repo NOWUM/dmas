@@ -88,6 +88,7 @@ class resAgent(basicAgent):
             energyPricePos = np.random.uniform(low=20, high=500)
             energyPriceNeg = np.random.uniform(low=20, high=500)
             if self.intelligence['Balancing'].randomPoint:
+                a = xopt[i,0]
                 powerPricePos = xopt[i,1]
                 powerPriceNeg = xopt[i,2]
                 energyPricePos = xopt[i,3]
