@@ -20,11 +20,11 @@ if __name__=="__main__":
 
     for i in range(args.start, args.end +1):
         if args.typ == 'RES':
-            subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
+            subprocess.Popen('python ' + path + r'/dmas/model/agents/res_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
                              %(i, args.mongo, args.influx, args.market), cwd=path, shell=True)
         elif args.typ == 'DEM':
-            subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
+            subprocess.Popen('python ' + path + r'/dmas/model/agents/dem_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
                              %(i, args.mongo, args.influx, args.market), cwd=path, shell=True)
         elif args.typ == 'PWP':
-            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
+            subprocess.Popen('python ' + path + r'/dmas/model/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
                              %(i, args.mongo, args.influx, args.market), cwd=path, shell=True)

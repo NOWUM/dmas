@@ -146,6 +146,7 @@ class agent:
 
     # ----- Exception Handling -----
     def exceptionHandle(self, part, inst):
+        print(self.name)
         print('Error in ' + part)
         print('Error --> ' + str(inst))
         self.error_counter += 1
