@@ -92,7 +92,7 @@ class pwpAgent(basicAgent):
         orders = dict(uuid=self.name, date=str(self.date))
         for i in range(6):
             # -- amount of power
-            a = np.random.uniform(low=0, high=1)
+            a = np.random.uniform(low=0, high=0.95)
             # -- power prices
             powerPricePos = np.random.uniform(low=20, high=500)
             powerPriceNeg = np.random.uniform(low=20, high=500)
@@ -100,6 +100,7 @@ class pwpAgent(basicAgent):
             energyPricePos = np.random.uniform(low=20, high=500)
             energyPriceNeg = np.random.uniform(low=20, high=500)
             if self.intelligence['Balancing'].randomPoint:
+                a = xopt[i,0]
                 powerPricePos = xopt[i,1]
                 powerPriceNeg = xopt[i,2]
                 energyPricePos = xopt[i,3]
