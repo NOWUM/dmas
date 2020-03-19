@@ -54,7 +54,10 @@ class learnDayAheadMarginal:
         # -- scale data
         self.scaler.partial_fit(X)
         Xstd = self.scaler.transform(X)
-        Xstd = Xstd[len(y), :]
+        if len(y) < len(Xstd):
+            Xstd = Xstd[len(y),:]
+        elif len(Xstd) < len(y):
+            y = y[:len(Xstd),:]
         # -- split in test & train
         X_train, X_test, y_train, y_test = train_test_split(Xstd, y, test_size=0.3)
 
