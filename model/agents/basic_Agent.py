@@ -69,7 +69,7 @@ class agent:
         for key, method in self.forecasts.items():
             if key != 'weather':
                 method.collectData(self.date)
-                method.counter += 0
+                method.counter += 1
 
                 if method.counter >= method.collect:
                     method.fitFunction()
@@ -146,6 +146,7 @@ class agent:
 
     # ----- Exception Handling -----
     def exceptionHandle(self, part, inst):
+        print(self.name)
         print('Error in ' + part)
         print('Error --> ' + str(inst))
         self.error_counter += 1
