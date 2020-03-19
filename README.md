@@ -55,21 +55,17 @@ $ nano /etc/bash.bashrc (add the export lines to the end) <br>
 export GUROBI_HOME="/usr/local/gurobi901/linux64" <br>
 export PATH="${PATH}:${GUROBI_HOME}/bin" <br>
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib" <br>
-export GRB_LICENSE_FILE="/opt/gurobi/gurobi.lic" <br>
+export PYTHONPATH="$HOME/dmas/model" <br>
+export GRB_LICENSE_FILE="$HOME/gurobi.lic" <br>
 
 refresh your bash
 $ source /etc/bash.bashrc <br>
 
-**Register gurobi with key**<br>
+**Register gurobi with key (Once for every User)**<br>
 $ grbgetkey KEY <br>
-choose /opt/gurobi as file location, create if directory doesn't exist or copy file later if you can only create it in your home directory <br>
+save to your home directory usually "/home/$USERNAME" <br>
 
 Test if gurobi and links are working by calling $ gurobi_cl <br>
-
-
-**Add Pythonpath for your user [Needs to be done for every user, TODO add dynamic path adding to /etc/bash.bashrc]**  <br>
-nano .profile <br>
-export PYTHONPATH="home/%USERNAME/dmas/model" <br>
 
 **Bash-Screen** <br>
 Informationen: [Wiki](https://wiki.ubuntuusers.de/Screen/ ) <br> <br>
