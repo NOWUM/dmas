@@ -54,19 +54,18 @@ class demandForecast:
         self.input['TAmb'].append(np.asarray(lst[0]).reshape((-1, 1)))
         self.input['GHI'].append(np.asarray(lst[1]).reshape((-1, 1)))
         self.input['Ws'].append(np.asarray(lst[2]).reshape((-1, 1)))
-
-        query = 'SELECT sum("P") FROM "DEM" WHERE time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
+        query = 'SELECT sum("Power") FROM "Areas" WHERE time >= \'%s\' and time < \'%s\'  and "timestamp" = \'optimize_dayAhead\' GROUP BY time(1h) fill(0)' % (start, end)
         result = self.influx.query(query)
         demand = [np.round(point['sum'],2) for point in result.get_points()]
 
         self.demand.append(np.asarray(demand).reshape((-1,1)))
 
     def fitFunction(self):
+        X = np.asarray(self.input['TAmb']).reshape((-1, 1))
 
         if not self.fitted:
+            self.scaler.fit(X)
             self.fitted = True
-
-        X = np.asarray(self.input['TAmb']).reshape((-1,1))
 
         self.scaler.partial_fit(X)
         Xstd = self.scaler.transform(X)
