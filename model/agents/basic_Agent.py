@@ -1,19 +1,21 @@
 # Importe
 import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-print(os.getcwd())
+# print(os.getcwd())
 from interfaces.interface_rest import restInferace
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface
 from apps.qLearn_BalPower import learnBalancingPower
 from apps.qLearn_DayAhead import learnDayAheadMarginal
-from apps.frcst_DEM import demandForecast
-from apps.frcst_Price import priceForecast
+# from apps.frcst_DEM import annFrcst as demANN
+from apps.frcst_DEM import typFrcst as demTyp
+# from apps.frcst_Price import annFrcst as priceANN
+from apps.frcst_Price import typFrcst as priceTyp
 from apps.frcst_Weather import weatherForecast
 import pandas as pd
 import geohash2
 import pika
-import pymongo
+
 
 class agent:
 
@@ -30,17 +32,17 @@ class agent:
         self. mongoCon = mongoInterface(host=mongo)
 
         credentials = pika.PlainCredentials('MAS_2019', 'FHAACHEN!')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0,credentials=credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0, credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
-        self.result = self.receive.queue_declare(queue='', exclusive=True)
+        self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
         self.queue_name = self.result.method.queue
         self.receive.queue_bind(exchange=exchange, queue=self.queue_name)
 
         self.forecasts = {
-            'demand': demandForecast(self.influxCon.influx),
+            'demand': demTyp(self.influxCon.influx),
             'weather': weatherForecast(self.influxCon.influx),
-            'price': priceForecast(self.influxCon.influx)
+            'price': priceTyp(self.influxCon.influx)
         }
 
         self.intelligence = {

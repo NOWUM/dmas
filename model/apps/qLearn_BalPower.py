@@ -17,8 +17,7 @@ class learnBalancingPower:
         self.scaler = StandardScaler()                  # -- Scaler to norm the input parameter
         self.function = models.Sequential()             # -- Model to fit the profit function
         # -- Build model structure
-        self.function.add(layers.Dense(320, activation='sigmoid', input_shape=(153,)))
-        self.function.add(layers.Dense(160, activation='relu'))
+        self.function.add(layers.Dense(153, activation='sigmoid', input_shape=(153,)))
         self.function.add(layers.Dense(160, activation='relu'))
         self.function.add(layers.Dense(1, activation='linear'))
         self.function.compile(loss='mean_absolute_percentage_error', optimizer=opt, metrics=['mean_squared_error'])
@@ -63,7 +62,7 @@ class learnBalancingPower:
         # -- split in test & train
         X_train, X_test, y_train, y_test = train_test_split(Xstd, y, test_size=0.3)
 
-        self.function.fit(X_train, y_train, epochs=200, batch_size=5, validation_data=(X_test, y_test))
+        self.function.fit(X_train, y_train, epochs=75, batch_size=25, validation_data=(X_test, y_test))
 
         print('val_loss: %s' %self.function.history.history['val_loss'][-1])
         print('loss: %s' %self.function.history.history['loss'][-1])
@@ -93,5 +92,5 @@ class learnBalancingPower:
 
     def getAction(self, weather, states, date, prices):
 
-        return pso(self.opt, self.lb, self.ub, omega=0.1, swarmsize=100, phip=0.75, phig=0.3,
-                   minfunc=1000, minstep=10, maxiter=100, args=(weather, states, date, prices))
+        return pso(self.opt, self.lb, self.ub, omega=0.1, swarmsize=10, phip=0.75, phig=0.3,
+                   minfunc=1000, minstep=10, maxiter=50, args=(weather, states, date, prices))

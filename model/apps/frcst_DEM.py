@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from keras import models, layers, optimizers
 
-class demandForecast:
+class annFrcst:
 
     def __init__(self, influx):
 
@@ -106,5 +106,57 @@ class demandForecast:
 
         else:
             demand = 10000 * np.zeros(24)
+
+        return demand
+
+
+class typFrcst:
+
+    def __init__(self, influx):
+
+        self.influx = influx
+        self.fitted = False
+        self.demand = []
+        self.index = []
+
+        self.typDays = []
+
+        self.collect = 10
+        self.counter = 0
+
+    def collectData(self, date):
+
+        self.index.append(pd.date_range(start=date, periods=24, freq='h'))
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+
+        query = 'SELECT sum("Power") FROM "Areas" WHERE time >= \'%s\' and time < \'%s\'  and "timestamp" = \'optimize_dayAhead\' GROUP BY time(1h) fill(0)' % (start, end)
+        result = self.influx.query(query)
+        demand = [np.round(point['sum'],2) for point in result.get_points()]
+        self.demand.append(np.asarray(demand).reshape((-1,1)))
+
+    def fitFunction(self):
+
+        timeIndex = pd.DatetimeIndex.append(self.index[0],self.index[1])
+
+        for i in np.arange(2,len(self.index)):
+            timeIndex = timeIndex.append(self.index[i])
+        df = pd.DataFrame(np.asarray(self.demand).reshape((-1,1)), timeIndex, ['demand'])
+
+        typDays = []
+        for i in range(7):
+            day = df.loc[df.index.dayofweek == i,:]
+            typDays.append(day.groupby(day.index.hour).mean())
+
+        self.fitted = True
+        self.typDays = typDays
+
+    def forecast(self, date):
+
+        if self.fitted:
+            date = pd.to_datetime(date).dayofweek
+            demand = self.typDays[date].to_numpy().reshape((1,-1))
+        else:
+            demand = 25000 * np.zeros(24)
 
         return demand

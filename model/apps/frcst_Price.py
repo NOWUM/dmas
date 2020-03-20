@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from keras import models, layers, optimizers
 
 
-class priceForecast:
+class annFrcst:
 
     def __init__(self, influx):
 
@@ -130,6 +130,64 @@ class priceForecast:
 
             power_price = price.reshape((-1,))                                              # -- Power Price        [€/MWh]
 
+        else:
+            power_price = 25*np.ones(24)
+
+        co = np.ones_like(power_price) * 20                                                 # -- Emission Price     [€/MWh]
+        gas = np.ones_like(power_price) * 3                                                 # -- Gas Price          [€/MWh]
+        lignite = 1.5                                                                       # -- Lignite Price      [€/MWh]
+        coal = 2                                                                            # -- Hard Coal Price    [€/MWh]
+        nuc = 1                                                                             # -- nuclear Price      [€/MWh]
+
+        return dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
+
+
+class typFrcst:
+
+    def __init__(self, influx):
+
+        self.influx = influx
+        self.fitted = False
+        self.mcp = []
+        self.index = []
+
+        self.typDays = []
+
+        self.collect = 10
+        self.counter = 0
+
+    def collectData(self, date):
+
+        self.index.append(pd.date_range(start=date, periods=24, freq='h'))
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+
+        query = 'SELECT sum("price") FROM "DayAhead" WHERE time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
+        result = self.influx.query(query)
+        mcp = [np.round(point['sum'],2) for point in result.get_points()]
+        self.mcp.append(np.asarray(mcp).reshape((-1,1)))
+
+    def fitFunction(self):
+
+        timeIndex = pd.DatetimeIndex.append(self.index[0],self.index[1])
+
+        for i in np.arange(2,len(self.index)):
+            timeIndex = timeIndex.append(self.index[i])
+        df = pd.DataFrame(np.asarray(self.mcp).reshape((-1,1)), timeIndex, ['demand'])
+
+        typDays = []
+        for i in range(7):
+            day = df.loc[df.index.dayofweek == i,:]
+            typDays.append(day.groupby(day.index.hour).mean())
+
+        self.fitted = True
+        self.typDays = typDays
+
+    def forecast(self, date, demand):
+
+        if self.fitted:
+            date = pd.to_datetime(date).dayofweek
+            power_price = self.typDays[date].to_numpy().reshape((-1,))
         else:
             power_price = 25*np.ones(24)
 
