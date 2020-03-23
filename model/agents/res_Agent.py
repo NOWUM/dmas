@@ -248,7 +248,7 @@ class resAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = resAgent(date='2019-01-01', plz=args.plz, mongo='127.0.0.1', influx='127.0.0.1', market='127.0.0.1')
+    agent = resAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
     agent.restCon.login(agent.name, agent.typ)
     try:
         agent.run_agent()
