@@ -2,6 +2,7 @@ import os
 import sqlite3
 from sqlite3 import Error
 import psutil
+import time
 
 class sqliteInterface:
 
@@ -67,25 +68,28 @@ class sqliteInterface:
 
 # -- DayAhead
     def setDayAhead(self, request):
-        try:
-            content = request.json
-            name = content['uuid']
-            conn = sqlite3.connect(self.db_file)
-            c = conn.cursor()
-            c.execute("SELECT name FROM agents WHERE name=?", (name,))
-            if len(c.fetchall()) == 0:
-                print('Agent %s does not logged in' % name)
-            else:
-                sql = ''' INSERT INTO orders(name,hour,volume,price)
-                            VALUES (?,?,?,?) '''
-                for i in range(24):
-                    for k in range(len(content[str(i)])):
-                        order = (name, i, content[str(i)][k][0], content[str(i)][k][1])
-                        c.execute(sql, order)
-                conn.commit()
-                conn.close()
-        except Error as e:
-            print(e)
+        while True:
+            try:
+                content = request.json
+                name = content['uuid']
+                conn = sqlite3.connect(self.db_file)
+                c = conn.cursor()
+                c.execute("SELECT name FROM agents WHERE name=?", (name,))
+                if len(c.fetchall()) == 0:
+                    print('Agent %s does not logged in' % name)
+                else:
+                    sql = ''' INSERT INTO orders(name,hour,volume,price)
+                                VALUES (?,?,?,?) '''
+                    for i in range(24):
+                        for k in range(len(content[str(i)])):
+                            order = (name, i, content[str(i)][k][0], content[str(i)][k][1])
+                            c.execute(sql, order)
+                    conn.commit()
+                    conn.close()
+            except Error as e:
+                print(e)
+                time.sleep(0.1)
+            break
 
     def getDayAhead(self,name):
         orders = []
@@ -153,8 +157,22 @@ class sqliteInterface:
         except Error as e:
             print(e)
 
-        # ----- Set Actuals for each Agent -----
-        def setActuals(self, request):
+    def getBalancingAgents(self):
+        agents = []
+        try:
+            conn = sqlite3.connect(self.db_file)
+            c = conn.cursor()
+            c.execute("SELECT name FROM agents WHERE reserve=?", ('X',))
+            rows = c.fetchall()
+            agents = [row[0] for row in rows]
+            conn.close()
+        except Error as e:
+            print(e)
+        return agents
+
+# -- Actuals
+    def setActuals(self, request):
+        while True:
             try:
                 content = request.json
                 name = content['uuid']
@@ -173,64 +191,8 @@ class sqliteInterface:
                     conn.close()
             except Error as e:
                 print(e)
-
-        # ----- get actuals of any Agent -----
-        def getActual(self, name):
-            actuals = []
-            try:
-                conn = sqlite3.connect(self.db_file)
-                c = conn.cursor()
-                c.execute("SELECT name,hour,volume FROM actuals WHERE name=?", (name,))
-                actuals = c.fetchall()
-                conn.close()
-            except Error as e:
-                print(e)
-            return actuals
-
-        # ----- delete all actuals -----
-        def deleteActuals(self):
-            try:
-                conn = sqlite3.connect(self.db_file)
-                c = conn.cursor()
-                c.execute("DELETE FROM actuals")
-                conn.commit()
-                conn.close()
-            except Error as e:
-                print(e)
-
-    def getBalancingAgents(self):
-        agents = []
-        try:
-            conn = sqlite3.connect(self.db_file)
-            c = conn.cursor()
-            c.execute("SELECT name FROM agents WHERE reserve=?", ('X',))
-            rows = c.fetchall()
-            agents = [row[0] for row in rows]
-            conn.close()
-        except Error as e:
-            print(e)
-        return agents
-
-# -- Actuals
-    def setActuals(self, request):
-        try:
-            content = request.json
-            name = content['uuid']
-            conn = sqlite3.connect(self.db_file)
-            c = conn.cursor()
-            c.execute("SELECT name FROM agents WHERE name=?", (name,))
-            if len(c.fetchall()) == 0:
-                print('Agent %s does not logged in' % name)
-            else:
-                sql = ''' INSERT INTO actuals(name,hour,volume)
-                                            VALUES (?,?,?) '''
-                for i in range(24):
-                    actual = (name, i, content[str(i)])
-                    c.execute(sql, actual)
-                conn.commit()
-                conn.close()
-        except Error as e:
-            print(e)
+                time.sleep()
+            break
 
     def getActual(self, name):
         actuals = []

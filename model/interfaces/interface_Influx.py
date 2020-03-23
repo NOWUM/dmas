@@ -291,8 +291,56 @@ class influxInterface:
             self.influx.write_points(json_body)
             print('generate weather for %s' %date)
 
+    def getWeather(self, geo, date):
+        geohash = str(geo)                                              # -- PLZ-Information
+        # -- Build-up query for InfluxDB
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        query = 'select * from "weather" where time >= \'%s\' and time <= \'%s\' and geohash = \'%s\'' % (start, end, geohash)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            dir = [point['DNI'] for point in result.get_points()]           # -- direct irradiation     [W/m²]
+            dif = [point['DHI'] for point in result.get_points()]           # -- diffuse irradiation    [W/m²]
+            wind = [point['Ws'] for point in result.get_points()]           # -- windspeed              [m/s] (2m)
+            TAmb = [point['TAmb'] for point in result.get_points()]         # -- temperatur             [°C]
+        else:
+            dir = list(np.zeros(24))
+            dif = list(np.zeros(24))
+            wind = list(np.zeros(24))
+            TAmb = list(np.zeros(24))
+
+        return dict(wind=wind, dir=dir, dif=dif, temp=TAmb)
+
+
     def saveData(self, json_body):
         self.influx.write_points(json_body)
+
+    def getDemand(self, date):
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        query = 'SELECT sum("Power") FROM "Areas" WHERE time >= \'%s\' and time < \'%s\'  and "timestamp" = \'optimize_dayAhead\' GROUP BY time(1h) fill(0)' % (
+        start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            demand = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
+        else:
+            demand = 35000*np.ones(24)
+
+        return np.asarray(demand).reshape((-1,1))
+
+    def getDayAheadPrice(self, date):
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        query = 'SELECT sum("price") FROM "DayAhead" WHERE time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (
+        start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            mcp = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
+        else:
+            mcp = 25*np.ones(24)
+
+        return np.asarray(mcp).reshape((-1, 1))
+
 
 if __name__ == "__main__":
     pass

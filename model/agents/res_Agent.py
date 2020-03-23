@@ -1,6 +1,7 @@
 # Importe
 import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
+import logging
 import argparse
 import pandas as pd
 import numpy as np
@@ -46,6 +47,7 @@ class resAgent(basicAgent):
             self.portfolio.Cap_Solar = sum(data['power']) / 1000
 
         print('Stop Building RES %s \n' % plz)
+        logging.info('Initialization done')
 
     def getStates(self):
 
@@ -246,7 +248,7 @@ class resAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = resAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
+    agent = resAgent(date='2019-01-01', plz=args.plz, mongo='127.0.0.1', influx='127.0.0.1', market='127.0.0.1')
     agent.restCon.login(agent.name, agent.typ)
     try:
         agent.run_agent()

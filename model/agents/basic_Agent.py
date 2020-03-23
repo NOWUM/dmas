@@ -1,12 +1,13 @@
 # Importe
 import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
+import logging
 # print(os.getcwd())
 from interfaces.interface_rest import restInferace
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface
-from apps.qLearn_BalPower import learnBalancingPower
-from apps.qLearn_DayAhead import learnDayAheadMarginal
+from apps.qLearn_BalPower import annLearn as balLearning
+from apps.qLearn_DayAhead import annLearn as daLearning
 # from apps.frcst_DEM import annFrcst as demANN
 from apps.frcst_DEM import typFrcst as demTyp
 # from apps.frcst_Price import annFrcst as priceANN
@@ -26,13 +27,14 @@ class agent:
         self.date = pd.to_datetime(date)                                         # -- current day
         self.typ = typ                                                           # -- Typ (RES,PWP,DEM,...)
         self.error_counter = 0                                                   # -- Error Counter
+        logging.basicConfig(filename=r'./logs/%s.log' %self.name, level=logging.WARNING, format='%(levelname)s:%(message)s', filemode='w')
 
         self.restCon = restInferace(host=market)
         self.influxCon = influxInterface(host=influx)
         self. mongoCon = mongoInterface(host=mongo)
 
         credentials = pika.PlainCredentials('MAS_2019', 'FHAACHEN!')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0, credentials=credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0))#, credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
@@ -40,14 +42,14 @@ class agent:
         self.receive.queue_bind(exchange=exchange, queue=self.queue_name)
 
         self.forecasts = {
-            'demand': demTyp(self.influxCon.influx),
-            'weather': weatherForecast(self.influxCon.influx),
-            'price': priceTyp(self.influxCon.influx)
+            'demand': demTyp(self.influxCon),
+            'weather': weatherForecast(self.influxCon),
+            'price': priceTyp(self.influxCon)
         }
 
         self.intelligence = {
-            'Balancing': learnBalancingPower(initT=10),
-            'DayAhead': learnDayAheadMarginal(initT=10)
+            'Balancing': balLearning(initT=20),
+            'DayAhead': daLearning(initT=20)
         }
 
         df = pd.read_csv('./data/PlzGeo.csv', index_col=0)
@@ -113,26 +115,31 @@ class agent:
                 self.optimize_balancing()
             except Exception as inst:
                 self.exceptionHandle(part='Balancing Plan', inst=inst)
+                logging.error('%s --> %s' % ('Balancing Plan', inst))
         if 'opt_dayAhead' in message:
             try:
                 self.optimize_dayAhead()
             except Exception as inst:
                 self.exceptionHandle(part='Day Ahead Plan', inst=inst)
+                logging.error('%s --> %s' % ('Day Ahead Plan', inst))
         if 'result_dayAhead' in message:
             try:
                 self.post_dayAhead()
             except Exception as inst:
                 self.exceptionHandle(part='Day Ahead Result', inst=inst)
+                logging.error('%s --> %s' % ('Day Ahead Result', inst))
         if 'opt_actual' in message:
             try:
                 self.optimize_actual()
             except Exception as inst:
                 self.exceptionHandle(part='Actual Plan', inst=inst)
+                logging.error('%s --> %s' % ('Actual Plan', inst))
         if 'result_actual' in message:
             try:
                 self.post_actual()
             except Exception as inst:
                 self.exceptionHandle(part='Actual Results', inst=inst)
+                logging.error('%s --> %s' % ('Actual Result', inst))
 
         if 'kill' in message:
             self.restCon.logout(self.name)
@@ -153,7 +160,7 @@ class agent:
         print('Error --> ' + str(inst))
         self.error_counter += 1
         print('Error Counter ' + str(self.error_counter))
-        if self.error_counter > 5:
+        if self.error_counter >= 5:
             print('logout')
             self.restInterface.logout()
             self.error_counter = 0

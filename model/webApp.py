@@ -1,4 +1,5 @@
 import pandas as pd
+import  os
 from flask import Flask, render_template, request,jsonify
 from flask_cors import cross_origin
 import pika
@@ -9,6 +10,7 @@ from apps.routine_DayAhead import dayAheadClearing
 from apps.routine_Balancing import balPowerClearing, balEnergyClearing
 import time as tm
 import configparser
+
 
 config = configparser.ConfigParser()
 config.read('app.cfg')
@@ -24,7 +26,7 @@ send = connection.channel()
 send.exchange_declare(exchange='DayAhead', exchange_type='fanout')
 
 app = Flask(__name__)
-path = r'C:\Program Files\SimEnv\\'
+path = os.path.dirname(os.path.dirname(__file__)) + r'/model'
 pd.set_option('mode.chained_assignment', None)
 
 # ----- Starting View -----

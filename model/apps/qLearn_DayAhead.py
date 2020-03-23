@@ -3,28 +3,21 @@ from numpy import asarray as array
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from keras import models, layers, optimizers
+from sklearn.neural_network import MLPRegressor
 from pyswarm import pso
+import datetime
 
-class learnDayAheadMarginal:
+
+class annLearn:
 
     def __init__(self, initT = 10):
 
-        # -- Optimization Parameter for function fit
-        opt = optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
-
-        # ----- Decision between Day Ahead and Balancing -----
         self.scaler = StandardScaler()          # -- Scaler to norm the input parameter
-        self.function = models.Sequential()     # -- Model to fit the profit function
-        # -- Build model structure
-        self.function.add(layers.Dense(220, activation='sigmoid', input_shape=(217,)))
-        self.function.add(layers.Dense(220, activation='relu'))
-        self.function.add(layers.Dense(1, activation='linear'))
-        self.function.compile(loss='mean_absolute_percentage_error', optimizer=opt, metrics=['mean_squared_error'])
+        self.function = MLPRegressor(hidden_layer_sizes=(300, 300,), activation='tanh', solver='sgd',
+                                     learning_rate='adaptive', shuffle=False, early_stopping=True)
 
         # -- Input Parameter
         self.input = dict(weather=[], prices=[], dates=[], states=[], actions=[], demand=[], Qs=[])
-        self.archiv = dict(weather=[], prices=[], dates=[], states=[], actions=[], demand=[], Qs=[])
 
         # -- Lower and Upper Bound for Action-Optimization
         self.lb = -20 * np.ones(24)
@@ -38,7 +31,7 @@ class learnDayAheadMarginal:
     def buildArray(self, values):
         num = len(self.input['weather'])
         sample = range(num)
-        if isinstance(values[0], pd.datetime):
+        if isinstance(values[0], datetime.datetime):
             return array([array(values[i].dayofweek).reshape((1, -1)) for i in sample]).reshape((num, -1))
         else:
             return array([array(values[i]).reshape((1, -1)) for i in sample]).reshape((num, -1))
@@ -54,24 +47,20 @@ class learnDayAheadMarginal:
         self.scaler.partial_fit(X)
         Xstd = self.scaler.transform(X)
         if len(y) < len(Xstd):
-            Xstd = Xstd[len(y),:]
+            Xstd = Xstd[:len(y),:]
         elif len(Xstd) < len(y):
             y = y[:len(Xstd),:]
         # -- split in test & train
-        X_train, X_test, y_train, y_test = train_test_split(Xstd, y, test_size=0.3)
+        X_train, X_test, y_train, y_test = train_test_split(Xstd, y, test_size=0.1)
 
-        self.function.fit(X_train, y_train, epochs=75, batch_size=25, validation_data=(X_test, y_test))
+        self.function.fit(X_train, y_train.reshape((-1,)))
+        scoreTrain = self.function.score(X_train, y_train)
+        scoreTest = self.function.score(X_test, y_test)
+        print('Score Train: %s' % scoreTrain)
+        print('Score Test: %s' % scoreTest)
 
-        print('val_loss: %s' %self.function.history.history['val_loss'][-1])
-        print('loss: %s' %self.function.history.history['loss'][-1])
-
-        if len(self.input['weather']) >= 350:
-            for _ in range(self.collect):
-                for key in self.input.keys():
-                    self.archiv[key].append(self.input[key].pop(0))
-
-        if not self.randomPoint:
-            self.randomPoint = True
+        if scoreTrain >= 0.2:
+            self.randomPoint = False
 
     # -- get optimal parameter setting for day ahead balancing decison
     def opt(self, x, *args):
