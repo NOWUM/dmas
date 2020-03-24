@@ -34,7 +34,7 @@ class agent:
         self. mongoCon = mongoInterface(host=mongo)
 
         credentials = pika.PlainCredentials('MAS_2019', 'FHAACHEN!')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0))#, credentials=credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0, credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
