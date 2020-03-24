@@ -286,7 +286,7 @@ class sqliteInterface:
             c.execute("SELECT name FROM agents WHERE name=?", (name,))
             if len(c.fetchall()) == 0:
                 sql = ''' INSERT INTO agents(name, typ, area, reserve) VALUES (?,?,?,?) '''
-                c.execute(sql,(content['uuid'], content['typ'],content['area'],content['reserve']))
+                c.execute(sql, (content['uuid'], content['typ'], content['area'], content['reserve']))
             else:
                 print('agent already logged in')
             conn.commit()

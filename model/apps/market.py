@@ -99,10 +99,10 @@ def dayAhead_clearing(orders, plot=False):
     #index = [np.round(i,1) for i in index]
     merit_order = pd.DataFrame(index=np.concatenate((ask0.index,bid0.index)))
     # merit_order = pd.DataFrame()
-    merit_order.loc[:,'buy'] = bid0['price']
-    merit_order.loc[:,'buyNames'] = bid0['name']
-    merit_order.loc[:,'sellNames'] = ask0['name']
-    merit_order.loc[:,'sell'] = ask0['price']
+    merit_order.loc[:, 'buy'] = bid0['price']
+    merit_order.loc[:, 'buyNames'] = bid0['name']
+    merit_order.loc[:, 'sellNames'] = ask0['name']
+    merit_order.loc[:, 'sell'] = ask0['price']
 
     merit_order = merit_order.sort_index()
     merit_order = merit_order.bfill()
@@ -148,18 +148,34 @@ def dayAhead_clearing(orders, plot=False):
 if __name__ == "__main__":
 
     df2 = orderGen(150)
-    df2 = df2[df2['quantity'] <=0]
+    #df2 = df2[df2['quantity'] <=0]
 
     test = [(0, -300, 'Nils'), (3000, 3000, 'Nils')]
     df = pd.DataFrame(test, columns=['quantity', 'price', 'name'])
     #df2 = df2.append(df)
-    df = pd.read_excel(r'./tmp/DA_2019-01-02_20.xlsx', index_col=0)
+    #df = pd.read_excel(r'./tmp/DA_2019-01-02_20.xlsx', index_col=0)
     #df = df[df.index == 5]
     #df = df[df['quantity'] != 0]
 
     # df = pd.read_excel(r'./tmp/DA_2019-01-01_5.xlsx', index_col=0)
     #ask, bid, mcp, mcm, test = dayAhead_clearing(df, plot=True)
-    ask_last, bid_last, mcp, mcm, merit_order = dayAhead_clearing(df)
+    ask_last, bid_last, mcp, mcm, merit_order = dayAhead_clearing(df2)
+    buy = merit_order.loc[:,['buy','buyNames']]
+    sell = merit_order.loc[:,['sell','sellNames']]
+    json_body = []
+
+    for row in buy.iterrows():
+        json_body.append(
+            {
+                "measurement": 'Market',
+                "tags": dict(name=self.name, area=self.area,
+                             timestamp='optimize_dayAhead', typ='RES', asset='solar'),
+                "time": time.isoformat() + 'Z',
+                "fields": dict(Power=self.portfolio.pSolar[i])
+            }
+        )
+
+
     #df = pd.read_excel(r'./tmp/test.xlsx', index_col=0)
     #df = df[df['typ'] == 'neg']
     #del df['typ']

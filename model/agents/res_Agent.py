@@ -62,50 +62,51 @@ class resAgent(basicAgent):
 
     # ----- Balancing Handling -----
     def optimize_balancing(self):
-        # -- set parameter for optimization
-        self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast())
-
-        # -- save the status for learning
-        self.intelligence['Balancing'].input['weather'].append([x[1] for x in agent.portfolio.weather.items()])
-        self.intelligence['Balancing'].input['dates'].append(self.portfolio.date)
-        self.intelligence['Balancing'].input['prices'].append(self.portfolio.prices['power'])
-        self.intelligence['Balancing'].input['states'].append(self.getStates()[0])
-
-        # -- get best split between dayAhead and balancing market
-        if self.intelligence['Balancing'].randomPoint:
-            xopt, _ = self.intelligence['Balancing'].getAction([x[1] for x in agent.portfolio.weather.items()], self.getStates()[0],
-                                                               self.portfolio.date, self.priceForecast()['power'])
-            xopt = np.asarray(xopt).reshape((6,-1))
-
-        # -- build up orderbook
-        actions = []
-        orders = dict(uuid=self.name, date=str(self.date))
-        for i in range(6):
-            # -- amount of power
-            a = np.random.uniform(low=0, high=1)
-            # -- power prices
-            powerPricePos = np.random.uniform(low=20, high=500)
-            powerPriceNeg = np.random.uniform(low=20, high=500)
-            # -- energy prices
-            energyPricePos = np.random.uniform(low=20, high=500)
-            energyPriceNeg = np.random.uniform(low=20, high=500)
-            if self.intelligence['Balancing'].randomPoint:
-                a = xopt[i,0]
-                powerPricePos = xopt[i,1]
-                powerPriceNeg = xopt[i,2]
-                energyPricePos = xopt[i,3]
-                energyPriceNeg = xopt[i,4]
-            # -- append actions
-            actions.append([a, powerPricePos, energyPricePos, powerPriceNeg, energyPriceNeg])
-
-            # -- build orders
-            orders.update({str(i) + '_pos': (np.round(self.getStates()[1][0][i] * a, 0), powerPricePos, energyPricePos)})
-            orders.update({str(i) + '_neg': (np.round(self.getStates()[1][1][i] * a, 0), powerPriceNeg, energyPriceNeg)})
-
-        # -- save actions for learning
-        self.intelligence['Balancing'].input['actions'].append(actions)
-        # -- send orderbook to market plattform
-        self.restCon.sendBalancing(orders)
+        pass
+        # # -- set parameter for optimization
+        # self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast())
+        #
+        # # -- save the status for learning
+        # self.intelligence['Balancing'].input['weather'].append([x[1] for x in agent.portfolio.weather.items()])
+        # self.intelligence['Balancing'].input['dates'].append(self.portfolio.date)
+        # self.intelligence['Balancing'].input['prices'].append(self.portfolio.prices['power'])
+        # self.intelligence['Balancing'].input['states'].append(self.getStates()[0])
+        #
+        # # -- get best split between dayAhead and balancing market
+        # if self.intelligence['Balancing'].randomPoint:
+        #     xopt, _ = self.intelligence['Balancing'].getAction([x[1] for x in agent.portfolio.weather.items()], self.getStates()[0],
+        #                                                        self.portfolio.date, self.priceForecast()['power'])
+        #     xopt = np.asarray(xopt).reshape((6,-1))
+        #
+        # # -- build up orderbook
+        # actions = []
+        # orders = dict(uuid=self.name, date=str(self.date))
+        # for i in range(6):
+        #     # -- amount of power
+        #     a = np.random.uniform(low=0, high=1)
+        #     # -- power prices
+        #     powerPricePos = np.random.uniform(low=100, high=500)
+        #     powerPriceNeg = np.random.uniform(low=100, high=500)
+        #     # -- energy prices
+        #     energyPricePos = np.random.uniform(low=0, high=50)
+        #     energyPriceNeg = np.random.uniform(low=0, high=50)
+        #     if self.intelligence['Balancing'].randomPoint:
+        #         a = xopt[i,0]
+        #         powerPricePos = xopt[i,1]
+        #         powerPriceNeg = xopt[i,2]
+        #         energyPricePos = xopt[i,3]
+        #         energyPriceNeg = xopt[i,4]
+        #     # -- append actions
+        #     actions.append([a, powerPricePos, energyPricePos, powerPriceNeg, energyPriceNeg])
+        #
+        #     # -- build orders
+        #     orders.update({str(i) + '_pos': (np.round(self.getStates()[1][0][i] * a, 0), powerPricePos, energyPricePos)})
+        #     orders.update({str(i) + '_neg': (np.round(self.getStates()[1][1][i] * a, 0), powerPriceNeg, energyPriceNeg)})
+        #
+        # # -- save actions for learning
+        # self.intelligence['Balancing'].input['actions'].append(actions)
+        # # -- send orderbook to market plattform
+        # self.restCon.sendBalancing(orders)
 
     # ----- Day Ahead Handling -----
     def optimize_dayAhead(self):
@@ -152,8 +153,27 @@ class resAgent(basicAgent):
                         "fields": dict(Power=power[i])
                     }
                 )
+                json_body.append(
+                    {
+                        "measurement": 'Areas',
+                        "tags": dict(agent=self.name, area=self.area,
+                                     timestamp='optimize_dayAhead', typ='RES', asset='wind'),
+                        "time": time.isoformat() + 'Z',
+                        "fields": dict(Power=self.portfolio.pWind[i])
+                    }
+                )
+                json_body.append(
+                    {
+                        "measurement": 'Areas',
+                        "tags": dict(agent=self.name, area=self.area,
+                                     timestamp='optimize_dayAhead', typ='RES', asset='solar'),
+                        "time": time.isoformat() + 'Z',
+                        "fields": dict(Power=self.portfolio.pSolar[i])
+                    }
+                )
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
             self.influxCon.saveData(json_body)
+
 
     # ----- Routine after day Ahead -----
     def post_dayAhead(self):

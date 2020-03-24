@@ -20,7 +20,9 @@ def dayAheadClearing(sqlite, influx, date):
         time = date + pd.DateOffset(hours=i)
         o = df[df.index == i]
 
-        ask, bid, mcp, mcm, _ = dayAhead_clearing(o, plot=False)
+        ask, bid, mcp, mcm, merit_order = dayAhead_clearing(o, plot=False)
+        buy = merit_order.loc[:, ['buy', 'buyNames']]
+        sell = merit_order.loc[:, ['sell', 'sellNames']]
 
         influx.influx.switch_database("MAS_2019")
         json_body = []
@@ -42,6 +44,29 @@ def dayAheadClearing(sqlite, influx, date):
                     "fields": dict(power=float(bid.loc[r, 'volume']))
                 }
             )
+        id_ = 0
+        for row in buy.iterrows():
+            json_body.append(
+                {
+                    "measurement": 'DayAhead',
+                    "tags": dict(agent=row[1].buyNames, order='bid', id=id_),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(power=float(row[0]), price=float(row[1].buy))
+                }
+            )
+            id_ += 1
+
+        id_ = 0
+        for row in sell.iterrows():
+            json_body.append(
+                {
+                    "measurement": 'DayAhead',
+                    "tags": dict(agent=row[1].sellNames, order='ask', id=id_),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(power=float(row[0]), price=float(row[1].sell))
+                }
+            )
+            id_ += 1
 
         json_body.append(
             {

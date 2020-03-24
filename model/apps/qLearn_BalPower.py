@@ -21,7 +21,10 @@ class annLearn:
         # -- Lower and Upper Bound for Action-Optimization
         self.lb = np.zeros(30)
         self.ub = np.ones(30).reshape((6,-1))
-        self.ub[:, 1:] *= 500
+        self.ub[:, 1] *= 500                        # -- Power Price Pos
+        self.ub[:, 2] *= 500                        # -- Power Price Neg
+        self.ub[:, 3] *= 50                         # -- Energy Price Pos
+        self.ub[:, 4] *= 50                         # -- Energy Price Neg
         self.ub = self.ub.reshape((-1,))
 
         self.collect = initT

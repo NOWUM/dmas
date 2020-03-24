@@ -79,7 +79,7 @@ class agent:
                     method.fitFunction()
                     method.counter = 0
 
-        if self.typ != 'DEM':
+        if self.typ == 'PWP':
             for _, func in self.intelligence.items():
                 func.counter += 1
                 if func.counter >= func.collect:

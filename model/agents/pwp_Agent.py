@@ -94,11 +94,11 @@ class pwpAgent(basicAgent):
             # -- amount of power
             a = np.random.uniform(low=0, high=0.95)
             # -- power prices
-            powerPricePos = np.random.uniform(low=20, high=500)
-            powerPriceNeg = np.random.uniform(low=20, high=500)
+            powerPricePos = np.random.uniform(low=100, high=500)
+            powerPriceNeg = np.random.uniform(low=100, high=500)
             # -- energy prices
-            energyPricePos = np.random.uniform(low=20, high=500)
-            energyPriceNeg = np.random.uniform(low=20, high=500)
+            energyPricePos = np.random.uniform(low=0, high=50)
+            energyPriceNeg = np.random.uniform(low=0, high=50)
             if self.intelligence['Balancing'].randomPoint:
                 a = xopt[i,0]
                 powerPricePos = xopt[i,1]

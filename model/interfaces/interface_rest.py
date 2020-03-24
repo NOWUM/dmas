@@ -7,7 +7,7 @@ class restInferace:
 
     def login(self, name, typ):
         reserve = 'X'
-        if typ == 'DEM':
+        if typ != 'PWP':
             reserve = 'O'
         r = requests.post(self.market_plattform + 'login', json={'uuid': name, 'area': name.split('_')[1],
                                                                  'typ': name.split('_')[0], 'reserve': reserve})
