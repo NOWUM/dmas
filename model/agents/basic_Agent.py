@@ -39,7 +39,7 @@ class agent:
 
         # Anbindung an MQTT
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0,credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0,credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
