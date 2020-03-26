@@ -28,14 +28,14 @@ class mongoInterface:
             tech = json.load(open('./data/Tech_Pwp.json'))
             return self.mongoTable.find({"_id": area})[0]['power_plants'],tech
         except:
-            return [], []
+            return dict(power=[]), []
 
     def getStorages(self, area):
         try:
             tech = []
             return self.mongoTable.find({"_id": area})[0]['storage'][0], tech
         except:
-            return [], []
+            return dict(power=[]), []
 
     def getHouseholds(self, area):
         try:

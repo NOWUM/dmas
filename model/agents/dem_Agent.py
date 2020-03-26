@@ -1,34 +1,34 @@
-# Importe
 import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
+from aggregation.dem_Port import demPort
+from agents.basic_Agent import agent as basicAgent
+from apps.build_houses import Houses
+import logging
 import argparse
 import pandas as pd
 import numpy as np
-from agents.basic_Agent import agent as basicAgent
-from aggregation.dem_Port import demPort
-from apps.build_houses import Houses
 
 
-# ----- Argument Parser for PLZ -----
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--plz', type=int, required=False, default=60, help='PLZ-Agent')
-    parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
-    parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
-    parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
+    parser.add_argument('--mongo', type=str, required=False, default='127.0.0.1', help='IP MongoDB')
+    parser.add_argument('--influx', type=str, required=False, default='127.0.0.1', help='IP InfluxDB')
+    parser.add_argument('--market', type=str, required=False, default='127.0.0.1', help='IP Market')
     return parser.parse_args()
 
 
 class demAgent(basicAgent):
 
     def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150'):
-        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='DayAhead', typ='DEM')
+        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='DEM')
 
-        print('Start Building DEM %s \n' % plz)
-        self.portfolio = demPort(typ="DEM")
+        logging.info('Start des Agenten')
+        # Aufbau des Portfolios mit den enstprechenden Haushalten, Gewerbe und Industrie
+        self.portfolio = demPort(typ="DEM")                             # Keine Verwendung eines Solvers
 
-        data, tech = self.mongoCon.getHouseholds(plz)
-        # -- build up households
+        # Einbindung der Daten aus der MongoDB und dem TechFile in ./data
+        data, tech = self.ConnectionMongo.getHouseholds(plz)
         if len(data) > 0:
             builder = Houses()
             housesBat = [builder.build(comp='PvBat') for _ in range(tech['battery'])]
@@ -50,32 +50,40 @@ class demAgent(basicAgent):
             del housesPv
             demandH0 = 1000*data['household'] - demandP
 
+            logging.info('Prosumer hinzugefügt')
+
             name = 'plz_' + str(plz) + '_h0'
             self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demandH0, 2), 'typ': 'H0'}})
+            logging.info('Consumer hinzugefügt')
+
             name = 'plz_' + str(plz) + '_g0'
             self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(1000*data['commercial'], 2), 'typ': 'G0'}})
+            logging.info('Gewerbe  hinzugefügt')
+
             name = 'plz_' + str(plz) + '_rlm'
             self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(1000*data['industrial'], 2), 'typ': 'RLM'}})
+            logging.info('Industrie hinzugefügt')
 
-            print('Stop Building DEM %s \n' % plz)
+            logging.info('Aufbau des Agenten abgeschlossen')
 
-    # ----- Balancing Handling -----
     def optimize_balancing(self):
-        pass
+        """Einsatzplanung für den Regelleistungsmarkt"""
+        logging.info('Planung Regelleistungsmarkt abgeschlossen')
 
-    #----- Routine before day Ahead -----
     def optimize_dayAhead(self):
-        # -- set parameter for optimization
-        self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast())
-
-        # -- build up orderbook
+        """Einsatzplanung für den DayAhead-Markt"""
+        orderbook = dict(uuid=self.name, date=str(self.date))  # Oderbook für alle Gebote (Stunde 1-24)
+        # Prognosen für den kommenden Tag
+        weather = self.weatherForecast()  # Wetterdaten (dir,dif,temp,wind)
+        price = self.priceForecast()  # Preisdaten (power,gas,nuc,coal,lignite)
+        self.portfolio.setPara(self.date, weather, price)
         self.portfolio.buildModel()
-        power = np.asarray(self.portfolio.optimize(), np.float)
-        orders = dict(uuid=self.name, date=str(self.date))
-        orders.update([(i, [(np.round(power[i] / 10**3, 2), 3000), (0,-300)]) for i in range(self.portfolio.T)])
+        power = np.asarray(self.portfolio.optimize(), np.float)  # Berechnung der Einspeiseleitung
 
-       # -- send and save result
-        if self.restCon.sendDayAhead(orders):
+        orderbook.update([(i, [(np.round(power[i] / 10**3, 2), 3000), (0, -300)]) for i in range(self.portfolio.T)])
+
+       # Abspeichern der Ergebnisse
+        if self.ConnectionRest.sendDayAhead(orderbook):
             json_body = []
             time = self.date
             for i in self.portfolio.t:
@@ -89,15 +97,18 @@ class demAgent(basicAgent):
                     }
                 )
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
-            self.influxCon.saveData(json_body)
+            self.ConnectionInflux.saveData(json_body)
 
-    #----- Routine after day Ahead -----
+        logging.info('Planung DayAhead-Markt abgeschlossen')
+
     def post_dayAhead(self):
-        # -- get Results from DayAhead Auction
-        ask, bid, reward = self.influxCon.getDayAheadResult(self.date, self.name)
+        """Reaktion auf  die DayAhead-Ergebnisse"""
+
+        # Abfrage der DayAhead Ergebnisse
+        ask, bid, reward = self.ConnectionInflux.getDayAheadResult(self.date, self.name)
         power = ask - bid
 
-        # -- save results
+        # Abspeichern der Ergebnisse
         json_body = []
         time = self.date
         for i in self.portfolio.t:
@@ -110,24 +121,24 @@ class demAgent(basicAgent):
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.influxCon.saveData(json_body)
+        self.ConnectionInflux.saveData(json_body)
 
-    # ----- Actual Handling -----
+        logging.info('DayAhead Ergebnisse erhalten')
+
     def optimize_actual(self):
-        # -- get DayAhead requirements
-        schedule = self.influxCon.getDayAheadSchedule(self.date, self.name)
+        """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
+        schedule = self.ConnectionInflux.getDayAheadSchedule(self.date, self.name)
 
         # -- difference for balancing energy
         actual = np.asarray(self.portfolio.fixPlaning()/10**3, np.float).reshape((-1,))
         difference = np.asarray([schedule[i] - actual[i] for i in self.portfolio.t])
         power = actual
+        # Aufbau der "Gebote" (Abweichungen zum gemeldeten Fahrplan)
+        orderbook = dict(uuid=self.name, date=str(self.date))
+        orderbook.update([(i, (difference[i])) for i in range(self.portfolio.T)])
 
-        # -- build up oderbook
-        orders = dict(uuid=self.name, date=str(self.date))  # -- build & send result to market
-        orders.update([(i, (difference[i])) for i in range(self.portfolio.T)])
-
-        # -- save results
-        if self.restCon.sendActuals(orders):
+        # Abspeichern der Ergebnisse
+        if self.ConnectionRest.sendActuals(orderbook):
             json_body = []
             time = self.date
             for i in self.portfolio.t:
@@ -140,29 +151,53 @@ class demAgent(basicAgent):
                     }
                 )
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
-            self.influxCon.saveData(json_body)
+            self.ConnectionInflux.saveData(json_body)
 
-    # ----- Routine after Actual -----
+        logging.info('Aktuellen Fahrplan erstellt')
+
     def post_actual(self):
-        # -- fit functions and models for the next day
-        self.nextDay()
+        """Abschlussplanung des Tages"""
+        power = self.ConnectionInflux.getActualPlan(self.date, self.name)  # Letzter bekannter  Fahrplan
+
+        # Abspeichern der Ergebnisse
+        time = self.date
+        json_body = []
+        for i in self.portfolio.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(agent=self.name, area=self.area, timestamp='post_actual', typ='DEM'),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(Power=power[i])
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolio.dt)
+        self.ConnectionInflux.saveData(json_body)
+
+        # Planung für den nächsten Tag
+        # Anpassung der Prognosemethoden für den Verbrauch und die Preise
+        for key, method in self.forecasts.items():
+            if key != 'weather':
+                method.collectData(self.date)
+                method.counter += 1
+                if method.counter >= method.collect:
+                    method.fitFunction()
+                    method.counter = 0
+
+        logging.info('Tag %s abgeschlossen' % self.date)
+
         print('%s done' % self.date)
 
 if __name__ == "__main__":
 
     args = parse_args()
     agent = demAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
-    agent.restCon.login(agent.name, agent.typ)
+    agent.ConnectionRest.login(agent.name, agent.typ)
     try:
         agent.run_agent()
     except Exception as e:
         print(e)
     finally:
-        try:
-            agent.restCon.logout(agent.name)
-            agent.receive.close()
-            agent.influxCon.influx.close()
-            agent.mongoCon.mongo.close()
-        except:
-            print('services already closed')
+        agent.ConnectionInflux.influx.close()
+        agent.ConnectionMongo.mongo.close()
 

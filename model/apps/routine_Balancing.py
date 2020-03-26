@@ -1,19 +1,42 @@
 from apps.market import balancing_clearing
 import pandas as pd
 import numpy as np
+import time as tm
 
 def balPowerClearing(sqlite, influx, date, power=1800):
 
     df = pd.DataFrame(
         columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice'])  # -- df to save all orders
     agents = sqlite.getBalancingAgents()  # -- get all agents
+    lastName = ''
+    timeouts = []
 
     for name in agents:
         orders = []
+        start = tm.time()
         while len(orders) == 0:
+            if name != lastName:
+                print('waiting for orders of Agent %s' %name)
+                lastName = name
             orders = sqlite.getBalancing(name)
+            end = tm.time()
             df = df.append(
                 pd.DataFrame(data=orders, columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice']))
+            if end - start >= 30:
+                timeouts.append(name)
+                print('get no orders of Agent %s' %name)
+                break
+
+    for name in timeouts:
+        print('last chance for Agent %s' %name)
+        orders = sqlite.getBalancing(name)
+        df = df.append(
+            pd.DataFrame(data=orders, columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice']))
+        if len(orders) > 0:
+            print('get orders of Agent %s' %name)
+        else:
+            print('get no orders of Agent %s' %name)
+
 
     df = df.set_index('slot', drop=True)
     df = df.rename(columns={'powerPrice': 'price'})
@@ -49,11 +72,32 @@ def balEnergyClearing(sqlite, influx, date):
 
     actuals = pd.DataFrame(columns=['name', 'hour', 'quantity'])
     agents = sqlite.getAllAgents()
+    lastName = ''
+    timeouts = []
+
     for name in agents:
         orders = []
+        start = tm.time()
         while len(orders) == 0:
+            if name != lastName:
+                print('waiting for orders of Agent %s' %name)
+                lastName = name
             orders = sqlite.getActual(name)
+            end = tm.time()
             actuals = actuals.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'quantity']))
+            if end - start >= 30:
+                timeouts.append(name)
+                print('get no orders of Agent %s' %name)
+                break
+
+    for name in timeouts:
+        print('last chance for Agent %s' %name)
+        orders = sqlite.getActual(name)
+        actuals = actuals.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'quantity']))
+        if len(orders) > 0:
+            print('get orders of Agent %s' %name)
+        else:
+            print('get no orders of Agent %s' %name)
 
     posCost, negCost = influx.getBalPowerCosts(date)
     orders = influx.getBalEnergy(date, sqlite.getBalancingAgents())

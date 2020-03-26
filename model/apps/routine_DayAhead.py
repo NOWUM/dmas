@@ -1,17 +1,37 @@
 from apps.market import dayAhead_clearing
 import pandas as pd
-
+import time as tm
 
 def dayAheadClearing(sqlite, influx, date):
 
     df = pd.DataFrame(columns=['name', 'hour', 'price', 'quantity'])
     agents = sqlite.getAllAgents()
+    lastName = ''
+    timeouts = []
 
     for name in agents:
         orders = []
-        while len(orders) == 0:
+        start = tm.time()
+        while (len(orders) == 0):
+            if name != lastName:
+                print('waiting for orders of Agent %s' %name)
+                lastName = name
             orders = sqlite.getDayAhead(name)
+            end = tm.time()
             df = df.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'price', 'quantity']))
+            if end - start >= 30:
+                timeouts.append(name)
+                print('get no orders of Agent %s' %name)
+                break
+
+    for name in timeouts:
+        print('last chance for Agent %s' %name)
+        orders = sqlite.getDayAhead(name)
+        df = df.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'price', 'quantity']))
+        if len(orders) > 0:
+            print('get orders of Agent %s' %name)
+        else:
+            print('get no orders of Agent %s' %name)
 
     df = df.set_index('hour', drop=True)
 
@@ -20,9 +40,7 @@ def dayAheadClearing(sqlite, influx, date):
         time = date + pd.DateOffset(hours=i)
         o = df[df.index == i]
 
-        ask, bid, mcp, mcm, merit_order = dayAhead_clearing(o, plot=False)
-        buy = merit_order.loc[:, ['buy', 'buyNames']]
-        sell = merit_order.loc[:, ['sell', 'sellNames']]
+        ask, bid, mcp, mcm, _ = dayAhead_clearing(o, plot=False)
 
         influx.influx.switch_database("MAS_2019")
         json_body = []
@@ -44,29 +62,6 @@ def dayAheadClearing(sqlite, influx, date):
                     "fields": dict(power=float(bid.loc[r, 'volume']))
                 }
             )
-        id_ = 0
-        for row in buy.iterrows():
-            json_body.append(
-                {
-                    "measurement": 'DayAhead',
-                    "tags": dict(agent=row[1].buyNames, order='bid', id=id_),
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(power=float(row[0]), price=float(row[1].buy))
-                }
-            )
-            id_ += 1
-
-        id_ = 0
-        for row in sell.iterrows():
-            json_body.append(
-                {
-                    "measurement": 'DayAhead',
-                    "tags": dict(agent=row[1].sellNames, order='ask', id=id_),
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(power=float(row[0]), price=float(row[1].sell))
-                }
-            )
-            id_ += 1
 
         json_body.append(
             {

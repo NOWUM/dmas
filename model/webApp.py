@@ -19,11 +19,9 @@ sqliteCon = sqliteCon()
 sqliteCon.createTables()
 influxCon = influxCon(config['InfluxDB']['host'])
 
-credentials = pika.PlainCredentials('Plattform', 'Hallo123')
-connection = pika.BlockingConnection(
-pika.ConnectionParameters(host=config['Market']['host'], heartbeat=0))#, credentials=credentials))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['host'], heartbeat=0))
 send = connection.channel()
-send.exchange_declare(exchange='DayAhead', exchange_type='fanout')
+send.exchange_declare(exchange='Market', exchange_type='fanout')
 
 app = Flask(__name__)
 path = os.path.dirname(os.path.dirname(__file__)) + r'/model'
@@ -116,18 +114,18 @@ def simulation(start, end):
 
     for date in pd.date_range(start=start,end=end,freq='D'):
         try:
-            send.basic_publish(exchange='DayAhead', routing_key='', body='opt_balancing ' + str(date))
+            send.basic_publish(exchange='Market', routing_key='', body='opt_balancing ' + str(date))
             balPowerClearing(sqliteCon, influxCon, date)
-            send.basic_publish(exchange='DayAhead', routing_key='', body='result_balancing ' + str(date))
+            send.basic_publish(exchange='Market', routing_key='', body='result_balancing ' + str(date))
             print('Balancing calculation finish ' + str(date.date()))
         except Exception as e:
             print('Error in  Balancing calculation ' + str(date.date()))
             print(e)
             sqliteCon.deleteBalancing()
         try:
-            send.basic_publish(exchange='DayAhead', routing_key='', body='opt_dayAhead ' + str(date))
+            send.basic_publish(exchange='Market', routing_key='', body='opt_dayAhead ' + str(date))
             dayAheadClearing(sqliteCon, influxCon, date)
-            send.basic_publish(exchange='DayAhead', routing_key='', body='result_dayAhead ' + str(date))
+            send.basic_publish(exchange='Market', routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
             sqliteCon.deleteDayAhead()
         except Exception as e:
@@ -135,9 +133,9 @@ def simulation(start, end):
             print(e)
             sqliteCon.deleteDayAhead()
         try:
-            send.basic_publish(exchange='DayAhead', routing_key='', body='opt_actual ' + str(date))
+            send.basic_publish(exchange='Market', routing_key='', body='opt_actual ' + str(date))
             balEnergyClearing(sqliteCon, influxCon, date)
-            send.basic_publish(exchange='DayAhead', routing_key='', body='result_actual ' + str(date))
+            send.basic_publish(exchange='Market', routing_key='', body='result_actual ' + str(date))
             print('Actual calculation finish ' + str(date.date()))
             sqliteCon.deleteBalancing()
             sqliteCon.deleteActuals()
@@ -168,7 +166,8 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
-        send.basic_publish(exchange='DayAhead', routing_key='', body='kill ' + str('1970-01-01'))
+        send.basic_publish(exchange='Market', routing_key='', body='kill ' + str('1970-01-01'))
+        send.close()
         tm.sleep(2)
         sqliteCon.stopServices()
 

@@ -47,9 +47,9 @@ class influxInterface:
         if result.__len__() > 0:
             price = np.asarray([point['sum'] for point in result.get_points()])  # -- price [€/MWh]
         else:
-            price = 3000 * np.ones(24)
+            price = 0 * np.ones(24)
 
-        return ask, bid, sum((ask-bid) * price)
+        return ask, bid, (ask-bid) * price
 
     def getDayAheadPlan(self, date, name):
         # -- Build date
@@ -327,6 +327,44 @@ class influxInterface:
             demand = 35000*np.ones(24)
 
         return np.asarray(demand).reshape((-1,1))
+
+
+    def getWind(self, date):
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        query = 'select mean("Ws") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            wind = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+        else:
+            wind = 4.0*np.ones(24)
+
+        return np.asarray(wind).reshape((-1,1))
+
+    def getIrradiation(self, date):
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        query = 'select mean("GHI") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            irradiation = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+        else:
+            irradiation = np.zeros(24)
+
+        return np.asarray(irradiation).reshape((-1, 1))
+
+    def getTemperature(self, date):
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        query = 'select mean("TAmb") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            temp = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+        else:
+            temp = 13 * np.ones(24)
+
+        return np.asarray(temp).reshape((-1, 1))
+
 
     def getDayAheadPrice(self, date):
         start = date.isoformat() + 'Z'

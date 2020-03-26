@@ -36,7 +36,7 @@ class typFrcst:
         self.fitted = True
         self.typDays = typDays
 
-    def forecast(self, date, demand):
+    def forecast(self, date):
 
         if self.fitted:
             date = pd.to_datetime(date).dayofweek

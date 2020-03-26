@@ -424,3 +424,215 @@ class learnDayAheadMarginal:
 
         return pso(self.opt, self.lb, self.ub, omega=0.1, swarmsize=10, phip=0.75, phig=0.3,
                    minfunc=1000, minstep=10, maxiter=50, args=(weather, states, date, prices, demand))
+
+    class annLearn:
+
+        def __init__(self, initT=10):
+
+            self.scaler = StandardScaler()  # -- Scaler to norm the input parameter
+            self.function = MLPRegressor(hidden_layer_sizes=(300, 300,), activation='tanh', solver='sgd',
+                                         learning_rate='adaptive', shuffle=False, early_stopping=True)
+
+            # -- Input Parameter
+            self.input = dict(weather=[], prices=[], dates=[], states=[], actions=[], demand=[], Qs=[])
+
+            # -- Lower and Upper Bound for Action-Optimization
+            self.lb = -20 * np.ones(24)
+            self.ub = 20 * np.ones(24)
+
+            self.collect = initT
+            self.counter = 0
+            self.randomPoint = False
+
+        # -- array for function fit
+        def buildArray(self, values):
+            num = len(self.input['weather'])
+            sample = range(num)
+            if isinstance(values[0], datetime.datetime):
+                return array([array(values[i].dayofweek).reshape((1, -1)) for i in sample]).reshape((num, -1))
+            else:
+                return array([array(values[i]).reshape((1, -1)) for i in sample]).reshape((num, -1))
+
+        # -- fit day ahead balancing function
+        def fit(self):
+            # -- build Input Matrix
+            X = np.concatenate(tuple([self.buildArray(values=value) for key, value in self.input.items()
+                                      if key != 'Qs']), axis=1)
+            # -- build Output Matrix
+            y = array(self.input['Qs']).reshape((-1, 1))
+            # -- scale data
+            self.scaler.partial_fit(X)
+            Xstd = self.scaler.transform(X)
+            if len(y) < len(Xstd):
+                Xstd = Xstd[:len(y), :]
+            elif len(Xstd) < len(y):
+                y = y[:len(Xstd), :]
+            # -- split in test & train
+            X_train, X_test, y_train, y_test = train_test_split(Xstd, y, test_size=0.1)
+
+            self.function.fit(X_train, y_train.reshape((-1,)))
+            scoreTrain = self.function.score(X_train, y_train)
+            scoreTest = self.function.score(X_test, y_test)
+            print('Score Train: %s' % scoreTrain)
+            print('Score Test: %s' % scoreTest)
+
+            if scoreTrain >= 0.2:
+                self.randomPoint = False
+
+        # -- get optimal parameter setting for day ahead balancing decison
+        def opt(self, x, *args):
+
+            day = (pd.to_datetime(str(args[2]))).dayofweek  # -- date
+            weather = array(args[0]).reshape((1, -1))  # -- weather
+            states = array(args[1]).reshape((1, -1))  # -- state
+            date = array(day).reshape((1, -1))  # -- day as int
+            prices = array(args[3]).reshape((1, -1))  # -- prices
+            demand = array(args[4]).reshape((1, -1))  # -- demand
+            actions = array(x).reshape((1, -1))  # -- actions
+            # -- care of argument order
+            X = np.concatenate((weather, prices, date, states, actions, demand), axis=1)
+
+            self.scaler.partial_fit(X)
+
+            return -1 * float(self.function.predict(self.scaler.transform(X)))
+
+        def getAction(self, weather, states, date, prices, demand):
+
+            return pso(self.opt, self.lb, self.ub, omega=0.1, swarmsize=10, phip=0.75, phig=0.3,
+                       minfunc=1000, minstep=10, maxiter=50, args=(weather, states, date, prices, demand))
+
+    def optimize_balancing(self):
+        # -- set parameter for optimization
+        self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast())
+
+        # -- save the status for learning
+        self.intelligence['Balancing'].input['weather'].append([x[1] for x in agent.portfolio.weather.items()])
+        self.intelligence['Balancing'].input['dates'].append(self.portfolio.date)
+        self.intelligence['Balancing'].input['prices'].append(self.portfolio.prices['power'])
+        self.intelligence['Balancing'].input['states'].append(self.getStates()[0])
+
+        # -- get best split between dayAhead and balancing market
+        if self.intelligence['Balancing'].randomPoint:
+            xopt, _ = self.intelligence['Balancing'].getAction([x[1] for x in agent.portfolio.weather.items()], self.getStates()[0],
+                                                               self.portfolio.date, self.priceForecast()['power'])
+            xopt = np.asarray(xopt).reshape((6,-1))
+
+        # -- build up orderbook
+        actions = []
+        orders = dict(uuid=self.name, date=str(self.date))
+        for i in range(6):
+            # -- amount of power
+            a = np.random.uniform(low=0, high=1)
+            # -- power prices
+            powerPricePos = np.random.uniform(low=100, high=500)
+            powerPriceNeg = np.random.uniform(low=100, high=500)
+            # -- energy prices
+            energyPricePos = np.random.uniform(low=0, high=50)
+            energyPriceNeg = np.random.uniform(low=0, high=50)
+            if self.intelligence['Balancing'].randomPoint:
+                a = xopt[i,0]
+                powerPricePos = xopt[i,1]
+                powerPriceNeg = xopt[i,2]
+                energyPricePos = xopt[i,3]
+                energyPriceNeg = xopt[i,4]
+            # -- append actions
+            actions.append([a, powerPricePos, energyPricePos, powerPriceNeg, energyPriceNeg])
+
+            # -- build orders
+            orders.update({str(i) + '_pos': (np.round(self.getStates()[1][0][i] * a, 0), powerPricePos, energyPricePos)})
+            orders.update({str(i) + '_neg': (np.round(self.getStates()[1][1][i] * a, 0), powerPriceNeg, energyPriceNeg)})
+
+        # -- save actions for learning
+        self.intelligence['Balancing'].input['actions'].append(actions)
+        # -- send orderbook to market plattform
+        self.restCon.sendBalancing(orders)
+
+        def getStates(self):
+
+            self.portfolio.setPara(weather=self.weatherForecast(), date=self.date, prices={})
+            self.portfolio.buildModel()
+            power = np.asarray(self.portfolio.optimize(), np.float) * 0.95
+
+            states = [[min(power[i:i + 4]) / 2 for i in range(0, 24, 4)],
+                      [min(power[i:i + 4]) / 2 for i in range(0, 24, 4)]]
+
+            return [np.mean(power), np.min(power)], states
+
+    class annLearn:
+
+        def __init__(self, initT=20):
+
+            self.scaler = StandardScaler()  # -- Scaler to norm the input parameter
+            self.function = MLPRegressor(hidden_layer_sizes=(300, 300,), activation='tanh', solver='sgd',
+                                         learning_rate='adaptive', shuffle=False, early_stopping=True)
+
+            # -- Input Parameter
+            self.input = dict(weather=[], prices=[], dates=[], states=[], actions=[], Qs=[])
+
+            # -- Lower and Upper Bound for Action-Optimization
+            self.lb = np.zeros(30)
+            self.ub = np.ones(30).reshape((6, -1))
+            self.ub[:, 1] *= 500  # -- Power Price Pos
+            self.ub[:, 2] *= 500  # -- Power Price Neg
+            self.ub[:, 3] *= 50  # -- Energy Price Pos
+            self.ub[:, 4] *= 50  # -- Energy Price Neg
+            self.ub = self.ub.reshape((-1,))
+
+            self.collect = initT
+            self.counter = 0
+            self.randomPoint = False
+
+        # -- array for function fit
+        def buildArray(self, values):
+            num = len(self.input['weather'])
+            sample = range(num)
+            if isinstance(values[0], datetime.datetime):
+                return array([array(values[i].dayofweek).reshape((1, -1)) for i in sample]).reshape((num, -1))
+            else:
+                return array([array(values[i]).reshape((1, -1)) for i in sample]).reshape((num, -1))
+
+        # -- fit day ahead balancing function
+        def fit(self):
+            # -- build Input Matrix
+            X = np.concatenate(tuple([self.buildArray(values=value) for key, value in self.input.items()
+                                      if key != 'Qs']), axis=1)
+            # -- build Output Matrix
+            y = array(self.input['Qs']).reshape((-1, 1))
+            # -- scale data
+            self.scaler.partial_fit(X)
+            Xstd = self.scaler.transform(X)
+            if len(y) < len(Xstd):
+                Xstd = Xstd[:len(y), :]
+            elif len(Xstd) < len(y):
+                y = y[:len(Xstd), :]
+            # -- split in test & train
+            X_train, X_test, y_train, y_test = train_test_split(Xstd, y, test_size=0.1)
+
+            self.function.fit(X_train, y_train.reshape((-1,)))
+            scoreTrain = self.function.score(X_train, y_train)
+            scoreTest = self.function.score(X_test, y_test)
+            print('Score Train: %s' % scoreTrain)
+            print('Score Test: %s' % scoreTest)
+
+            if scoreTrain >= 0.2:
+                self.randomPoint = False
+
+        # -- get optimal parameter setting for day ahead balancing decison
+        def opt(self, x, *args):
+
+            day = (pd.to_datetime(str(args[2]))).dayofweek  # -- date
+            weather = array(args[0]).reshape((1, -1))  # -- weather
+            states = array(args[1]).reshape((1, -1))  # -- state
+            date = array(day).reshape((1, -1))  # -- day as int
+            prices = array(args[3]).reshape((1, -1))  # -- prices
+            actions = array(x).reshape((1, -1))  # -- actions
+            # -- care of argument order
+            X = np.concatenate((weather, prices, date, states, actions), axis=1)
+            self.scaler.partial_fit(X)
+
+            return -1 * float(self.function.predict(self.scaler.transform(X)))
+
+        def getAction(self, weather, states, date, prices):
+
+            return pso(self.opt, self.lb, self.ub, omega=0.1, swarmsize=10, phip=0.75, phig=0.3,
+                       minfunc=1000, minstep=10, maxiter=50, args=(weather, states, date, prices))

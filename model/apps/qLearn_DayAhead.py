@@ -1,85 +1,58 @@
 import numpy as np
-from numpy import asarray as array
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPRegressor
-from pyswarm import pso
-import datetime
+from sklearn.cluster import KMeans
 
 
-class annLearn:
+class qLeran:
 
-    def __init__(self, initT = 10):
+    def __init__(self, influx, init=5):
 
-        self.scaler = StandardScaler()          # -- Scaler to norm the input parameter
-        self.function = MLPRegressor(hidden_layer_sizes=(300, 300,), activation='tanh', solver='sgd',
-                                     learning_rate='adaptive', shuffle=False, early_stopping=True)
+        self.influx = influx
+        self.states = KMeans(n_clusters=30, n_init=5, max_iter=200, random_state=np.random.randint(low=1, high=100))
 
-        # -- Input Parameter
-        self.input = dict(weather=[], prices=[], dates=[], states=[], actions=[], demand=[], Qs=[])
+        # -- Input for Cluster-Anaylse
+        self.dem = np.array([]).reshape((-1, 1))
+        self.wnd = np.array([]).reshape((-1, 1))
+        self.rad = np.array([]).reshape((-1, 1))
+        self.tmp = np.array([]).reshape((-1, 1))
+        self.prc = np.array([]).reshape((-1, 1))
+        # -- Action Size (70)
+        self.act = np.array([]).reshape((-1, 1))
+        # -- Reward Values
+        self.qus = np.random.randint(100, 10000, (30, 70))
 
-        # -- Lower and Upper Bound for Action-Optimization
-        self.lb = -20 * np.ones(24)
-        self.ub = 20 * np.ones(24)
-
-        self.collect = initT
+        self.fitted = False
         self.counter = 0
-        self.randomPoint = False
+        self.collect = init
 
-    # -- array for function fit
-    def buildArray(self, values):
-        num = len(self.input['weather'])
-        sample = range(num)
-        if isinstance(values[0], datetime.datetime):
-            return array([array(values[i].dayofweek).reshape((1, -1)) for i in sample]).reshape((num, -1))
-        else:
-            return array([array(values[i]).reshape((1, -1)) for i in sample]).reshape((num, -1))
+    def collectData(self, date, actions):
+        self.dem = np.concatenate((self.dem, self.influx.getDemand(date)/1000))
+        self.wnd = np.concatenate((self.wnd, self.influx.getWind(date)))
+        self.rad = np.concatenate((self.rad, self.influx.getIrradiation(date)))
+        self.prc = np.concatenate((self.prc, self.influx.getDayAheadPrice(date)))
+        self.tmp = np.concatenate((self.tmp, self.influx.getTemperature(date)))
+        self.act = np.concatenate((self.act, actions))
 
-    # -- fit day ahead balancing function
     def fit(self):
-        # -- build Input Matrix
-        X = np.concatenate(tuple([self.buildArray(values=value) for key, value in self.input.items()
-                                  if key != 'Qs']), axis=1)
-        # -- build Output Matrix
-        y = array(self.input['Qs']).reshape((-1, 1))
-        # -- scale data
-        self.scaler.partial_fit(X)
-        Xstd = self.scaler.transform(X)
-        if len(y) < len(Xstd):
-            Xstd = Xstd[:len(y),:]
-        elif len(Xstd) < len(y):
-            y = y[:len(Xstd),:]
-        # -- split in test & train
-        X_train, X_test, y_train, y_test = train_test_split(Xstd, y, test_size=0.1)
+        x = np.concatenate((self.wnd, self.rad, self.tmp, self.dem, self.prc), axis=0)
+        x = x.reshape((5,-1))
+        x = x[:, -1 * min(2000, np.size(x, 1)):].T  # -- last 2000 samples
+        self.states.fit(x)
+        print('score Kmeans [optimal --> 0]: %s' % (self.states.score(x)/len(x)))
+        self.fitted = True
 
-        self.function.fit(X_train, y_train.reshape((-1,)))
-        scoreTrain = self.function.score(X_train, y_train)
-        scoreTest = self.function.score(X_test, y_test)
-        print('Score Train: %s' % scoreTrain)
-        print('Score Test: %s' % scoreTest)
+    def getAction(self, wnd, rad, tmp, dem, prc):
+        x = np.concatenate((wnd, rad, tmp, dem/1000, prc), axis=0)
+        x = x.reshape((5,-1))
+        states = self.states.predict(x.T)
+        actions = [np.argmax(self.qus[state, :]) for state in states]
+        return np.array(actions).reshape((-1,))
 
-        if scoreTrain >= 0.2:
-            self.randomPoint = False
+    def getStates(self, date):
+        x = np.concatenate((self.influx.getWind(date), self.influx.getIrradiation(date), self.influx.getTemperature(date),
+                            self.influx.getDemand(date)/1000, self.influx.getDayAheadPrice(date)), axis=0)
+        x = x.reshape((5,-1))
+        states = self.states.predict(x.T)
+        return states
 
-    # -- get optimal parameter setting for day ahead balancing decison
-    def opt(self, x, *args):
-
-        day = (pd.to_datetime(str(args[2]))).dayofweek      # -- date
-        weather = array(args[0]).reshape((1, -1))           # -- weather
-        states = array(args[1]).reshape((1, -1))            # -- state
-        date = array(day).reshape((1, -1))                  # -- day as int
-        prices = array(args[3]).reshape((1, -1))            # -- prices
-        demand = array(args[4]).reshape((1,-1))             # -- demand
-        actions = array(x).reshape((1, -1))                 # -- actions
-        # -- care of argument order
-        X = np.concatenate((weather, prices, date, states, actions, demand), axis=1)
-
-        self.scaler.partial_fit(X)
-
-        return -1*float(self.function.predict(self.scaler.transform(X)))
-
-    def getAction(self, weather, states, date, prices, demand):
-
-        return pso(self.opt, self.lb, self.ub, omega=0.1, swarmsize=10, phip=0.75, phig=0.3,
-                   minfunc=1000, minstep=10, maxiter=50, args=(weather, states, date, prices, demand))
+if __name__ == "__main__":
+    pass
