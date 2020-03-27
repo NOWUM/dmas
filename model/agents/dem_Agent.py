@@ -200,4 +200,5 @@ if __name__ == "__main__":
     finally:
         agent.ConnectionInflux.influx.close()
         agent.ConnectionMongo.mongo.close()
+        agent.connection.close()
 
