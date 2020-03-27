@@ -104,8 +104,9 @@ class agent:
                 self.exceptionHandle(part='Actual Results', inst=inst)
         # Aufruf zum Beenden
         if 'kill' in message:
-            agent.ConnectionInflux.influx.close()
-            agent.ConnectionMongo.mongo.close()
+            self.ConnectionInflux.influx.close()
+            self.ConnectionMongo.mongo.close()
+            self.connection.close()
             print('terminate area')
 
     # ----- Learning Next Day -----
