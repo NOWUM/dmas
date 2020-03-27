@@ -149,8 +149,8 @@ class pwpAgent(basicAgent):
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            order = [(-1*(p/100 * power[i]), float(min(self.maxPrice * prc[i], max(self.minPrice * prc[i], slopes[i] * p))))
-                     for p in range(1, 101)]
+            order = [(-1*(5/100 * power[i]), float(min(self.maxPrice * prc[i], max(self.minPrice * prc[i], slopes[i] * p))))
+                     for p in range(5, 105,5)]
             orderbook.update([(i, order)])
 
         # -- send and save result
