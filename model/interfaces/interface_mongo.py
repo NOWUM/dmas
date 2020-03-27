@@ -52,9 +52,24 @@ class mongoInterface:
                     "connected": True,
                     "reserve": reserve
                   }
-        self.tableOrderbooks.insert_one(status)
+        if self.tableOrderbooks.find_one({"_id": name}) is None:
+            self.tableOrderbooks.insert_one(status)
+        else:
+            query = {"_id": name}
+            status = {"$set": {"connected": True, "reserve": reserve}}
+            self.tableOrderbooks.update_one(query, status)
 
     def logout(self, name):
         query = {"_id": name}
         status = {"$set": {"connected": False, "reserve": False}}
         self.tableOrderbooks.update_one(query, status)
+
+    def setBalancing(self, name, date, orders):
+        query = {"_id": name}
+        orders = {"$set": {str(date.date()): {'Balancing': orders}}}
+        self.tableOrderbooks.update_one(query, orders)
+
+    def setDayAhead(self, name, date, orders):
+        query = {"_id": name}
+        orders = {"$set": {str(date.date()): {'DayAhead': orders}}}
+        self.tableOrderbooks.update_one(query, orders)
