@@ -40,7 +40,8 @@ class agent:
         self.ConnectionMongo = mongoInterface(host=mongo)  # Datenbank zur Speicherung der Strukurdaten
 
         # Anbindung an MQTT
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market, heartbeat=0))
+        credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0, credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
