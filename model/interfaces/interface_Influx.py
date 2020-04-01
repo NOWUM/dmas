@@ -13,188 +13,248 @@ class influxInterface:
         self.switchWeatherYear = year
 
         self.maphash = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
-        self.maphash=self.maphash.set_index('hash')
+        self.maphash = self.maphash.set_index('hash')
 
-# -- DayAhead
-    def getDayAheadResult(self, date, name):
-        # -- Build date
+    def saveData(self, json_body):
+        self.influx.write_points(json_body)
+
+    """----------------------------------------------------------
+    -->             Query Wetterdaten                        <---    
+    ----------------------------------------------------------"""
+
+    def generateWeather(self, start, end):
+        """ Wettergenerator für die Simualtionsdauer (start --> end) """
+        for date in pd.date_range(start=start, end=end, freq='D'):
+            if date.year != self.switchWeatherYear:
+                self.histWeatherYear = np.random.randint(low=2005, high=2015)
+                self.switchWeatherYear = date.year
+            # Zugriff auf die Datenbank mit den historischen Wetterdaten
+            self.influx.switch_database('weather')
+            start = date.replace(self.histWeatherYear).isoformat() + 'Z'
+            end = (date.replace(self.histWeatherYear) + pd.DateOffset(days=1)).isoformat() + 'Z'
+            # Fehler bei Schaltjahr abfangen
+            if '0229' in start:
+                start = start.replace('2902', '2802')
+            # --> Abfrage der Daten
+            query = 'select * from "germany" where time > \'%s\' and time < \'%s\'' % (start, end)
+            result = self.influx.query(query)
+            # Wechsel zur Simulationsdatenbank
+            self.influx.switch_database('MAS_2019')
+            json_body = []
+            for data in result['germany']:
+                json_body.append(
+                    {
+                        "measurement": "weather",
+                        "tags": {
+                            "geohash": data['geohash'],
+                            "plz": self.maphash.loc[self.maphash.index==data['geohash'], 'PLZ'].to_numpy()[0]
+                        },
+                        "time": str(date.year) + data['time'][4:],
+                        "fields": {
+                            "GHI": np.float(data['GHI']),               # Globalstrahlung           [W/m²]
+                            "DNI": np.float(data['DNI']),               # Direkte Strahlung         [W/m²]
+                            "DHI": np.float(data['DHI']),               # Diffuse Stahlung          [W/m²]
+                            "TAmb": np.float(data['TAmb']),             # Temperatur                [°C]
+                            "Ws": np.float(data['Ws'])                  # Windgeschwindigkeit       [m/s] (2m)
+                        }
+                    }
+                )
+            self.influx.write_points(json_body)
+            print('Wetter für %s geschrieben' % date.date())
+
+    def getWeather(self, geo, date):
+        """ Wetter im jeweiligen PLZ-Gebiet am Tag X """
+        geohash = str(geo)
+        # Tag im ISO Format
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        # --> Abfrage der Daten
+        query = 'select * from "weather" where time >= \'%s\' and time <= \'%s\' and geohash = \'%s\'' \
+                % (start, end, geohash)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            dir = [point['DNI'] for point in result.get_points()]           # Direkte Strahlung         [W/m²]
+            dif = [point['DHI'] for point in result.get_points()]           # Diffuse Stahlung          [W/m²]
+            wind = [point['Ws'] for point in result.get_points()]           # Windgeschwindigkeit       [m/s] (2m)
+            TAmb = [point['TAmb'] for point in result.get_points()]         # Temperatur                [°C]
+        else:
+            dir = list(np.zeros(24))
+            dif = list(np.zeros(24))
+            wind = list(np.zeros(24))
+            TAmb = list(np.zeros(24))
+
+        return dict(wind=wind, dir=dir, dif=dif, temp=TAmb)
+
+    def getWind(self, date):
+        """ mittlere Windgeschwindigkeit in [m/s] """
+        # Tag im ISO Format
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        # --> Abfrage der Daten
+        query = 'select mean("Ws") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+                % (start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            wind = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+        else:
+            wind =  4.0*np.ones(24)
+        return np.asarray(wind).reshape((-1, 1))
+
+    def getIrradiation(self, date):
+        """ mittlere Bestrahlungssträke in [W/m²]"""
+        # Tag im ISO Format
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        # --> Abfrage der Daten
+        query = 'select mean("GHI") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+                % (start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            rad = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+        else:
+            rad = np.zeros(24)
+        return np.asarray(rad).reshape((-1, 1))
+
+    def getTemperature(self, date):
+        """ mittlere Temperatur in [W/m²]"""
+        # Tag im ISO Format
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        # --> Abfrage
+        query = 'select mean("TAmb") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+                % (start, end)
+        result = self.influx.query(query)
+        if result.__len__() > 0:
+            temp = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+        else:
+            temp = 13 * np.ones(24)
+        return np.asarray(temp).reshape((-1, 1))
+
+    """----------------------------------------------------------
+    -->             Query DayAhead Vermarktung               <---    
+    ----------------------------------------------------------"""
+
+    def getDayAheadAsk(self, date, name):
+        """ Verkaufsvolumen in [MWh] """
+        # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        # -- Get Ask-Results
-        query = 'select sum("power") from "DayAhead" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'ask\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
+        # --> Abfrage
+        query = 'select sum("power") from "DayAhead" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and' \
+                ' "order"=\'ask\' GROUP BY time(1h) fill(0)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            ask = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
+            return np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
         else:
-            ask = np.zeros(24)
+            return np.zeros(24)
+        return ask
 
-        # -- Get Bid-Results
-        query = 'select sum("power") from "DayAhead" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'bid\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
+    def getDayAheadBid(self, date, name):
+        """ Kaufsvolumen in [MWh] """
+        # Tag im ISO Format
+        date = pd.to_datetime(date)
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        # --> Abfrage
+        query = 'select sum("power") from "DayAhead" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' ' \
+                'and "order"=\'bid\' GROUP BY time(1h) fill(0)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
             bid = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
         else:
             bid = np.zeros(24)
+        return bid
 
-        # -- Get MCP
-        query = 'select sum("price") from "DayAhead" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' % (
-        start, end)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            price = np.asarray([point['sum'] for point in result.get_points()])  # -- price [€/MWh]
-        else:
-            price = 0 * np.ones(24)
-
-        return ask, bid, (ask-bid) * price
-
-    def getDayAheadPlan(self, date, name):
-        # -- Build date
+    def getDayAheadPrice(self, date):
+        """ Marktclearing Preis in [€/MWh] """
+        # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        query = 'select sum("Power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'optimize_dayAhead\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
+        # --> Abfrage
+        query = 'select sum("price") from "DayAhead" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+                % (start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            power = np.asarray([point['sum'] for point in result.get_points()])
+            mcp = np.asarray([point['sum'] for point in result.get_points()])
         else:
-            power = np.zeros(24)
+            mcp =  np.zeros(24)
+        return np.asarray(mcp).reshape((-1, 1))
 
-        return power
-
-    def getDayAheadSchedule(self, date, name):
-        # -- Build date
+    """----------------------------------------------------------
+    -->             Query Regelleistung                      <---    
+    ----------------------------------------------------------"""
+    def getBalancingPower(self, date, name):
+        """ Bezuschlagte positive und negative Regelleistung in [MW] """
+        # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        query = 'select sum("Power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'post_dayAhead\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            power = np.asarray([point['sum'] for point in result.get_points()])
-        else:
-            power = np.zeros(24)
-
-        return power
-
-    def getActualPlan(self, date, name):
-        # -- Build date
-        date = pd.to_datetime(date)
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        query = 'select sum("Power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'optimize_actual\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            power = np.asarray([point['sum'] for point in result.get_points()])
-        else:
-            power = np.zeros(24)
-
-        return power
-
-# -- Balancing
-    def getBalPowerResult(self, date, name):
-        # -- Build date
-        date = pd.to_datetime(date)
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        # -- Get Result postive Balancing
-        query = 'select sum("power"), sum("powerPrice") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'pos\' GROUP BY time(4h) fill(0)' \
+        # --> Abfrage der Daten
+        # positive Regelleistung
+        query = 'select sum("power") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' ' \
+                'and "order"=\'pos\' GROUP BY time(4h) fill(0)' \
                 % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
             pos = np.asarray([np.round(point['sum'], 2) for point in result.get_points() for _ in range(4)])
-            price = np.asarray([np.round(point['sum_1'], 2) for point in result.get_points() for _ in range(4)])
         else:
             pos = np.zeros(24)
-            price = np.zeros(24)
-        rewardPos = sum(pos * price) / 6
-
-        # -- Get Result negative Balancing
-        query = 'select sum("power"), sum("powerPrice") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'neg\' GROUP BY time(4h) fill(0)' \
-                % (start, end, name)
+        # negative Regelleistung
+        query = 'select sum("power") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' ' \
+                'and "order"=\'neg\' GROUP BY time(4h) fill(0)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
             neg = np.asarray([np.round(point['sum'], 2) for point in result.get_points() for _ in range(4)])
-            price = np.asarray([np.round(point['sum_1'], 2) for point in result.get_points() for _ in range(4)])
         else:
             neg = np.zeros(24)
-            price = np.zeros(24)
-        rewardNeg = sum(neg * price) / 6
 
-        return pos, neg, rewardPos + rewardNeg
+        return pos, neg
 
-    def getBalPowerCosts(self, date):
+    def getBalancingEnergy(self, date, name):
+        """ Bezuschlagte positive und negative Regelenergie in [MWh] """
+        # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        query = 'select sum("power")*sum("powerPrice") from "Balancing" where "order" =\'pos\' and ' \
-                'time >= \'%s\' and time < \'%s\' GROUP BY time(4h) fill(0)' % (start, end)
-        resultPos = self.influx.query(query)
-        posVal = [np.round(point['sum_sum'], 2) for point in resultPos.get_points()]
-
-        query = 'select sum("power")*sum("powerPrice") from "Balancing" where "order" =\'neg\' and ' \
-                'time >= \'%s\' and time < \'%s\' GROUP BY time(4h) fill(0)' % (start, end)
-        resultNeg = self.influx.query(query)
-        negVal = [np.round(point['sum_sum'], 2) for point in resultNeg.get_points()]
-
-        return posVal, negVal
-
-    def getBalEnergyResult(self, date, name):
-        date = pd.to_datetime(date)
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        query = 'select sum("energy") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'pos\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
+        # --> Abfrage der Daten
+        # postive Regelenergie
+        query = 'select sum("energy") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and ' \
+                '"order"=\'pos\' GROUP BY time(1h) fill(0)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
             pos = np.asarray([point['sum'] for point in result.get_points()])
         else:
             pos = np.zeros(24)
-
-        query = 'select sum("energyPrice")*sum("energy") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'pos\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            rewardPos = np.asarray([point['sum_sum'] for point in result.get_points()])
-        else:
-            rewardPos = np.zeros(24)
-
-        query = 'select sum("energy") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'neg\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
+        # negative Regelenergie
+        query = 'select sum("energy") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and ' \
+                '"order"=\'neg\' GROUP BY time(1h) fill(0)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
             neg = np.asarray([point['sum'] for point in result.get_points()])
         else:
             neg = np.zeros(24)
 
-        query = 'select sum("energyPrice")*sum("energy") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "order"=\'neg\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            rewardNeg = np.asarray([point['sum_sum'] for point in result.get_points()])
-        else:
-            rewardNeg = np.zeros(24)
+        return pos, neg
 
-        query = 'select sum("cost") from "Balancing" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            cost = np.asarray([point['sum'] for point in result.get_points()])
-        else:
-            cost = np.zeros(24)
+    def getBalancingPowerFees(self, date):
+        """ Gebühren resultierend aus der Bereitstellung der Leistung [€]"""
+        # Tag im ISO Format
+        date = pd.to_datetime(date)
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        # --> Abfrage der Daten
+        query = 'select sum("power")*sum("powerPrice") from "Balancing" where "order" =\'pos\' and ' \
+                'time >= \'%s\' and time < \'%s\' GROUP BY time(4h) fill(0)' % (start, end)
+        resultPos = self.influx.query(query)
+        posVal = [np.round(point['sum_sum'], 2) for point in resultPos.get_points()]
+        query = 'select sum("power")*sum("powerPrice") from "Balancing" where "order" =\'neg\' and ' \
+                'time >= \'%s\' and time < \'%s\' GROUP BY time(4h) fill(0)' % (start, end)
+        resultNeg = self.influx.query(query)
+        negVal = [np.round(point['sum_sum'], 2) for point in resultNeg.get_points()]
 
-        return pos, neg, np.sum(rewardPos + rewardNeg) - np.sum(cost)
+        return posVal + negVal
 
     def getBalEnergy(self, date, names):
         date = pd.to_datetime(date)
@@ -219,166 +279,39 @@ class influxInterface:
 
         return df
 
-# -- Weather
-    def getMeanWeather(self, start, end):
+    """----------------------------------------------------------
+    -->             Query Leistungsplanung                   <---    
+    ----------------------------------------------------------"""
 
-        start = start.isoformat() + 'Z'
-        if start == end:
-            end = (start + pd.DateOffset(days=1)).isoformat() + 'Z'
-        else:
-            end = end.isoformat() + 'Z'
-
-        self.influx.switch_database('MAS_2019')
-        lst = []
-        for data in ['TAmb', 'GHI', 'Ws']:
-            tmp = {'Date': data}  # -- Dict to save Weather
-            query = 'select mean(%s) from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (
-            data, start, end)
-            try:
-                result = self.influx.query(query)
-                result = [point for point in result.get_points()]
-            except:
-                result = []
-
-            if len(result) > 0:
-                tmp.update({p['time']: p['mean'] for p in result})
-            else:
-                tmp.update({str(i): 0 for i in pd.date_range(start=pd.to_datetime(start), end=pd.to_datetime(end), freq='60min')})
-            lst.append(tmp)
-
-        return lst
-
-    def generateWeather(self, start, end):
-        for date in pd.date_range(start=start, end=end, freq='D'):
-            if date.year != self.switchWeatherYear:
-                self.histWeatherYear = np.random.randint(low=2005, high=2015)
-                self.switchWeatherYear = date.year
-
-            #----- query hist. weather data ----
-            self.influx.switch_database('weather')
-
-            start = date.replace(self.histWeatherYear).isoformat() + 'Z'
-            end = (date.replace(self.histWeatherYear) + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-            if '0229' in start:
-                start = start.replace('2902', '2802')
-
-            query = 'select * from "germany" where time > \'%s\' and time < \'%s\'' % (start, end)
-            result = self.influx.query(query)
-
-            #----- switch to influx simulation database -----
-            self.influx.switch_database('MAS_2019')
-            json_body = []
-            for data in result['germany']:
-                json_body.append(
-                    {
-                        "measurement": "weather",
-                        "tags": {
-                            "geohash": data['geohash'],
-                            "plz": self.maphash.loc[self.maphash.index==data['geohash'],'PLZ'].to_numpy()[0]
-                        },
-                        "time": str(date.year) + data['time'][4:],
-                        "fields": {
-                            "GHI": np.float(data['GHI']),
-                            "DNI": np.float(data['DNI']),
-                            "DHI": np.float(data['DHI']),
-                            "TAmb": np.float(data['TAmb']),
-                            "Ws": np.float(data['Ws'])
-                        }
-                    }
-                )
-
-            self.influx.write_points(json_body)
-            print('generate weather for %s' %date)
-
-    def getWeather(self, geo, date):
-        geohash = str(geo)                                              # -- PLZ-Information
-        # -- Build-up query for InfluxDB
+    def getPowerScheduling(self, date, name, timestamp):
+        """ Leistung zum jeweilgen Planungsschritt in [MW] """
+        # Tag im ISO Format
+        date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-        query = 'select * from "weather" where time >= \'%s\' and time <= \'%s\' and geohash = \'%s\'' % (start, end, geohash)
+        # --> Abfrage
+        query = 'select sum("Power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'%s\' GROUP BY time(1h) fill(0)' \
+                % (start, end, name, timestamp)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            dir = [point['DNI'] for point in result.get_points()]           # -- direct irradiation     [W/m²]
-            dif = [point['DHI'] for point in result.get_points()]           # -- diffuse irradiation    [W/m²]
-            wind = [point['Ws'] for point in result.get_points()]           # -- windspeed              [m/s] (2m)
-            TAmb = [point['TAmb'] for point in result.get_points()]         # -- temperatur             [°C]
+           return np.asarray([point['sum'] for point in result.get_points()])
         else:
-            dir = list(np.zeros(24))
-            dif = list(np.zeros(24))
-            wind = list(np.zeros(24))
-            TAmb = list(np.zeros(24))
+            return np.zeros(24)
 
-        return dict(wind=wind, dir=dir, dif=dif, temp=TAmb)
-
-
-    def saveData(self, json_body):
-        self.influx.write_points(json_body)
-
-    def getDemand(self, date):
+    def getTotalDemand(self, date):
+        """ Gesamtlast in Deutschland in [MW] """
+        # Tag im ISO Format
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        # --> Abfrage
         query = 'SELECT sum("Power") FROM "Areas" WHERE time >= \'%s\' and time < \'%s\'  and "timestamp" = \'optimize_dayAhead\' GROUP BY time(1h) fill(0)' % (
         start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            demand = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
+            demand =  np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
         else:
             demand = 35000*np.ones(24)
-
         return np.asarray(demand).reshape((-1,1))
-
-
-    def getWind(self, date):
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-        query = 'select mean("Ws") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            wind = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
-        else:
-            wind = 4.0*np.ones(24)
-
-        return np.asarray(wind).reshape((-1,1))
-
-    def getIrradiation(self, date):
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-        query = 'select mean("GHI") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            irradiation = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
-        else:
-            irradiation = np.zeros(24)
-
-        return np.asarray(irradiation).reshape((-1, 1))
-
-    def getTemperature(self, date):
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-        query = 'select mean("TAmb") from "weather" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (start, end)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            temp = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
-        else:
-            temp = 13 * np.ones(24)
-
-        return np.asarray(temp).reshape((-1, 1))
-
-
-    def getDayAheadPrice(self, date):
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-        query = 'SELECT sum("price") FROM "DayAhead" WHERE time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' % (
-        start, end)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            mcp = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
-        else:
-            mcp = 25*np.ones(24)
-
-        return np.asarray(mcp).reshape((-1, 1))
-
 
 if __name__ == "__main__":
     pass

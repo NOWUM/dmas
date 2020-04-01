@@ -95,7 +95,7 @@ class pwpAgent(basicAgent):
     def optimize_balancing(self):
         # TODO Überarbeiten der Gebotsstrategie --> Biete immer 30 % der Verfügbaren Menge zu Random Preisen
         """Einsatzplanung für den Regelleistungsmarkt"""
-        orderbook = dict(uuid=self.name, date=str(self.date))                # Oderbook für alle Blöcke (Stunde 1-6)
+        orderbook = dict()                                                  # Oderbook für alle Blöcke (Stunde 1-6)
 
         states = [0, 0]
         for _, value in self.portfolio.energySystems.items():
@@ -113,33 +113,35 @@ class pwpAgent(basicAgent):
             powerPriceNeg = np.random.uniform(low=100, high=500)
             energyPricePos = np.random.uniform(low=0, high=50)
             energyPriceNeg = np.random.uniform(low=0, high=50)
-            orderbook.update({str(i) + '_pos': (np.round(states[0] * a, 0), powerPricePos, energyPricePos)})
-            orderbook.update({str(i) + '_neg': (np.round(states[1] * a, 0), powerPriceNeg, energyPriceNeg)})
-        self.ConnectionRest.sendBalancing(orderbook)
+            orderbook.update({'neg_%s' % i: {'quantity': np.round(states[1] * a, 0), 'powerPrice': powerPriceNeg,
+                                             'energyPrice': energyPriceNeg, 'typ': 'neg', 'slot': i, 'name': self.name}})
+            orderbook.update({'pos_%s' % i: {'quantity': np.round(states[0] * a, 0), 'powerPrice': powerPricePos,
+                                             'energyPrice': energyPricePos, 'typ': 'pos', 'slot': i, 'name': self.name}})
+
+        self.ConnectionMongo.setBalancing(self.name, self.date, orderbook)
+
         logging.info('Planung Regelleistungsmarkt abgeschlossen')
-
-
 
     def optimize_dayAhead(self):
         """Einsatzplanung für den DayAhead-Markt"""
-        orderbook = dict(uuid=self.name, date=str(self.date))               # Oderbook für alle Gebote (Stunde 1-24)
+        orderbook = dict()                                                  # Oderbook für alle Gebote (Stunde 1-24)
         # Prognosen für den kommenden Tag
         weather = self.weatherForecast()                                    # Wetterdaten (dir,dif,temp,wind)
         price = self.priceForecast()                                        # Preisdaten (power,gas,nuc,coal,lignite)
         demand = self.demandForecast()                                      # Lastprognose
         # Verpflichtungen Regelleistung
-        pos, neg, _ = self.ConnectionInflux.getBalPowerResult(self.date, self.name)
+        pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)
         self.portfolio.setPara(self.date, weather,  price, demand, pos, neg)
         self.portfolio.buildModel()
         power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
 
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
-        wnd = np.asarray(weather['wind']).reshape((-1, 1))  # Wind [m/s]
-        rad = np.asarray(weather['dir']).reshape((-1, 1))  # Dirkete Strahlung [W/m²]
-        tmp = np.asarray(weather['temp']).reshape((-1, 1))  # Temperatur [°C]
-        dem = np.asarray(demand).reshape((-1, 1))  # Lastprognose [MW]
-        prc = np.asarray(price['power']).reshape((-1, 1))  # MCP Porgnose
+        wnd = np.asarray(weather['wind']).reshape((-1, 1))                  # Wind [m/s]
+        rad = np.asarray(weather['dir']).reshape((-1, 1))                   # Dirkete Strahlung [W/m²]
+        tmp = np.asarray(weather['temp']).reshape((-1, 1))                  # Temperatur [°C]
+        dem = np.asarray(demand).reshape((-1, 1))                           # Lastprognose [MW]
+        prc = np.asarray(price['power']).reshape((-1, 1))                   # MCP Porgnose
         if self.qLearn.fitted and (self.espilion > np.random.uniform(0,1)):
             # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
             slopes = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
@@ -149,31 +151,31 @@ class pwpAgent(basicAgent):
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            order = [(-1*(p/100 * power[i]), float(min(self.maxPrice * prc[i], max(self.minPrice * prc[i], slopes[i] * p))))
-                     for p in range(1, 101)]
-            orderbook.update([(i, order)])
+            quantity = [-1*(5/100 * power[i]) for _ in range(5, 105, 5)]
+            price = [float(min(self.maxPrice * prc[i], max(self.minPrice * prc[i], slopes[i] * p))) for p in range(5, 105, 5)]
+            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name':self.name}})
 
-        # -- send and save result
-        if self.ConnectionRest.sendDayAhead(orderbook):
-            json_body = []
-            for key, value in self.portfolio.energySystems.items():
-                time = self.date
-                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                volume = np.zeros_like(power)
-                if value['typ'] == 'storage':
-                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                for i in self.portfolio.t:
-                    json_body.append(
-                        {
-                            "measurement": 'Areas',
-                            "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
-                                         timestamp='optimize_dayAhead', typ='PWP'),
-                            "time": time.isoformat() + 'Z',
-                            "fields": dict(Power=power[i], Volume=volume[i])
-                        }
-                    )
-                    time = time + pd.DateOffset(hours=self.portfolio.dt)
-            self.ConnectionInflux.saveData(json_body)
+        self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
+
+        json_body = []
+        for key, value in self.portfolio.energySystems.items():
+            time = self.date
+            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            volume = np.zeros_like(power)
+            if value['typ'] == 'storage':
+                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            for i in self.portfolio.t:
+                json_body.append(
+                    {
+                        "measurement": 'Areas',
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
+                                     timestamp='optimize_dayAhead', typ='PWP'),
+                        "time": time.isoformat() + 'Z',
+                        "fields": dict(Power=power[i], Volume=volume[i])
+                    }
+                )
+                time = time + pd.DateOffset(hours=self.portfolio.dt)
+        self.ConnectionInflux.saveData(json_body)
 
         logging.info('Planung DayAhead-Markt abgeschlossen')
 
@@ -182,20 +184,17 @@ class pwpAgent(basicAgent):
 
         # Speichern der Daten und Aktionen, um aus diesen zu lernen
         self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))
-
-        ask, bid, reward = self.ConnectionInflux.getDayAheadResult(self.date, self.name)
-
         # Abfrage der DayAhead Ergebnisse
-        ask, bid, reward = self.ConnectionInflux.getDayAheadResult(self.date, self.name)
-        power = ask - bid
-
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
+        price = self.ConnectionInflux.getDayAheadPrice(self.date)
+        profit = [(ask[i]-bid[i])*price[i] for i in range(24)]
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
             states = self.qLearn.getStates(self.date)
             for i in self.portfolio.t:
                 oldValue = self.qLearn.qus[states[i], int(self.actions[i]-10)]
-                self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (reward[i] - oldValue)
-
+                self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (profit[i] - oldValue)
 
         # Minimiere Differenz zu den bezuschlagten Geboten
         self.portfolio.buildModel(response=ask-bid)
@@ -220,39 +219,41 @@ class pwpAgent(basicAgent):
 
     def optimize_actual(self):
         """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
-        ask, bid, _ = self.ConnectionInflux.getDayAheadResult(self.date, self.name)
-        schedule = self.ConnectionInflux.getDayAheadSchedule(self.date, self.name)
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
+        schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'post_dayAhead')
+
         # Berechnung der Abweichung, die zum Abruf von Regelenergie führt
         difference = schedule-(ask-bid)
         # Aufbau der "Gebote" (Abweichungen zum gemeldeten Fahrplan)
-        orderbook = dict(uuid=self.name, date=str(self.date))
-        orderbook.update([(i, (difference[i])) for i in range(self.portfolio.T)])
-
+        orderbook = dict()
+        for i in range(self.portfolio.T):
+            orderbook.update({'h_%s' % i: {'quantity': difference[i], 'hour': i, 'name': self.name}})
+        self.ConnectionMongo.setActuals(name=self.name, date=self.date, orders=orderbook)
         # Abspeichern der Ergebnisse
-        if self.ConnectionRest.sendActuals(orderbook):
-            time = self.date
-            json_body = []
-            for i in self.portfolio.t:
-                json_body.append(
-                    {
-                        "measurement": 'Areas',
-                        "tags": dict(agent=self.name, area=self.area, timestamp='optimize_actual', typ='PWP'),
-                        "time": time.isoformat() + 'Z',
-                        "fields": dict(Difference=difference[i], Power=schedule[i])
-                    }
-                )
-                time = time + pd.DateOffset(hours=self.portfolio.dt)
-            self.ConnectionInflux.saveData(json_body)
+        time = self.date
+        json_body = []
+        for i in self.portfolio.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(agent=self.name, area=self.area, timestamp='optimize_actual', typ='PWP'),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(Difference=difference[i], Power=schedule[i])
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolio.dt)
+        self.ConnectionInflux.saveData(json_body)
 
-        logging.info('Aktuellen Fahrplan erstellt')
+    logging.info('Aktuellen Fahrplan erstellt')
 
     def post_actual(self):
         """Abschlussplanung des Tages"""
-        # _, _, rewardPower = self.ConnectionInflux.getBalPowerResult(self.date, self.name)
-        pos, neg, rewardEnergy = self.ConnectionInflux.getBalEnergyResult(self.date, self.name)
+        pos, neg = self.ConnectionInflux.getBalancingEnergy(self.date,self.name)
         self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast(),
                                np.zeros(self.portfolio.T), np.zeros(self.portfolio.T))
-        self.portfolio.buildModel(response=self.ConnectionInflux.getActualPlan(self.date, self.name) + pos - neg)
+        schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual')
+        self.portfolio.buildModel(response=schedule + pos - neg)
         power = self.portfolio.fixPlaning()
 
         # -- save result
@@ -292,17 +293,22 @@ class pwpAgent(basicAgent):
                                                                         # sind viele Bereiche schon bekannt
 
         logging.info('Tag %s abgeschlossen' %self.date)
-        print('%s done' % self.date)
+        print('Agent %s %s done' % (self.name, self.date.date()))
 
 if __name__ == "__main__":
 
     args = parse_args()
     agent = pwpAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
-    agent.ConnectionRest.login(agent.name, agent.typ)
+    agent.ConnectionMongo.login(agent.name, True)
     try:
         agent.run_agent()
     except Exception as e:
-        print(e)
+        logging.error('Fehler in run_agent: %s' %e)
     finally:
         agent.ConnectionInflux.influx.close()
+        agent.ConnectionMongo.logout(agent.name)
         agent.ConnectionMongo.mongo.close()
+        if agent.receive.is_open:
+            agent.receive.close()
+            agent.connection.close()
+        exit()

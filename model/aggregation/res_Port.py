@@ -25,9 +25,9 @@ class resPort(port_model):
     def optimize(self):
         power = np.zeros_like(self.t)
         try:
-            pWind = np.asarray([value['model'].genWind for _, value in self.energySystems.items()],np.float)
+            pWind = np.asarray([value['model'].powerWind for _, value in self.energySystems.items()],np.float)
             self.pWind = np.sum(pWind, axis=0)
-            pSolar = np.asarray([value['model'].genSolar for _, value in self.energySystems.items()], np.float)
+            pSolar = np.asarray([value['model'].powerSolar for _, value in self.energySystems.items()], np.float)
             self.pSolar = np.sum(pSolar, axis=0)
             power = self.pWind + self.pSolar
         except Exception as e:

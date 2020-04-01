@@ -18,7 +18,7 @@ class typFrcst:
     def collectData(self, date):
 
         self.index.append(pd.date_range(start=date, periods=24, freq='h'))
-        self.demand.append(self.influx.getDemand(date))
+        self.demand.append(self.influx.getTotalDemand(date))
 
     def fitFunction(self):
 

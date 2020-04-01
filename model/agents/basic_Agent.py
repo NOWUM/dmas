@@ -1,8 +1,6 @@
-# Importe
 import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 import logging
-from interfaces.interface_rest import restInferace
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface
 from apps.frcst_DEM import typFrcst as demTyp
@@ -19,26 +17,30 @@ class agent:
                  exchange='Market'):
 
         # Metadaten eines Agenten
-        self.name = typ + '_%i' %plz                            # Name
-        self.area = plz                                         # Gebiet
-        self.date = pd.to_datetime(date)                        # aktueller Tag
-        self.typ = typ                                          # Agententyp (RES,PWP,DEM,...)
+        self.name = typ + '_%i' % plz  # Name
+        self.area = plz  # Gebiet
+        self.date = pd.to_datetime(date)  # aktueller Tag
+        self.typ = typ  # Agententyp (RES,PWP,DEM,...)
         # Laden der Geoinfomationen
-        df = pd.read_csv('./data/PlzGeo.csv', index_col=0)
-        geo = df.loc[df['PLZ'] == plz, ['Latitude', 'Longitude']]
-        self.geo = geohash2.encode(float(geo.Latitude), float(geo.Longitude))
+        try:
+            df = pd.read_csv('./data/PlzGeo.csv', index_col=0)
+            geo = df.loc[df['PLZ'] == plz, ['Latitude', 'Longitude']]
+            self.geo = geohash2.encode(float(geo.Latitude), float(geo.Longitude))
+        except:
+            print('Nummer: %s ist kein offizielles PLZ-Gebiet' % plz)
+            print(' --> Aufbau des Agenten %s_%s beendet' % (typ, plz))
+            exit()
 
         # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
-        logging.basicConfig(filename=r'./logs/%s.log' %self.name, level=logging.WARNING,
+        logging.basicConfig(filename=r'./logs/%s.log' % self.name, level=logging.WARNING,
                             format='%(levelname)s:%(message)s', filemode='w')
 
         # Verbindingen an die Datenbanken sowie den Marktplatz
-        self.ConnectionRest = restInferace(host=market)         # Restschnittstelle des Marktes
-        self.ConnectionInflux = influxInterface(host=influx)    # Datenbank zur Speicherung der Zeitreihen
-        self. ConnectionMongo = mongoInterface(host=mongo)      # Datenbank zur Speicherung der Strukurdaten
+        self.ConnectionInflux = influxInterface(host=influx)  # Datenbank zur Speicherung der Zeitreihen
+        self.ConnectionMongo = mongoInterface(host=mongo)  # Datenbank zur Speicherung der Strukurdaten
 
         # Anbindung an MQTT
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market, heartbeat=0))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
@@ -53,22 +55,22 @@ class agent:
         }
 
     def weatherForecast(self):
-        """Wetterprognose des jeweiligen PLZ-Gebietes"""
+        """ Wetterprognose des jeweiligen PLZ-Gebietes"""
         return self.forecasts['weather'].forecast(str(self.geo), self.date)
 
     def priceForecast(self):
-        """Preisprognose für MCP, Braun- und Steinkohle, Kernkraft und Gas"""
+        """ Preisprognose für MCP, Braun- und Steinkohle, Kernkraft und Gas"""
         return self.forecasts['price'].forecast(self.date)
 
     def demandForecast(self):
-        """Lastprognose für Gesamtdeutschland"""
+        """ Lastprognose für Gesamtdeutschland"""
         return self.forecasts['demand'].forecast(self.date)
 
     def post_actual(self):
         print('post actual')
 
     def callback(self, ch, method, properties, body):
-        """Methodenaufruf zugehörig zum Marktsignal"""
+        """ Methodenaufruf zugehörig zum Marktsignal"""
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
         # Aufruf Regelleistungsmarkt
@@ -103,9 +105,14 @@ class agent:
                 self.exceptionHandle(part='Actual Results', inst=inst)
         # Aufruf zum Beenden
         if 'kill' in message:
-            agent.ConnectionInflux.influx.close()
-            agent.ConnectionMongo.mongo.close()
+            self.ConnectionInflux.influx.close()
+            self.ConnectionMongo.logout(self.name)
+            self.ConnectionMongo.mongo.close()
+            if self.receive.is_open:
+                self.receive.close()
+                self.connection.close()
             print('terminate area')
+            exit()
 
     # ----- Learning Next Day -----
     def nextDay(self):
@@ -127,9 +134,10 @@ class agent:
                     func.counter = 0
 
     def run_agent(self):
-        """Verbinden des Agenten mit der Marktplattform und Warten auf Anweisungen """
+        """ Verbinden des Agenten mit der Marktplattform und Warten auf Anweisungen """
         self.receive.basic_consume(queue=self.queue_name, on_message_callback=self.callback, auto_ack=True)
-        print(' --> Mit dem Marktplatz verbunden, warte auf Anweisungen (To exit press CTRL+C)')
+        print(' --> Agent %s hat sich mit dem Marktplatz verbunden, wartet auf Anweisungen (To exit press CTRL+C)'
+              % self.name)
         self.receive.start_consuming()
 
     def exceptionHandle(self, part, inst):
@@ -138,8 +146,8 @@ class agent:
         print('Error --> ' + str(inst))
         logging.error('%s --> %s' % (part, inst))
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     agent = agent(date='2019-01-01', plz=1)
-    agent.ConnectionRest.login(agent.name, agent.typ)
-    agent.run_agent()
+    # agent.ConnectionRest.login(agent.name, agent.typ)
+    # agent.run_agent()

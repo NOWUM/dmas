@@ -2,36 +2,33 @@ from apps.market import dayAhead_clearing
 import pandas as pd
 import time as tm
 
-def dayAheadClearing(sqlite, influx, date):
-
+def dayAheadClearing(connectionMongo, influx, date):
+    # Dataframe für alle Gebote der Agenten
     df = pd.DataFrame(columns=['name', 'hour', 'price', 'quantity'])
-    agents = sqlite.getAllAgents()
-    lastName = ''
-    timeouts = []
-
-    for name in agents:
-        orders = []
-        start = tm.time()
-        while (len(orders) == 0):
-            if name != lastName:
-                print('waiting for orders of Agent %s' %name)
-                lastName = name
-            orders = sqlite.getDayAhead(name)
-            end = tm.time()
-            df = df.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'price', 'quantity']))
-            if end - start >= 30:
-                timeouts.append(name)
-                print('get no orders of Agent %s' %name)
-                break
-
-    for name in timeouts:
-        print('last chance for Agent %s' %name)
-        orders = sqlite.getDayAhead(name)
-        df = df.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'price', 'quantity']))
-        if len(orders) > 0:
-            print('get orders of Agent %s' %name)
-        else:
-            print('get no orders of Agent %s' %name)
+    # Abfrage der anmeldeten Agenten
+    agent_ids = connectionMongo.tableOrderbooks.find().distinct('_id')
+    # Sammel für jeden Agent die Gebote
+    for id in agent_ids:
+        print('waiting for Agent %s' % id)
+        wait = True                                                         # Warte solange bis Gebot vorliegt
+        start = tm.time()                                                   # Startzeitpunkt
+        while wait:
+            x = connectionMongo.tableOrderbooks.find_one({"_id": id})       # Abfrage der Gebote
+            # Wenn das Gebot vorliegt, füge es hinzu
+            if str(date.date()) in x.keys():
+                for hour in range(24):
+                    dict_ = x['2019-01-01']['DayAhead']['h_%s' %hour]
+                    num_ = len(dict_['price'])
+                    orders = pd.DataFrame({'price': dict_['price'], 'quantity': dict_['quantity'],
+                                           'name': [id for _ in range(num_)], 'hour': [hour for _ in range(num_)]})
+                    df = df.append(orders)
+                wait = False                                                # Warten beenden
+            else:
+                tm.sleep(0.2)
+            end = tm.time()  # aktueller Zeitstempel
+            if end - start >= 30:                                           # Warte maximal 30 Sekunden
+                print('get no orders of Agent %s' % id)
+                wait = False
 
     df = df.set_index('hour', drop=True)
 

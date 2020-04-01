@@ -3,58 +3,48 @@ import pandas as pd
 import numpy as np
 import time as tm
 
-def balPowerClearing(sqlite, influx, date, power=1800):
-
-    df = pd.DataFrame(
-        columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice'])  # -- df to save all orders
-    agents = sqlite.getBalancingAgents()  # -- get all agents
-    lastName = ''
-    timeouts = []
-
-    for name in agents:
-        orders = []
-        start = tm.time()
-        while len(orders) == 0:
-            if name != lastName:
-                print('waiting for orders of Agent %s' %name)
-                lastName = name
-            orders = sqlite.getBalancing(name)
-            end = tm.time()
-            df = df.append(
-                pd.DataFrame(data=orders, columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice']))
-            if end - start >= 30:
-                timeouts.append(name)
-                print('get no orders of Agent %s' %name)
-                break
-
-    for name in timeouts:
-        print('last chance for Agent %s' %name)
-        orders = sqlite.getBalancing(name)
-        df = df.append(
-            pd.DataFrame(data=orders, columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice']))
-        if len(orders) > 0:
-            print('get orders of Agent %s' %name)
-        else:
-            print('get no orders of Agent %s' %name)
-
-
+def balPowerClearing(connectionMongo, influx, date, power=1800):
+    # Dataframe für alle Gebote der Agenten
+    df = pd.DataFrame(columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice'])
+    # Abfrage der anmeldeten Agenten
+    agent_ids = connectionMongo.tableOrderbooks.find().distinct('_id')
+    # Sammel für jeden Agent die Gebote
+    for id in agent_ids:
+        # Wenn der Agent Regelleistung bereitstellt
+        if connectionMongo.tableOrderbooks.find_one({"_id": id})['reserve']:
+            print('waiting for Agent %s' % id)
+            wait = True                                                         # Warte solange bis Gebot vorliegt
+            start = tm.time()                                                   # Startzeitpunkt
+            while wait:
+                x = connectionMongo.tableOrderbooks.find_one({"_id": id})       # Abfrage der Gebote
+                # Wenn das Gebot vorliegt, füge es hinzu
+                if str(date.date()) in x.keys():
+                    orders = pd.DataFrame.from_dict(x[str(date.date())]['Balancing'], 'index')
+                    df = df.append(orders)
+                    wait = False                                                # Warten beenden
+                else:
+                    tm.sleep(0.2)
+                end = tm.time()  # aktueller Zeitstempel
+                if end - start >= 30:                                           # Warte maximal 30 Sekunden
+                    print('get no orders of Agent %s' % id)
+                    wait = False
     df = df.set_index('slot', drop=True)
     df = df.rename(columns={'powerPrice': 'price'})
 
+    # Für postive und negative Regelleistung
     for balancing in ['pos', 'neg']:
+        # bestimme für jeden Block die Zuschläge
         for i in range(6):
-
-            time = date + pd.DateOffset(hours=i * 4)
-            tmp = df.loc[df['typ'] == balancing, ['name', 'quantity', 'price']]
-            o = tmp[tmp.index == i]
-
-            result = balancing_clearing(o, ask=power, minimal=5)
-
-            mcp = max(result['price'].to_numpy())
+            # Alle Gebote des jeweiligen Slots & Typs
+            marketInput = df.loc[(df['typ'] == balancing) & (df.index == i), ['name', 'quantity', 'price']]
+            # Führe das Marktclearing durch
+            result = balancing_clearing(marketInput, ask=power, minimal=5)
+            # Erstelle Preisinfomationen und speichere diese in der Influx
             prices = df.loc[df['typ'] == balancing, ['name', 'price', 'energyPrice']]
             prices = prices.loc[i, :]
             prices = prices.set_index('name', drop=True)
-
+            # Zeitstempel des Blockgebotes
+            time = date + pd.DateOffset(hours=i * 4)
             json_body = []
             for r in result.index:
                 json_body.append(
@@ -62,55 +52,57 @@ def balPowerClearing(sqlite, influx, date, power=1800):
                         "measurement": 'Balancing',
                         "tags": dict(agent=r, area=r.split('_')[-1], typ=r.split('_')[0], order=balancing),
                         "time": time.isoformat() + 'Z',
-                        "fields": dict(maxPrice=mcp, power=result.loc[r, 'volume'],
+                        "fields": dict(maxPrice=max(result['price'].to_numpy()), power=result.loc[r, 'volume'],
                                        energyPrice=prices.loc[r, 'energyPrice'], powerPrice=prices.loc[r, 'price'])
                     }
                 )
             influx.influx.write_points(json_body)
 
-def balEnergyClearing(sqlite, influx, date):
+def balEnergyClearing(connectionMongo, influx, date):
+    # Dataframe für alle Abweichungen der Agenten
+    df = pd.DataFrame(columns=['name', 'hour', 'quantity'])
+    # Abfrage der anmeldeten Agenten
+    agent_ids = connectionMongo.tableOrderbooks.find().distinct('_id')
+    # Sammel für jeden Agent die Fahrplanabweichungen
+    for id in agent_ids:
+        print('waiting for Agent %s' % id)
+        wait = True                                                                     # Warte solange bis Gebot vorliegt
+        start = tm.time()  # Startzeitpunkt
+        while wait:
+            x = connectionMongo.tableOrderbooks.find_one({"_id": id})                   # Abfrage der Abweichung
+            # Wenn die Abweichung vorliegt, füge sie hinzu
+            if str(date.date()) in x.keys():
+                if 'Actual' in x[str(date.date())].keys():
+                    actual = pd.DataFrame.from_dict(x[str(date.date())]['Actual'], 'index')
+                    df = df.append(actual)
+                    wait = False                                                            # Warten beenden
+            else:
+                tm.sleep(0.2)
+            end = tm.time()  # aktueller Zeitstempel
+            if end - start >= 30:                                                       # Warte maximal 30 Sekunden
+                print('get no Actuals of Agent %s' % id)
+                wait = False
 
-    actuals = pd.DataFrame(columns=['name', 'hour', 'quantity'])
-    agents = sqlite.getAllAgents()
-    lastName = ''
-    timeouts = []
+    # Abfrage der Kosten, die durch die Bereitstellung der Leistung entstanden sind
+    fees = influx.getBalancingPowerFees(date)                                           # positiv wie negative Leistung
 
-    for name in agents:
-        orders = []
-        start = tm.time()
-        while len(orders) == 0:
-            if name != lastName:
-                print('waiting for orders of Agent %s' %name)
-                lastName = name
-            orders = sqlite.getActual(name)
-            end = tm.time()
-            actuals = actuals.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'quantity']))
-            if end - start >= 30:
-                timeouts.append(name)
-                print('get no orders of Agent %s' %name)
-                break
+    # Abfrage der leistungsbezuschlagten Agenten
+    balAgents = [id for id in agent_ids if connectionMongo.tableOrderbooks.find_one({"_id": id})['reserve']]
+    orders = influx.getBalEnergy(date, balAgents)
 
-    for name in timeouts:
-        print('last chance for Agent %s' %name)
-        orders = sqlite.getActual(name)
-        actuals = actuals.append(pd.DataFrame(data=orders, columns=['name', 'hour', 'quantity']))
-        if len(orders) > 0:
-            print('get orders of Agent %s' %name)
-        else:
-            print('get no orders of Agent %s' %name)
+    df = df.set_index('hour', drop=True)
 
-    posCost, negCost = influx.getBalPowerCosts(date)
-    orders = influx.getBalEnergy(date, sqlite.getBalancingAgents())
+    slot = 0                                                                            # Slot Indikator
+    first = True                                                                        # Bool für den ersten Durchlauf
 
-    slot = 0; first = True
-
+    # Berechene für jede Stunden den Regelenergieabruf
     for i in range(24):
 
         typ = 'pos'
-        actual = actuals[actuals.index == i]
+        actual = df[df.index == i]
         ask = np.sum(actual['quantity'].to_numpy())
-
-        if ask < 0: typ = 'neg'
+        if ask < 0:
+            typ = 'neg'
 
         order = orders[orders.index == slot]
         order = order.loc[order['typ'] == typ, ['name', 'quantity', 'price']]
@@ -119,10 +111,9 @@ def balEnergyClearing(sqlite, influx, date):
         for name in result.index:
             result.loc[name,'price'] = order.loc[order['name'] == name, 'price'].to_numpy()[0]
 
-        totalCost = (posCost[slot] + negCost[slot]) + \
-                    sum(result['price'].to_numpy(dtype=float) * result['volume'].to_numpy(dtype=float))
+        totalFees = fees[slot] + sum(result['price'].to_numpy(dtype=float) * result['volume'].to_numpy(dtype=float))
 
-        reBAP = totalCost/np.sum(np.abs(actual['quantity'].to_numpy(dtype=float)))
+        reBAP = totalFees/np.sum(np.abs(actual['quantity'].to_numpy(dtype=float)))
         actual.loc[:,'cost'] = np.abs(actual['quantity'].to_numpy(dtype=float)) * reBAP
         actual.set_index('name', inplace=True)
         time = date + pd.DateOffset(hours=i)

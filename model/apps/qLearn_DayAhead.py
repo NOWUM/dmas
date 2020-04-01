@@ -25,7 +25,7 @@ class qLeran:
         self.collect = init
 
     def collectData(self, date, actions):
-        self.dem = np.concatenate((self.dem, self.influx.getDemand(date)/1000))
+        self.dem = np.concatenate((self.dem, self.influx.getTotalDemand(date)/1000))
         self.wnd = np.concatenate((self.wnd, self.influx.getWind(date)))
         self.rad = np.concatenate((self.rad, self.influx.getIrradiation(date)))
         self.prc = np.concatenate((self.prc, self.influx.getDayAheadPrice(date)))
@@ -49,7 +49,7 @@ class qLeran:
 
     def getStates(self, date):
         x = np.concatenate((self.influx.getWind(date), self.influx.getIrradiation(date), self.influx.getTemperature(date),
-                            self.influx.getDemand(date)/1000, self.influx.getDayAheadPrice(date)), axis=0)
+                            self.influx.getTotalDemand(date)/1000, self.influx.getDayAheadPrice(date)), axis=0)
         x = x.reshape((5,-1))
         states = self.states.predict(x.T)
         return states

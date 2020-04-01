@@ -1,13 +1,16 @@
 from gurobipy import *
-from components.basic_EnergySystem import es_model
+import numpy as np
+from components.basic_EnergySystem import energySystem as es
 
-class storage_gurobi(es_model):
+class storage_gurobi(es):
 
-    def __init__(self, t, T, dt, model):
+    def __init__(self,
+                 model,                                     # Gurobi Model
+                 t=np.arange(24), T=24, dt=1):              # Metainfo Zeit t, T, dt
         super().__init__(t, T, dt)
         self.m = model
 
-    def build(self, name, data, timeseries):
+    def build(self, name, data, ts):
 
         # Leistung & Volumen & Zustand
         power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
@@ -18,7 +21,7 @@ class storage_gurobi(es_model):
 
         # Erlöse
         profit = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='Profit_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        self.m.addConstrs(profit[i] == power[i] * timeseries['power'][i] for i in self.t)
+        self.m.addConstrs(profit[i] == power[i] * ts['power'][i] for i in self.t)
 
         # Leistung Speicher
         self.m.addConstrs(power[i] == -pP[i] + pM[i] for i in self.t)

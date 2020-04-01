@@ -40,8 +40,8 @@ class demPort(port_model):
     def optimize(self):
         power = np.zeros_like(self.t)
         try:
-            power = np.asarray([value['model'].demand for _,value in self.energySystems.items()],np.float)
-            power = np.sum(power,axis=0)
+            power = np.asarray([value['model'].powerDemand for _, value in self.energySystems.items()], np.float)
+            power = np.sum(power, axis=0)
         except Exception as e:
             print(e)
         self.power = power

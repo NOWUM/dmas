@@ -1,14 +1,16 @@
 from gurobipy import *
 import numpy as np
-from components.basic_EnergySystem import es_model
+from components.basic_EnergySystem import energySystem as es
 
-class powerPlant_gurobi(es_model):
+class powerPlant_gurobi(es):
 
-    def __init__(self, t, T, dt, model):
+    def __init__(self,
+                 model,                                     # Gurobi Model
+                 t=np.arange(24), T=24, dt=1):              # Metainfo Zeitt, T, dt
         super().__init__(t, T, dt)
         self.m = model
 
-    def build(self, name, data, timeseries):
+    def build(self, name, data, ts):
 
         # leistung & Zustand
         power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P_' + name, lb=0, ub=GRB.INFINITY)
@@ -18,22 +20,22 @@ class powerPlant_gurobi(es_model):
 
         # Erlöse
         profit = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='Profit_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        self.m.addConstrs(profit[i] == power[i] * timeseries['power'][i] for i in self.t)
+        self.m.addConstrs(profit[i] == power[i] * ts['power'][i] for i in self.t)
 
         # Brennstoffkosten
         fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
         if data['fuel'] == 'lignite':
-            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * timeseries['lignite'] for i in self.t)
+            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * ts['lignite'] for i in self.t)
         if data['fuel'] == 'coal':
-            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * timeseries['coal'] for i in self.t)
+            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * ts['coal'] for i in self.t)
         if data['fuel'] == 'gas':
-            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * timeseries['gas'][i] for i in self.t)
+            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * ts['gas'][i] for i in self.t)
         if data['fuel'] == 'nuc':
-            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * timeseries['nuc'] for i in self.t)
+            self.m.addConstrs(fuel[i] == power[i] / data['eta'] * ts['nuc'] for i in self.t)
 
         # Emissionskosten
         emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E_' + name, lb=0, ub=GRB.INFINITY)
-        self.m.addConstrs(emission[i] == power[i] * data['chi'] * timeseries['co'][i] for i in self.t)
+        self.m.addConstrs(emission[i] == power[i] * data['chi'] * ts['co'][i] for i in self.t)
 
         # Berücksichtigung der Startbedingungen
         self.m.addConstr(power[0] <= data['P0'] + data['gradP'])
