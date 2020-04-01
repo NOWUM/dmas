@@ -17,7 +17,7 @@ def dayAheadClearing(connectionMongo, influx, date):
             # Wenn das Gebot vorliegt, füge es hinzu
             if str(date.date()) in x.keys():
                 for hour in range(24):
-                    dict_ = x['2019-01-01']['DayAhead']['h_%s' %hour]
+                    dict_ = x[str(date.date())]['DayAhead']['h_%s' %hour]
                     num_ = len(dict_['price'])
                     orders = pd.DataFrame({'price': dict_['price'], 'quantity': dict_['quantity'],
                                            'name': [id for _ in range(num_)], 'hour': [hour for _ in range(num_)]})
