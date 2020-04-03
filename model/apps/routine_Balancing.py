@@ -7,25 +7,27 @@ def balPowerClearing(connectionMongo, influx, date, power=1800):
     # Dataframe für alle Gebote der Agenten
     df = pd.DataFrame(columns=['name', 'slot', 'quantity', 'typ', 'powerPrice', 'energyPrice'])
     # Abfrage der anmeldeten Agenten
-    agent_ids = connectionMongo.tableOrderbooks.find().distinct('_id')
+    agent_ids = connectionMongo.status.find().distinct('_id')
     # Sammel für jeden Agent die Gebote
     for id in agent_ids:
         # Wenn der Agent Regelleistung bereitstellt
-        if connectionMongo.tableOrderbooks.find_one({"_id": id})['reserve']:
+        if connectionMongo.status.find_one({"_id": id})['reserve']:
             print('waiting for Agent %s' % id)
-            wait = True                                                         # Warte solange bis Gebot vorliegt
-            start = tm.time()                                                   # Startzeitpunkt
+            wait = True                                                                 # Warte solange bis Gebot vorliegt
+            start = tm.time()                                                           # Startzeitpunkt
             while wait:
-                x = connectionMongo.tableOrderbooks.find_one({"_id": id})       # Abfrage der Gebote
-                # Wenn das Gebot vorliegt, füge es hinzu
-                if str(date.date()) in x.keys():
-                    orders = pd.DataFrame.from_dict(x[str(date.date())]['Balancing'], 'index')
-                    df = df.append(orders)
-                    wait = False                                                # Warten beenden
+                x = connectionMongo.orderDB[str(date.date())].find_one({"_id": id})     # Abfrage der Gebote
+                if x is not None:
+                    if 'Balancing' in x.keys():
+                        # Wenn das Gebot vorliegt, füge es hinzu
+                        orders = pd.DataFrame.from_dict(x['Balancing'], 'index')
+                        df = df.append(orders)
+                        wait = False                                                        # Warten beenden
+                        continue
                 else:
-                    tm.sleep(0.2)
+                    tm.sleep(0.05)
                 end = tm.time()  # aktueller Zeitstempel
-                if end - start >= 30:                                           # Warte maximal 30 Sekunden
+                if end - start >= 30:                                                   # Warte maximal 30 Sekunden
                     print('get no orders of Agent %s' % id)
                     wait = False
     df = df.set_index('slot', drop=True)
@@ -56,28 +58,29 @@ def balPowerClearing(connectionMongo, influx, date, power=1800):
                                        energyPrice=prices.loc[r, 'energyPrice'], powerPrice=prices.loc[r, 'price'])
                     }
                 )
-            influx.influx.write_points(json_body)
+            influx.saveData(json_body)
 
 def balEnergyClearing(connectionMongo, influx, date):
     # Dataframe für alle Abweichungen der Agenten
     df = pd.DataFrame(columns=['name', 'hour', 'quantity'])
     # Abfrage der anmeldeten Agenten
-    agent_ids = connectionMongo.tableOrderbooks.find().distinct('_id')
+    agent_ids = connectionMongo.status.find().distinct('_id')
     # Sammel für jeden Agent die Fahrplanabweichungen
     for id in agent_ids:
         print('waiting for Agent %s' % id)
         wait = True                                                                     # Warte solange bis Gebot vorliegt
         start = tm.time()  # Startzeitpunkt
         while wait:
-            x = connectionMongo.tableOrderbooks.find_one({"_id": id})                   # Abfrage der Abweichung
-            # Wenn die Abweichung vorliegt, füge sie hinzu
-            if str(date.date()) in x.keys():
-                if 'Actual' in x[str(date.date())].keys():
-                    actual = pd.DataFrame.from_dict(x[str(date.date())]['Actual'], 'index')
-                    df = df.append(actual)
-                    wait = False                                                            # Warten beenden
+            x = connectionMongo.orderDB[str(date.date())].find_one({"_id": id})         # Abfrage der Gebote
+            if x is not None:
+                if 'Actual' in x.keys():
+                    # Wenn das Gebot vorliegt, füge es hinzu
+                    orders = pd.DataFrame.from_dict(x['Actual'], 'index')
+                    df = df.append(orders)
+                    wait = False  # Warten beenden
+                    continue
             else:
-                tm.sleep(0.2)
+                tm.sleep(0.05)
             end = tm.time()  # aktueller Zeitstempel
             if end - start >= 30:                                                       # Warte maximal 30 Sekunden
                 print('get no Actuals of Agent %s' % id)
@@ -87,11 +90,10 @@ def balEnergyClearing(connectionMongo, influx, date):
     fees = influx.getBalancingPowerFees(date)                                           # positiv wie negative Leistung
 
     # Abfrage der leistungsbezuschlagten Agenten
-    balAgents = [id for id in agent_ids if connectionMongo.tableOrderbooks.find_one({"_id": id})['reserve']]
+    balAgents = [id for id in agent_ids if connectionMongo.status.find_one({"_id": id})['reserve']]
     orders = influx.getBalEnergy(date, balAgents)
 
     df = df.set_index('hour', drop=True)
-
     slot = 0                                                                            # Slot Indikator
     first = True                                                                        # Bool für den ersten Durchlauf
 
@@ -140,7 +142,7 @@ def balEnergyClearing(connectionMongo, influx, date):
                 }
             )
 
-        influx.influx.write_points(json_body)
+        influx.saveData(json_body)
 
         if i % 4 == 0:
             if first: first = False

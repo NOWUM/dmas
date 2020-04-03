@@ -15,12 +15,13 @@ def parse_args():
     parser.add_argument('--mongo', type=str, required=False, default='127.0.0.1', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='127.0.0.1', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='127.0.0.1', help='IP Market')
+    parser.add_argument('--dbName', type=str, required=False, default='MAS_XXXX', help='Name der Datenbank')
     return parser.parse_args()
 
 class pwpAgent(basicAgent):
 
-    def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150'):
-        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='PWP')
+    def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_XXXX'):
+        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='PWP', dbName=dbName)
 
         logging.info('Start des Agenten')
 
@@ -188,17 +189,21 @@ class pwpAgent(basicAgent):
         ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
         bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
         price = self.ConnectionInflux.getDayAheadPrice(self.date)
-        profit = [(ask[i]-bid[i])*price[i] for i in range(24)]
+        profit = np.asarray([(ask[i]-bid[i])*price[i] for i in range(24)])
+
+        # Minimiere Differenz zu den bezuschlagten Geboten
+        self.portfolio.buildModel(response=ask-bid)
+        power = self.portfolio.fixPlaning()
+        E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
+        F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
+        costs = E+F
+        profit = profit - costs
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
             states = self.qLearn.getStates(self.date)
             for i in self.portfolio.t:
                 oldValue = self.qLearn.qus[states[i], int(self.actions[i]-10)]
                 self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (profit[i] - oldValue)
-
-        # Minimiere Differenz zu den bezuschlagten Geboten
-        self.portfolio.buildModel(response=ask-bid)
-        power = self.portfolio.fixPlaning()
 
         # Abspeichern der Ergebnisse
         json_body = []
@@ -298,7 +303,8 @@ class pwpAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = pwpAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
+    agent = pwpAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx,
+                     market=args.market, dbName=args.dbName)
     agent.ConnectionMongo.login(agent.name, True)
     try:
         agent.run_agent()

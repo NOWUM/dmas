@@ -16,10 +16,13 @@ from interfaces.interface_mongo import mongoInterface as mongoCon
 config = configparser.ConfigParser()
 config.read('app.cfg')
 
-mongoCon = mongoCon(config['MongoDB']['host'])
-influxCon = influxCon(config['InfluxDB']['host'])
+database = config['Results']['Database']
+mongoCon = mongoCon(host=config['MongoDB']['host'], database=database)
+influxCon = influxCon(host=config['InfluxDB']['host'], database=database)
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['host'], heartbeat=0))
+credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['host'],
+                                                               heartbeat=0, credentials=credentials))
 send = connection.channel()
 send.exchange_declare(exchange='Market', exchange_type='fanout')
 
@@ -32,7 +35,7 @@ pd.set_option('mode.chained_assignment', None)
 @app.route('/')
 def index():
     num = []
-    agent_ids = mongoCon.tableOrderbooks.find().distinct('_id')
+    agent_ids = mongoCon.status.find().distinct('_id')
     for typ in ['PWP', 'RES', 'DEM']:
         counter = 0
         for id in agent_ids:
@@ -64,16 +67,17 @@ def buildAreas():
         influx = config['InfluxDB']['host']
         mongo = config['MongoDB']['host']
         market = config['Market']['host']
+        database = config['Results']['Database']
 
         if request.form['res'] == 'true':  # -- if true build RES
-            subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
-                             % (i, mongo, influx, market), cwd=path, shell=True)
+            subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
+                             % (i, mongo, influx, market, database), cwd=path, shell=True)
         if request.form['dem'] == 'true':  # -- if true build DEM
-            subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
-                             % (i, mongo, influx, market), cwd=path, shell=True)
+            subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
+                             % (i, mongo, influx, market, database), cwd=path, shell=True)
         if request.form['pwp'] == 'true':  # -- if true build PWP
-            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s'
-                             % (i, mongo, influx, market), cwd=path, shell=True)
+            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
+                             % (i, mongo, influx, market, database), cwd=path, shell=True)
     return 'OK'
 
 
@@ -82,6 +86,9 @@ def simulation(start, end):
     influxCon.generateWeather(start, end)
 
     for date in pd.date_range(start=start, end=end, freq='D'):
+
+        mongoCon.orderDB[str(date.date)]
+
         try:
             send.basic_publish(exchange='Market', routing_key='', body='opt_balancing ' + str(date))
             balPowerClearing(mongoCon, influxCon, date)
@@ -124,9 +131,16 @@ if __name__ == "__main__":
         pids.append(cmd.pid)
 
     tm.sleep(2)
-    influxCon.influx.drop_database('MAS_2019')
-    influxCon.influx.create_database('MAS_2019')
-    mongoCon.tableOrderbooks.delete_many({})
+
+    influxCon.influx.drop_database(database)
+    influxCon.influx.create_database(database)
+    for name in mongoCon.orderDB.list_collection_names():
+        mongoCon.orderDB.drop_collection(name)
+
+    init = mongoCon.orderDB["init"]
+    query = {"_id": 'start'}
+    start = {"$set": {"_id": "start", "start": tm.ctime(), "config": config}}
+    init.update_one(filter=query, update=start, upsert=True)
 
     try:
         app.run(debug=False, port=5010, host='0.0.0.0')

@@ -11,17 +11,18 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=60, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=52, help='PLZ-Agent')
     parser.add_argument('--mongo', type=str, required=False, default='127.0.0.1', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='127.0.0.1', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='127.0.0.1', help='IP Market')
+    parser.add_argument('--dbName', type=str, required=False, default='MAS_XXXX', help='Name der Datenbank')
     return parser.parse_args()
 
 
 class demAgent(basicAgent):
 
-    def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150'):
-        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='DEM')
+    def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_XXXX'):
+        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='DEM', dbName=dbName)
 
         logging.info('Start des Agenten')
         # Aufbau des Portfolios mit den enstprechenden Haushalten, Gewerbe und Industrie
@@ -80,7 +81,7 @@ class demAgent(basicAgent):
         self.portfolio.buildModel()
         power = np.asarray(self.portfolio.optimize(), np.float)  # Berechnung der Einspeiseleitung
         for i in range(self.portfolio.T):
-            orderbook.update({'h_%s' % i: {'quantity': [power[i]], 'price': [3000], 'hour': i, 'name': self.name}})
+            orderbook.update({'h_%s' % i: {'quantity': [power[i]/10**3, 0], 'price': [3000, -3000], 'hour': i, 'name': self.name}})
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
         # Abspeichern der Ergebnisse
         json_body = []
@@ -193,7 +194,8 @@ class demAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = demAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx, market=args.market)
+    agent = demAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx,
+                     market=args.market, dbName=args.dbName)
     agent.ConnectionMongo.login(agent.name, False)
     try:
         agent.run_agent()

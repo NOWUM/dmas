@@ -59,6 +59,7 @@ class pwpPort(port_model):
         # ----- cashflow -----
         profit = self.m.addVar(vtype=GRB.CONTINUOUS, name='Profit', lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstr(profit == quicksum(power[i] * self.prices['power'][i] for i in self.t))
+
         if len(response) == 0:
             # objective function (max cashflow)
             self.m.setObjective(profit - quicksum(fuel[i] + emission[i] for i in self.t), GRB.MAXIMIZE)

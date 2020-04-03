@@ -4,10 +4,10 @@ from influxdb import InfluxDBClient
 
 class influxInterface:
 
-    def __init__(self, host='149.201.88.150', port=8086 ,user='root', password='root', dbName='MAS_2019',
+    def __init__(self, host='149.201.88.150', port=8086, user='root', password='root', database='MAS_XXXX',
                  year=2019):
-        self.influx = InfluxDBClient(host, port, user, password, dbName)
-        self.influx.switch_database(dbName)
+        self.influx = InfluxDBClient(host, port, user, password, database)
+        self.influx.switch_database(database)
 
         self.histWeatherYear = np.random.randint(low=2005, high=2015)
         self.switchWeatherYear = year
@@ -15,7 +15,10 @@ class influxInterface:
         self.maphash = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
         self.maphash = self.maphash.set_index('hash')
 
+        self.database = database
+
     def saveData(self, json_body):
+        self.influx.switch_database(database=self.database)
         self.influx.write_points(json_body)
 
     """----------------------------------------------------------
@@ -39,7 +42,7 @@ class influxInterface:
             query = 'select * from "germany" where time > \'%s\' and time < \'%s\'' % (start, end)
             result = self.influx.query(query)
             # Wechsel zur Simulationsdatenbank
-            self.influx.switch_database('MAS_2019')
+            self.influx.switch_database(self.database)
             json_body = []
             for data in result['germany']:
                 json_body.append(
@@ -64,6 +67,7 @@ class influxInterface:
 
     def getWeather(self, geo, date):
         """ Wetter im jeweiligen PLZ-Gebiet am Tag X """
+        self.influx.switch_database(database=self.database)
         geohash = str(geo)
         # Tag im ISO Format
         start = date.isoformat() + 'Z'
@@ -87,6 +91,7 @@ class influxInterface:
 
     def getWind(self, date):
         """ mittlere Windgeschwindigkeit in [m/s] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
@@ -102,6 +107,7 @@ class influxInterface:
 
     def getIrradiation(self, date):
         """ mittlere Bestrahlungssträke in [W/m²]"""
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
@@ -117,6 +123,7 @@ class influxInterface:
 
     def getTemperature(self, date):
         """ mittlere Temperatur in [W/m²]"""
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
@@ -136,6 +143,7 @@ class influxInterface:
 
     def getDayAheadAsk(self, date, name):
         """ Verkaufsvolumen in [MWh] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
@@ -152,6 +160,7 @@ class influxInterface:
 
     def getDayAheadBid(self, date, name):
         """ Kaufsvolumen in [MWh] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
@@ -168,6 +177,7 @@ class influxInterface:
 
     def getDayAheadPrice(self, date):
         """ Marktclearing Preis in [€/MWh] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
@@ -187,6 +197,7 @@ class influxInterface:
     ----------------------------------------------------------"""
     def getBalancingPower(self, date, name):
         """ Bezuschlagte positive und negative Regelleistung in [MW] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
@@ -214,6 +225,7 @@ class influxInterface:
 
     def getBalancingEnergy(self, date, name):
         """ Bezuschlagte positive und negative Regelenergie in [MWh] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
@@ -240,6 +252,7 @@ class influxInterface:
 
     def getBalancingPowerFees(self, date):
         """ Gebühren resultierend aus der Bereitstellung der Leistung [€]"""
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
@@ -257,6 +270,7 @@ class influxInterface:
         return posVal + negVal
 
     def getBalEnergy(self, date, names):
+        self.influx.switch_database(database=self.database)
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
@@ -285,6 +299,7 @@ class influxInterface:
 
     def getPowerScheduling(self, date, name, timestamp):
         """ Leistung zum jeweilgen Planungsschritt in [MW] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
@@ -300,6 +315,7 @@ class influxInterface:
 
     def getTotalDemand(self, date):
         """ Gesamtlast in Deutschland in [MW] """
+        self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'

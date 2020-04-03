@@ -1,14 +1,19 @@
 import pymongo
 import json
 
+
 class mongoInterface:
 
-    def __init__(self, host='149.201.88.150'):
+    def __init__(self, database, host='149.201.88.150'):
 
         self.mongo = pymongo.MongoClient('mongodb://' + host + ':27017/')
-        self.mongodb = self.mongo["MAS_2019"]
-        self.tableStructur = self.mongodb["system_data"]
-        self.tableOrderbooks = self.mongodb["orderbooks"]
+        self.structDB = self.mongo["MAS_2019"]
+        self.tableStructur = self.structDB["system_data"]
+
+        self.orderDB = self.mongo[database]
+        self.status = self.orderDB['status']
+
+        # self.tableOrderbooks = self.mongodb["orderbooks"]
 
     def getWindOn(self, area):
         try:
@@ -52,32 +57,29 @@ class mongoInterface:
                     "connected": True,
                     "reserve": reserve
                   }
-        if self.tableOrderbooks.find_one({"_id": name}) is None:
-            self.tableOrderbooks.insert_one(status)
+        if self.status.find_one({"_id": name}) is None:
+            self.status.insert_one(status)
         else:
             query = {"_id": name}
             status = {"$set": {"connected": True, "reserve": reserve}}
-            self.tableOrderbooks.update_one(query, status)
+            self.status.update_one(query, status)
 
     def logout(self, name):
         query = {"_id": name}
         status = {"$set": {"connected": False, "reserve": False}}
-        self.tableOrderbooks.update_one(query, status)
+        self.status.update_one(query, status)
 
     def setBalancing(self, name, date, orders):
         query = {"_id": name}
-        string_= str(date.date()) + '.Balancing'
-        orders = {"$set": {string_: orders}}
-        self.tableOrderbooks.update_one(query, orders)
+        orders = {"$set": {"_id": name, "Balancing": orders}}
+        self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)
 
     def setDayAhead(self, name, date, orders):
         query = {"_id": name}
-        string_ = str(date.date()) + '.DayAhead'
-        orders = {"$set": {string_: orders}}
-        self.tableOrderbooks.update_one(query, orders)
+        orders = {"$set": {"_id": name, "DayAhead": orders}}
+        self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)
 
     def setActuals(self, name, date, orders):
         query = {"_id": name}
-        string_ = str(date.date()) + '.Actual'
-        orders = {"$set": {string_: orders}}
-        self.tableOrderbooks.update_one(query, orders)
+        orders = {"$set": {"_id": name, "Actual": orders}}
+        self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)

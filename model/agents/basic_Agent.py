@@ -14,7 +14,7 @@ import pika
 class agent:
 
     def __init__(self, date, plz, typ='RES', mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150',
-                 exchange='Market'):
+                 exchange='Market', dbName='MAS_XXXX'):
 
         # Metadaten eines Agenten
         self.name = typ + '_%i' % plz  # Name
@@ -36,11 +36,12 @@ class agent:
                             format='%(levelname)s:%(message)s', filemode='w')
 
         # Verbindingen an die Datenbanken sowie den Marktplatz
-        self.ConnectionInflux = influxInterface(host=influx)  # Datenbank zur Speicherung der Zeitreihen
-        self.ConnectionMongo = mongoInterface(host=mongo)  # Datenbank zur Speicherung der Strukurdaten
+        self.ConnectionInflux = influxInterface(host=influx, database=dbName)  # Datenbank zur Speicherung der Zeitreihen
+        self.ConnectionMongo = mongoInterface(host=mongo, database=dbName)     # Datenbank zur Speicherung der Strukurdaten
 
         # Anbindung an MQTT
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market, heartbeat=0))
+        credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0, credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)

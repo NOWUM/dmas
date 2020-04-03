@@ -6,26 +6,28 @@ def dayAheadClearing(connectionMongo, influx, date):
     # Dataframe für alle Gebote der Agenten
     df = pd.DataFrame(columns=['name', 'hour', 'price', 'quantity'])
     # Abfrage der anmeldeten Agenten
-    agent_ids = connectionMongo.tableOrderbooks.find().distinct('_id')
+    agent_ids = connectionMongo.status.find().distinct('_id')
     # Sammel für jeden Agent die Gebote
     for id in agent_ids:
         print('waiting for Agent %s' % id)
-        wait = True                                                         # Warte solange bis Gebot vorliegt
-        start = tm.time()                                                   # Startzeitpunkt
+        wait = True                                                              # Warte solange bis Gebot vorliegt
+        start = tm.time()                                                        # Startzeitpunkt
         while wait:
-            x = connectionMongo.tableOrderbooks.find_one({"_id": id})       # Abfrage der Gebote
+            x = connectionMongo.orderDB[str(date.date())].find_one({"_id": id})  # Abfrage der Gebote
             # Wenn das Gebot vorliegt, füge es hinzu
-            if str(date.date()) in x.keys():
-                for hour in range(24):
-                    dict_ = x['2019-01-01']['DayAhead']['h_%s' %hour]
-                    num_ = len(dict_['price'])
-                    orders = pd.DataFrame({'price': dict_['price'], 'quantity': dict_['quantity'],
-                                           'name': [id for _ in range(num_)], 'hour': [hour for _ in range(num_)]})
-                    df = df.append(orders)
-                wait = False                                                # Warten beenden
+            if x is not None:
+                if 'DayAhead' in x.keys():
+                    for hour in range(24):
+                        dict_ = x['DayAhead']['h_%s' % hour]
+                        num_ = len(dict_['price'])
+                        orders = pd.DataFrame({'price': dict_['price'], 'quantity': dict_['quantity'],
+                                               'name': [id for _ in range(num_)], 'hour': [hour for _ in range(num_)]})
+                        df = df.append(orders)
+                    wait = False                                                # Warten beenden
+                    continue
             else:
-                tm.sleep(0.2)
-            end = tm.time()  # aktueller Zeitstempel
+                tm.sleep(0.05)
+            end = tm.time()                                                 # aktueller Zeitstempel
             if end - start >= 30:                                           # Warte maximal 30 Sekunden
                 print('get no orders of Agent %s' % id)
                 wait = False
@@ -67,4 +69,4 @@ def dayAheadClearing(connectionMongo, influx, date):
                 "fields": dict(price=mcp)
             }
         )
-        influx.influx.write_points(json_body)
+        influx.saveData(json_body)
