@@ -105,11 +105,11 @@ class demAgent(basicAgent):
         """Reaktion auf  die DayAhead-Ergebnisse"""
 
         # Abfrage der DayAhead Ergebnisse
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
+        #ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
         bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
         # price = self.ConnectionInflux.getDayAheadPrice(self.date)
         # profit = [(ask[i]-bid[i])*price[i] for i in range(24)]
-        power = ask - bid
+        power = bid
 
         # Abspeichern der Ergebnisse
         json_body = []
