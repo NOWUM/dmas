@@ -35,11 +35,14 @@ Technische Fragestellungen:
 -	Mögliche Probleme bei der Kommunikation in Bezug auf Latenzen und Verarbeitungszeiten
 -	Lastverteilung auf den Servern im Kontext der Anforderungen der Agenten
 Mit welchen neu zu beschaffenden Forschungsgeräten sollen die geplanten Untersuchungen durchgeführt werden? Welche Messungen sind daran vorgesehen? Welche voraussichtlichen Preise (netto) für diese Forschungsgeräte werden dem Antrag zugrunde gelegt? – Angaben hierzu nur soweit zutreffend! (max 2000 Zeichen)
+Zur Validierung der Simulation soll ein Datenbankserver sowie zwei Simulationsserver beschafft werden. Ein Datenbankserver verringert die Abfragezeiten- und Antwortzeiten der einzelnen Agenten und der Marktplattform, was zu kürzeren Laufzeiten und schnellerer Ergebnisvalidierung führt. Durch die Simulationsserver kann eine bessere Lastverteilung der einzelnen Agenten vorgenommen werden. Durch die zusätzliche Rechenleistung kann die Zeit bis zur Entscheidungsfindung der einzelnen Agenten verkürzt werden. Außerdem können unterschiedliche rechenintensive Optimierungsalgorithmen bis hin zum Maschine-Learning eingesetzt und hinsichtlich ihrer Ergebnisse und Effektivität beurteilt werden.
+
+Beispielkonfigurationen für mögliche Servervarianten
 Simulationsserver:
--	https://www.thomas-krenn.com/de/produkte/rack-server/2he-server/amd-single-cpu/amd-single-cpu-ra1208.html 		(7500 €)
--	https://www.thomas-krenn.com/de/produkte/rack-server/2he-server/amd-single-cpu/amd-single-cpu-ra1208.html 		(7500 €)
+-	https://www.thomas-krenn.com/loadproduct?id=y224917adf9344b38&lang=de                                    		(7755 €)
+-	https://www.thomas-krenn.com/loadproduct?id=y224917adf9344b38&lang=de                                    		(7755 €)
 Datenbankserver:
--	https://www.thomas-krenn.com/de/produkte/rack-server/2he-server/amd-single-cpu/amd-single-ra1212-e.html			(5000 €)
+-   https://www.thomas-krenn.com/loadproduct?id=y95ba130bb7ae035a&lang=de                                           (7255 €)
 
 Welche zusätzlichen Anwendungsmöglichkeiten sollen mit den geplanten Untersuchungen erkundet werden? Welche derzeit noch bestehenden Probleme könnten damit gelöst werden? (max 2000 Zeichen)
 Problemstellungen, die gelöst werden:
