@@ -19,10 +19,10 @@ Personal (E13/2) Vollzeit:
 Materialkosten:
 Maximale Gesamtsumme: 70.000€
 Welche (neuen) wissenschaftlichen Ergebnisse / Erkenntnisse sollen hinsichtlich neuer Anwendungsmöglichkeiten validiert werden? Woher stammen diese Ergebnisse/Erkenntnisse? (max 2000 Zeichen)
-Im Zuge mehrerer Abschlussarbeiten in Bacherlor- und Masterstudiengängen sowie im Forschungsprojekt KRaFT wurde eine Simulationsumgebung entwickelt, die eine Analyse der Energiewende auf unterschiedlichen Ebenen des Energiesystems ermöglicht. Durch den modularen Aufbau der Simulation respektive der Agenten ist eine skalierbare Berechung auf verteilter Infrasktruktur möglich. Im Gegensatz zu vielen anderen Modellen wird hierzu kein geschlossenes Simulationsmodell aufgespannt, sondern eine Infrastrukur geschaffen, die moderene Komunikationmethoden bzw. Protokolle nutzt, um eine möglichst perfomate Simulation zu ermöglichen. Weiter kann die Analyse um verschiedene Aspekte erweiteret werden, da die Agenten oder ihrere Methoden infolge definierter Schnittstellen ausgetauscht werden können. 
+Im Zuge mehrerer Abschlussarbeiten in Bacherlor- und Masterstudiengängen sowie im Forschungsprojekt KRaFT wurde eine Simulationsumgebung entwickelt, die eine Analyse der Energiewende auf unterschiedlichen Ebenen des Energiesystems ermöglicht. Durch den modularen Aufbau der Simulation respektive der Agenten ist eine skalierbare Berechnung auf verteilter Infrasktruktur möglich. Im Gegensatz zu vielen anderen Modellen wird hierzu kein geschlossenes Simulationsmodell aufgespannt, sondern eine Infrastrukur geschaffen, die moderene Komunikationmethoden bzw. Protokolle nutzt, um eine möglichst perfomate Simulation zu ermöglichen. Weiter kann die Analyse um verschiedene Aspekte erweiteret werden, da die Agenten oder ihrere Methoden infolge definierter Schnittstellen ausgetauscht werden können. 
 Zumal die bisherige Modellentwicklung die technische Umsetzung fokussiert hat, gilt es nun das Gesamtmodell zu parametrisieren und die Ergebnisse der Simualtion auf Basis historischer Daten zu valiedieren. Die Bestimmung der Parameter erfolgt auf unterschiedlichen Ebenen. Zum einen sind Parameter, die die ökomischen Interessen der Ageneten vertreten zu bestimmen, zum anderen sind technische Parameter, die bspw. das Einspeiseverhalten der Erneuerbaren Energien determinieren, festzulegen. 
 •	Einbindung Übertragungsnetz
-Abschließend soll ein Vergleich zwischen dem verteilten agentenbasierten Modell und einem von der Fachhochschule bereits erworbenen Fundamentalmodell erfolgen. Hierzu ist ein Aufbau der Infrakstruktur für die verteilte agentenbasierte notwendig, da das Modell aktuell auf zeitlich beschränkter infrasktrur respektive Server der Fachhochschule rechnet. 
+Abschließend soll ein Vergleich zwischen dem verteilten agentenbasierten Modell und einem von der Fachhochschule bereits erworbenen Fundamentalmodell erfolgen. Hierzu ist ein Aufbau der Infrakstruktur für die verteilte agentenbasierte Simulation notwendig, da das Modell aktuell auf zeitlich beschränkter Infrastruktur respektive Servern der Fachhochschule rechnet. 
 Welche Untersuchungen sollen ausgehend von den vorliegenden Ergebnissen / Erkenntnissen durchgeführt werden (Darstellung in Form eines kurzen Arbeitsplanes)? (max 2000 Zeichen)
 Zusammenspiel der Akteure, Optimum entspricht nicht dem Marktverhalten,
 
@@ -32,7 +32,7 @@ Wissenschaftliche Fragestellungen:
 -	Einbindung Netzinfrastruktur
 -	Kostenbestimmung für Volkswirtschaftliches Optimum
 Technische Fragestellungen:
--	Mögliche Probleme bei der Komminikation in Bezug auf Latenzen und Verarbeitungszeiten
+-	Mögliche Probleme bei der Kommunikation in Bezug auf Latenzen und Verarbeitungszeiten
 -	Lastverteilung auf den Servern im Kontext der Anforderungen der Agenten
 Mit welchen neu zu beschaffenden Forschungsgeräten sollen die geplanten Untersuchungen durchgeführt werden? Welche Messungen sind daran vorgesehen? Welche voraussichtlichen Preise (netto) für diese Forschungsgeräte werden dem Antrag zugrunde gelegt? – Angaben hierzu nur soweit zutreffend! (max 2000 Zeichen)
 Simulationsserver:
@@ -43,13 +43,13 @@ Datenbankserver:
 
 Welche zusätzlichen Anwendungsmöglichkeiten sollen mit den geplanten Untersuchungen erkundet werden? Welche derzeit noch bestehenden Probleme könnten damit gelöst werden? (max 2000 Zeichen)
 Problemstellungen, die gelöst werden:
--	Lange Simulationdauer
+-	Lange Simulationsdauer
 -	Geschlossene Modelle, die nicht oder nur schwer erweiterbar sind
 -	Langsame Datenauswertung (meist in Excel)
 
 Zusätzliche Anwedungsmöglichkeiten:
 -	Einsatz in Lehre?
--	Geschäftsmodell Entwicklung für verschiedene Aktuere
+-	Geschäftsmodell Entwicklung für verschiedene Akteure
 -	HPFC
 
 Veröffentlichbare Zusammenfassung (max 2000Zeichen)
