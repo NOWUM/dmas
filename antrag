@@ -1,0 +1,99 @@
+Antragsvorlage progres nrw research (auf Webseite eintragen)
+https://progres-nrw-research.ptj.de/index.php?index=17
+stollenwerkfhaachende
+max 30.000€ für das Gerät werden zugesteuert; Gerät darf beliebig teuer sein; Energieforschung; Innovationsgehalt wichtig zur Bewertung des Antrags, Perspektive in der Weiterverwertung der Ergebnisse über Studie hinaus, 
+Überführung von Ideen und Innovationen für ein CO2-armes Energiesystem, den Klimaschutz und die klimaneutrale Industrie in die Praxis
+
+Thema (Max 150 Zeichen)
+Verteile Multi-Agentenbasierte Simulation des deutschen Strommarktes: Akteursverhaltens-, Interaktions-, Enscheidungsanalysen- und Geschäftsmodell-Testumgebung 
+Thema Eng (max 150 Zeichen)
+Distributed multi-agent-based simulation of the German electricity market: stakeholder behaviour, interconnection, decision analysis and business model test environment 
+Akronym (max 25 Zeichen)
+AGenT-DE -  AGentenbasierte Testumgebung des DEutschen Strommarktes 
+Durchführungszeitraum (max. 6 Monate)
+-	Angedachter Zeitraum: 01.07.2020-31.12.2020 (ab Bewilligung)
+-	Kostenplan: 
+Server: 30.000€ 
+Personal (E13/2) Vollzeit:
+35.094€
+Materialkosten:
+Maximale Gesamtsumme: 70.000€
+Welche (neuen) wissenschaftlichen Ergebnisse / Erkenntnisse sollen hinsichtlich neuer Anwendungsmöglichkeiten validiert werden? Woher stammen diese Ergebnisse/Erkenntnisse? (max 2000 Zeichen)
+Im Zuge mehrerer Abschlussarbeiten in Bacherlor- und Masterstudiengängen sowie im Forschungsprojekt KRaFT wurde eine Simulationsumgebung entwickelt, die eine Analyse der Energiewende auf unterschiedlichen Ebenen des Energiesystems ermöglicht. Durch den modularen Aufbau der Simulation respektive der Agenten ist eine skalierbare Berechung auf verteilter Infrasktruktur möglich. Im Gegensatz zu vielen anderen Modellen wird hierzu kein geschlossenes Simulationsmodell aufgespannt, sondern eine Infrastrukur geschaffen, die moderene Komunikationmethoden bzw. Protokolle nutzt, um eine möglichst perfomate Simulation zu ermöglichen. Weiter kann die Analyse um verschiedene Aspekte erweiteret werden, da die Agenten oder ihrere Methoden infolge definierter Schnittstellen ausgetauscht werden können. 
+Zumal die bisherige Modellentwicklung die technische Umsetzung fokussiert hat, gilt es nun das Gesamtmodell zu parametrisieren und die Ergebnisse der Simualtion auf Basis historischer Daten zu valiedieren. Die Bestimmung der Parameter erfolgt auf unterschiedlichen Ebenen. Zum einen sind Parameter, die die ökomischen Interessen der Ageneten vertreten zu bestimmen, zum anderen sind technische Parameter, die bspw. das Einspeiseverhalten der Erneuerbaren Energien determinieren, festzulegen. 
+•	Einbindung Übertragungsnetz
+Abschließend soll ein Vergleich zwischen dem verteilten agentenbasierten Modell und einem von der Fachhochschule bereits erworbenen Fundamentalmodell erfolgen. Hierzu ist ein Aufbau der Infrakstruktur für die verteilte agentenbasierte notwendig, da das Modell aktuell auf zeitlich beschränkter infrasktrur respektive Server der Fachhochschule rechnet. 
+Welche Untersuchungen sollen ausgehend von den vorliegenden Ergebnissen / Erkenntnissen durchgeführt werden (Darstellung in Form eines kurzen Arbeitsplanes)? (max 2000 Zeichen)
+Zusammenspiel der Akteure, Optimum entspricht nicht dem Marktverhalten,
+
+Wissenschaftliche Fragestellungen:
+-	Vermarktungsstrategien Erneuerbare Ernergien
+-	Vermarktungsstrategien Kraftwerke
+-	Einbindung Netzinfrastruktur
+-	Kostenbestimmung für Volkswirtschaftliches Optimum
+Technische Fragestellungen:
+-	Mögliche Probleme bei der Komminikation in Bezug auf Latenzen und Verarbeitungszeiten
+-	Lastverteilung auf den Servern im Kontext der Anforderungen der Agenten
+Mit welchen neu zu beschaffenden Forschungsgeräten sollen die geplanten Untersuchungen durchgeführt werden? Welche Messungen sind daran vorgesehen? Welche voraussichtlichen Preise (netto) für diese Forschungsgeräte werden dem Antrag zugrunde gelegt? – Angaben hierzu nur soweit zutreffend! (max 2000 Zeichen)
+Simulationsserver:
+-	https://www.thomas-krenn.com/de/produkte/rack-server/2he-server/amd-single-cpu/amd-single-cpu-ra1208.html 		(7500 €)
+-	https://www.thomas-krenn.com/de/produkte/rack-server/2he-server/amd-single-cpu/amd-single-cpu-ra1208.html 		(7500 €)
+Datenbankserver:
+-	https://www.thomas-krenn.com/de/produkte/rack-server/2he-server/amd-single-cpu/amd-single-ra1212-e.html			(5000 €)
+
+Welche zusätzlichen Anwendungsmöglichkeiten sollen mit den geplanten Untersuchungen erkundet werden? Welche derzeit noch bestehenden Probleme könnten damit gelöst werden? (max 2000 Zeichen)
+Problemstellungen, die gelöst werden:
+-	Lange Simulationdauer
+-	Geschlossene Modelle, die nicht oder nur schwer erweiterbar sind
+-	Langsame Datenauswertung (meist in Excel)
+
+Zusätzliche Anwedungsmöglichkeiten:
+-	Einsatz in Lehre?
+-	Geschäftsmodell Entwicklung für verschiedene Aktuere
+-	HPFC
+
+Veröffentlichbare Zusammenfassung (max 2000Zeichen)
+Welche (neuen) wissenschaftlichen Ergebnisse / Erkenntnisse sollen hinsichtlich neuer Anwendungsmöglichkeiten validiert werden? Woher stammen diese Ergebnisse/Erkenntnisse? ( max 2000 Zeichen)
+s.o.
+
+Finanzierungsplan:
+VALIDIERUNGSVORHABEN (SOWEIT ZUTREFFEND) (RICHTLINIE 2.1)
+Zuwendungsfestbetrag (höchstens 40.000€) Validierungsvorhaben	
+0,00 €
+
+ANSCHAFFUNG BZW. ENTGELTLICHE NUTZUNG VON FORSCHUNGSGERÄTEN (RICHTLINIE 2.2)
+Investitionen in Forschungsgeräte	
+0,00 €
+Entgeltliche Nutzung von Forschungsgeräten Dritter	
+0,00 €
+Erwartete Einnahmen	
+0,00 €
+Bemessungsgrundlage	
+0,00 €
+Eigenmittel (mindestens 10% der Gesamtausgaben für Geräteanschaffungen und –nutzungen)	
+0,00 €
+Beantragte Zuwendung (max. 30.000,00€)	
+0,00 €
+AUSZAHLUNG DER ZUWENDUNG
+Auszahlung der Zuwendung beantragt für das Jahr	
+Jahr (YYYY)
+
+
+NOTWENDIGKEIT DES VALIDIERUNGSVORHABENS Max. 2000 Zeichenb
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum nunc. Nunc nonummy metus. Vestib
+
+NOTWENDIGKEIT DER GERÄTEANSCHAFFUNGEN Max. 2000 Zeichen
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum nunc. Nunc nonummy metus. Vestib
+
+
+NOTWENDIGKEIT DER UNTERSUCHUNGEN AN FORSCHUNGSGERÄTEN DRITTER (Max. 2000 Zeichen)
+entfällt
+
+
+NOTWENDIGKEIT DER FÖRDERUNG Max. 2000 Zeichen
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum nunc. Nunc nonummy metus. Vestib
+
+
+FOLGEKOSTEN Wieviel, wofür, für wen oder Angabe, dass keine Folgekosten entstehen.
+Max. 2000 Zeichen
+Es entstehen keine Folgekosten
