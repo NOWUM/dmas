@@ -4,7 +4,7 @@ import logging
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface
 from apps.frcst_DEM import typFrcst as demTyp
-from apps.frcst_Price import typFrcst as priceTyp
+from apps.frcst_Price import annFrcst as priceTyp
 from apps.frcst_Weather import weatherForecast
 import pandas as pd
 import geohash2
@@ -61,7 +61,8 @@ class agent:
 
     def priceForecast(self):
         """ Preisprognose für MCP, Braun- und Steinkohle, Kernkraft und Gas"""
-        return self.forecasts['price'].forecast(self.date)
+        demand = self.demandForecast()
+        return self.forecasts['price'].forecast(self.date, demand)
 
     def demandForecast(self):
         """ Lastprognose für Gesamtdeutschland"""

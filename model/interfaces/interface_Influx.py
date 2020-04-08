@@ -33,9 +33,13 @@ class influxInterface:
                 self.switchWeatherYear = date.year
             # Zugriff auf die Datenbank mit den historischen Wetterdaten
             self.influx.switch_database('weather')
-            start = date.replace(self.histWeatherYear).isoformat() + 'Z'
+            try: # Fehler bei Schaltjahr abfangen
+                start = date.replace(self.histWeatherYear).isoformat() + 'Z'
+            except:
+                date = date - pd.DateOffset(days=1)
+                start = date.replace(self.histWeatherYear).isoformat() + 'Z'
             end = (date.replace(self.histWeatherYear) + pd.DateOffset(days=1)).isoformat() + 'Z'
-            # Fehler bei Schaltjahr abfangen
+
             if '0229' in start:
                 start = start.replace('2902', '2802')
             # --> Abfrage der Daten

@@ -42,6 +42,7 @@ class typFrcst:
             date = pd.to_datetime(date).dayofweek
             demand = self.typDays[date].to_numpy().reshape((1,-1))
         else:
-            demand = 25000 * np.zeros(24)
+            with open(r'./data/Ref_Demand.array', 'rb') as file:
+                demand = np.load(file).reshape((24,))
 
         return demand

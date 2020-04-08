@@ -89,13 +89,22 @@ class resAgent(basicAgent):
             slopes = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
 
         self.actions = slopes                                               # abschpeichern der Ergebnisse
-        slopes = (prc.reshape((-1,))/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
+        var = 2
+
+        if len(self.forecasts['price'].mcp)>0:
+            var = np.sqrt(np.var(self.forecasts['price'].mcp) * self.forecasts['price'].factor)
+
+        self.maxPrice = prc.reshape((-1,)) + var
+        self.minPrice = prc.reshape((-1,)) - var
+        delta = self.maxPrice - self.minPrice
+        slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
+
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [-1*(20/100 * power[i]) for _ in range(20, 120, 20)]
-            price = [float(min(self.maxPrice * prc[i], max(self.minPrice * prc[i], slopes[i] * p))) for p in range(20, 120, 20)]
-            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name':self.name}})
+            quantity = [-1*(5/100 * power[i]) for _ in range(5, 105, 5)]
+            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(5, 105, 5)]
+            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 

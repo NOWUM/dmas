@@ -34,10 +34,10 @@ class qLeran:
 
     def fit(self):
         x = np.concatenate((self.wnd, self.rad, self.tmp, self.dem, self.prc), axis=0)
-        x = x.reshape((5,-1))
+        x = x.reshape((5, -1))
         x = x[:, -1 * min(2000, np.size(x, 1)):].T  # -- last 2000 samples
         self.states.fit(x)
-        print('score Kmeans [optimal --> 0]: %s' % (self.states.score(x)/len(x)))
+        print('score Kmeans [optimal --> 0]: %.2f' % (self.states.score(x)/len(x)))
         self.fitted = True
 
     def getAction(self, wnd, rad, tmp, dem, prc):

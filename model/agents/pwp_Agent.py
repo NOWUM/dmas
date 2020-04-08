@@ -12,9 +12,9 @@ import numpy as np
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--plz', type=int, required=False, default=52, help='PLZ-Agent')
-    parser.add_argument('--mongo', type=str, required=False, default='127.0.0.1', help='IP MongoDB')
-    parser.add_argument('--influx', type=str, required=False, default='127.0.0.1', help='IP InfluxDB')
-    parser.add_argument('--market', type=str, required=False, default='127.0.0.1', help='IP Market')
+    parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
+    parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
+    parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
     parser.add_argument('--dbName', type=str, required=False, default='MAS_XXXX', help='Name der Datenbank')
     return parser.parse_args()
 
@@ -35,7 +35,7 @@ class pwpAgent(basicAgent):
             fuel = data['fuel'][i]                                          # Brennstoff
             typ = data['typ'][i]                                            # Alter (typ)
             p = data['power'][i]                                            # Nennleistung [MW]
-            t = tech[str(fuel) + '_%i' %typ]                                # weitere Daten wie Gradient, Out-Time, ...
+            t = tech[str(fuel) + '_%i' % typ]                               # weitere Daten wie Gradient, Out-Time, ...
             # Aufbau des Blocks
             block = {name: dict(
                         typ='konv',                                         # konventionelles Kraftwerk
@@ -82,8 +82,8 @@ class pwpAgent(basicAgent):
         logging.info('Speicher hinzugefügt')
 
         # Parameter für die Handelsstrategie am Day Ahead Markt
-        self.maxPrice = 10                                                  # Maximalgebot entspricht dem 10fachen MCP
-        self.minPrice = 0.1                                                 # Minimalgenbot entspricht dem 0.1fachen MCP
+        self.maxPrice = []                                                  # Maximalgebot
+        self.minPrice = []                                                  # Minimalgenbot
         self.actions = np.zeros(24)                                         # Steigung der Gebotsgeraden für jede Stunde
         self.espilion = 0.8                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
@@ -148,13 +148,22 @@ class pwpAgent(basicAgent):
             slopes = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
 
         self.actions = slopes                                               # abschpeichern der Ergebnisse
-        slopes = (prc.reshape((-1,))/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
+        var = 2
+
+        if len(self.forecasts['price'].mcp):
+            var = np.sqrt(np.var(self.forecasts['price'].mcp) * self.forecasts['price'].factor)
+
+        self.maxPrice = prc.reshape((-1,)) + var
+        self.minPrice = prc.reshape((-1,)) - var
+        delta = self.maxPrice - self.minPrice
+        slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
+
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [-1*(20/100 * power[i]) for _ in range(20, 120, 20)]
-            price = [float(min(self.maxPrice * prc[i], max(self.minPrice * prc[i], slopes[i] * p))) for p in range(20, 120, 20)]
-            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name':self.name}})
+            quantity = [-1*(5/100 * power[i]) for _ in range(5, 105, 5)]
+            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(5, 105, 5)]
+            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
@@ -197,7 +206,7 @@ class pwpAgent(basicAgent):
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
         F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
         costs = E+F
-        profit = profit - costs
+        profit = profit.reshape((24,)) - costs.reshape((24,))
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
             states = self.qLearn.getStates(self.date)

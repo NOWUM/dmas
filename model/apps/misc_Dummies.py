@@ -17,10 +17,16 @@ def getSeason(now):
     return next(season for season, (start, end) in seasons
                 if start <= now <= end)
 
-def createSaisonDummy(start,end,hour=False):
+
+def createSaisonDummy(start, end, hour=False):
+
+    if end < (start+pd.DateOffset(days=366)):
+        end_ = start+pd.DateOffset(days=366)
+    else:
+        end_ = end
 
     if hour:
-        index = pd.date_range(start=start,end=end, freq='60min')
+        index = pd.date_range(start=start, end=end_)
         hourofday = [str(i.hour) for i in index]
         dayofweek = [i.day_name() for i in index]
         monthofyear = [i.month_name() for i in index]
@@ -30,13 +36,17 @@ def createSaisonDummy(start,end,hour=False):
         seasons = [getSeason(i) for i in index]
         df = pd.DataFrame(index=index,data={'hourofday':hourofday, 'dayofweek':dayofweek, 'monthofyear':monthofyear,'holidays':holidays,'seasons':seasons})
     else:
-        index = pd.date_range(start=start, end=end, freq='D')
+        index = pd.date_range(start=start, end=end_, freq='D')
         dayofweek = [i.day_name() for i in index]
         monthofyear = [i.month_name() for i in index]
         holidays = [getHolidays(year)[0] for year in np.unique([i.year for i in index])]
         holidays = [i for h in holidays for i in h]
         holidays = [int(i in holidays) for i in index]
         seasons = [getSeason(i) for i in index]
-        df = pd.DataFrame(index=index,data={'dayofweek':dayofweek, 'monthofyear':monthofyear,'holidays':holidays,'seasons':seasons})
+        df = pd.DataFrame(index=index, data={'dayofweek':dayofweek, 'monthofyear':monthofyear,'holidays':holidays,'seasons':seasons})
 
-    return pd.get_dummies(df)
+    df = pd.get_dummies(df)
+    df = df.loc[df.index >= start]
+    df = df.loc[df.index <= end]
+
+    return df.to_numpy()

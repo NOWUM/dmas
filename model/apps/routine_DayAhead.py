@@ -1,12 +1,17 @@
 from apps.market import dayAhead_clearing
 import pandas as pd
 import time as tm
+import random
+
 
 def dayAheadClearing(connectionMongo, influx, date):
     # Dataframe für alle Gebote der Agenten
-    df = pd.DataFrame(columns=['name', 'hour', 'price', 'quantity'])
+    #df = pd.DataFrame(columns=['name', 'hour', 'price', 'quantity'])
     # Abfrage der anmeldeten Agenten
     agent_ids = connectionMongo.status.find().distinct('_id')
+    random.shuffle(agent_ids)
+    total_dict = {}
+    i = 0
     # Sammel für jeden Agent die Gebote
     for id in agent_ids:
         print('waiting for Agent %s' % id)
@@ -17,12 +22,14 @@ def dayAheadClearing(connectionMongo, influx, date):
             # Wenn das Gebot vorliegt, füge es hinzu
             if x is not None:
                 if 'DayAhead' in x.keys():
+                    test = tm.time()
                     for hour in range(24):
                         dict_ = x['DayAhead']['h_%s' % hour]
                         num_ = len(dict_['price'])
-                        orders = pd.DataFrame({'price': dict_['price'], 'quantity': dict_['quantity'],
-                                               'name': [id for _ in range(num_)], 'hour': [hour for _ in range(num_)]})
-                        df = df.append(orders)
+                        for k in range(num_):
+                            total_dict[i] = {'price': dict_['price'][k], 'quantity': dict_['quantity'][k],
+                                                   'name': id, 'hour': hour}
+                            i += 1
                     wait = False                                                # Warten beenden
                     continue
             else:
@@ -31,7 +38,7 @@ def dayAheadClearing(connectionMongo, influx, date):
             if end - start >= 30:                                           # Warte maximal 30 Sekunden
                 print('get no orders of Agent %s' % id)
                 wait = False
-
+    df = pd.DataFrame.from_dict(total_dict, "index")
     df = df.set_index('hour', drop=True)
 
     for i in range(24):
