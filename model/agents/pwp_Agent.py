@@ -161,8 +161,8 @@ class pwpAgent(basicAgent):
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [-1*(5/100 * power[i]) for _ in range(5, 105, 5)]
-            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(5, 105, 5)]
+            quantity = [-1*(20/100 * power[i]) for _ in range(20, 120, 20)]
+            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(20, 120, 20)]
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
