@@ -91,8 +91,8 @@ class resAgent(basicAgent):
         self.actions = slopes                                               # abschpeichern der Ergebnisse
         var = 2
 
-        if len(self.forecasts['price'].mcp)>0:
-            var = np.sqrt(np.var(self.forecasts['price'].mcp) * self.forecasts['price'].factor)
+        if len(self.forecasts['price'].y) > 0:
+            var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
         self.maxPrice = prc.reshape((-1,)) + var
         self.minPrice = prc.reshape((-1,)) - var

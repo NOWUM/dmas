@@ -27,6 +27,18 @@ class annFrcst:
 
         self.factor = 0
 
+        # Input Daten des Model
+        self.dem = np.array([]).reshape((-1, 24))                # Gesamte Nachfrage [MW]
+        self.wnd = np.array([]).reshape((-1, 24))                # mittlere Windgeschwindigkeit [m/s]
+        self.rad = np.array([]).reshape((-1, 24))                # mittlere Globalstrahlung [W/m²]
+        self.tmp = np.array([]).reshape((-1, 24))                # mittlere Temperatur [°C]
+        self.prc_1 = np.array([]).reshape((-1, 24))              # DayAhead Preis gestern [€/MWh]
+        self.prc_7 = np.array([]).reshape((-1, 24))              # DayAhead Preis vor einer Woche [€/MWh]
+        self.dummies = np.array([]).reshape((-1, 24))            # Dummie-Variablen: Feiertag, Sonntag, Monat, Jahreszeit
+
+        # Outputdaten des Models
+        self.mcp = np.array([]).reshape((-1, 24))                # DayAhead Preise (0..24) [€/MWh]
+
         if preTrain:
             # Schritt 0: Laden der Input und Outputdaten (2017 - 2018)
             with open(r'./data/preTrain_Input.array', 'rb') as file:
@@ -46,18 +58,6 @@ class annFrcst:
             self.fitted = True
             self.factor = 1 - self.model.score(X_test, y_test)
 
-        # Input Daten des Model
-        self.dem = np.array([]).reshape((-1, 24))                # Gesamte Nachfrage [MW]
-        self.wnd = np.array([]).reshape((-1, 24))                # mittlere Windgeschwindigkeit [m/s]
-        self.rad = np.array([]).reshape((-1, 24))                # mittlere Globalstrahlung [W/m²]
-        self.tmp = np.array([]).reshape((-1, 24))                # mittlere Temperatur [°C]
-        self.prc_1 = np.array([]).reshape((-1, 24))              # DayAhead Preis gestern [€/MWh]
-        self.prc_7 = np.array([]).reshape((-1, 24))              # DayAhead Preis vor einer Woche [€/MWh]
-        self.dummies = np.array([]).reshape((-1, 24))            # Dummie-Variablen: Feiertag, Sonntag, Monat, Jahreszeit
-
-
-        # Outputdaten des Models
-        self.mcp = np.array([]).reshape((-1, 24))                # DayAhead Preise (0..24) [€/MWh]
 
     def collectData(self, date):
         """ Sammelt die Daten, die zum Training benötigt werden """
