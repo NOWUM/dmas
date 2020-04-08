@@ -20,7 +20,7 @@ class pwpPort(port_model):
 
         self.energySystems.update(energysystem)
 
-    def buildModel(self, response=[]):
+    def buildModel(self, response=[], max_=False):
         # ----- remove all constrains and vars -----
         self.m.remove(self.m.getVars())
         self.m.remove(self.m.getConstrs())
@@ -61,8 +61,11 @@ class pwpPort(port_model):
         self.m.addConstr(profit == quicksum(power[i] * self.prices['power'][i] for i in self.t))
 
         if len(response) == 0:
-            # objective function (max cashflow)
-            self.m.setObjective(profit - quicksum(fuel[i] + emission[i] for i in self.t), GRB.MAXIMIZE)
+            if max_:
+                self.m.setObjective(quicksum(power[i] for i in self.t), GRB.MAXIMIZE)
+            else:
+                # objective function (max cashflow)
+                self.m.setObjective(profit - quicksum(fuel[i] + emission[i] for i in self.t), GRB.MAXIMIZE)
         else:
             minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
             plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
