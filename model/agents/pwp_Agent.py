@@ -141,7 +141,8 @@ class pwpAgent(basicAgent):
         powerMax = np.asarray(self.portfolio.optimize(), np.float)
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
         F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
-        priceMax = ((E+F) + 1.2)/powerMax
+        powerMax[powerMax <= 0] = self.portfolio.Cap_PWP
+        priceMax = ((E+F) * 1.5)/powerMax
         powerMax = powerMax - power
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
@@ -168,11 +169,11 @@ class pwpAgent(basicAgent):
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [-1*(20/100 * power[i]) for _ in range(20, 120, 20)]
-            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(20, 120, 20)]
-            if powerMax[i]>0:
+            quantity = [-1*(5/100 * power[i]) for _ in range(5, 105, 5)]
+            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(5, 105, 5)]
+            if powerMax[i] > 0:
                 quantity.append(-1 * powerMax[i])
-                price.append(priceMax[i])
+                price.append(max(priceMax[i], self.maxPrice[i] + 5))
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
