@@ -119,7 +119,6 @@ class pwpAgent(basicAgent):
             orderbook.update({'pos_%s' % i: {'quantity': np.round(states[0] * a, 0), 'powerPrice': powerPricePos,
                                              'energyPrice': energyPricePos, 'typ': 'pos', 'slot': i, 'name': self.name}})
 
-        print(orderbook)
         self.ConnectionMongo.setBalancing(self.name, self.date, orderbook)
 
         logging.info('Planung Regelleistungsmarkt abgeschlossen')
@@ -140,11 +139,10 @@ class pwpAgent(basicAgent):
         self.portfolio.setPara(self.date, weather, price, demand, pos, neg)
         self.portfolio.buildModel(max_=True)
         powerMax = np.asarray(self.portfolio.optimize(), np.float)
-        powerMax = powerMax - power
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
         F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
-        priceMax = (E+F) + 1.2
-
+        priceMax = ((E+F) + 1.2)/powerMax
+        powerMax = powerMax - power
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
         wnd = np.asarray(weather['wind']).reshape((-1, 1))                  # Wind [m/s]
