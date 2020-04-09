@@ -161,16 +161,16 @@ class pwpAgent(basicAgent):
         if len(self.forecasts['price'].y):
             var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + var
-        self.minPrice = prc.reshape((-1,)) - var
+        self.maxPrice = prc.reshape((-1,)) + 1.25*var
+        self.minPrice = prc.reshape((-1,)) - 0.5*var
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [-1*(5/100 * power[i]) for _ in range(5, 105, 5)]
-            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(5, 105, 5)]
+            quantity = [-1*(2/100 * power[i]) for _ in range(2, 102, 2)]
+            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(2, 102, 2)]
             if powerMax[i] > 0:
                 quantity.append(-1 * powerMax[i])
                 price.append(max(priceMax[i], self.maxPrice[i] + 5))

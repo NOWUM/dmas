@@ -94,16 +94,16 @@ class resAgent(basicAgent):
         if len(self.forecasts['price'].y) > 0:
             var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + var
-        self.minPrice = prc.reshape((-1,)) - var
+        self.maxPrice = prc.reshape((-1,)) + 1.25*var
+        self.minPrice = prc.reshape((-1,)) - 0.5*var
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [-1*(20/100 * power[i]) for _ in range(20, 120, 20)]
-            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(20, 120, 20)]
+            quantity = [-1*(2/100 * power[i]) for _ in range(2, 102, 2)]
+            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(2, 102, 2)]
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
