@@ -111,10 +111,10 @@ class annFrcst:
         else:
             power_price = 25*np.ones(24)
 
-        co = np.ones_like(power_price) * 20                                                 # -- Emission Price     [€/MWh]
-        gas = np.ones_like(power_price) * 3                                                 # -- Gas Price          [€/MWh]
-        lignite = 1.5                                                                       # -- Lignite Price      [€/MWh]
-        coal = 2                                                                            # -- Hard Coal Price    [€/MWh]
+        co = np.ones_like(power_price) * 25                                                 # -- Emission Price     [€/MWh]
+        gas = np.ones_like(power_price) * 18                                                # -- Gas Price          [€/MWh]
+        lignite = 3.5                                                                       # -- Lignite Price      [€/MWh]
+        coal = 8.5                                                                          # -- Hard Coal Price    [€/MWh]
         nuc = 1                                                                             # -- nuclear Price      [€/MWh]
 
         return dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)

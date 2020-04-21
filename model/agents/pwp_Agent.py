@@ -43,7 +43,7 @@ class pwpAgent(basicAgent):
                         powerMax=np.round(p,1),                             # Maximalleistung
                         powerMin=np.round(p * t['out_min']/100, 1),         # Minimalleistung (Angabe in % in Tech)
                         eta=t['eta'],                                       # Wirkungsgrad
-                        chi='0.15',                                         # Emissionsfaktor [kgCo2/MWh]
+                        chi='0.40',                                         # Emissionsfaktor [kgCo2/MWh]
                         P0=np.round(p * t['out_min']/100, 1),               # aktuelle Leistung des Blocks
                         stopTime=t['down_min'],                             # minimale Stillstandszeit
                         runTime=t['up_min'],                                # minimale Laufzeit
@@ -132,11 +132,10 @@ class pwpAgent(basicAgent):
         demand = self.demandForecast()                                      # Lastprognose
         # Verpflichtungen Regelleistung
         pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)
-        self.portfolio.setPara(self.date, weather,  price, demand, pos, neg)
+        self.portfolio.setPara(self.date, weather,  price, demand)
         self.portfolio.buildModel()
         power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
-
-        self.portfolio.setPara(self.date, weather, price, demand, pos, neg)
+        self.portfolio.setPara(self.date, weather, price, demand)
         self.portfolio.buildModel(max_=True)
         powerMax = np.asarray(self.portfolio.optimize(), np.float)
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
@@ -144,6 +143,11 @@ class pwpAgent(basicAgent):
         powerMax[powerMax <= 0] = self.portfolio.Cap_PWP
         priceMax = ((E+F) * 1.5)/powerMax
         powerMax = powerMax - power
+
+        self.portfolio.setPara(self.date, weather,  price, demand)
+        self.portfolio.buildModel()
+        _ = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
+
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
         wnd = np.asarray(weather['wind']).reshape((-1, 1))                  # Wind [m/s]
@@ -161,8 +165,8 @@ class pwpAgent(basicAgent):
         if len(self.forecasts['price'].y):
             var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + 1.25*var
-        self.minPrice = prc.reshape((-1,)) - 0.5*var
+        self.maxPrice = prc.reshape((-1,)) + 2*var
+        self.minPrice = prc.reshape((-1,)) - 2*var
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 

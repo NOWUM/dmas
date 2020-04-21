@@ -95,6 +95,7 @@ class pwpPort(port_model):
                 if value['typ'] == 'storage':
                     value['P+0'] = [self.m.getVarByName('P+_%s[%i]' % (key, i)).x for i in self.t][-1]
                     value['P-0'] = [self.m.getVarByName('P-_%s[%i]' % (key, i)).x for i in self.t][-1]
+                    value['V0'] = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t][-1]
             power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
         except Exception as e:
             print(e)

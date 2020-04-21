@@ -54,7 +54,7 @@ class resAgent(basicAgent):
         self.maxPrice = 10
         self.minPrice = 0.1
         self.actions = np.zeros(24)                                         # Steigung der Gebotsgeraden für jede Stunde
-        self.espilion = 0.8                                                 # Faktor zum Abtasten der Möglichkeiten
+        self.espilion = 0.5                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=5)             # Lernalgorithmus im 5 Tage Rythmus
         self.qLearn.qus = self.qLearn.qus * (self.portfolio.Cap_Wind + self.portfolio.Cap_Solar)
@@ -96,8 +96,8 @@ class resAgent(basicAgent):
         if len(self.forecasts['price'].y) > 0:
             var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + 1.25*var
-        self.minPrice = prc.reshape((-1,)) - 0.5*var
+        self.maxPrice = prc.reshape((-1,)) + 2*var
+        self.minPrice = prc.reshape((-1,)) - 2*var
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 
@@ -140,16 +140,17 @@ class resAgent(basicAgent):
         profit = [(ask[i]-bid[i])*price[i] for i in range(24)]
         power = ask - bid
         # print('%s (%s, %s): %s' % (self.name, self.portfolio.Cap_Wind, self.portfolio.Cap_Solar, profit))
+        planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead')
+        difference = np.asarray(planing).reshape((-1,)) - np.asarray(power).reshape((-1,))
+        missed = [difference[i]*price[i] if price[i] > 0 else 0 for i in range(24)]
+
 
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
             states = self.qLearn.getStates(self.date)
             for i in self.portfolio.t:
                 oldValue = self.qLearn.qus[states[i], int(self.actions[i]-10)]
-                self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (profit[i] - oldValue)
-
-        planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead')
-        difference = np.asarray(planing).reshape((-1,)) - np.asarray(power).reshape((-1,))
+                self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (profit[i] - missed[i] - oldValue)
 
        # Abspeichern der Ergebnisse
         json_body = []
@@ -238,7 +239,7 @@ class resAgent(basicAgent):
 
             self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
                                                                              # Zukunft nicht mehr so schnell)
-            self.espilion = max(0.999*self.espilion, 0.2)                    # Epsilion * 0.999 (mit steigender Simulationdauer
+            self.espilion = max(0.999*self.espilion, 0.1)                    # Epsilion * 0.999 (mit steigender Simulationdauer
                                                                              # sind viele Bereiche schon bekannt
             print(self.lr)
             print(self.espilion)

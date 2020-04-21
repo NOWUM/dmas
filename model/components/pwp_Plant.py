@@ -14,40 +14,11 @@ class powerPlant_gurobi(es):
 
         # Leistung des Kraftwerkes zu jedem Zeitschritt t
         power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P_' + name, lb=0, ub=GRB.INFINITY)
-        # Leistung zur Lösung des Optimierungsproblems
-        p = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, lb=0, ub=GRB.INFINITY, name='p_')
-
-        # Zustände des Kraftwerks
-        v = self.m.addVars(self.t, vtype=GRB.BINARY, name='v')      # von 0 -> Pmin
-        w = self.m.addVars(self.t, vtype=GRB.BINARY, name='w')      # von Pmin -> 0
-        z = self.m.addVars(self.t, vtype=GRB.BINARY, name='z')      # Normalbetrieb
+        on = self.m.addVars(self.t, vtype=GRB.BINARY, name='On_' + name)
 
         # Gradienten für Regelleistung
         gradP = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='gradUp_' + name, lb=0, ub=GRB.INFINITY)
         gradM = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='gradDown_' + name, lb=0, ub=GRB.INFINITY)
-
-        # Startbedingungen der Zustände
-        self.m.addConstr(z[0] == 1)
-        self.m.addConstr(v[0] == 0)
-        self.m.addConstr(w[0] == 0)
-
-        # Verknüpfung der Zustände über Laufzeitbedingungen
-        self.m.addConstrs(z[i - 1] - z[i] + v[i] - w[i] == 0 for i in self.t[1:])
-        self.m.addConstrs(1-z[i] >= quicksum(w[k] for k in range(min(1, i+1-int(data['stopTime']/self.dt),i))) for i in self.t[1:])
-        self.m.addConstrs(z[i] >= quicksum(v[k] for k in range(min(1, i+1-int(data['runTime']/self.dt),i))) for i in self.t[1:])
-
-        # Startbedingungen der lesitung
-        self.m.addConstr(p[0] == data['P0'] - data['powerMin'])
-        # Verknüpfung der Leistungen zur Lösung & der tatsächlichen leistung
-        self.m.addConstrs(power[i] == data['powerMin'] * z[i] + p[i] for i in self.t)
-
-        # Leitungsgrenzen
-        self.m.addConstrs(p[i] <= (data['powerMax'] - data['powerMin']) * z[i] - (data['powerMax'] - data['gradP']) * v[i] for i in self.t)
-        self.m.addConstrs(p[i] <= (data['powerMax'] - data['powerMin']) * z[i] - (data['powerMax'] - data['gradM']) * w[i] for i in self.t)
-
-        # Flex-Grenzen
-        self.m.addConstrs(p[i] - p[i-1] <= data['gradP'] * z[i] + (data['gradP'] - data['powerMin']) * v[i] for i in self.t[1:])
-        self.m.addConstrs(p[i-1] - p[i] <= data['gradM'] * z[i] + (data['gradM'] - data['powerMin']) * v[i] for i in self.t[1:])
 
         # Erlöse
         profit = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='Profit_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
@@ -64,15 +35,23 @@ class powerPlant_gurobi(es):
         if data['fuel'] == 'nuc':
             self.m.addConstrs(fuel[i] == power[i] / data['eta'] * ts['nuc'] for i in self.t)
 
-        # Emissionskosten
         emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E_' + name, lb=0, ub=GRB.INFINITY)
         self.m.addConstrs(emission[i] == power[i] * data['chi'] * ts['co'][i] for i in self.t)
 
+        # Berücksichtigung der Startbedingungen
+        if data['P0'] == 0:
+            self.m.addConstr(power[0] == on[0] * data['powerMin'])
+        else:
+            self.m.addConstr(power[0] <= on[0] * data['P0'] + data['gradP'])
+            self.m.addConstr(power[0] >= on[0] * data['P0'] - data['gradM'])
+        # Berücksichtigung der Gradienten
+        self.m.addConstrs(power[i] <= power[i - 1] + data['gradP'] for i in self.t[1:])
+        self.m.addConstrs(power[i] >= power[i - 1] - data['gradM'] for i in self.t[1:])
         # Wenn das Kraftwerk läuft --> [Pmin,Pmax]
-        self.m.addConstrs(power[i] >= z[i] * data['powerMin'] for i in self.t)
-        self.m.addConstrs(power[i] <= z[i] * data['powerMax'] for i in self.t)
+        self.m.addConstrs(power[i] >= on[i] * data['powerMin'] for i in self.t)
+        self.m.addConstrs(power[i] <= on[i] * data['powerMax'] for i in self.t)
         # Verfügbare Gradienten für Regelleistung
-        self.m.addConstrs(gradP[i] == z[i] * min(data['gradP'], data['powerMax'] - data['P0']) for i in self.t)
-        self.m.addConstrs(gradM[i] == z[i] * min(data['gradM'], data['P0'] - data['powerMin']) for i in self.t)
+        self.m.addConstrs(gradP[i] == 0 for i in self.t) #on[i] * min(data['gradP'], data['powerMax'] - data['P0']) for i in self.t)
+        self.m.addConstrs(gradM[i] == 0 for i in self.t) #on[i] * min(data['gradM'], data['P0'] - data['powerMin']) for i in self.t)
 
         self.m.update()
