@@ -10,9 +10,9 @@ class port_model:
         self.date = pd.to_datetime(date)            # -- Date-Time
         self.energySystems = {}                     # -- dict to save the meta data for the systems
         self.typ = typ                              # -- Portfoliotyp (DEM,RES,PWP,...)
-        self.Cap_Wind = 0                            # -- Wind Capacity in Portfolio
-        self.Cap_Solar = 0                           # -- Solar Capacity in Portfolio
-        self.Cap_PWP = 0                             # -- Power Plant Capacity in Portfolio
+        self.Cap_Wind = 0                           # -- Wind Capacity in Portfolio
+        self.Cap_Solar = 0                          # -- Solar Capacity in Portfolio
+        self.Cap_PWP = 0                            # -- Power Plant Capacity in Portfolio
         # time data
         self.T = 24                                 # -- steps per day
         self.t = np.arange(T)                       # -- array with single steps

@@ -19,13 +19,16 @@ class resPort(port_model):
         self.energySystems.update(energysystem)
 
     def buildModel(self, response=[]):
-        for _, data in self.energySystems.items():
-            data['model'].build(data, self.weather, self.date)
+        if len(response) == 0:
+            for _, data in self.energySystems.items():
+                data['model'].build(data, self.weather, self.date)
+        else:
+            self.power = np.asarray(response)
 
     def optimize(self):
         power = np.zeros_like(self.t)
         try:
-            pWind = np.asarray([value['model'].powerWind for _, value in self.energySystems.items()],np.float)
+            pWind = np.asarray([value['model'].powerWind for _, value in self.energySystems.items()], np.float)
             self.pWind = np.sum(pWind, axis=0)
             pSolar = np.asarray([value['model'].powerSolar for _, value in self.energySystems.items()], np.float)
             self.pSolar = np.sum(pSolar, axis=0)

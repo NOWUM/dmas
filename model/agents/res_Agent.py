@@ -51,12 +51,14 @@ class resAgent(basicAgent):
         logging.info('PV-Erzeugung hinzugefügt')
 
         # Parameter für die Handelsstrategie am Day Ahead Markt
-        self.maxPrice = 10                                                  # Maximalgebot entspricht dem 10fachen MCP
-        self.minPrice = 0.1                                                 # Minimalgenbot entspricht dem 0.1fachen MCP
+        self.maxPrice = 10
+        self.minPrice = 0.1
         self.actions = np.zeros(24)                                         # Steigung der Gebotsgeraden für jede Stunde
         self.espilion = 0.8                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=5)             # Lernalgorithmus im 5 Tage Rythmus
+        self.qLearn.qus = self.qLearn.qus * (self.portfolio.Cap_Wind + self.portfolio.Cap_Solar)
+
 
         logging.info('Parameter der Handelsstrategie festgelegt')
 
@@ -76,7 +78,7 @@ class resAgent(basicAgent):
         self.portfolio.setPara(self.date, weather, price, demand)
         self.portfolio.buildModel()
         power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
-
+        # print('%s (%s, %s): %s' % (self.name, self.portfolio.Cap_Wind, self.portfolio.Cap_Solar, power))
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
         wnd = np.asarray(weather['wind']).reshape((-1, 1))                  # Wind [m/s]
@@ -136,6 +138,8 @@ class resAgent(basicAgent):
         bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
         price = self.ConnectionInflux.getDayAheadPrice(self.date)
         profit = [(ask[i]-bid[i])*price[i] for i in range(24)]
+        power = ask - bid
+        # print('%s (%s, %s): %s' % (self.name, self.portfolio.Cap_Wind, self.portfolio.Cap_Solar, profit))
 
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
@@ -144,7 +148,8 @@ class resAgent(basicAgent):
                 oldValue = self.qLearn.qus[states[i], int(self.actions[i]-10)]
                 self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (profit[i] - oldValue)
 
-        power = ask - bid
+        planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead')
+        difference = np.asarray(planing).reshape((-1,)) - np.asarray(power).reshape((-1,))
 
        # Abspeichern der Ergebnisse
         json_body = []
@@ -155,7 +160,7 @@ class resAgent(basicAgent):
                     "measurement": 'Areas',
                     "tags": dict(agent=self.name, area=self.area, timestamp='post_dayAhead', typ='RES'),
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(Power=power[i])
+                    "fields": dict(Power=power[i], Difference=difference[i])
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
@@ -168,10 +173,11 @@ class resAgent(basicAgent):
         schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'post_dayAhead')
 
         # Berechnung der Prognoseabweichung
+        self.portfolio.buildModel(response=schedule)
         actual = self.portfolio.fixPlaning()                    # Berechung des aktuellen Fahrplans + Errors
-        # Wenn kein Zuschlag am DayAhead Markt vorliegt, regel die Anlage runter
+        # Berechnung der Abweichung
         difference = np.asarray([(schedule[i] - actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolio.t])
-        power = np.asarray([(actual[i] if schedule[i] > 0 else 0) for i in self.portfolio.t])
+        power = np.asarray([(actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolio.t])
         # Aufbau der "Gebote" (Abweichungen zum gemeldeten Fahrplan)
         orderbook = dict()
         for i in range(self.portfolio.T):
@@ -197,7 +203,7 @@ class resAgent(basicAgent):
 
     def post_actual(self):
         """Abschlussplanung des Tages"""
-        power = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual')     # Letzter bekannter  Fahrplan
+        power = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual')     # Letzter bekannter Fahrplan
 
         # Abspeichern der Ergebnisse
         time = self.date
@@ -230,10 +236,12 @@ class resAgent(basicAgent):
             self.qLearn.fit()
             self.qLearn.counter = 0
 
-        self.lr = max(self.lr*0.9, 0.4)                                 # Lernrate * 0.9 (Annahme Markt ändert sich
-                                                                        # Zukunft nicht mehr so schnell)
-        self.espilion = max(0.9*self.espilion, 0.2)                     # Epsilion * 0.9 (mit steigender Simulationdauer
-                                                                        # sind viele Bereiche schon bekannt
+            self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
+                                                                             # Zukunft nicht mehr so schnell)
+            self.espilion = max(0.999*self.espilion, 0.2)                    # Epsilion * 0.999 (mit steigender Simulationdauer
+                                                                             # sind viele Bereiche schon bekannt
+            print(self.lr)
+            print(self.espilion)
 
         logging.info('Tag %s abgeschlossen' %self.date)
         print('Agent %s %s done' % (self.name, self.date.date()))

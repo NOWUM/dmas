@@ -27,7 +27,7 @@ class powerPlant_gurobi(es):
         gradM = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='gradDown_' + name, lb=0, ub=GRB.INFINITY)
 
         # Startbedingungen der Zustände
-        self.m.addConstr(z[0] == 0)
+        self.m.addConstr(z[0] == 1)
         self.m.addConstr(v[0] == 0)
         self.m.addConstr(w[0] == 0)
 
@@ -37,7 +37,7 @@ class powerPlant_gurobi(es):
         self.m.addConstrs(z[i] >= quicksum(v[k] for k in range(min(1, i+1-int(data['runTime']/self.dt),i))) for i in self.t[1:])
 
         # Startbedingungen der lesitung
-        self.m.addConstr(p[0] == data['P_0'] - data['powerMin'])
+        self.m.addConstr(p[0] == data['P0'] - data['powerMin'])
         # Verknüpfung der Leistungen zur Lösung & der tatsächlichen leistung
         self.m.addConstrs(power[i] == data['powerMin'] * z[i] + p[i] for i in self.t)
 

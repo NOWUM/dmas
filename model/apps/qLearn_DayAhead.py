@@ -4,10 +4,10 @@ from sklearn.cluster import KMeans
 
 class qLeran:
 
-    def __init__(self, influx, init=5):
+    def __init__(self, influx, init=6):
 
         self.influx = influx
-        self.states = KMeans(n_clusters=30, n_init=5, max_iter=200, random_state=np.random.randint(low=1, high=100))
+        self.states = KMeans(n_clusters=72, n_init=7, max_iter=200, random_state=np.random.randint(low=1, high=100))
 
         # -- Input for Cluster-Anaylse
         self.dem = np.array([]).reshape((-1, 1))
@@ -18,7 +18,7 @@ class qLeran:
         # -- Action Size (70)
         self.act = np.array([]).reshape((-1, 1))
         # -- Reward Values
-        self.qus = np.random.randint(100, 10000, (30, 70))
+        self.qus = 15*np.ones((72, 70))
 
         self.fitted = False
         self.counter = 0
