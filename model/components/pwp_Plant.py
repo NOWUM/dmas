@@ -51,7 +51,7 @@ class powerPlant_gurobi(es):
         self.m.addConstrs(power[i] >= on[i] * data['powerMin'] for i in self.t)
         self.m.addConstrs(power[i] <= on[i] * data['powerMax'] for i in self.t)
         # Verfügbare Gradienten für Regelleistung
-        self.m.addConstrs(gradP[i] == 0 for i in self.t) #on[i] * min(data['gradP'], data['powerMax'] - data['P0']) for i in self.t)
-        self.m.addConstrs(gradM[i] == 0 for i in self.t) #on[i] * min(data['gradM'], data['P0'] - data['powerMin']) for i in self.t)
+        self.m.addConstrs(gradP[i] == on[i] * min(data['gradP'], data['powerMax'] - data['P0']) for i in self.t)
+        self.m.addConstrs(gradM[i] == on[i] * min(data['gradM'], data['P0'] - data['powerMin']) for i in self.t)
 
         self.m.update()

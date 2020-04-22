@@ -132,10 +132,10 @@ class pwpAgent(basicAgent):
         demand = self.demandForecast()                                      # Lastprognose
         # Verpflichtungen Regelleistung
         pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)
-        self.portfolio.setPara(self.date, weather,  price, demand)
+        self.portfolio.setPara(self.date, weather,  price, demand, pos, neg)
         self.portfolio.buildModel()
         power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
-        self.portfolio.setPara(self.date, weather, price, demand)
+        self.portfolio.setPara(self.date, weather, price, demand, pos, neg)
         self.portfolio.buildModel(max_=True)
         powerMax = np.asarray(self.portfolio.optimize(), np.float)
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
@@ -144,7 +144,7 @@ class pwpAgent(basicAgent):
         priceMax = ((E+F) * 1.5)/powerMax
         powerMax = powerMax - power
 
-        self.portfolio.setPara(self.date, weather,  price, demand)
+        self.portfolio.setPara(self.date, weather,  price, demand, pos, neg)
         self.portfolio.buildModel()
         _ = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
 

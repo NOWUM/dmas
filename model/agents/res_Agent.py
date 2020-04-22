@@ -119,7 +119,8 @@ class resAgent(basicAgent):
                     "measurement": 'Areas',
                     "tags": dict(agent=self.name, area=self.area, timestamp='optimize_dayAhead', typ='RES'),
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(Power=power[i], Wind=self.portfolio.pWind[i], Solar=self.portfolio.pSolar[i])
+                    "fields": dict(Power=power[i], Wind=self.portfolio.pWind[i], Solar=self.portfolio.pSolar[i],
+                                   PriceFrcst=prc[i][0])
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
