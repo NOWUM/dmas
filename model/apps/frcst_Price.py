@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from apps.misc_Dummies import createSaisonDummy
-from apps.frcst_DEM import typFrcst as demFrcst
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
@@ -81,7 +80,8 @@ class annFrcst:
         x = np.concatenate((self.x, x), axis=0)
         y = np.concatenate((self.y, self.mcp), axis=0)
         # Schritt 1: Skalieren der Daten
-        x_std = self.scaler.fit_transform(x)
+        self.scaler.partial_fit(x)
+        x_std = self.scaler.transform(x)
         # Schritt 2: Aufteilung in Test- und Trainingsdaten
         X_train, X_test, y_train, y_test = train_test_split(x_std, y, test_size=0.2)
         # Schritt 3: Training des Models
@@ -105,7 +105,8 @@ class annFrcst:
             dummies = createSaisonDummy(date, date).reshape((-1, 24))
             # Schritt 1: Skalieren der Daten
             x = np.concatenate((dem, rad, wnd, tmp, prc_1, prc_7, dummies), axis=1)
-            x_std = self.scaler.fit_transform(x)
+            self.scaler.partial_fit(x)
+            x_std = self.scaler.transform(x)
             # Schritt 2: Berechnung des Forecasts
             power_price = self.model.predict(x_std).reshape((24,))
         else:

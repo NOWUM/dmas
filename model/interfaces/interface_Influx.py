@@ -199,6 +199,7 @@ class influxInterface:
     """----------------------------------------------------------
     -->             Query Regelleistung                      <---    
     ----------------------------------------------------------"""
+
     def getBalancingPower(self, date, name):
         """ Bezuschlagte positive und negative Regelleistung in [MW] """
         self.influx.switch_database(database=self.database)
@@ -324,7 +325,7 @@ class influxInterface:
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
         # --> Abfrage
-        query = 'SELECT sum("Power") FROM "Areas" WHERE time >= \'%s\' and time < \'%s\'  and "timestamp" = \'optimize_dayAhead\' GROUP BY time(1h) fill(0)' % (
+        query = 'SELECT sum("Power") FROM "Areas" WHERE time >= \'%s\' and time < \'%s\'  and "typ" =\'DEM\' and "timestamp" = \'optimize_dayAhead\' GROUP BY time(1h) fill(0)' % (
         start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
