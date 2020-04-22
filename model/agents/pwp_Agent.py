@@ -135,18 +135,58 @@ class pwpAgent(basicAgent):
         self.portfolio.setPara(self.date, weather,  price, demand)
         self.portfolio.buildModel()
         power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
+        # Speichern des Fahrplans bei aktuller Preisprognose
+        json_body = []
+        for key, value in self.portfolio.energySystems.items():
+            time = self.date
+            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            volume = np.zeros_like(power)
+            if value['typ'] == 'storage':
+                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            for i in self.portfolio.t:
+                json_body.append(
+                    {
+                        "measurement": 'Areas',
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
+                                     timestamp='optimize_dayAhead', typ='PWP'),
+                        "time": time.isoformat() + 'Z',
+                        "fields": dict(Power=power[i], Volume=volume[i], PriceFrcst=price['power'][i])
+                    }
+                )
+                time = time + pd.DateOffset(hours=self.portfolio.dt)
+        self.ConnectionInflux.saveData(json_body)
+
+
         self.portfolio.setPara(self.date, weather, price, demand)
         self.portfolio.buildModel(max_=True)
         powerMax = np.asarray(self.portfolio.optimize(), np.float)
+        # Speichern der maximal möglichen Leistung
+        json_body = []
+        for key, value in self.portfolio.energySystems.items():
+            time = self.date
+            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            volume = np.zeros_like(power)
+            if value['typ'] == 'storage':
+                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            for i in self.portfolio.t:
+                json_body.append(
+                    {
+                        "measurement": 'Areas',
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
+                                     timestamp='optimize_dayAhead', typ='PWP'),
+                        "time": time.isoformat() + 'Z',
+                        "fields": dict(PowerMax=power[i], Volume=volume[i])
+                    }
+                )
+                time = time + pd.DateOffset(hours=self.portfolio.dt)
+        self.ConnectionInflux.saveData(json_body)
+
+
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
         F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
         powerMax[powerMax <= 0] = self.portfolio.Cap_PWP
         priceMax = ((E+F) * 1.5)/powerMax
         powerMax = powerMax - power
-
-        self.portfolio.setPara(self.date, weather,  price, demand)
-        self.portfolio.buildModel()
-        _ = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
 
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
@@ -181,26 +221,6 @@ class pwpAgent(basicAgent):
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
-
-        json_body = []
-        for key, value in self.portfolio.energySystems.items():
-            time = self.date
-            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-            volume = np.zeros_like(power)
-            if value['typ'] == 'storage':
-                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-            for i in self.portfolio.t:
-                json_body.append(
-                    {
-                        "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
-                                     timestamp='optimize_dayAhead', typ='PWP'),
-                        "time": time.isoformat() + 'Z',
-                        "fields": dict(Power=power[i], Volume=volume[i])
-                    }
-                )
-                time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
 
         logging.info('Planung DayAhead-Markt abgeschlossen')
 
@@ -283,8 +303,8 @@ class pwpAgent(basicAgent):
                                np.zeros(self.portfolio.T), np.zeros(self.portfolio.T))
         schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual')
         self.portfolio.buildModel(response=schedule + pos - neg)
-        power = self.portfolio.fixPlaning()
-
+        #power = self.portfolio.fixPlaning()
+        power = schedule
         # -- save result
         time = self.date
         json_body = []
