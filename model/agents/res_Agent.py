@@ -91,13 +91,11 @@ class resAgent(basicAgent):
             slopes = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
 
         self.actions = slopes                                               # abschpeichern der Ergebnisse
-        var = 2
+        var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        if len(self.forecasts['price'].y) > 0:
-            var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
+        self.maxPrice = prc.reshape((-1,))
+        self.minPrice = prc.reshape((-1,)) - 4*var
 
-        self.maxPrice = prc.reshape((-1,)) + 2*var
-        self.minPrice = prc.reshape((-1,)) - 2*var
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 

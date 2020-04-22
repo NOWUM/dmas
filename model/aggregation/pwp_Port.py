@@ -30,33 +30,20 @@ class pwpPort(port_model):
 
         # ----- build up aggregation constrains and vars -----
 
-        # ----- total power -----
+        # Summe Leistung
         power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P', lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        pPower = [x for x in self.m.getVars() if 'P_' in x.VarName]
-        self.m.addConstrs(power[i] == quicksum(p for p in pPower if '[%i]' % i in p.VarName) for i in self.t)
+        self.m.addConstrs(power[i] == quicksum(p for p in [x for x in self.m.getVars() if 'P_' in x.VarName]
+                                               if '[%i]' % i in p.VarName) for i in self.t)
 
-        # ----- balancing power -----
-        gradP = [x for x in self.m.getVars() if 'gradUp_' in x.VarName]
-        self.m.addConstrs(
-            float(self.posBalPower[i]) <= quicksum(x for x in gradP if '[%i]' % i in x.VarName) for i in self.t)
-
-        gradM = [x for x in self.m.getVars() if 'gradDown_' in x.VarName]
-        self.m.addConstrs(
-            float(self.negBalPower[i]) <= quicksum(x for x in gradM if '[%i]' % i in x.VarName) for i in self.t)
-
-        maxPower = np.asarray(self.pwpCap - self.posBalPower)
-        self.m.addConstrs((power[i] <= maxPower[i] for i in self.t))
-        self.m.addConstrs((power[i] >= float(self.negBalPower[i]) for i in self.t))
-        # ----- fuel -----
+        # Summe Brennstoffkosten
         fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F', lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        pFuel = [x for x in self.m.getVars() if 'F_' in x.VarName]
-        self.m.addConstrs(fuel[i] == quicksum(f for f in pFuel if '[%i]' % i in f.VarName) for i in self.t)
-        # ----- emissions -----
+        self.m.addConstrs(fuel[i] == quicksum(f for f in [x for x in self.m.getVars() if 'F_' in x.VarName]
+                                              if '[%i]' % i in f.VarName) for i in self.t)
+        # Summe Emissionkosten
         emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E', lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        pEmssion = [x for x in self.m.getVars() if 'E_' in x.VarName]
-        self.m.addConstrs(
-            emission[i] == quicksum(e for e in pEmssion if '[%i]' % i in e.VarName) for i in self.t)
-        # ----- cashflow -----
+        self.m.addConstrs(emission[i] == quicksum(e for e in [x for x in self.m.getVars() if 'E_' in x.VarName]
+                                                  if '[%i]' % i in e.VarName) for i in self.t)
+        # Summe Erlöse
         profit = self.m.addVar(vtype=GRB.CONTINUOUS, name='Profit', lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstr(profit == quicksum(power[i] * self.prices['power'][i] for i in self.t))
 

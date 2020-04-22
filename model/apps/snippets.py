@@ -636,3 +636,18 @@ class learnDayAheadMarginal:
 
             return pso(self.opt, self.lb, self.ub, omega=0.1, swarmsize=10, phip=0.75, phig=0.3,
                        minfunc=1000, minstep=10, maxiter=50, args=(weather, states, date, prices))
+
+
+
+        # ----- balancing power -----
+        gradP = [x for x in self.m.getVars() if 'gradUp_' in x.VarName]
+        self.m.addConstrs(
+            float(self.posBalPower[i]) <= quicksum(x for x in gradP if '[%i]' % i in x.VarName) for i in self.t)
+
+        gradM = [x for x in self.m.getVars() if 'gradDown_' in x.VarName]
+        self.m.addConstrs(
+            float(self.negBalPower[i]) <= quicksum(x for x in gradM if '[%i]' % i in x.VarName) for i in self.t)
+
+        maxPower = np.asarray(self.Cap_PWP - self.posBalPower)
+        self.m.addConstrs((power[i] <= maxPower[i] for i in self.t))
+        self.m.addConstrs((power[i] >= float(self.negBalPower[i]) for i in self.t))
