@@ -44,7 +44,7 @@ class resAgent(basicAgent):
         for i in range(len(data['power'])):
             name = 'plz_' + str(plz) + '_solar_' + str(i)                   # Name der PV-Parks (1,..,n)
             generator = dict(peakpower=data['power'][i],                    # Default Werte sowie die angegebene
-                             typ='solar', eta=0.15, area=3.5)               # Nennleistung [kW]
+                             typ='solar', eta=0.13, area=7)                 # Nennleistung [kW]
             self.portfolio.addToPortfolio(name, {name : generator})
         self.portfolio.Cap_Solar = sum(data['power']) / 1000                # Gesamte Solarleistung in [MW]
 
