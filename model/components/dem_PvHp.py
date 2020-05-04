@@ -25,7 +25,7 @@ class pvwp_model(es):
         for i in range(len(residuum)):
             if (residuum[i] >= 0) & (vt == 0) | (heatDemand[i] > vt):                                # keine Nutuzng möglich (leer)
                 q_wp = heatDemand[i]
-                grid.append(residuum[i] + q_wp/data['WP']['cop'])
+                grid.append(residuum[i] + q_wp/data['HP']['cop'])
                 continue
             if (residuum[i] >= 0) & (heatDemand[i] <= vt):                                          # Nutze Wärmespeicher
                 vt -= heatDemand[i]
@@ -33,13 +33,13 @@ class pvwp_model(es):
                 continue
             if (residuum[i] <= 0):                                                                  # Eigenerzeugung
                 # Strombedarf resultierend aus Wärmebedarf
-                powHp = heatDemand[i]/data['WP']['cop']
-                if (powHp < residuum[i]) & (vt - (residuum[i] + powHp)*data['WP']['cop'] < data['tank']['vmax']):
-                    vt -= (residuum[i] + powHp)*data['WP']['cop']                                   # entlade Speicher
+                powHp = heatDemand[i]/data['HP']['cop']
+                if (powHp < residuum[i]) & (vt - (residuum[i] + powHp)*data['HP']['cop'] < data['tank']['vmax']):
+                    vt -= (residuum[i] + powHp)*data['HP']['cop']                                   # entlade Speicher
                     grid.append(0)
                     continue
-                if (powHp < residuum[i]) & (vt - (residuum[i] + powHp)*data['WP']['cop'] >= data['tank']['vmax']):
-                    grid.append((residuum[i] + powHp)-(data['tank']['vmax']-vt)/data['WP']['cop'])  # Lade Speicher
+                if (powHp < residuum[i]) & (vt - (residuum[i] + powHp)*data['HP']['cop'] >= data['tank']['vmax']):
+                    grid.append((residuum[i] + powHp)-(data['tank']['vmax']-vt)/data['HP']['cop'])  # Lade Speicher
                     vt = data['tank']['vmax']
                     continue
                 if (powHp > residuum[i]):                                                           # --> Rest Netz

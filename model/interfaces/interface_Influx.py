@@ -302,7 +302,7 @@ class influxInterface:
     -->             Query Leistungsplanung                   <---    
     ----------------------------------------------------------"""
 
-    def getPowerScheduling(self, date, name, timestamp):
+    def getPowerScheduling(self, date, name, timestamp, EEG='False'):
         """ Leistung zum jeweilgen Planungsschritt in [MW] """
         self.influx.switch_database(database=self.database)
         # Tag im ISO Format
@@ -310,8 +310,8 @@ class influxInterface:
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
         # --> Abfrage
-        query = 'select sum("Power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'%s\' GROUP BY time(1h) fill(0)' \
-                % (start, end, name, timestamp)
+        query = 'select sum("Power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'%s\' and "EEG" = \'%s\' GROUP BY time(1h) fill(0)' \
+                % (start, end, name, timestamp, EEG)
         result = self.influx.query(query)
         if result.__len__() > 0:
            return np.asarray([point['sum'] for point in result.get_points()])

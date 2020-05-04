@@ -11,7 +11,7 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=52, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=44, help='PLZ-Agent')
     parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
@@ -29,56 +29,20 @@ class pwpAgent(basicAgent):
         self.portfolio = pwpPort(typ='PWP', gurobi=True)                    # Verwendung von Gurobi
 
         # Einbindung der Kraftwerksdaten aus der MongoDB und dem TechFile in ./data
-        data, tech = self.ConnectionMongo.getPowerPlants(plz)
-        for i in range(len(data['power'])):
-            name = 'plz_' + str(plz) + '_block_' + str(i)                   # Name des Kraftwerkblocks (1,...,n)
-            fuel = data['fuel'][i]                                          # Brennstoff
-            typ = data['typ'][i]                                            # Alter (typ)
-            p = data['power'][i]                                            # Nennleistung [MW]
-            t = tech[str(fuel) + '_%i' % typ]                               # weitere Daten wie Gradient, Out-Time, ...
-            # Aufbau des Blocks
-            block = {name: dict(
-                        typ='konv',                                         # konventionelles Kraftwerk
-                        fuel=fuel,                                          # Brennstoff
-                        powerMax=np.round(p,1),                             # Maximalleistung
-                        powerMin=np.round(p * t['out_min']/100, 1),         # Minimalleistung (Angabe in % in Tech)
-                        eta=t['eta'],                                       # Wirkungsgrad
-                        chi=t['chi'],                                       # Emissionsfaktor [tCo2/MWh]
-                        P0=np.round(p * t['out_min']/100, 1),               # aktuelle Leistung des Blocks
-                        stopTime=t['down_min'],                             # minimale Stillstandszeit
-                        runTime=t['up_min'],                                # minimale Laufzeit
-                        on=t['up_min'],                                     # aktuelle Betriebsdauer
-                        gradP=int(t['gradient']/100 * 4 * p),               # positiver Gradient (Angabe in %/15min in Tech)
-                        gradM=int(t['gradient']/100 * 4 * p),               # negativer Gradient (Angabe in %/15min in Tech)
-                        heat=[])                                            # mögliche Wärmelast
-                    }
-            self.portfolio.addToPortfolio(name, block)
-
-        self.portfolio.Cap_PWP = sum(data['power'])                          # Gesamte Kraftwerksleitung  in [MW]
+        totalPower = 0
+        powerPlants = self.ConnectionMongo.getPowerPlants(plz)
+        for key, value in powerPlants.items():
+            if value['maxPower'] > 1:
+                self.portfolio.addToPortfolio(key, {key: value})
+                totalPower += value['maxPower']                                 # Gesamte Kraftwerksleitung  in [MW]
+        self.portfolio.capacities['fossil'] = totalPower
 
         logging.info('Kraftwerke hinzugefügt')
 
         # Einbindung der Speicherdaten aus der MongoDB
-        data, tech = self.ConnectionMongo.getStorages(plz)
-        for i in range(len(data['power'])):
-            name = 'plz_' + str(plz) + '_storage_' + str(i)                 # Name des Speichers (1,...,n)
-            power = data['power'][i]                                        # Nennleistung [MW]
-            energy = data['energy'][i]                                      # Speicherkapazität [MWh]
-            # Aufbau des Speichers
-            storage = {name: {
-                        'typ': 'storage',                                   # Speicherkraftwerk
-                        'VMin': 0,                                          # Minimaler Speicherfüllstand
-                        'VMax': energy,                                     # Maximaler Speicherfüllstand
-                        'P+_Max': power,                                    # maximale Ladeleistung
-                        'P-_Max': power,                                    # maximale Endladeleistung
-                        'P+_Min': 0,                                        # minimale Ladeleistung
-                        'P-_Min': 0,                                        # minimale EntLadeleistung
-                        'V0': energy / 2,                                   # aktueller Speicherfüllstand
-                        'eta+': 0.85,                                       # Ladewirkungsgrad
-                        'eta-': 0.80,                                       # Entladewirkungsgrad
-                        'fuel': 'water'}
-                      }
-            self.portfolio.addToPortfolio(name, storage)
+        storages = self.ConnectionMongo.getStorages(plz)
+        for key, value in storages.items():
+            self.portfolio.addToPortfolio(key, {key: value})
 
         logging.info('Speicher hinzugefügt')
 
@@ -89,7 +53,7 @@ class pwpAgent(basicAgent):
         self.espilion = 0.8                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=5)             # Lernalgorithmus im 5 Tage Rythmus
-        self.qLearn.qus = self.qLearn.qus * self.portfolio.Cap_PWP
+        self.qLearn.qus = self.qLearn.qus * self.portfolio.capacities['fossil']
         logging.info('Parameter der Handelsstrategie festgelegt')
 
         logging.info('Aufbau des Agenten abgeschlossen')
@@ -106,7 +70,7 @@ class pwpAgent(basicAgent):
                     states[0] += 0
                     states[1] += 0
                 else:
-                    states[0] += min(value['powerMax'] - value['P0'], value['gradP'])
+                    states[0] += min(value['maxPower'] - value['P0'], value['gradP'])
                     states[1] += max(min(value['P0'] - value['powerMin'], value['gradM']), 0)
 
         for i in range(6):
@@ -150,8 +114,8 @@ class pwpAgent(basicAgent):
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
-                                     timestamp='optimize_dayAhead', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
+                                     timestamp='optimize_dayAhead', typ='PWP', EEG='False', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i], PriceFrcst=price['power'][i])
                     }
@@ -175,8 +139,8 @@ class pwpAgent(basicAgent):
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
-                                     timestamp='optimize_dayAhead', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
+                                     timestamp='optimize_dayAhead', typ='PWP', EEG='False', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(PowerMax=power[i], Volume=volume[i])
                     }
@@ -187,7 +151,7 @@ class pwpAgent(basicAgent):
 
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
         F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
-        powerMax[powerMax <= 0] = self.portfolio.Cap_PWP
+        powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
         priceMax = ((E+F) * 1.5)/powerMax
         powerMax = powerMax - power
 
@@ -265,8 +229,8 @@ class pwpAgent(basicAgent):
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
-                                     timestamp='post_dayAhead', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
+                                     timestamp='post_dayAhead', typ='PWP', EEG='False', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i])
                     }
@@ -302,8 +266,8 @@ class pwpAgent(basicAgent):
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
-                                     timestamp='optimize_actual', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
+                                     timestamp='optimize_actual', typ='PWP', EEG='False', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i])
                     }
@@ -334,8 +298,8 @@ class pwpAgent(basicAgent):
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.area,
-                                     timestamp='post_actual', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
+                                     timestamp='post_actual', typ='PWP', EEG='False', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i])
                     }

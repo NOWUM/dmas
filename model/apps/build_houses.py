@@ -12,18 +12,18 @@ class Houses:
 
         if np.random.uniform() > 0.533:
             typ = 'MFH'
-            As = [int(np.random.normal(loc=70, scale=70*0.05)) for i in range(np.random.randint(low=3,high=10))]
+            As = [int(np.random.normal(loc=70, scale=70*0.05)) for i in range(np.random.randint(low=3, high=10))]
         else:
             typ = 'EFH'
             As = [int(np.random.normal(loc=105, scale=105*0.05)) for i in range(np.random.choice(a=[1,2],p=[0.8,0.2]))]
 
         # ----- Heat Demand -----
         heatData = self.data['apartments']['heat']
-        prob = [(key,value['prob']/100)[1] for key,value in heatData.items()]
-        keys = [(key,value)[0] for key,value in heatData.items()]
-        key = np.random.choice(a=keys,p=prob)
+        prob = [(key, value['prob']/100)[1] for key, value in heatData.items()]
+        keys = [(key, value)[0] for key, value in heatData.items()]
+        key = np.random.choice(a=keys, p=prob)
         para = heatData[key]['para']
-        para = np.asarray([para['A'],para['B'],para['C'],para['D']], np.float32)
+        para = np.asarray([para['A'], para['B'], para['C'], para['D']], np.float32)
         demandQ = int(np.random.uniform(low=float(key)-30,high=float(key)+30) * np.sum(As))
 
         # ----- Persons and Power -----
@@ -35,8 +35,8 @@ class Houses:
         for A in As:
             index = int(np.argmin([np.abs(A-float(i)) for i in keys]))
             key = keys[index]
-            prob = [(key,value/100)[1] for key,value in personData[key].items()]
-            persons = str(np.random.choice(a=[1,2,np.random.randint(low=3,high=5)], p=prob))
+            prob = [(key, value/100)[1] for key,value in personData[key].items()]
+            persons = str(np.random.choice(a=[1,2,np.random.randint(low=3, high=5)], p=prob))
             demandP += np.random.randint(low=powerData[persons][0],high=powerData[persons][1])
 
         name = str(uuid.uuid4())
@@ -46,7 +46,7 @@ class Houses:
                           'para'   : para,
                           'demandP': demandP,
                           'demandQ': demandQ,
-                          'PV'     : dict(eta=0.15,peakpower=demandP/1000,direction=180)
+                          'PV'     : dict(eta=0.15, peakpower=demandP/1000, direction=180)
                          }
                      }
         elif comp == 'PvBat':

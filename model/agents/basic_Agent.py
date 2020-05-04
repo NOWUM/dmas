@@ -18,7 +18,7 @@ class agent:
 
         # Metadaten eines Agenten
         self.name = typ + '_%i' % plz  # Name
-        self.area = plz  # Gebiet
+        self.plz = plz  # Gebiet
         self.date = pd.to_datetime(date)  # aktueller Tag
         self.typ = typ  # Agententyp (RES,PWP,DEM,...)
         # Laden der Geoinfomationen

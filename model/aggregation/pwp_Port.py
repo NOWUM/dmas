@@ -13,7 +13,7 @@ class pwpPort(port_model):
         data = energysystem[name]
 
         # -- PWP
-        if data['typ'] == 'konv':              # konv. power plant
+        if data['typ'] == 'powerPlant':              # konv. power plant
             data.update(dict(model=power_plant(t=self.t, T=self.T, dt=self.dt, model=self.m)))
         elif data['typ'] == 'storage':           # storage plant
             data.update(dict(model=storage(t=self.t, T=self.T, dt=self.dt, model=self.m)))
@@ -77,8 +77,20 @@ class pwpPort(port_model):
         try:
             self.m.optimize()
             for key, value in self.energySystems.items():
-                if value['typ'] == 'konv':
+                if value['typ'] == 'powerPlant':
                     value['P0'] = [np.round(self.m.getVarByName('P_%s[%i]' % (key, i)).x, 2) for i in self.t][-1]
+
+                    z = np.asanyarray([self.m.getVarByName('z_%s[%i]' % (key, i)).x for i in self.t], np.float)
+
+                    if z[-1] > 0:
+                        index = -1 * value['runTime']
+                        value['on'] = np.count_nonzero(z[index:])
+                        value['off'] = 0
+                    else:
+                        index = -1 * value['stopTime']
+                        value['off'] = np.count_nonzero(1 - z[index:])
+                        value['on'] = 0
+
                 if value['typ'] == 'storage':
                     value['P+0'] = [self.m.getVarByName('P+_%s[%i]' % (key, i)).x for i in self.t][-1]
                     value['P-0'] = [self.m.getVarByName('P-_%s[%i]' % (key, i)).x for i in self.t][-1]

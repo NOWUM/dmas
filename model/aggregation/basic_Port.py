@@ -10,17 +10,18 @@ class port_model:
         self.date = pd.to_datetime(date)            # -- Date-Time
         self.energySystems = {}                     # -- dict to save the meta data for the systems
         self.typ = typ                              # -- Portfoliotyp (DEM,RES,PWP,...)
-        self.Cap_Wind = 0                           # -- Wind Capacity in Portfolio
-        self.Cap_Solar = 0                          # -- Solar Capacity in Portfolio
-        self.Cap_PWP = 0                            # -- Power Plant Capacity in Portfolio
+        self.capacities = dict(wind=0, solar=0, fossil=0, water=0, bio=0)
+
         # time data
         self.T = 24                                 # -- steps per day
         self.t = np.arange(T)                       # -- array with single steps
         self.dt = dt                                # -- resolution
 
-        self.power = np.zeros_like(self.t)
-        self.pSolar = np.zeros_like(self.t)
-        self.pWind = np.zeros_like(self.t)
+        self.generation = dict(total=np.zeros_like(self.t),
+                               solar=np.zeros_like(self.t),
+                               wind=np.zeros_like(self.t),
+                               water=np.zeros_like(self.t),
+                               bio=np.zeros_like(self.t))
 
         # -- optimization data
         self.weather = {}                           # -- weahter data dict(wind,dir,dif,temp)
@@ -42,6 +43,7 @@ class port_model:
         if gurobi:
             self.m = Model('aggregation')             # -- gurobi model for milp model
             self.m.Params.OutputFlag = 0              # -- hide output
+            self.m.__len__ = 1
 
     # ----- Set Parameter for optimization -----
     def setPara(self, date, weather, prices, demand=np.zeros(24), posBalPower=np.zeros(24), negBalPower=np.zeros(24)):

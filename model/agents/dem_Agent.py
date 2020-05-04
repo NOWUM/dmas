@@ -2,7 +2,6 @@ import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 from aggregation.dem_Port import demPort
 from agents.basic_Agent import agent as basicAgent
-from apps.build_houses import Houses
 import logging
 import argparse
 import pandas as pd
@@ -11,10 +10,10 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=52, help='PLZ-Agent')
-    parser.add_argument('--mongo', type=str, required=False, default='127.0.0.1', help='IP MongoDB')
-    parser.add_argument('--influx', type=str, required=False, default='127.0.0.1', help='IP InfluxDB')
-    parser.add_argument('--market', type=str, required=False, default='127.0.0.1', help='IP Market')
+    parser.add_argument('--plz', type=int, required=False, default=6, help='PLZ-Agent')
+    parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
+    parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
+    parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
     parser.add_argument('--dbName', type=str, required=False, default='MAS_XXXX', help='Name der Datenbank')
     return parser.parse_args()
 
@@ -28,44 +27,38 @@ class demAgent(basicAgent):
         # Aufbau des Portfolios mit den enstprechenden Haushalten, Gewerbe und Industrie
         self.portfolio = demPort(typ="DEM")                             # Keine Verwendung eines Solvers
 
-        # Einbindung der Daten aus der MongoDB und dem TechFile in ./data
-        data, tech = self.ConnectionMongo.getHouseholds(plz)
-        if len(data) > 0:
-            builder = Houses()
-            housesBat = [builder.build(comp='PvBat') for _ in range(tech['battery'])]
+        powerH0 = 0
 
-            if tech['heatpump'] == min(tech['solar'] - tech['battery'], tech['heatpump']):
-                housesWp = [builder.build(comp='PvWp') for _ in range(tech['heatpump'])]
-                housesPv = [builder.build(comp='Pv') for _ in range(tech['solar'] - tech['heatpump'])]
-            else:
-                housesWp = [builder.build(comp='PvWp') for _ in range(tech['solar'] - tech['battery'])]
-                housesPv = []
+        pvBatteries = self.ConnectionMongo.getPVBatteries(plz)
+        for key, value in pvBatteries.items():
+            self.portfolio.addToPortfolio(key, {key: value})
+            powerH0 += value['demandP']
 
-            demandP = np.sum([h[2] for h in housesBat]) + np.sum([h[2] for h in housesWp]) + np.sum(
-                [h[2] for h in housesPv])
-            for h in housesBat: self.portfolio.addToPortfolio(name=h[0], energysystem=h[1])
-            del housesBat
-            for h in housesWp: self.portfolio.addToPortfolio(name=h[0], energysystem=h[1])
-            del housesWp
-            for h in housesPv: self.portfolio.addToPortfolio(name=h[0], energysystem=h[1])
-            del housesPv
-            demandH0 = 1000*data['household'] - demandP
+        pvHeatpumps = self.ConnectionMongo.getHeatPumps(plz)
+        for key, value in pvHeatpumps.items():
+            self.portfolio.addToPortfolio(key, {key: value})
+            powerH0 += value['demandP']
 
-            logging.info('Prosumer hinzugefügt')
+        pv = self.ConnectionMongo.getPVs(plz)
+        for key, value in pv.items():
+            self.portfolio.addToPortfolio(key, {key: value})
+            powerH0 += value['demandP']
 
-            name = 'plz_' + str(plz) + '_h0'
-            self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demandH0, 2), 'typ': 'H0'}})
-            logging.info('Consumer hinzugefügt')
+        demand = self.ConnectionMongo.getDemand(plz)
 
-            name = 'plz_' + str(plz) + '_g0'
-            self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(1000*data['commercial'], 2), 'typ': 'G0'}})
-            logging.info('Gewerbe  hinzugefügt')
+        name = 'plz_' + str(plz) + '_h0'
+        self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['h0']*10**6 - powerH0, 2), 'typ': 'H0'}})
+        logging.info('Consumer hinzugefügt')
 
-            name = 'plz_' + str(plz) + '_rlm'
-            self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(1000*data['industrial'], 2), 'typ': 'RLM'}})
-            logging.info('Industrie hinzugefügt')
+        name = 'plz_' + str(plz) + '_g0'
+        self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['g0']*10**6, 2), 'typ': 'G0'}})
+        logging.info('Gewerbe  hinzugefügt')
 
-            logging.info('Aufbau des Agenten abgeschlossen')
+        name = 'plz_' + str(plz) + '_rlm'
+        self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['rlm']*10**6, 2), 'typ': 'RLM'}})
+        logging.info('Industrie hinzugefügt')
+
+        logging.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):
         """Einsatzplanung für den Regelleistungsmarkt"""
@@ -90,8 +83,8 @@ class demAgent(basicAgent):
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area,
-                                 timestamp='optimize_dayAhead', typ='DEM'),
+                    "tags": dict(agent=self.name, area=self.plz,
+                                 timestamp='optimize_dayAhead', EEG='False', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i]/10**3)
                 }
@@ -118,7 +111,7 @@ class demAgent(basicAgent):
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area, timestamp='post_dayAhead', typ='DEM'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_dayAhead', EEG='False', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i])
                 }
@@ -148,7 +141,7 @@ class demAgent(basicAgent):
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area, timestamp='optimize_actual', typ='DEM'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_actual', EEG='False', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Difference=difference[i], Power=power[i])
                 }
@@ -169,7 +162,7 @@ class demAgent(basicAgent):
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area, timestamp='post_actual', typ='DEM'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', EEG='False', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i])
                 }

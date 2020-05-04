@@ -9,12 +9,7 @@ class wind_model(energySystem):
     def build(self, data, ts, date):
         powerWind = []
         z0 = 0.5
-        if data['P'] <= 600:
-            factor = (np.log(50 / z0) / np.log(2 / z0))
-        elif data['P'] <= 3000:
-            factor = (np.log(95 / z0) / np.log(2 / z0))
-        else:
-            factor = (np.log(125 / z0) / np.log(2 / z0))
+        factor = (np.log(data['height'] / z0) / np.log(2 / z0))
 
         for wind in ts['wind']:
             wind = wind * factor
@@ -23,6 +18,6 @@ class wind_model(energySystem):
             elif wind >= data['cut_off']:
                 generation = 0
             else:
-                generation = data['P'] / (1 + np.exp(-data['k'] * (wind - data['x0'])))
+                generation = data['maxPower'] / (1 + np.exp(-data['k'] * (wind - data['x0'])))
             powerWind.append(generation/10**3)
-        self.powerWind = np.asarray(powerWind, np.float).reshape((-1,))
+        self.generation['wind'] = np.asarray(powerWind, np.float).reshape((-1,))

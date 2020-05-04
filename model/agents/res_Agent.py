@@ -11,10 +11,10 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=52, help='PLZ-Agent')
-    parser.add_argument('--mongo', type=str, required=False, default='127.0.0.1', help='IP MongoDB')
-    parser.add_argument('--influx', type=str, required=False, default='127.0.0.1', help='IP InfluxDB')
-    parser.add_argument('--market', type=str, required=False, default='127.0.0.1', help='IP Market')
+    parser.add_argument('--plz', type=int, required=False, default=6, help='PLZ-Agent')
+    parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
+    parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
+    parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
     parser.add_argument('--dbName', type=str, required=False, default='MAS_XXXX', help='Name der Datenbank')
     return parser.parse_args()
 
@@ -24,29 +24,65 @@ class resAgent(basicAgent):
         super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='RES', dbName=dbName)
 
         logging.info('Start des Agenten')
+        # Aufbau des Portfolios mit den enstprechenden Wind- und Solaranlagen (EEG)
+        self.portfolioEEG = resPort(typ='RES', gurobi=False)                    # Keine Verwendung eines Solvers
 
-        # Aufbau des Portfolios mit den enstprechenden Wind- und Solaranlagen
-        self.portfolio = resPort(typ='RES', gurobi=False)                   # Keine Verwendung eines Solvers
+        # Einbindung der Solardaten aus der MongoDB (EEG Anlagen vor 2013)
+        solarsystems = self.ConnectionMongo.getPvEEG(plz)
+        total = 0
+        for key, system in solarsystems.items():
+            total += system['maxPower']
+        self.portfolioEEG.capacities['solar'] = np.round(total / 1000, 2)
+        name = 'EEG_SolarSystem_%s' % plz
+        generator = dict(maxPower=np.round(total, 2), eta=0.15, area=7, typ='solarsystem')
+        self.portfolioEEG.addToPortfolio(name, {name: generator})
 
-        # Einbindung der Windaten aus der MongoDB und dem TechFile in ./data
-        data, tech = self.ConnectionMongo.getWindOn(plz)
-        for i in range(len(data['power'])):
-            name = 'plz_' + str(plz) + '_windOn_' + str(i)                  # Name der Windkraftanalge (1,..,n)
-            generator = dict(P=data['power'][i], typ='wind')                # Nennleistung [kW]
-            generator.update(tech[str(data['typ'][i])])                     # Daten der Einspeisekurve
-            self.portfolio.addToPortfolio(name, {name : generator})
-        self.portfolio.Cap_Wind = sum(data['power']) / 1000                 # Gesamte Windleistung in [MW]
+        logging.info('PV(EEG)-Erzeugung hinzugefügt')
+
+        # Einbindung der Laufwasserkraftwerke aus der MongoDB
+        runRiver = self.ConnectionMongo.getRunRiver(plz)
+        total = 0
+        for key, system in runRiver.items():
+            total += system['maxPower']
+        self.portfolioEEG.capacities['water'] = np.round(total / 1000, 2)
+        name = 'EEG_RunRiver_%s' % plz
+        generator = dict(maxPower=np.round(total, 2), typ='run-river')
+        self.portfolioEEG.addToPortfolio(name, {name: generator})
+
+        logging.info('Laufwasserkraftwerk (EEG) hinzugefügt')
+
+        # Einbindung der Biomasseanlagen aus der MongoDB
+        bioMass = self.ConnectionMongo.getBioMass(plz)
+        total = 0
+        for key, system in bioMass.items():
+            total += system['maxPower']
+        self.portfolioEEG.capacities['bio'] = np.round(total / 1000, 2)
+        name = 'EEG_BioMass_%s' % plz
+        generator = dict(maxPower=np.round(total, 2), typ='biomass')
+        self.portfolioEEG.addToPortfolio(name, {name: generator})
+
+        logging.info('Biomassekraftwerke (EEG) hinzugefügt')
+
+        # Aufbau des Portfolios mit den enstprechenden Wind- und Solaranlagen (Direktvermarktung)
+        self.portfolioDirect = resPort(typ='RES', gurobi=False)                   # Keine Verwendung eines Solvers
+
+        # Einbindung der Windaten aus der MongoDB
+        windOnshore = self.ConnectionMongo.getWindOn(plz)
+        total = 0
+        for key, system in windOnshore.items():
+            self.portfolioDirect.addToPortfolio(key, {key : system})
+            total += system['maxPower']
+        self.portfolioDirect.capacities['wind'] = np.round(total / 1000, 2)                   # Gesamte Windleistung in [MW]
 
         logging.info('Winderzeugung hinzugefügt')
 
         # Einbindung der Solardaten aus der MongoDB (nur PV-Anlagen > 750 kW)
-        data, tech = self.ConnectionMongo.getPvParks(plz)
-        for i in range(len(data['power'])):
-            name = 'plz_' + str(plz) + '_solar_' + str(i)                   # Name der PV-Parks (1,..,n)
-            generator = dict(peakpower=data['power'][i],                    # Default Werte sowie die angegebene
-                             typ='solar', eta=0.13, area=7)                 # Nennleistung [kW]
-            self.portfolio.addToPortfolio(name, {name : generator})
-        self.portfolio.Cap_Solar = sum(data['power']) / 1000                # Gesamte Solarleistung in [MW]
+        solarparks = self.ConnectionMongo.getPvParks(plz)
+        total = 0
+        for key, system in solarparks.items():
+            self.portfolioDirect.addToPortfolio(key, {key : system})
+            total += system['maxPower']
+        self.portfolioDirect.capacities['solar'] = np.round(total / 1000, 2)         # Gesamte Solarleistung in [MW]
 
         logging.info('PV-Erzeugung hinzugefügt')
 
@@ -57,8 +93,8 @@ class resAgent(basicAgent):
         self.espilion = 0.5                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=5)             # Lernalgorithmus im 5 Tage Rythmus
-        self.qLearn.qus = self.qLearn.qus * (self.portfolio.Cap_Wind + self.portfolio.Cap_Solar)
-
+        self.qLearn.qus = self.qLearn.qus * (self.portfolioDirect.capacities['wind']
+                                             + self.portfolioDirect.capacities['solar'])
 
         logging.info('Parameter der Handelsstrategie festgelegt')
 
@@ -71,14 +107,18 @@ class resAgent(basicAgent):
     def optimize_dayAhead(self):
         """Einsatzplanung für den DayAhead-Markt"""
         orderbook = dict()                                                  # Oderbook für alle Gebote (Stunde 1-24)
+
         # Prognosen für den kommenden Tag
         weather = self.weatherForecast()                                    # Wetterdaten (dir,dif,temp,wind)
         price = self.priceForecast()                                        # Preisdaten (power,gas,nuc,coal,lignite)
         demand = self.demandForecast()                                      # Lastprognose
-        self.portfolio.setPara(self.date, weather, price, demand)
-        self.portfolio.buildModel()
-        power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
-        # print('%s (%s, %s): %s' % (self.name, self.portfolio.Cap_Wind, self.portfolio.Cap_Solar, power))
+
+        # --> Dirketvermakrtung <--
+
+        self.portfolioDirect.setPara(self.date, weather, price, demand)
+        self.portfolioDirect.buildModel()
+        power = np.asarray(self.portfolioDirect.optimize(), np.float)       # Berechnung der Einspeiseleitung
+
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
         wnd = np.asarray(weather['wind']).reshape((-1, 1))                  # Wind [m/s]
@@ -100,28 +140,60 @@ class resAgent(basicAgent):
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
-        for i in range(self.portfolio.T):
+        for i in range(self.portfolioDirect.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
             quantity = [-1*(2/100 * power[i]) for _ in range(2, 102, 2)]
             price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(2, 102, 2)]
-            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
+            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name + '_direct'}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
         # Abspeichern der Ergebnisse
         json_body = []
         time = self.date
-        for i in self.portfolio.t:
+        for i in self.portfolioDirect.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area, timestamp='optimize_dayAhead', typ='RES'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_dayAhead', typ='RES', EEG='False'),
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(Power=power[i], Wind=self.portfolio.pWind[i], Solar=self.portfolio.pSolar[i],
-                                   PriceFrcst=prc[i][0])
+                    "fields": dict(Power=power[i], Wind=self.portfolioDirect.generation['wind'][i], Solar=self.portfolioDirect.generation['solar'][i],
+                                   Water=self.portfolioDirect.generation['water'][i], Bio=self.portfolioDirect.generation['bio'][i], PriceFrcst=prc[i][0])
                 }
             )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
+            time = time + pd.DateOffset(hours=self.portfolioDirect.dt)
+        self.ConnectionInflux.saveData(json_body)
+
+        # --> EEG-Vermarktung <--
+
+        orderbook = dict()                                                     # Oderbook für alle Gebote (Stunde 1-24)
+
+        self.portfolioEEG.setPara(self.date, weather, price, demand)
+        self.portfolioEEG.buildModel()
+        power = np.asarray(self.portfolioEEG.optimize(), np.float)             # Berechnung der Einspeiseleitung
+
+        # Füge für jede Stunde die entsprechenden Gebote hinzu
+        for i in range(self.portfolioEEG.T):
+            quantity = [-1*power[i]]
+            price = [float(-499.89)]
+            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name + '_EEG'}})
+
+        self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
+
+        # Abspeichern der Ergebnisse
+        json_body = []
+        time = self.date
+        for i in self.portfolioEEG.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_dayAhead', typ='RES', EEG='True'),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(Power=power[i], Wind=self.portfolioEEG.generation['wind'][i], Solar=self.portfolioEEG.generation['solar'][i],
+                                   Water=self.portfolioEEG.generation['water'][i], Bio=self.portfolioEEG.generation['bio'][i], PriceFrcst=prc[i][0])
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolioEEG.dt)
         self.ConnectionInflux.saveData(json_body)
 
         logging.info('Planung DayAhead-Markt abgeschlossen')
@@ -132,72 +204,133 @@ class resAgent(basicAgent):
         # Speichern der Daten und Aktionen, um aus diesen zu lernen
         self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))
 
+        # --> Dirketvermakrtung <--
+
         # Abfrage der DayAhead Ergebnisse
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name + '_direct')
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name + '_direct')
         price = self.ConnectionInflux.getDayAheadPrice(self.date)
         profit = [(ask[i]-bid[i])*price[i] for i in range(24)]
         power = ask - bid
         # print('%s (%s, %s): %s' % (self.name, self.portfolio.Cap_Wind, self.portfolio.Cap_Solar, profit))
-        planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead')
+        planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead', 'False')
         difference = np.asarray(planing).reshape((-1,)) - np.asarray(power).reshape((-1,))
         missed = [difference[i]*price[i] if price[i] > 0 else 0 for i in range(24)]
-
 
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
             states = self.qLearn.getStates(self.date)
-            for i in self.portfolio.t:
+            for i in self.portfolioDirect.t:
                 oldValue = self.qLearn.qus[states[i], int(self.actions[i]-10)]
                 self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (profit[i] - missed[i] - oldValue)
 
        # Abspeichern der Ergebnisse
         json_body = []
         time = self.date
-        for i in self.portfolio.t:
+        for i in self.portfolioDirect.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area, timestamp='post_dayAhead', typ='RES'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_dayAhead', typ='RES', EEG='False'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i], Difference=difference[i])
                 }
             )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
+            time = time + pd.DateOffset(hours=self.portfolioDirect.dt)
+        self.ConnectionInflux.saveData(json_body)
+
+        # --> EEG-Vermarktung <--
+
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name + '_EEG')
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name + '_EEG')
+
+        power = ask - bid
+        # print('%s (%s, %s): %s' % (self.name, self.portfolio.Cap_Wind, self.portfolio.Cap_Solar, profit))
+        planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead', EEG='True')
+        difference = np.asarray(planing).reshape((-1,)) - np.asarray(power).reshape((-1,))
+
+        # Abspeichern der Ergebnisse
+        json_body = []
+        time = self.date
+        for i in self.portfolioEEG.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_dayAhead', typ='RES', EEG='True'),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(Power=power[i], Difference=difference[i])
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolioEEG.dt)
         self.ConnectionInflux.saveData(json_body)
 
         logging.info('DayAhead Ergebnisse erhalten')
 
     def optimize_actual(self):
         """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
+
+        # --> Dirketvermakrtung <--
+
         schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'post_dayAhead')
 
         # Berechnung der Prognoseabweichung
-        self.portfolio.buildModel(response=schedule)
-        actual = self.portfolio.fixPlaning()                    # Berechung des aktuellen Fahrplans + Errors
+        self.portfolioDirect.buildModel(response=schedule)
+        actual = self.portfolioDirect.fixPlaning()                    # Berechung des aktuellen Fahrplans + Errors
         # Berechnung der Abweichung
-        difference = np.asarray([(schedule[i] - actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolio.t])
-        power = np.asarray([(actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolio.t])
+        difference = np.asarray([(schedule[i] - actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolioDirect.t])
+        power = np.asarray([(actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolioDirect.t])
         # Aufbau der "Gebote" (Abweichungen zum gemeldeten Fahrplan)
         orderbook = dict()
-        for i in range(self.portfolio.T):
+        for i in range(self.portfolioDirect.T):
             orderbook.update({'h_%s' % i: {'quantity': difference[i], 'hour': i, 'name': self.name}})
         self.ConnectionMongo.setActuals(name=self.name, date=self.date, orders=orderbook)
 
         # Abspeichern der Ergebnisse
         json_body = []
         time = self.date
-        for i in self.portfolio.t:
+        for i in self.portfolioDirect.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area, timestamp='optimize_actual', typ='RES'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_actual', typ='RES', EEG='False'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i], Difference=difference[i])
                 }
             )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
+            time = time + pd.DateOffset(hours=self.portfolioDirect.dt)
         self.ConnectionInflux.saveData(json_body)
+
+        # --> EEG-Vermarktung <--
+
+        schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'post_dayAhead', EEG='True')
+
+        # Berechnung der Prognoseabweichung
+        self.portfolioEEG.buildModel(response=schedule)
+        actual = self.portfolioEEG.fixPlaning()                    # Berechung des aktuellen Fahrplans + Errors
+        # Berechnung der Abweichung
+        difference = np.asarray([(schedule[i] - actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolioEEG.t])
+        power = np.asarray([(actual[i] if schedule[i] > 0 else 0.00) for i in self.portfolioEEG.t])
+        # Aufbau der "Gebote" (Abweichungen zum gemeldeten Fahrplan)
+        orderbook = dict()
+        for i in range(self.portfolioEEG.T):
+            orderbook.update({'h_%s' % i: {'quantity': difference[i], 'hour': i, 'name': self.name}})
+        self.ConnectionMongo.setActuals(name=self.name, date=self.date, orders=orderbook)
+
+        # Abspeichern der Ergebnisse
+        json_body = []
+        time = self.date
+        for i in self.portfolioEEG.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_actual', typ='RES', EEG='True'),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(Power=power[i], Difference=difference[i])
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolioEEG.dt)
+        self.ConnectionInflux.saveData(json_body)
+
 
         logging.info('Aktuellen Fahrplan erstellt')
 
@@ -208,17 +341,36 @@ class resAgent(basicAgent):
         # Abspeichern der Ergebnisse
         time = self.date
         json_body = []
-        for i in self.portfolio.t:
+        for i in self.portfolioDirect.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.area, timestamp='post_actual', typ='RES'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', typ='RES', EEG='False'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i])
                 }
             )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
+            time = time + pd.DateOffset(hours=self.portfolioDirect.dt)
         self.ConnectionInflux.saveData(json_body)
+
+
+        power = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual', EEG='True')     # Letzter bekannter Fahrplan
+
+        # Abspeichern der Ergebnisse
+        time = self.date
+        json_body = []
+        for i in self.portfolioDirect.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', typ='RES', EEG='True'),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(Power=power[i])
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolioDirect.dt)
+        self.ConnectionInflux.saveData(json_body)
+
 
         # Planung für den nächsten Tag
         # Anpassung der Prognosemethoden für den Verbrauch und die Preise

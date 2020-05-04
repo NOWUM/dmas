@@ -45,10 +45,12 @@ class energySystem:
         self.heatYear = demQ                                    # Wärmebedarf pro Jahr in kwH/a
         self.powerDemand = np.zeros_like(self.t)                # Strombedarf der Komponente
         self.heatDemand = np.zeros_like(self.t)                 # Wärmebedarf der Komponente
-        self.powerWind = np.zeros_like(self.t)                  # Winderzeugung der Komponente
-        self.powerSolar = np.zeros_like(self.t)                 # PV-Erzeugung der Komponente
-        self.powerConv = np.zeros_like(self.t)                  # Erzeugung aus konv. Kraftwerken der Komponente
-        self.powerStorage = np.zeros_like(self.t)               # Speicherleistung der Komponente
+        self.generation = dict(wind=np.zeros_like(self.t),      # Winderzeugung der Komponente
+                               solar=np.zeros_like(self.t),     # PV-Erzeugung der Komponente
+                               fossil=np.zeros_like(self.t),    # Erzeugung aus konv. Kraftwerken der Komponente
+                               bio=np.zeros_like(self.t),       # Erzeugung aus Biomasse
+                               water=np.zeros_like(self.t),     # Erzeugung aus Laufwasserkraftwerken
+                               storage=np.zeros_like(self.t))   # Speicherleistung der Komponente
 
     def getPowerDemand(self, data, date):
         """ Stromverbrauch des aktuellen Tages in stündlicher Auflösung und [kW] """
@@ -59,7 +61,7 @@ class energySystem:
     def getPowerSolar(self, data, ts):
         """ PV-Erzeugung des aktuellen Tages in Abhängigkeit des aktuellen Wetters in stündlicher Auflösung und [kW] """
         rad = np.asarray(ts['dif']) + np.asarray(ts['dir'])
-        return 7 * data['PV']['peakpower'] * rad * data['PV']['eta'] / 1000
+        return 7 * data['PV']['maxPower'] * rad * data['PV']['eta'] / 1000
 
 
     def getHeatDemand(self, data, ts):
