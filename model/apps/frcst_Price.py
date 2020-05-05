@@ -10,7 +10,7 @@ simplefilter(action='ignore', category=FutureWarning)
 
 class annFrcst:
 
-    def __init__(self, influx, preTrain=True):
+    def __init__(self, influx, init=5, preTrain=True):
 
         self.influx = influx
         self.fitted = False
@@ -22,7 +22,7 @@ class annFrcst:
 
         self.fitted = False
         self.counter = 0
-        self.collect = 5
+        self.collect = init
 
         self.factor = 0
 

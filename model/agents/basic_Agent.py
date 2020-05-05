@@ -9,6 +9,7 @@ from apps.frcst_Weather import weatherForecast
 import pandas as pd
 import geohash2
 import pika
+import numpy as np
 
 
 class agent:
@@ -52,7 +53,7 @@ class agent:
         self.forecasts = {
             'demand': demTyp(self.ConnectionInflux),
             'weather': weatherForecast(self.ConnectionInflux),
-            'price': priceTyp(self.ConnectionInflux)
+            'price': priceTyp(self.ConnectionInflux, init=np.random.random_integers(low=5, high=10))
         }
 
     def weatherForecast(self):

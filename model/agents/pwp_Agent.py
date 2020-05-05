@@ -152,7 +152,7 @@ class pwpAgent(basicAgent):
         E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
         F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
         powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
-        priceMax = ((E+F) * 1.5)/powerMax
+        priceMax = ((E+F))/powerMax
         powerMax = powerMax - power
 
         # Aufbau der linearen Gebotskurven
@@ -170,8 +170,8 @@ class pwpAgent(basicAgent):
 
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + 0.2*var
-        self.minPrice = prc.reshape((-1,)) - 2*var
+        self.maxPrice = prc.reshape((-1,)) + 0.5*var
+        self.minPrice = prc.reshape((-1,)) - 4*var
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 
