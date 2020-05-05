@@ -179,7 +179,7 @@ class pwpAgent(basicAgent):
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
             quantity = [-1*(2/100 * power[i]) for _ in range(2, 102, 2)]
-            price = [float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(2, 102, 2)]
+            price = [float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(2, 102, 2)]
             if powerMax[i] > 0:
                 quantity.append(-1 * powerMax[i])
                 price.append(max(priceMax[i], (self.maxPrice[i] + 5)))
