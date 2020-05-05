@@ -11,7 +11,7 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=55, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=10, help='PLZ-Agent')
     parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
@@ -113,7 +113,7 @@ class resAgent(basicAgent):
         # --> Dirketvermakrtung <--
         self.portfolio.setPara(self.date, weather, price, demand)
         self.portfolio.buildModel()
-        power = np.asarray(self.portfolio.optimize(), np.float)       # Berechnung der Einspeiseleitung
+        _ = np.asarray(self.portfolio.optimize(), np.float)       # Berechnung der Einspeiseleitung
 
         powerDirect = []
         powerEEG = []
@@ -125,9 +125,14 @@ class resAgent(basicAgent):
                 powerEEG.append(value['model'].generation['bio'])
                 powerEEG.append(value['model'].generation['water'])
                 powerEEG.append(value['model'].generation['solar'])
-
-        powerDirect = np.sum(np.asarray(powerDirect), axis=0)
-        powerEEG = np.sum(np.asarray(powerEEG), axis=0)
+        if len(powerDirect) == 0:
+            powerDirect = np.zeros(24)
+        else:
+            powerDirect = np.sum(np.asarray(powerDirect), axis=0)
+        if len(powerEEG) == 0:
+            powerEEG = np.np.zeros(24)
+        else:
+            powerEEG = np.sum(np.asarray(powerEEG), axis=0)
 
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(10, 80, 24)
@@ -305,16 +310,16 @@ if __name__ == "__main__":
     args = parse_args()
     agent = resAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx,
                      market=args.market, dbName=args.dbName)
-    agent.ConnectionMongo.login(agent.name, False)
-    try:
-        agent.run_agent()
-    except Exception as e:
-        logging.error('Fehler in run_agent: %s' %e)
-    finally:
-        agent.ConnectionInflux.influx.close()
-        agent.ConnectionMongo.logout(agent.name)
-        agent.ConnectionMongo.mongo.close()
-        if agent.receive.is_open:
-            agent.receive.close()
-            agent.connection.close()
-        exit()
+    # agent.ConnectionMongo.login(agent.name, False)
+    # try:
+    #     agent.run_agent()
+    # except Exception as e:
+    #     logging.error('Fehler in run_agent: %s' %e)
+    # finally:
+    #     agent.ConnectionInflux.influx.close()
+    #     agent.ConnectionMongo.logout(agent.name)
+    #     agent.ConnectionMongo.mongo.close()
+    #     if agent.receive.is_open:
+    #         agent.receive.close()
+    #         agent.connection.close()
+    #     exit()
