@@ -89,7 +89,7 @@ class resAgent(basicAgent):
         self.actions = np.zeros(24)                                         # Steigung der Gebotsgeraden für jede Stunde
         self.espilion = 0.5                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
-        self.qLearn = daLearning(self.ConnectionInflux, init=5)             # Lernalgorithmus im 5 Tage Rythmus
+        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.random_integers(low=5, high=10))             # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus = self.qLearn.qus * (self.portfolio.capacities['wind']
                                              + self.portfolio.capacities['solar'])
 
