@@ -11,7 +11,7 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=10, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=35, help='PLZ-Agent')
     parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')

@@ -84,7 +84,7 @@ class mongoInterface:
             tech = json.load(open(r'./data/Tech_Wind.json'))
             wind = self.tableStructur.find_one({"_id": area})['windOnshore']
             for key, system in wind.items():
-                generator = dict(maxPower=wind['maxPower'],
+                generator = dict(maxPower=system['maxPower'],
                                  height=system['height'], typ='wind',
                                  fuel='wind')
                 generator.update(tech['5'])                                        # Daten der Einspeisekurve
