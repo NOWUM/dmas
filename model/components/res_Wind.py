@@ -9,7 +9,7 @@ class wind_model(energySystem):
     def build(self, data, ts, date):
         powerWind = []
         z0 = 0.5
-        factor = (data['height']/2)**0.28
+        factor = (data['height']/2)**0.14
         #factor = (np.log(data['height'] / z0) / np.log(2 / z0))
 
         for wind in ts['wind']:
