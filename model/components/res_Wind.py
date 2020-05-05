@@ -22,3 +22,4 @@ class wind_model(energySystem):
                 generation = data['maxPower'] / (1 + np.exp(-data['k'] * (wind - data['x0'])))
             powerWind.append(generation/10**3)
         self.generation['wind'] = np.asarray(powerWind, np.float).reshape((-1,))
+        self.power = np.asarray(powerWind, np.float).reshape((-1,))

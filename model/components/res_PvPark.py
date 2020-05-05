@@ -15,3 +15,4 @@ class solar_model(es):
             powerSolar.append(generation/10**6)
 
         self.generation['solar'] = np.asarray(powerSolar, np.float).reshape((-1,))
+        self.power = np.asarray(powerSolar, np.float).reshape((-1,))

@@ -52,6 +52,8 @@ class energySystem:
                                water=np.zeros_like(self.t),     # Erzeugung aus Laufwasserkraftwerken
                                storage=np.zeros_like(self.t))   # Speicherleistung der Komponente
 
+        self.power = np.zeros_like(self.t)
+
     def getPowerDemand(self, data, date):
         """ Stromverbrauch des aktuellen Tages in stündlicher Auflösung und [kW] """
         demand = self.slpP.get_profile(date.dayofyear, date.dayofweek, data['demandP']).reshape((96, 1))

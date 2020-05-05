@@ -85,7 +85,8 @@ class mongoInterface:
             wind = self.tableStructur.find_one({"_id": area})['windOnshore']
             for key, system in wind.items():
                 generator = dict(maxPower=system['Bruttoleistung'],
-                                 height=system['Nabenhöhe'], typ='wind')           # Nennleistung [kW]
+                                 height=system['Nabenhöhe'], typ='wind',
+                                 fuel='wind')
                 generator.update(tech['5'])                                        # Daten der Einspeisekurve
                 dict_.update({key: generator})
             return dict_

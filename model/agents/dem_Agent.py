@@ -84,7 +84,7 @@ class demAgent(basicAgent):
                 {
                     "measurement": 'Areas',
                     "tags": dict(agent=self.name, area=self.plz,
-                                 timestamp='optimize_dayAhead', EEG='False', typ='DEM'),
+                                 timestamp='optimize_dayAhead', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i]/10**3)
                 }
@@ -111,7 +111,7 @@ class demAgent(basicAgent):
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_dayAhead', EEG='False', typ='DEM'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_dayAhead', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i])
                 }
@@ -141,7 +141,7 @@ class demAgent(basicAgent):
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_actual', EEG='False', typ='DEM'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_actual', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Difference=difference[i], Power=power[i])
                 }
@@ -162,7 +162,7 @@ class demAgent(basicAgent):
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', EEG='False', typ='DEM'),
+                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', typ='DEM'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(Power=power[i])
                 }

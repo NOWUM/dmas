@@ -115,7 +115,7 @@ class pwpAgent(basicAgent):
                     {
                         "measurement": 'Areas',
                         "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='optimize_dayAhead', typ='PWP', EEG='False', fuel=value['fuel']),
+                                     timestamp='optimize_dayAhead', typ='PWP', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i], PriceFrcst=price['power'][i])
                     }
@@ -140,7 +140,7 @@ class pwpAgent(basicAgent):
                     {
                         "measurement": 'Areas',
                         "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='optimize_dayAhead', typ='PWP', EEG='False', fuel=value['fuel']),
+                                     timestamp='optimize_dayAhead', typ='PWP', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(PowerMax=power[i], Volume=volume[i])
                     }
@@ -230,7 +230,7 @@ class pwpAgent(basicAgent):
                     {
                         "measurement": 'Areas',
                         "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='post_dayAhead', typ='PWP', EEG='False', fuel=value['fuel']),
+                                     timestamp='post_dayAhead', typ='PWP', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i])
                     }
@@ -267,7 +267,7 @@ class pwpAgent(basicAgent):
                     {
                         "measurement": 'Areas',
                         "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='optimize_actual', typ='PWP', EEG='False', fuel=value['fuel']),
+                                     timestamp='optimize_actual', typ='PWP', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i])
                     }
@@ -299,7 +299,7 @@ class pwpAgent(basicAgent):
                     {
                         "measurement": 'Areas',
                         "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='post_actual', typ='PWP', EEG='False', fuel=value['fuel']),
+                                     timestamp='post_actual', typ='PWP', fuel=value['fuel']),
                         "time": time.isoformat() + 'Z',
                         "fields": dict(Power=power[i], Volume=volume[i])
                     }
