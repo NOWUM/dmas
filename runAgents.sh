@@ -26,4 +26,5 @@ for ((i=$1; i <= $2; i++ ))
                          screen -dmS PWP_$i
                          screen -S PWP_$i -X stuff $'python3 dmas/model/agents/pwp_Agent.py --plz "'$i'" --mongo "'${args[3]:-149.201.88.150}'" --influx "'${args[4]:-149.201.88.150}'" --market "'${args[5]:-149.201.88.150}'" --dbName "'${args[6]:-MAS_XXXX}'" \n'
                 fi
+        sleep 0.25
         done
