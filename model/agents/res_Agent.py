@@ -89,7 +89,7 @@ class resAgent(basicAgent):
         self.actions = np.zeros(24)                                         # Steigung der Gebotsgeraden für jede Stunde
         self.espilion = 0.5                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
-        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.random_integers(low=5, high=10))             # Lernalgorithmus im x Tage Rythmus
+        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))             # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus = self.qLearn.qus * (self.portfolio.capacities['wind']
                                              + self.portfolio.capacities['solar'])
 
@@ -148,8 +148,8 @@ class resAgent(basicAgent):
         self.actions = slopes                                               # abschpeichern der Ergebnisse
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,))
-        self.minPrice = prc.reshape((-1,)) - 5*var
+        self.maxPrice = prc.reshape((-1,)) + max(2*var, 1)
+        self.minPrice = np.zeros_like(self.maxPrice)
 
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW

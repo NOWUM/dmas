@@ -93,7 +93,6 @@ def dayAhead_clearing(orders):
         df = pd.DataFrame(index=[diff + bid0['mo'].max()],
                           data=dict(quantity=diff, mo=diff + bid0['mo'].max(), price=maxPrice, name='extra'))
         ask0 = ask0.append(df)
-        print(ask0)
 
     merit_order = pd.DataFrame(index=np.concatenate((ask0.index, bid0.index)))
 

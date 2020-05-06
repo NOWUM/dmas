@@ -46,7 +46,7 @@ def dayAheadClearing(connectionMongo, influx, date):
         time = date + pd.DateOffset(hours=i)
         o = df[df.index == i]
 
-        ask, bid, mcp, mcm, _ = dayAhead_clearing(o, plot=False)
+        ask, bid, mcp, mcm, _ = dayAhead_clearing(o)
 
         influx.influx.switch_database("MAS_2019")
         json_body = []

@@ -52,7 +52,7 @@ class pwpAgent(basicAgent):
         self.actions = np.zeros(24)                                         # Steigung der Gebotsgeraden für jede Stunde
         self.espilion = 0.8                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
-        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.random_integers(low=5, high=10))             # Lernalgorithmus im x Tage Rythmus
+        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))             # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus = self.qLearn.qus * self.portfolio.capacities['fossil']
         logging.info('Parameter der Handelsstrategie festgelegt')
 
@@ -102,6 +102,17 @@ class pwpAgent(basicAgent):
         self.portfolio.setPara(self.date, weather,  price, demand)
         self.portfolio.buildModel()
         power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
+        try:
+            E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
+            F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
+        except Exception as e:
+            E = np.zeros_like(self.portfolio.t)
+            F = np.zeros_like(self.portfolio.t)
+
+        costs = [(E[i] + F[i])/power[i] if power[i] else 0 for i in self.portfolio.t]
+
+        self.minPrice = np.asarray(costs).reshape((-1,))
+
         # Speichern des Fahrplans bei aktuller Preisprognose
         json_body = []
         for key, value in self.portfolio.energySystems.items():
@@ -109,14 +120,12 @@ class pwpAgent(basicAgent):
             try:
                 power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
             except Exception as e:
-                print(e)
                 power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
                 try:
                     volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
                 except Exception as e:
-                    print(e)
                     volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
@@ -142,14 +151,12 @@ class pwpAgent(basicAgent):
             try:
                 power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
             except Exception as e:
-                print(e)
                 power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
                 try:
                     volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
                 except Exception as e:
-                    print(e)
                     volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
@@ -168,7 +175,6 @@ class pwpAgent(basicAgent):
             E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
             F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
         except Exception as e:
-            print(e)
             E = np.zeros_like(self.portfolio.t)
             F = np.zeros_like(self.portfolio.t)
         powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
@@ -190,8 +196,8 @@ class pwpAgent(basicAgent):
 
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + 0.5*var
-        self.minPrice = prc.reshape((-1,)) - 4*var
+        self.maxPrice = prc.reshape((-1,)) + max(3*var,2)
+
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
 
@@ -230,7 +236,6 @@ class pwpAgent(basicAgent):
             E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
             F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
         except Exception as e:
-            print(e)
             E = np.zeros_like(self.portfolio.t)
             F = np.zeros_like(self.portfolio.t)
         costs = E+F
@@ -249,14 +254,12 @@ class pwpAgent(basicAgent):
             try:
                 power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
             except Exception as e:
-                print(e)
                 power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
                 try:
                     volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
                 except Exception as e:
-                    print(e)
                     volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
@@ -294,14 +297,12 @@ class pwpAgent(basicAgent):
             try:
                 power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
             except Exception as e:
-                print(e)
                 power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
                 try:
                     volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
                 except Exception as e:
-                    print(e)
                     volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
@@ -334,14 +335,12 @@ class pwpAgent(basicAgent):
             try:
                 power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
             except Exception as e:
-                print(e)
                 power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
                 try:
                     volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
                 except Exception as e:
-                    print(e)
                     volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(

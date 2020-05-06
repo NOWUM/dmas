@@ -53,7 +53,7 @@ class agent:
         self.forecasts = {
             'demand': demTyp(self.ConnectionInflux),
             'weather': weatherForecast(self.ConnectionInflux),
-            'price': priceTyp(self.ConnectionInflux, init=np.random.random_integers(low=5, high=10))
+            'price': priceTyp(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))
         }
 
     def weatherForecast(self):
