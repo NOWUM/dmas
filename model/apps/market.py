@@ -71,7 +71,7 @@ def balancing_clearing(orders, ask=1800, minimal=5):
     return result
 
 # Day Ahead Markt
-def dayAhead_clearing(orders, plot=False):
+def dayAhead_clearing(orders):
 
     ask0 = orders[orders['quantity'] < -0.1]
     ask0 = ask0.sort_values(by=['price'])
@@ -87,18 +87,16 @@ def dayAhead_clearing(orders, plot=False):
     bid0 = bid0.set_index(bid0['mo'])
     namesBid = set(bid0['name'].to_numpy())
 
-    askMax = ask0['mo'].max()
-    if math.isnan(askMax):
-        askMax=0
-    bidMax = bid0['mo'].max()
-    if math.isnan(bidMax):
-        bidMax=0
+    if bid0['mo'].max() > ask0['mo'].max():
+        diff = bid0['mo'].max() - ask0['mo'].max()
+        maxPrice = ask0['price'].max() + 1
+        df = pd.DataFrame(index=[diff + bid0['mo'].max()],
+                          data=dict(quantity=diff, mo=diff + bid0['mo'].max(), price=maxPrice, name='extra'))
+        ask0 = ask0.append(df)
+        print(ask0)
 
-    #maxi = max(askMax, bidMax)
-    #index = np.arange(0, maxi+0.1, 0.1)
-    #index = [np.round(i,1) for i in index]
-    merit_order = pd.DataFrame(index=np.concatenate((ask0.index,bid0.index)))
-    # merit_order = pd.DataFrame()
+    merit_order = pd.DataFrame(index=np.concatenate((ask0.index, bid0.index)))
+
     merit_order.loc[:, 'buy'] = bid0['price']
     merit_order.loc[:, 'buyNames'] = bid0['name']
     merit_order.loc[:, 'sellNames'] = ask0['name']
@@ -109,11 +107,8 @@ def dayAhead_clearing(orders, plot=False):
     merit_order = merit_order.dropna()
 
     index = list(np.round((np.diff((merit_order.index))),1))
-    index.insert(0,merit_order.index[0])
+    index.insert(0, merit_order.index[0])
     merit_order.index = index
-
-    if plot:
-        merit_order.plot()
 
     if ask0['price'].min() > bid0['price'].max():
         mcp = np.nan
@@ -148,44 +143,23 @@ def dayAhead_clearing(orders, plot=False):
 if __name__ == "__main__":
 
     df2 = orderGen(150)
+    df = pd.DataFrame(index=[7], data=dict(quantity=4000, price=250, name='Extra'))
+    df2 = df2.append(df)
     #df2 = df2[df2['quantity'] <=0]
 
-    test = [(0, -300, 'Nils'), (3000, 3000, 'Nils')]
-    df = pd.DataFrame(test, columns=['quantity', 'price', 'name'])
+    #test = [(0, -300, 'Nils'), (3000, 3000, 'Nils')]
+    #df = pd.DataFrame(test, columns=['quantity', 'price', 'name'])
     #df2 = df2.append(df)
     #df = pd.read_excel(r'./tmp/DA_2019-01-02_20.xlsx', index_col=0)
-    #df = df[df.index == 5]
+    #df = df[df.index == 5]k
     #df = df[df['quantity'] != 0]
 
     # df = pd.read_excel(r'./tmp/DA_2019-01-01_5.xlsx', index_col=0)
     #ask, bid, mcp, mcm, test = dayAhead_clearing(df, plot=True)
     ask_last, bid_last, mcp, mcm, merit_order = dayAhead_clearing(df2)
-    buy = merit_order.loc[:,['buy','buyNames']]
-    sell = merit_order.loc[:,['sell','sellNames']]
-    json_body = []
-
-    for row in buy.iterrows():
-        json_body.append(
-            {
-                "measurement": 'Market',
-                "tags": dict(name=self.name, area=self.area,
-                             timestamp='optimize_dayAhead', typ='RES', asset='solar'),
-                "time": time.isoformat() + 'Z',
-                "fields": dict(Power=self.portfolio.pSolar[i])
-            }
-        )
+    buy = merit_order.loc[:, ['buy', 'buyNames']]
+    sell = merit_order.loc[:, ['sell', 'sellNames']]
 
 
-    #df = pd.read_excel(r'./tmp/test.xlsx', index_col=0)
-    #df = df[df['typ'] == 'neg']
-    #del df['typ']
-    #df['quantity'] = df['quantity'].to_numpy(dtype=float)
-    #print(df)
-    # df = df[df['quantity'] > 0]
-    # actual = pd.read_excel(r'./tmp/actual.xlsx', index_col=0)
 
-    # ask = np.sum(actual['quantity'].to_numpy())
-    # df = pd.read_excel(r'./tmp/test.xlsx', index_col=0)
 
-    # test = balancing_clearing(orders=df, ask=np.abs(np.round(-197.14000000000001,1)), minimal=0)
-    #print(test)

@@ -106,10 +106,18 @@ class pwpAgent(basicAgent):
         json_body = []
         for key, value in self.portfolio.energySystems.items():
             time = self.date
-            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            try:
+                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            except Exception as e:
+                print(e)
+                power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
-                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                try:
+                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                except Exception as e:
+                    print(e)
+                    volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
                     {
@@ -131,10 +139,18 @@ class pwpAgent(basicAgent):
         json_body = []
         for key, value in self.portfolio.energySystems.items():
             time = self.date
-            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            try:
+                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            except Exception as e:
+                print(e)
+                power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
-                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                try:
+                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                except Exception as e:
+                    print(e)
+                    volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
                     {
@@ -148,9 +164,13 @@ class pwpAgent(basicAgent):
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
         self.ConnectionInflux.saveData(json_body)
 
-
-        E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
-        F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
+        try:
+            E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
+            F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
+        except Exception as e:
+            print(e)
+            E = np.zeros_like(self.portfolio.t)
+            F = np.zeros_like(self.portfolio.t)
         powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
         priceMax = ((E+F))/powerMax
         powerMax = powerMax - power
@@ -206,8 +226,13 @@ class pwpAgent(basicAgent):
 
         delta = power - (ask-bid)
 
-        E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
-        F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
+        try:
+            E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
+            F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
+        except Exception as e:
+            print(e)
+            E = np.zeros_like(self.portfolio.t)
+            F = np.zeros_like(self.portfolio.t)
         costs = E+F
         profit = profit.reshape((24,)) - costs.reshape((24,))
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
@@ -221,10 +246,18 @@ class pwpAgent(basicAgent):
         json_body = []
         for key, value in self.portfolio.energySystems.items():
             time = self.date
-            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            try:
+                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            except Exception as e:
+                print(e)
+                power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
-                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                try:
+                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                except Exception as e:
+                    print(e)
+                    volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
                     {
@@ -258,10 +291,18 @@ class pwpAgent(basicAgent):
         json_body = []
         for key, value in self.portfolio.energySystems.items():
             time = self.date
-            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            try:
+                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            except Exception as e:
+                print(e)
+                power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
-                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                try:
+                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                except Exception as e:
+                    print(e)
+                    volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
                     {
@@ -290,10 +331,18 @@ class pwpAgent(basicAgent):
         json_body = []
         for key, value in self.portfolio.energySystems.items():
             time = self.date
-            power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            try:
+                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+            except Exception as e:
+                print(e)
+                power = np.zeros_like(self.portfolio.t)
             volume = np.zeros_like(power)
             if value['typ'] == 'storage':
-                volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                try:
+                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                except Exception as e:
+                    print(e)
+                    volume = np.zeros_like(self.portfolio.t)
             for i in self.portfolio.t:
                 json_body.append(
                     {
