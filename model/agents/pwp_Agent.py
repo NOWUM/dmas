@@ -178,6 +178,7 @@ class pwpAgent(basicAgent):
             E = np.zeros_like(self.portfolio.t)
             F = np.zeros_like(self.portfolio.t)
         powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
+        print(powerMax)
         priceMax = ((E+F))/powerMax
         powerMax = powerMax - power
 
@@ -196,7 +197,7 @@ class pwpAgent(basicAgent):
 
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + max(3*var,2)
+        self.maxPrice = self.minPrice * 1.1
 
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
