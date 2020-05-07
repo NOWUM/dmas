@@ -53,7 +53,7 @@ class pwpAgent(basicAgent):
         self.espilion = 0.8                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))             # Lernalgorithmus im x Tage Rythmus
-        self.qLearn.qus = self.qLearn.qus * self.portfolio.capacities['fossil']
+        self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
         logging.info('Parameter der Handelsstrategie festgelegt')
 
         logging.info('Aufbau des Agenten abgeschlossen')
@@ -183,7 +183,7 @@ class pwpAgent(basicAgent):
         powerMax = powerMax - power
 
         # Aufbau der linearen Gebotskurven
-        slopes = np.random.randint(10, 80, 24)
+        slopes = np.random.randint(1, 8, 24) * 10
         wnd = np.asarray(weather['wind']).reshape((-1, 1))                  # Wind [m/s]
         rad = np.asarray(weather['dir']).reshape((-1, 1))                   # Dirkete Strahlung [W/m²]
         tmp = np.asarray(weather['temp']).reshape((-1, 1))                  # Temperatur [°C]
@@ -197,7 +197,7 @@ class pwpAgent(basicAgent):
 
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = self.minPrice * 1.1
+        self.maxPrice = prc.reshape((-1,)) - max(var, 1)#self.minPrice * 1.1
 
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
@@ -245,8 +245,8 @@ class pwpAgent(basicAgent):
         if self.qLearn.fitted:
             states = self.qLearn.getStates(self.date)
             for i in self.portfolio.t:
-                oldValue = self.qLearn.qus[states[i], int(self.actions[i]-10)]
-                self.qLearn.qus[states[i], int(self.actions[i]-10)] = oldValue + self.lr * (profit[i] - np.abs(delta[i]) * 1000 - oldValue)
+                oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
+                self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - np.abs(delta[i]) * 1000 - oldValue)
 
         # Abspeichern der Ergebnisse
         json_body = []

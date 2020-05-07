@@ -7,7 +7,7 @@ class qLeran:
     def __init__(self, influx, init=6):
 
         self.influx = influx
-        self.states = KMeans(n_clusters=72, n_init=7, max_iter=200, random_state=np.random.randint(low=1, high=100))
+        self.states = KMeans(n_clusters=25, n_init=7, max_iter=200, random_state=np.random.randint(low=1, high=100))
 
         # -- Input for Cluster-Anaylse
         self.dem = np.array([]).reshape((-1, 1))
@@ -18,7 +18,7 @@ class qLeran:
         # -- Action Size (70)
         self.act = np.array([]).reshape((-1, 1))
         # -- Reward Values
-        self.qus = 15*np.ones((72, 70))
+        self.qus = 50*np.ones((25, 7))
 
         self.fitted = False
         self.counter = 0
@@ -42,7 +42,7 @@ class qLeran:
 
     def getAction(self, wnd, rad, tmp, dem, prc):
         x = np.concatenate((wnd, rad, tmp, dem/1000, prc), axis=0)
-        x = x.reshape((5,-1))
+        x = x.reshape((5, -1))
         states = self.states.predict(x.T)
         actions = [np.argmax(self.qus[state, :]) for state in states]
         return np.array(actions).reshape((-1,))

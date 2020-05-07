@@ -142,7 +142,7 @@ def dayAhead_clearing(orders):
 if __name__ == "__main__":
 
     df2 = orderGen(150)
-    df = pd.DataFrame(index=[7], data=dict(quantity=4000, price=250, name='Extra'))
+    df = pd.DataFrame(index=[7], data=dict(quantity=-4000, price=-250, name='Extra'))
     df2 = df2.append(df)
     #df2 = df2[df2['quantity'] <=0]
 
