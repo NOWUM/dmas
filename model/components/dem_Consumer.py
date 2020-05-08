@@ -93,8 +93,8 @@ if __name__ == "__main__":
     testg0 = g0_model()
     testRlm = rlm_model()
     industrie = dict(demandP=189*10**9)
-    gewerbe = dict(demandP=155*10**9)
-    haushalte = dict(demandP=139*10**9)
+    gewerbe = dict(demandP=128*10**9)
+    haushalte = dict(demandP=185*10**9)
 
     days = pd.date_range(start='2019-01-01', freq='d',periods=365)
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     totalg0 = np.asarray(totalg0).reshape((-1))
     totalRlm = np.asarray(totalRlm).reshape((-1))
     #plt.plot(totalRlm)
-    total = (totalRlm + totalh0 + totalg0)/1000000
+    total = (totalh0 + totalg0)/1000000
     total1 = total[1:2126]
     total2 = total[2127:7176]
     total3 = total[7201:]
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     #plt.plot(total)
     #plt.plot(values/1000)
-    plt.plot(values[:-2])
+    plt.plot(values)
     plt.plot(total)
     #plt.plot(values[:-27]-total4)
     print('Mittelwert %s' % np.mean(total))
@@ -128,10 +128,10 @@ if __name__ == "__main__":
 
     # sommer=np.asarray(np.load(open(r'./data/Time_Summer.array','rb')), np.int64)
     # winter = np.asarray(np.load(open(r'./data/Time_Winter.array', 'rb')), np.int64)
-    # x = values[:-27]-total4
-    # plt.plot(x)
-    # rlm = pd.DataFrame(x)
-    # print(np.sum(rlm))
+    #x = values[:-27]-total4
+    #plt.plot(x)
+    #rlm = pd.DataFrame(x)
+    #print(np.sum(rlm))
     #
     # rlm = rlm/np.sum(rlm)*1000000
     # rlm.index = pd.date_range(start='2019-01-01', periods=8733, freq='h')

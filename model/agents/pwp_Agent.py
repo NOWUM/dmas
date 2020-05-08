@@ -197,7 +197,7 @@ class pwpAgent(basicAgent):
 
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) - max(var, 1)#self.minPrice * 1.1
+        self.maxPrice = prc.reshape((-1,)) - max(3*var, 1)#self.minPrice * 1.1
 
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
