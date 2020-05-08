@@ -145,10 +145,10 @@ class resAgent(basicAgent):
             # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
             slopes = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
 
-        self.actions = slopes                                               # abschpeichern der Ergebnisse
+        self.actions = slopes                                               # abschpeichern der Ergebnissek
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) - max(5*var, 1)
+        self.maxPrice = prc.reshape((-1,)) - max(2*var, 1)
         self.minPrice = np.zeros_like(self.maxPrice)
 
         delta = self.maxPrice - self.minPrice
