@@ -18,7 +18,10 @@ class mongoInterface:
 
     def getPowerPlants(self, area):
         try:
-            return self.tableStructur.find_one({"_id": area})['powerPlants']
+            powerplants = self.tableStructur.find_one({"_id": area})['powerPlants']
+            for key, value in powerplants.items():
+                value['P0'] = int(value['maxPower']/2)
+            return powerplants
         except:
             return {}
 

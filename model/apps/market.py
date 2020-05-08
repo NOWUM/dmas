@@ -87,11 +87,11 @@ def dayAhead_clearing(orders):
     bid0 = bid0.set_index(bid0['mo'])
     namesBid = set(bid0['name'].to_numpy())
 
-    if bid0['mo'].max() > ask0['mo'].max():
+    if bid0['mo'].max() >= ask0['mo'].max():
         diff = bid0['mo'].max() - ask0['mo'].max()
         maxPrice = ask0['price'].max() + 1
-        df = pd.DataFrame(index=[diff + bid0['mo'].max()],
-                          data=dict(quantity=diff, mo=diff + bid0['mo'].max(), price=maxPrice, name='extra'))
+        df = pd.DataFrame(index=[diff + ask0['mo'].max()],
+                          data=dict(quantity=diff, mo=diff + ask0['mo'].max(), price=maxPrice, name='extra'))
         ask0 = ask0.append(df)
 
     merit_order = pd.DataFrame(index=np.concatenate((ask0.index, bid0.index)))
@@ -142,7 +142,7 @@ def dayAhead_clearing(orders):
 if __name__ == "__main__":
 
     df2 = orderGen(150)
-    df = pd.DataFrame(index=[7], data=dict(quantity=-4000, price=-250, name='Extra'))
+    df = pd.DataFrame(index=[7], data=dict(quantity=4000, price=250, name='Extra'))
     df2 = df2.append(df)
     #df2 = df2[df2['quantity'] <=0]
 
