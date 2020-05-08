@@ -20,7 +20,7 @@ class mongoInterface:
         try:
             powerplants = self.tableStructur.find_one({"_id": area})['powerPlants']
             for key, value in powerplants.items():
-                value['P0'] = int(value['maxPower']/2)
+                value['P0'] = int(value['maxPower']*0.75)
             return powerplants
         except:
             return {}
