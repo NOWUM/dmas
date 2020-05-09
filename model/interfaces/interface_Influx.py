@@ -104,9 +104,9 @@ class influxInterface:
                 % (start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            wind = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+            wind = np.asarray([np.round(point['mean']*np.random.normal(loc=1, scale=0.05), 2) for point in result.get_points()])
         else:
-            wind =  4.0*np.ones(24)
+            wind = 4.0*np.ones(24)
         return np.asarray(wind).reshape((-1, 1))
 
     def getIrradiation(self, date):
@@ -120,7 +120,7 @@ class influxInterface:
                 % (start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            rad = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+            rad = np.asarray([np.round(point['mean']*np.random.normal(loc=1, scale=0.05), 2) for point in result.get_points()])
         else:
             rad = np.zeros(24)
         return np.asarray(rad).reshape((-1, 1))
@@ -136,7 +136,7 @@ class influxInterface:
                 % (start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            temp = np.asarray([np.round(point['mean'], 2) for point in result.get_points()])
+            temp = np.asarray([np.round(point['mean']*np.random.normal(loc=1, scale=0.05), 2) for point in result.get_points()])
         else:
             temp = 13 * np.ones(24)
         return np.asarray(temp).reshape((-1, 1))

@@ -101,7 +101,7 @@ class pwpAgent(basicAgent):
         # Standardoptimierung
         self.portfolio.setPara(self.date, weather,  price, demand)
         self.portfolio.buildModel()
-        power = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
+        powerDA = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
         try:
             E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
             F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
@@ -109,7 +109,7 @@ class pwpAgent(basicAgent):
             E = np.zeros_like(self.portfolio.t)
             F = np.zeros_like(self.portfolio.t)
 
-        costs = [(E[i] + F[i])/power[i] if power[i] else 0 for i in self.portfolio.t]
+        costs = [(E[i] + F[i])/powerDA[i] if powerDA[i] else 0 for i in self.portfolio.t]
 
         self.minPrice = np.asarray(costs).reshape((-1,))
 
@@ -178,9 +178,9 @@ class pwpAgent(basicAgent):
             E = np.zeros_like(self.portfolio.t)
             F = np.zeros_like(self.portfolio.t)
         powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
-        print(powerMax)
+
         priceMax = ((E+F))/powerMax
-        powerMax = powerMax - power
+        powerMax = powerMax - powerDA
 
         # Aufbau der linearen Gebotskurven
         slopes = np.random.randint(1, 8, 24) * 10
@@ -197,19 +197,19 @@ class pwpAgent(basicAgent):
 
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) - max(1*var, 1)#self.minPrice * 1.1
+        self.maxPrice = prc.reshape((-1,)) - max(1*var, 1)
 
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
-
+        print(powerDA)
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [-1*(2/100 * power[i]) for _ in range(2, 102, 2)]
+            quantity = [float(-1*(2/100 * powerDA[i])) for _ in range(2, 102, 2)]
             price = [float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(2, 102, 2)]
             if powerMax[i] > 0:
-                quantity.append(-1 * powerMax[i])
-                price.append(max(priceMax[i], (self.maxPrice[i] + 5)))
+                quantity.append(float(-1 * powerMax[i]))
+                price.append(float(max(priceMax[i], (self.maxPrice[i] + 5))))
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
@@ -229,9 +229,10 @@ class pwpAgent(basicAgent):
 
         # Minimiere Differenz zu den bezuschlagten Geboten
         self.portfolio.buildModel(response=ask-bid)
-        power = self.portfolio.fixPlaning()
+        #planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead')
+        _ = self.portfolio.fixPlaning()
 
-        delta = power - (ask-bid)
+        #delta = planing - (ask-bid)
 
         try:
             E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
@@ -246,7 +247,7 @@ class pwpAgent(basicAgent):
             states = self.qLearn.getStates(self.date)
             for i in self.portfolio.t:
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
-                self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - np.abs(delta[i]) * 1000 - oldValue)
+                self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - oldValue) # np.abs(delta[i]) * 1000
 
         # Abspeichern der Ergebnisse
         json_body = []
