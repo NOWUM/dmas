@@ -162,7 +162,10 @@ class resAgent(basicAgent):
                 quantity.append(-1*(2/100 * powerDirect[i]))
             price = [-499.98]
             for p in range(2, 102, 2):
-                price.append(float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])))
+                if slopes[i] > 0:
+                    price.append(float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])))
+                else:
+                    price.append(float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])))
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
