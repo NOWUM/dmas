@@ -97,7 +97,6 @@ class pwpAgent(basicAgent):
         demand = self.demandForecast()                                      # Lastprognose
         # Verpflichtungen Regelleistung
         # pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)
-
         # Standardoptimierung
         self.portfolio.setPara(self.date, weather,  price, demand)
         self.portfolio.buildModel()
@@ -144,6 +143,7 @@ class pwpAgent(basicAgent):
         self.portfolio.setPara(self.date, weather, price, demand)
         self.portfolio.buildModel(max_=True)
         powerMax = np.asarray(self.portfolio.optimize(), np.float)
+
         # Speichern der maximal möglichen Leistung
         json_body = []
         for key, value in self.portfolio.energySystems.items():
@@ -179,7 +179,7 @@ class pwpAgent(basicAgent):
             F = np.zeros_like(self.portfolio.t)
         powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
 
-        priceMax = ((E+F))/powerMax
+        priceMax = (E+F)/powerMax
         powerMax = powerMax - powerDA
 
         # Aufbau der linearen Gebotskurven
@@ -201,15 +201,17 @@ class pwpAgent(basicAgent):
 
         delta = self.maxPrice - self.minPrice
         slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
-        print(powerDA)
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
             quantity = [float(-1*(2/100 * powerDA[i])) for _ in range(2, 102, 2)]
-            price = [float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) for p in range(2, 102, 2)]
-            if powerMax[i] > 0:
+            price = [float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) if prc[i] > 0 else
+                     float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i]))
+                     for p in range(2, 102, 2)]
+            if (powerMax[i] > 0):
                 quantity.append(float(-1 * powerMax[i]))
                 price.append(float(max(priceMax[i], (self.maxPrice[i] + 5))))
+
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)

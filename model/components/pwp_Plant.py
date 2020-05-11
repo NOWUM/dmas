@@ -18,7 +18,8 @@ class powerPlant_gurobi(es):
 
         # Leistung des Kraftwerkes zu jedem Zeitschritt t
         p_out = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P_' + name, lb=0, ub=data['maxPower'])
-        self.m.addConstr(p_out[0] == data['P0'])
+        self.m.addConstr(p_out[0] <= data['P0'] + data['gradP'])
+        self.m.addConstr(p_out[0] >= data['P0'] - data['gradM'])
         # Leistung für die Optimierung
         p_opt = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='opt_' + name, lb=0, ub=delta)
 
