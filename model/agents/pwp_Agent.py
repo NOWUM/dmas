@@ -54,6 +54,8 @@ class pwpAgent(basicAgent):
         self.lr = 0.8                                                                           # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))      # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
+        self.risk = np.random.choice([-2, -1, 0, 1, 2])
+
         logging.info('Parameter der Handelsstrategie festgelegt')
 
         logging.info('Aufbau des Agenten abgeschlossen')
@@ -190,7 +192,7 @@ class pwpAgent(basicAgent):
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) - max(1*var, 1)                               # Maximalpreis      [€/MWh]
+        self.maxPrice = prc.reshape((-1,)) + max(self.risk*var, 1)                       # Maximalpreis      [€/MWh]
 
         slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi)  # Preissteigung pro weitere MW
 

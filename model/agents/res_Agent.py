@@ -94,6 +94,8 @@ class resAgent(basicAgent):
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * (self.portfolio.capacities['wind']
                                                       + self.portfolio.capacities['solar'])
 
+        self.risk = np.random.choice([-2, -1, 0, 1, 2])
+
         logging.info('Parameter der Handelsstrategie festgelegt')
 
         logging.info('Aufbau des Agenten abgeschlossen')
@@ -197,7 +199,7 @@ class resAgent(basicAgent):
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) - max(2*var, 1)                              # Maximalpreis      [€/MWh]
+        self.maxPrice = prc.reshape((-1,)) + max(self.risk*var, 1)                      # Maximalpreis      [€/MWh]
         self.minPrice = np.zeros_like(self.maxPrice)                                    # Minimalpreis      [€/MWh]
 
         slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi) # Preissteigung pro weitere MW
