@@ -112,11 +112,11 @@ class pwpAgent(basicAgent):
         # verdiene mindestens die variablen Kosten
         self.minPrice = np.asarray(costs).reshape((-1,))                        # Minimalpreis      [€/MWh]
 
-        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t),              # gesamte Erzeugung aus Braunkohle
-                          coal=np.zeros_like(self.portfolio.t),                 # gesamte Erzeugung aus Steinkohle
-                          gas=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Erdgas
-                          nuc=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Kernkraft
-                          water=np.zeros_like(self.portfolio.t))
+        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t, dtype=float),              # gesamte Erzeugung aus Braunkohle
+                          coal=np.zeros_like(self.portfolio.t, dtype=float),                 # gesamte Erzeugung aus Steinkohle
+                          gas=np.zeros_like(self.portfolio.t, dtype=float),                  # gesamte Erzeugung aus Erdgas
+                          nuc=np.zeros_like(self.portfolio.t, dtype=float),                  # gesamte Erzeugung aus Kernkraft
+                          water=np.zeros_like(self.portfolio.t, dtype=float))
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
@@ -236,11 +236,11 @@ class pwpAgent(basicAgent):
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - oldValue) # np.abs(delta[i]) * 1000
 
-        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t),              # gesamte Erzeugung aus Braunkohle
-                          coal=np.zeros_like(self.portfolio.t),                 # gesamte Erzeugung aus Steinkohle
-                          gas=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Erdgas
-                          nuc=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Kernkraft
-                          water=np.zeros_like(self.portfolio.t))
+        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t, dtype=float),              # gesamte Erzeugung aus Braunkohle
+                          coal=np.zeros_like(self.portfolio.t, dtype=float),                 # gesamte Erzeugung aus Steinkohle
+                          gas=np.zeros_like(self.portfolio.t, dtype=float),                  # gesamte Erzeugung aus Erdgas
+                          nuc=np.zeros_like(self.portfolio.t, dtype=float),                  # gesamte Erzeugung aus Kernkraft
+                          water=np.zeros_like(self.portfolio.t, dtype=float))
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():

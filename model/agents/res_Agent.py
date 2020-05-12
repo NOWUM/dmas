@@ -130,10 +130,10 @@ class resAgent(basicAgent):
                 powerEEG += value['model'].generation['water'].reshape(-1)      # alle Laufwasser-Kraftwerke
                 powerEEG += value['model'].generation['solar'].reshape(-1)      # alle PV-Anlagen vor 2013
 
-        powerFuels = dict(bio=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Biomasse
-                          water=np.zeros_like(self.portfolio.t),                # gesamte Erzeugung aus Wasserkraft
-                          solar=np.zeros_like(self.portfolio.t),                # gesamte Erzeugung aus Globalstrahlung
-                          wind=np.zeros_like(self.portfolio.t))                 # gesamte Erzeugung aus Windkraft
+        powerFuels = dict(bio=np.zeros_like(self.portfolio.t, dtype=float),                  # gesamte Erzeugung aus Biomasse
+                          water=np.zeros_like(self.portfolio.t, dtype=float),                # gesamte Erzeugung aus Wasserkraft
+                          solar=np.zeros_like(self.portfolio.t, dtype=float),                # gesamte Erzeugung aus Globalstrahlung
+                          wind=np.zeros_like(self.portfolio.t, dtype=float))                 # gesamte Erzeugung aus Windkraft
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
@@ -151,7 +151,6 @@ class resAgent(basicAgent):
                                      timestamp='optimize_dayAhead'),        # Zeitstempel der Tagesplanung
                         "time": time.isoformat() + 'Z',
                         "fields": dict(power=power[i])                      # Gesamtleistung des Energiesystems [MW]
-
                     }
                 )
                 powerFuels[value['fuel']][i] += power[i]                    # Summe der Erzeugungsleistung pro Energieträger
@@ -246,10 +245,10 @@ class resAgent(basicAgent):
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - missed[i] - oldValue)
 
-        powerFuels = dict(bio=np.zeros_like(self.portfolio.t),               # gesamte Erzeugung aus Biomasse
-                          water=np.zeros_like(self.portfolio.t),             # gesamte Erzeugung aus Wasserkraft
-                          solar=np.zeros_like(self.portfolio.t),             # gesamte Erzeugung aus Globalstrahlung
-                          wind=np.zeros_like(self.portfolio.t))              # gesamte Erzeugung aus Windkraft
+        powerFuels = dict(bio=np.zeros_like(self.portfolio.t, dtype=float),                  # gesamte Erzeugung aus Biomasse
+                          water=np.zeros_like(self.portfolio.t, dtype=float),                # gesamte Erzeugung aus Wasserkraft
+                          solar=np.zeros_like(self.portfolio.t, dtype=float),                # gesamte Erzeugung aus Globalstrahlung
+                          wind=np.zeros_like(self.portfolio.t, dtype=float))                 # gesamte Erzeugung aus Windkraft
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
