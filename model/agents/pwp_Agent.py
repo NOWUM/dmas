@@ -115,7 +115,8 @@ class pwpAgent(basicAgent):
         powerFuels = dict(lignite=np.zeros_like(self.portfolio.t),              # gesamte Erzeugung aus Braunkohle
                           coal=np.zeros_like(self.portfolio.t),                 # gesamte Erzeugung aus Steinkohle
                           gas=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Erdgas
-                          nuc=np.zeros_like(self.portfolio.t))                  # gesamte Erzeugung aus Kernkraft
+                          nuc=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Kernkraft
+                          water=np.zeros_like(self.portfolio.t))
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
@@ -237,7 +238,8 @@ class pwpAgent(basicAgent):
         powerFuels = dict(lignite=np.zeros_like(self.portfolio.t),              # gesamte Erzeugung aus Braunkohle
                           coal=np.zeros_like(self.portfolio.t),                 # gesamte Erzeugung aus Steinkohle
                           gas=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Erdgas
-                          nuc=np.zeros_like(self.portfolio.t))                  # gesamte Erzeugung aus Kernkraft
+                          nuc=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Kernkraft
+                          water=np.zeros_like(self.portfolio.t))
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
