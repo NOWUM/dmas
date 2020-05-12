@@ -283,6 +283,7 @@ class pwpAgent(basicAgent):
                                    powerCoal=powerFuels['coal'][i],         # gesamt Steinkohle             [MW]
                                    powerGas=powerFuels['gas'][i],           # gesamt Erdgas                 [MW]
                                    powerNuc=powerFuels['nuc'][i],           # gesamt Kernkraft              [MW]
+                                   powerStorage=powerFuels['water'][i],
                                    profit=profit[i])                        # erzielte Erlöse               [€]
                 }
             )
@@ -310,7 +311,7 @@ class pwpAgent(basicAgent):
         self.ConnectionMongo.setActuals(name=self.name, date=self.date, orders=orderbook)
 
         powerFuels = dict(lignite=np.zeros_like(self.portfolio.t), coal=np.zeros_like(self.portfolio.t), gas=np.zeros_like(self.portfolio.t),
-                          nuc=np.zeros_like(self.portfolio.t))
+                          nuc=np.zeros_like(self.portfolio.t), water=np.zeros_like(self.portfolio.t))
         try:
             for key, value in self.portfolio.energySystems.items():
                 time = self.date
@@ -360,7 +361,7 @@ class pwpAgent(basicAgent):
         json_body = []  # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         powerFuels = dict(lignite=np.zeros_like(self.portfolio.t), coal=np.zeros_like(self.portfolio.t), gas=np.zeros_like(self.portfolio.t),
-                          nuc=np.zeros_like(self.portfolio.t))
+                          nuc=np.zeros_like(self.portfolio.t), water=np.zeros_like(self.portfolio.t))
         try:
             for key, value in self.portfolio.energySystems.items():
                 time = self.date
