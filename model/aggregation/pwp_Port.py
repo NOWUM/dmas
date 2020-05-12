@@ -118,10 +118,14 @@ class pwpPort(port_model):
                         value['off'] = np.count_nonzero(1 - z[index:])
                         value['on'] = 0
 
+                    value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
+                    value['model'].volume = np.zeros_like(power)
+
                 if value['typ'] == 'storage':
                     value['P+0'] = [self.m.getVarByName('P+_%s[%i]' % (key, i)).x for i in self.t][-1]
                     value['P-0'] = [self.m.getVarByName('P-_%s[%i]' % (key, i)).x for i in self.t][-1]
                     value['V0'] = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t][-1]
+                    value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
 
             # Einspeiseleitung
             power = np.asanyarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
@@ -134,6 +138,9 @@ class pwpPort(port_model):
             fuel = np.round(fuel, 2)
 
         except Exception as e:
+            for key, value in self.energySystems.items():
+                value['model'].power = np.zeros_like(power)
+                value['model'].volume = np.zeros_like(power)
             print(e)
         self.power = power
         self.emisson = emisson

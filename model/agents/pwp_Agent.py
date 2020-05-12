@@ -144,8 +144,8 @@ class pwpAgent(basicAgent):
         # Berechne maximal verfügbare Leistung
         self.portfolio.buildModel(max_=True)
         power_max = np.asarray(self.portfolio.optimize(), np.float)
-        power_max = power_max - power_dayAhead
         priceMax = (self.portfolio.emisson + self.portfolio.fuel) / power_max
+        power_max = power_max - power_dayAhead
 
         # Portfolioinformation
         time = self.date
@@ -158,15 +158,16 @@ class pwpAgent(basicAgent):
                                  area=self.plz,                             # Plz Gebiet
                                  timestamp='optimize_dayAhead'),            # Zeitstempel der Tagesplanung
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(powerMax=power_max[i],                   # maximal mögliche Leistung     [MW]
-                                   powerTotal=power_dayAhead[i],            # gesamte geplante Leistung     [MW]
-                                   emissionCost=emission[i],                # Kosten aus CO2                [€]
-                                   fuelCost=fuel[i],                        # Kosten aus Brennstoff         [€]
-                                   priceForcast=price['power'][i],          # Day Ahead Preisprognose       [€/MWh]
-                                   powerLignite=powerFuels['lignite'][i],   # gesamt Braunkohle             [MW]
-                                   powerCoal=powerFuels['coal'][i],         # gesamt Steinkohle             [MW]
-                                   powerGas=powerFuels['gas'][i],           # gesamt Erdgas                 [MW]
-                                   powerNuc=powerFuels['nuc'][i])           # gesamt Kernkraft              [MW]
+                    "fields": dict(powerMax=power_max[i] + power_dayAhead[i],   # maximal mögliche Leistung     [MW]
+                                   powerTotal=power_dayAhead[i],                # gesamte geplante Leistung     [MW]
+                                   emissionCost=emission[i],                    # Kosten aus CO2                [€]
+                                   fuelCost=fuel[i],                            # Kosten aus Brennstoff         [€]
+                                   priceForcast=price['power'][i],              # Day Ahead Preisprognose       [€/MWh]
+                                   powerLignite=powerFuels['lignite'][i],       # gesamt Braunkohle             [MW]
+                                   powerCoal=powerFuels['coal'][i],             # gesamt Steinkohle             [MW]
+                                   powerGas=powerFuels['gas'][i],               # gesamt Erdgas                 [MW]
+                                   powerNuc=powerFuels['nuc'][i],               # gesamt Kernkraft              [MW]
+                                   powerStorage=powerFuels['water'][i])
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
@@ -202,7 +203,7 @@ class pwpAgent(basicAgent):
                      for p in range(2, 102, 2)]
             if (power_max[i] > 0):
                 quantity.append(float(-1 * power_max[i]))
-                price.append(float(max(priceMax[i], (self.maxPrice[i] + 5))))
+                price.append(float(max(priceMax[i], self.maxPrice[i])))
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
