@@ -360,49 +360,49 @@ class pwpAgent(basicAgent):
     def post_actual(self):
         """Abschlussplanung des Tages"""
         # TODO: Überarbeitung, wenn Regelleistung
-        json_body = []  # Liste zur Speicherung der Ergebnisse in der InfluxDB
-
-        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t), coal=np.zeros_like(self.portfolio.t), gas=np.zeros_like(self.portfolio.t),
-                          nuc=np.zeros_like(self.portfolio.t), water=np.zeros_like(self.portfolio.t))
-        try:
-            for key, value in self.portfolio.energySystems.items():
-                time = self.date
-                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                volume = np.zeros_like(power)
-                if value['typ'] == 'storage':
-                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                for i in self.portfolio.t:
-                    json_body.append(
-                        {
-                            "measurement": 'Areas',
-                            "tags": dict(typ='PWP', fuel=value['fuel'], asset=key, agent=self.name, area=self.plz, timestamp='post_actual'),
-                            "time": time.isoformat() + 'Z',
-                            "fields": dict(power=power[i], volume=volume[i])
-                        }
-                    )
-                    powerFuels[value['fuel']][i] += power[i]
-                    time = time + pd.DateOffset(hours=self.portfolio.dt)
-        except Exception as e:
-            print('Error: %s' % e)
-
-        try:
-            time = self.date
-            for i in self.portfolio.t:
-                json_body.append(
-                    {
-                        "measurement": 'Areas',
-                        "tags": dict(typ='PWP', agent=self.name, area=self.plz, timestamp='post_actual'),
-                        "time": time.isoformat() + 'Z',
-                        "fields": dict(powerTotal=self.portfolio.power[i], emissionCost=self.portfolio.emisson[i],
-                                       fuelCost=self.portfolio.fuel[i], powerLignite=powerFuels['lignite'][i],
-                                       powerCoal=powerFuels['coal'][i], powerGas=powerFuels['gas'][i], powerNuc=powerFuels['nuc'][i])
-                    }
-                )
-                time = time + pd.DateOffset(hours=self.portfolio.dt)
-        except Exception as e:
-            print('Error: %s' % e)
-
-        self.ConnectionInflux.saveData(json_body)
+        # json_body = []  # Liste zur Speicherung der Ergebnisse in der InfluxDB
+        #
+        # powerFuels = dict(lignite=np.zeros_like(self.portfolio.t), coal=np.zeros_like(self.portfolio.t), gas=np.zeros_like(self.portfolio.t),
+        #                   nuc=np.zeros_like(self.portfolio.t), water=np.zeros_like(self.portfolio.t))
+        # try:
+        #     for key, value in self.portfolio.energySystems.items():
+        #         time = self.date
+        #         power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+        #         volume = np.zeros_like(power)
+        #         if value['typ'] == 'storage':
+        #             volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+        #         for i in self.portfolio.t:
+        #             json_body.append(
+        #                 {
+        #                     "measurement": 'Areas',
+        #                     "tags": dict(typ='PWP', fuel=value['fuel'], asset=key, agent=self.name, area=self.plz, timestamp='post_actual'),
+        #                     "time": time.isoformat() + 'Z',
+        #                     "fields": dict(power=power[i], volume=volume[i])
+        #                 }
+        #             )
+        #             powerFuels[value['fuel']][i] += power[i]
+        #             time = time + pd.DateOffset(hours=self.portfolio.dt)
+        # except Exception as e:
+        #     print('Error: %s' % e)
+        #
+        # try:
+        #     time = self.date
+        #     for i in self.portfolio.t:
+        #         json_body.append(
+        #             {
+        #                 "measurement": 'Areas',
+        #                 "tags": dict(typ='PWP', agent=self.name, area=self.plz, timestamp='post_actual'),
+        #                 "time": time.isoformat() + 'Z',
+        #                 "fields": dict(powerTotal=self.portfolio.power[i], emissionCost=self.portfolio.emisson[i],
+        #                                fuelCost=self.portfolio.fuel[i], powerLignite=powerFuels['lignite'][i],
+        #                                powerCoal=powerFuels['coal'][i], powerGas=powerFuels['gas'][i], powerNuc=powerFuels['nuc'][i])
+        #             }
+        #         )
+        #         time = time + pd.DateOffset(hours=self.portfolio.dt)
+        # except Exception as e:
+        #     print('Error: %s' % e)
+        #
+        # self.ConnectionInflux.saveData(json_body)
 
         #pos, neg = self.ConnectionInflux.getBalancingEnergy(self.date,self.name)
         #self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast(),

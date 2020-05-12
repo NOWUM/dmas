@@ -90,9 +90,9 @@ def simulation(start, end):
         mongoCon.orderDB[str(date.date)]
 
         try:
-            send.basic_publish(exchange='Market', routing_key='', body='opt_balancing ' + str(date))
-            balPowerClearing(mongoCon, influxCon, date)
-            send.basic_publish(exchange='Market', routing_key='', body='result_balancing ' + str(date))
+            #send.basic_publish(exchange='Market', routing_key='', body='opt_balancing ' + str(date))
+            #balPowerClearing(mongoCon, influxCon, date)
+            #send.basic_publish(exchange='Market', routing_key='', body='result_balancing ' + str(date))
             print('Balancing calculation finish ' + str(date.date()))
         except Exception as e:
             print('Error in  Balancing calculation ' + str(date.date()))
@@ -106,8 +106,8 @@ def simulation(start, end):
             print('Error in Day Ahead calculation ' + str(date.date()))
             print(e)
         try:
-            send.basic_publish(exchange='Market', routing_key='', body='opt_actual ' + str(date))
-            balEnergyClearing(mongoCon, influxCon, date)
+            #send.basic_publish(exchange='Market', routing_key='', body='opt_actual ' + str(date))
+            #balEnergyClearing(mongoCon, influxCon, date)
             send.basic_publish(exchange='Market', routing_key='', body='result_actual ' + str(date))
             print('Actual calculation finish ' + str(date.date()))
         except Exception as e:
