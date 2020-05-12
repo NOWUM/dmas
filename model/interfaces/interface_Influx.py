@@ -310,8 +310,11 @@ class influxInterface:
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
         # --> Abfrage
-        query = 'select sum("Power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'%s\' GROUP BY time(1h) fill(0)' \
+        query = 'select sum("power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'%s\' GROUP BY time(1h) fill(0)' \
                 % (start, end, name, timestamp)
+        if 'DEM' in name:
+            query = 'select sum("powerTotal") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'%s\' GROUP BY time(1h) fill(0)' \
+                    % (start, end, name, timestamp)
         result = self.influx.query(query)
         if result.__len__() > 0:
            return np.asarray([point['sum'] for point in result.get_points()])

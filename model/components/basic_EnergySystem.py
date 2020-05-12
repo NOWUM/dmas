@@ -45,6 +45,7 @@ class energySystem:
         self.heatYear = demQ                                    # Wärmebedarf pro Jahr in kwH/a
         self.powerDemand = np.zeros_like(self.t)                # Strombedarf der Komponente
         self.heatDemand = np.zeros_like(self.t)                 # Wärmebedarf der Komponente
+
         self.generation = dict(wind=np.zeros_like(self.t),      # Winderzeugung der Komponente
                                solar=np.zeros_like(self.t),     # PV-Erzeugung der Komponente
                                fossil=np.zeros_like(self.t),    # Erzeugung aus konv. Kraftwerken der Komponente
@@ -53,6 +54,7 @@ class energySystem:
                                storage=np.zeros_like(self.t))   # Speicherleistung der Komponente
 
         self.power = np.zeros_like(self.t)
+        self.volume = np.zeros_like(self.t)
 
     def getPowerDemand(self, data, date):
         """ Stromverbrauch des aktuellen Tages in stündlicher Auflösung und [kW] """

@@ -28,7 +28,7 @@ class pwpAgent(basicAgent):
         # Aufbau des Portfolios mit den enstprechenden Kraftwerken und Speichern
         self.portfolio = pwpPort(typ='PWP', gurobi=True)                    # Verwendung von Gurobi
 
-        # Einbindung der Kraftwerksdaten aus der MongoDB und dem TechFile in ./data
+        # Einbindung der Kraftwerksdaten aus der MongoDB
         totalPower = 0
         powerPlants = self.ConnectionMongo.getPowerPlants(plz)
         for key, value in powerPlants.items():
@@ -47,12 +47,12 @@ class pwpAgent(basicAgent):
         logging.info('Speicher hinzugefügt')
 
         # Parameter für die Handelsstrategie am Day Ahead Markt
-        self.maxPrice = []                                                  # Maximalgebot
-        self.minPrice = []                                                  # Minimalgenbot
-        self.actions = np.zeros(24)                                         # Steigung der Gebotsgeraden für jede Stunde
-        self.espilion = 0.8                                                 # Faktor zum Abtasten der Möglichkeiten
-        self.lr = 0.8                                                       # Lernrate des Q-Learning-Einsatzes
-        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))             # Lernalgorithmus im x Tage Rythmus
+        self.maxPrice = np.zeros(24)                                                             # Maximalgebote
+        self.minPrice = np.zeros(24)                                                            # Minimalgenbote
+        self.actions = np.zeros(24)                                                             # Steigung der Gebotsgeraden für jede Stunde
+        self.espilion = 0.8                                                                     # Faktor zum Abtasten der Möglichkeiten
+        self.lr = 0.8                                                                           # Lernrate des Q-Learning-Einsatzes
+        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))      # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
         logging.info('Parameter der Handelsstrategie festgelegt')
 
@@ -91,125 +91,116 @@ class pwpAgent(basicAgent):
     def optimize_dayAhead(self):
         """Einsatzplanung für den DayAhead-Markt"""
         orderbook = dict()                                                  # Oderbook für alle Gebote (Stunde 1-24)
+        json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
+
         # Prognosen für den kommenden Tag
         weather = self.weatherForecast()                                    # Wetterdaten (dir,dif,temp,wind)
         price = self.priceForecast()                                        # Preisdaten (power,gas,nuc,coal,lignite)
         demand = self.demandForecast()                                      # Lastprognose
-        # Verpflichtungen Regelleistung
-        # pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)
+
+        # pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)  # Verpflichtungen Regelleistung
+
         # Standardoptimierung
         self.portfolio.setPara(self.date, weather,  price, demand)
         self.portfolio.buildModel()
-        powerDA = np.asarray(self.portfolio.optimize(), np.float)             # Berechnung der Einspeiseleitung
-        try:
-            E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
-            F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
-        except Exception as e:
-            E = np.zeros_like(self.portfolio.t)
-            F = np.zeros_like(self.portfolio.t)
+        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)
 
-        costs = [(E[i] + F[i])/powerDA[i] if powerDA[i] else 0 for i in self.portfolio.t]
+        emission = self.portfolio.emisson
+        fuel = self.portfolio.fuel
+        costs = [(emission[i] + fuel[i])/power_dayAhead[i] if power_dayAhead[i] else 0 for i in self.portfolio.t]
 
-        self.minPrice = np.asarray(costs).reshape((-1,))
+        # verdiene mindestens die variablen Kosten
+        self.minPrice = np.asarray(costs).reshape((-1,))                        # Minimalpreis      [€/MWh]
 
-        # Speichern des Fahrplans bei aktuller Preisprognose
-        json_body = []
+        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t),              # gesamte Erzeugung aus Braunkohle
+                          coal=np.zeros_like(self.portfolio.t),                 # gesamte Erzeugung aus Steinkohle
+                          gas=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Erdgas
+                          nuc=np.zeros_like(self.portfolio.t))                  # gesamte Erzeugung aus Kernkraft
+
+        # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
             time = self.date
-            try:
-                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-            except Exception as e:
-                power = np.zeros_like(self.portfolio.t)
-            volume = np.zeros_like(power)
-            if value['typ'] == 'storage':
-                try:
-                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                except Exception as e:
-                    volume = np.zeros_like(self.portfolio.t)
+            power = value['model'].power
+            volume = value['model'].volume
             for i in self.portfolio.t:
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='optimize_dayAhead', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(typ='PWP',                             # Typ konventionelle Kraftwerke
+                                     fuel=value['fuel'],                    # Brennstoff/ Energieträger (Braunkohle, Steinkohle, Erdgas, Kernkraft)
+                                     asset=key,                             # eindeutiger Name des Energiesystems
+                                     agent=self.name,                       # Name des Agenten
+                                     area=self.plz,                         # Plz Gebiet
+                                     timestamp='optimize_dayAhead'),        # Zeitstempel der Tagesplanung
                         "time": time.isoformat() + 'Z',
-                        "fields": dict(Power=power[i], Volume=volume[i], PriceFrcst=price['power'][i])
+                        "fields": dict(power=power[i],                      # Gesamtleistung des Energiesystems [MW]
+                                       volume=volume[i])                    # Speichervolumen                   [MWh]
                     }
                 )
+                powerFuels[value['fuel']][i] += power[i]                    # Summe der Erzeugungsleistung pro Energieträger
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
 
-        # Optimierung Maximale leistung
-        self.portfolio.setPara(self.date, weather, price, demand)
+        # Berechne maximal verfügbare Leistung
         self.portfolio.buildModel(max_=True)
-        powerMax = np.asarray(self.portfolio.optimize(), np.float)
+        power_max = np.asarray(self.portfolio.optimize(), np.float)
+        power_max = power_max - power_dayAhead
+        priceMax = (self.portfolio.emisson + self.portfolio.fuel) / power_max
 
-        # Speichern der maximal möglichen Leistung
-        json_body = []
-        for key, value in self.portfolio.energySystems.items():
-            time = self.date
-            try:
-                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-            except Exception as e:
-                power = np.zeros_like(self.portfolio.t)
-            volume = np.zeros_like(power)
-            if value['typ'] == 'storage':
-                try:
-                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                except Exception as e:
-                    volume = np.zeros_like(self.portfolio.t)
-            for i in self.portfolio.t:
-                json_body.append(
-                    {
-                        "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='optimize_dayAhead', typ='PWP', fuel=value['fuel']),
-                        "time": time.isoformat() + 'Z',
-                        "fields": dict(PowerMax=power[i], Volume=volume[i])
-                    }
-                )
-                time = time + pd.DateOffset(hours=self.portfolio.dt)
+        # Portfolioinformation
+        time = self.date
+        for i in self.portfolio.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(typ='PWP',                                 # Typ konventionelle Kraftwerke
+                                 agent=self.name,                           # Name des Agenten
+                                 area=self.plz,                             # Plz Gebiet
+                                 timestamp='optimize_dayAhead'),            # Zeitstempel der Tagesplanung
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(powerMax=power_max[i],                   # maximal mögliche Leistung     [MW]
+                                   powerTotal=power_dayAhead[i],            # gesamte geplante Leistung     [MW]
+                                   emissionCost=emission[i],                # Kosten aus CO2                [€]
+                                   fuelCost=fuel[i],                        # Kosten aus Brennstoff         [€]
+                                   priceForcast=price['power'][i],          # Day Ahead Preisprognose       [€/MWh]
+                                   powerLignite=powerFuels['lignite'][i],   # gesamt Braunkohle             [MW]
+                                   powerCoal=powerFuels['coal'][i],         # gesamt Steinkohle             [MW]
+                                   powerGas=powerFuels['gas'][i],           # gesamt Erdgas                 [MW]
+                                   powerNuc=powerFuels['nuc'][i])           # gesamt Kernkraft              [MW]
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolio.dt)
+
         self.ConnectionInflux.saveData(json_body)
-
-        try:
-            E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
-            F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
-        except Exception as e:
-            E = np.zeros_like(self.portfolio.t)
-            F = np.zeros_like(self.portfolio.t)
-        powerMax[powerMax <= 0] = self.portfolio.capacities['fossil']
-
-        priceMax = (E+F)/powerMax
-        powerMax = powerMax - powerDA
 
         # Aufbau der linearen Gebotskurven
-        slopes = np.random.randint(1, 8, 24) * 10
-        wnd = np.asarray(weather['wind']).reshape((-1, 1))                  # Wind [m/s]
-        rad = np.asarray(weather['dir']).reshape((-1, 1))                   # Dirkete Strahlung [W/m²]
-        tmp = np.asarray(weather['temp']).reshape((-1, 1))                  # Temperatur [°C]
-        dem = np.asarray(demand).reshape((-1, 1))                           # Lastprognose [MW]
-        prc = np.asarray(price['power']).reshape((-1, 1))                   # MCP Porgnose
+        actions = np.random.randint(1, 8, 24) * 10
+        prc = np.asarray(price['power']).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
+
+        # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
         if self.qLearn.fitted and (self.espilion > np.random.uniform(0,1)):
-            # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-            slopes = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
+            wnd = np.asarray(weather['wind']).reshape((-1, 1))                          # Wind              [m/s]
+            rad = np.asarray(weather['dir']).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
+            tmp = np.asarray(weather['temp']).reshape((-1, 1))                          # Temperatur        [°C]
+            dem = np.asarray(demand).reshape((-1, 1))                                   # Lastprognose      [MW]
+            actions = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
+        self.actions = actions                                                          # abschpeichern der Aktionen
 
-        self.actions = slopes                                               # abschpeichern der Ergebnisse
-
+        # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) - max(1*var, 1)
+        self.maxPrice = prc.reshape((-1,)) - max(1*var, 1)                               # Maximalpreis      [€/MWh]
 
-        delta = self.maxPrice - self.minPrice
-        slopes = (delta/100) * np.tan((slopes+10)/180*np.pi)   # Preissteigung pro weitere MW
+        slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi)  # Preissteigung pro weitere MW
+
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
-            # biete immer den minimalen Preis, aber nie mehr als den maximalen Preis
-            quantity = [float(-1*(2/100 * powerDA[i])) for _ in range(2, 102, 2)]
+            # biete nie mehr als den maximalen Preis
+            quantity = [float(-1*(2/100 * power_dayAhead[i])) for _ in range(2, 102, 2)]
             price = [float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) if slopes[i] > 0 else
                      float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i]))
                      for p in range(2, 102, 2)]
-            if (powerMax[i] > 0):
-                quantity.append(float(-1 * powerMax[i]))
+            if (power_max[i] > 0):
+                quantity.append(float(-1 * power_max[i]))
                 price.append(float(max(priceMax[i], (self.maxPrice[i] + 5))))
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
@@ -220,29 +211,21 @@ class pwpAgent(basicAgent):
 
     def post_dayAhead(self):
         """Reaktion auf  die DayAhead-Ergebnisse"""
+        json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         # Speichern der Daten und Aktionen, um aus diesen zu lernen
         self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))
         # Abfrage der DayAhead Ergebnisse
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
-        price = self.ConnectionInflux.getDayAheadPrice(self.date)
-        profit = np.asarray([(ask[i]-bid[i])*price[i] for i in range(24)])
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)                # Angebotene Menge [MWh]
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)                # Nachgefragte Menge [MWh]
+        price = self.ConnectionInflux.getDayAheadPrice(self.date)                       # MCP [€/MWh]
+        profit = np.asarray([float((ask[i] - bid[i]) * price[i]) for i in range(24)])   # erzielte Erlöse
 
         # Minimiere Differenz zu den bezuschlagten Geboten
         self.portfolio.buildModel(response=ask-bid)
-        #planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead')
-        _ = self.portfolio.fixPlaning()
+        power_dayAhead = self.portfolio.fixPlaning()
 
-        #delta = planing - (ask-bid)
-
-        try:
-            E = np.asarray([np.round(self.portfolio.m.getVarByName('E[%i]' % i).x, 2) for i in self.portfolio.t])
-            F = np.asarray([np.round(self.portfolio.m.getVarByName('F[%i]' % i).x, 2) for i in self.portfolio.t])
-        except Exception as e:
-            E = np.zeros_like(self.portfolio.t)
-            F = np.zeros_like(self.portfolio.t)
-        costs = E+F
+        costs = self.portfolio.emisson + self.portfolio.fuel
         profit = profit.reshape((24,)) - costs.reshape((24,))
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
@@ -251,37 +234,66 @@ class pwpAgent(basicAgent):
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - oldValue) # np.abs(delta[i]) * 1000
 
-        # Abspeichern der Ergebnisse
-        json_body = []
+        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t),              # gesamte Erzeugung aus Braunkohle
+                          coal=np.zeros_like(self.portfolio.t),                 # gesamte Erzeugung aus Steinkohle
+                          gas=np.zeros_like(self.portfolio.t),                  # gesamte Erzeugung aus Erdgas
+                          nuc=np.zeros_like(self.portfolio.t))                  # gesamte Erzeugung aus Kernkraft
+
+        # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
             time = self.date
-            try:
-                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-            except Exception as e:
-                power = np.zeros_like(self.portfolio.t)
-            volume = np.zeros_like(power)
-            if value['typ'] == 'storage':
-                try:
-                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                except Exception as e:
-                    volume = np.zeros_like(self.portfolio.t)
+            power = value['model'].power
+            volume = value['model'].volume
             for i in self.portfolio.t:
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='post_dayAhead', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(typ='PWP',                             # Typ konventionelle Kraftwerke
+                                     fuel=value['fuel'],                    # Brennstoff/ Energieträger (Braunkohle, Steinkohle, Erdgas, Kernkraft)
+                                     asset=key,                             # eindeutiger Name des Energiesystems
+                                     agent=self.name,                       # Name des Agenten
+                                     area=self.plz,                         # Plz Gebiet
+                                     timestamp='post_dayAhead'),            # Zeitstempel der Tagesplanung
                         "time": time.isoformat() + 'Z',
-                        "fields": dict(Power=power[i], Volume=volume[i])
+                        "fields": dict(power=power[i],                      # Gesamtleistung des Energiesystems [MW]
+                                       volume=volume[i])                    # Speichervolumen                   [MWh]
                     }
                 )
+                powerFuels[value['fuel']][i] += power[i]                    # Summe der Erzeugungsleistung pro Energieträger
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
+
+        # Portfolioinformation
+        time = self.date
+        for i in self.portfolio.t:
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(typ='PWP',                                 # Typ konventionelle Kraftwerke
+                                 agent=self.name,                           # Name des Agenten
+                                 area=self.plz,                             # Plz Gebiet
+                                 timestamp='post_dayAhead'),                # Zeitstempel der Tagesplanung
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(powerTotal=power_dayAhead[i],            # gesamte geplante Leistung     [MW]
+                                   emissionCost=self.portfolio.emisson[i],  # Kosten aus CO2                [€]
+                                   fuelCost=self.portfolio.fuel[i],         # Kosten aus Brennstoff         [€]
+                                   powerLignite=powerFuels['lignite'][i],   # gesamt Braunkohle             [MW]
+                                   powerCoal=powerFuels['coal'][i],         # gesamt Steinkohle             [MW]
+                                   powerGas=powerFuels['gas'][i],           # gesamt Erdgas                 [MW]
+                                   powerNuc=powerFuels['nuc'][i],           # gesamt Kernkraft              [MW]
+                                   profit=profit[i])                        # erzielte Erlöse               [€]
+                }
+            )
+            time = time + pd.DateOffset(hours=self.portfolio.dt)
+
         self.ConnectionInflux.saveData(json_body)
 
         logging.info('DayAhead Ergebnisse erhalten')
 
     def optimize_actual(self):
         """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
+        # TODO: Überarbeitung, wenn Regelleistung
+        json_body = []  # Liste zur Speicherung der Ergebnisse in der InfluxDB
+
         ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
         bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
         schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'post_dayAhead')
@@ -294,37 +306,98 @@ class pwpAgent(basicAgent):
             orderbook.update({'h_%s' % i: {'quantity': difference[i], 'hour': i, 'name': self.name}})
         self.ConnectionMongo.setActuals(name=self.name, date=self.date, orders=orderbook)
 
-        # Abspeichern der Ergebnisse
-        json_body = []
-        for key, value in self.portfolio.energySystems.items():
-            time = self.date
-            try:
+        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t), coal=np.zeros_like(self.portfolio.t), gas=np.zeros_like(self.portfolio.t),
+                          nuc=np.zeros_like(self.portfolio.t))
+        try:
+            for key, value in self.portfolio.energySystems.items():
+                time = self.date
                 power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-            except Exception as e:
-                power = np.zeros_like(self.portfolio.t)
-            volume = np.zeros_like(power)
-            if value['typ'] == 'storage':
-                try:
+                volume = np.zeros_like(power)
+                if value['typ'] == 'storage':
                     volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                except Exception as e:
-                    volume = np.zeros_like(self.portfolio.t)
+                for i in self.portfolio.t:
+                    json_body.append(
+                        {
+                            "measurement": 'Areas',
+                            "tags": dict(typ='PWP', fuel=value['fuel'], asset=key, agent=self.name, area=self.plz, timestamp='optimize_actual'),
+                            "time": time.isoformat() + 'Z',
+                            "fields": dict(power=power[i], volume=volume[i])
+                        }
+                    )
+                    powerFuels[value['fuel']][i] += power[i]
+                    time = time + pd.DateOffset(hours=self.portfolio.dt)
+        except Exception as e:
+            print('Error: %s' % e)
+
+        try:
+            time = self.date
             for i in self.portfolio.t:
                 json_body.append(
                     {
                         "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='optimize_actual', typ='PWP', fuel=value['fuel']),
+                        "tags": dict(typ='PWP', agent=self.name, area=self.plz, timestamp='optimize_actual'),
                         "time": time.isoformat() + 'Z',
-                        "fields": dict(Power=power[i], Volume=volume[i])
+                        "fields": dict(powerTotal=self.portfolio.power[i], emissionCost=self.portfolio.emisson[i],
+                                       fuelCost=self.portfolio.fuel[i], powerLignite=powerFuels['lignite'][i],
+                                       powerCoal=powerFuels['coal'][i], powerGas=powerFuels['gas'][i], powerNuc=powerFuels['nuc'][i])
                     }
                 )
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
+        except Exception as e:
+            print('Error: %s' % e)
+
         self.ConnectionInflux.saveData(json_body)
+
 
     logging.info('Aktuellen Fahrplan erstellt')
 
     def post_actual(self):
         """Abschlussplanung des Tages"""
+        # TODO: Überarbeitung, wenn Regelleistung
+        json_body = []  # Liste zur Speicherung der Ergebnisse in der InfluxDB
+
+        powerFuels = dict(lignite=np.zeros_like(self.portfolio.t), coal=np.zeros_like(self.portfolio.t), gas=np.zeros_like(self.portfolio.t),
+                          nuc=np.zeros_like(self.portfolio.t))
+        try:
+            for key, value in self.portfolio.energySystems.items():
+                time = self.date
+                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                volume = np.zeros_like(power)
+                if value['typ'] == 'storage':
+                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
+                for i in self.portfolio.t:
+                    json_body.append(
+                        {
+                            "measurement": 'Areas',
+                            "tags": dict(typ='PWP', fuel=value['fuel'], asset=key, agent=self.name, area=self.plz, timestamp='post_actual'),
+                            "time": time.isoformat() + 'Z',
+                            "fields": dict(power=power[i], volume=volume[i])
+                        }
+                    )
+                    powerFuels[value['fuel']][i] += power[i]
+                    time = time + pd.DateOffset(hours=self.portfolio.dt)
+        except Exception as e:
+            print('Error: %s' % e)
+
+        try:
+            time = self.date
+            for i in self.portfolio.t:
+                json_body.append(
+                    {
+                        "measurement": 'Areas',
+                        "tags": dict(typ='PWP', agent=self.name, area=self.plz, timestamp='post_actual'),
+                        "time": time.isoformat() + 'Z',
+                        "fields": dict(powerTotal=self.portfolio.power[i], emissionCost=self.portfolio.emisson[i],
+                                       fuelCost=self.portfolio.fuel[i], powerLignite=powerFuels['lignite'][i],
+                                       powerCoal=powerFuels['coal'][i], powerGas=powerFuels['gas'][i], powerNuc=powerFuels['nuc'][i])
+                    }
+                )
+                time = time + pd.DateOffset(hours=self.portfolio.dt)
+        except Exception as e:
+            print('Error: %s' % e)
+
+        self.ConnectionInflux.saveData(json_body)
+
         #pos, neg = self.ConnectionInflux.getBalancingEnergy(self.date,self.name)
         #self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast(),
         #                       np.zeros(self.portfolio.T), np.zeros(self.portfolio.T))
@@ -332,32 +405,6 @@ class pwpAgent(basicAgent):
         #self.portfolio.buildModel(response=schedule + pos - neg)
         #power = self.portfolio.fixPlaning()
         #power = schedule
-        # Abspeichern der Ergebnisse
-        json_body = []
-        for key, value in self.portfolio.energySystems.items():
-            time = self.date
-            try:
-                power = [self.portfolio.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-            except Exception as e:
-                power = np.zeros_like(self.portfolio.t)
-            volume = np.zeros_like(power)
-            if value['typ'] == 'storage':
-                try:
-                    volume = [self.portfolio.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.portfolio.t]
-                except Exception as e:
-                    volume = np.zeros_like(self.portfolio.t)
-            for i in self.portfolio.t:
-                json_body.append(
-                    {
-                        "measurement": 'Areas',
-                        "tags": dict(plant=value['typ'], asset=key, agent=self.name, area=self.plz,
-                                     timestamp='post_actual', typ='PWP', fuel=value['fuel']),
-                        "time": time.isoformat() + 'Z',
-                        "fields": dict(Power=power[i], Volume=volume[i])
-                    }
-                )
-                time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
 
         # Planung für den nächsten Tag
         # Anpassung der Prognosemethoden für den Verbrauch und die Preise

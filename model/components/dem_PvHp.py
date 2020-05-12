@@ -48,6 +48,8 @@ class pvwp_model(es):
         # Atkueller Speicherfüllstand in [l]
         data['tank']['v0'] = vt
         self.powerDemand = np.asarray(grid, np.float).reshape((-1,))
+        self.heatDemand = np.asarray(heatDemand, np.float).reshape((-1,))
+
 
 if __name__ == "__main__":
     test = pvwp_model()

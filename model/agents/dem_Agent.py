@@ -27,33 +27,45 @@ class demAgent(basicAgent):
         # Aufbau des Portfolios mit den enstprechenden Haushalten, Gewerbe und Industrie
         self.portfolio = demPort(typ="DEM")                             # Keine Verwendung eines Solvers
 
-        powerH0 = 0
+        powerH0 = 0                                                     # Summe der bereits verwendeten Leistung [MW]
 
+        # Einbindung der Prosumer PV mit Batterie
         pvBatteries = self.ConnectionMongo.getPVBatteries(plz)
         for key, value in pvBatteries.items():
             self.portfolio.addToPortfolio(key, {key: value})
             powerH0 += value['demandP']
 
+        logging.info('Prosumer PV-Bat hinzugefügt')
+
+        # Einbindung der Prosumer PV mit Wärmepumpe
         pvHeatpumps = self.ConnectionMongo.getHeatPumps(plz)
         for key, value in pvHeatpumps.items():
             self.portfolio.addToPortfolio(key, {key: value})
             powerH0 += value['demandP']
 
+        logging.info('Prosumer PV-WP hinzugefügt')
+
+        # Einbindung Consumer mit PV
         pv = self.ConnectionMongo.getPVs(plz)
         for key, value in pv.items():
             self.portfolio.addToPortfolio(key, {key: value})
             powerH0 += value['demandP']
 
+        logging.info('Consumer PV hinzugefügt')
+
         demand = self.ConnectionMongo.getDemand(plz)
 
+        # Aufbau Standard Consumer H0
         name = 'plz_' + str(plz) + '_h0'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['h0']*10**6 - powerH0, 2), 'typ': 'H0'}})
         logging.info('Consumer hinzugefügt')
 
+        # Aufbau Standard Consumer G0
         name = 'plz_' + str(plz) + '_g0'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['g0']*10**6, 2), 'typ': 'G0'}})
         logging.info('Gewerbe  hinzugefügt')
 
+        # Aufbau Standard Consumer RLM
         name = 'plz_' + str(plz) + '_rlm'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['rlm']*10**6, 2), 'typ': 'RLM'}})
         logging.info('Industrie hinzugefügt')
@@ -66,63 +78,136 @@ class demAgent(basicAgent):
 
     def optimize_dayAhead(self):
         """Einsatzplanung für den DayAhead-Markt"""
-        orderbook = dict()  # Oderbook für alle Gebote (Stunde 1-24)
+        orderbook = dict()                                                  # Oderbook für alle Gebote (Stunde 1-24)
+        json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
+
         # Prognosen für den kommenden Tag
         weather = self.weatherForecast()  # Wetterdaten (dir,dif,temp,wind)
         price = self.priceForecast()  # Preisdaten (power,gas,nuc,coal,lignite)
+
+        # Standardoptimierung
         self.portfolio.setPara(self.date, weather, price)
         self.portfolio.buildModel()
-        power = np.asarray(self.portfolio.optimize(), np.float)  # Berechnung der Einspeiseleitung
-        for i in range(self.portfolio.T):
-            orderbook.update({'h_%s' % i: {'quantity': [power[i]/10**3, 0], 'price': [3000, -3000], 'hour': i, 'name': self.name}})
-        self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
-        # Abspeichern der Ergebnisse
-        json_body = []
+        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)  # Berechnung der Einspeiseleitung [kW]
+
+        demand = dict(PvBat=(np.zeros_like(self.portfolio.t),np.zeros_like(self.portfolio.t)),      # Wärme- und Strombedarf Prosumer PV Bat
+                      PvWp=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),      # Wärme- und Strombedarf Prosumer PV Wp
+                      Pv=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),        # Wärme- und Strombedarf Consumer PV
+                      H0=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),        # Wärme- und Strombedarf Consumer H0
+                      G0=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),        # Wärme- und Strombedarf Consumer G0
+                      RLM=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)))       # Wärme- und Strombedarf Consumer RLM
+
+
+        heatTotal = np.zeros_like(power_dayAhead)
+
+        # aggregiere Energiesysteminformation
+        for key, value in self.portfolio.energySystems.items():
+            power = value['model'].powerDemand/10**3
+            heat = value['model'].heatDemand/10**3
+            for i in self.portfolio.t:
+                heatTotal[i] += heat[i]
+                demand[value['typ']][0][i] += heat[i]
+                demand[value['typ']][1][i] += power[i]
+
+        # Portfolioinformation
         time = self.date
         for i in self.portfolio.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.plz,
-                                 timestamp='optimize_dayAhead', typ='DEM'),
+                    "tags": dict(typ='DEM',                                      # Typ Erneuerbare Energien
+                                 agent=self.name,                                # Name des Agenten
+                                 area=self.plz,                                  # Plz Gebiet
+                                 timestamp='optimize_dayAhead'),                 # Zeitstempel der Tagesplanung
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(Power=power[i]/10**3)
+                    "fields": dict(powerTotal=power_dayAhead[i]/10**3,           # Gesamte Nachfrage Strom  [MW]
+                                   heatTotal=heatTotal[i]/10**3,                 # Gesamte Nachfrage Wärme  [MW]
+                                   powerPvBat=demand['PvBat'][1][i],
+                                   heatPvBat=demand['PvBat'][0][i],
+                                   powerPvHp=demand['PvWp'][1][i],
+                                   heatPvHp=demand['PvWp'][0][i],
+                                   powerPvSolo=demand['Pv'][1][i],
+                                   heatPvSolo=demand['Pv'][0][i],
+                                   powerH0=demand['H0'][1][i],
+                                   powerG0=demand['G0'][1][i],
+                                   powerRLM=demand['RLM'][1][i])
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
+
         self.ConnectionInflux.saveData(json_body)
+
+        # Aufbau der Gebotskurven
+        for i in range(self.portfolio.T):
+            orderbook.update({'h_%s' % i: {'quantity': [power_dayAhead[i]/10**3, 0], 'price': [3000, -3000], 'hour': i, 'name': self.name}})
+        self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
         logging.info('Planung DayAhead-Markt abgeschlossen')
 
     def post_dayAhead(self):
         """Reaktion auf  die DayAhead-Ergebnisse"""
+        json_body = []                                                          # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         # Abfrage der DayAhead Ergebnisse
-        #ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)
-        # price = self.ConnectionInflux.getDayAheadPrice(self.date)
-        # profit = [(ask[i]-bid[i])*price[i] for i in range(24)]
-        power = bid
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)            # Angebotene Menge [MWh]
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)            # Nachgefragte Menge [MWh]
+        price = self.ConnectionInflux.getDayAheadPrice(self.date)                   # MCP [€/MWh]
+        profit = [float((ask[i] - bid[i]) * price[i]) for i in range(24)]           # erzielte Erlöse
 
-        # Abspeichern der Ergebnisse
-        json_body = []
+        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)            # Berechnung der Einspeiseleitung [kW]
+
+        demand = dict(PvBat=(np.zeros_like(self.portfolio.t),np.zeros_like(self.portfolio.t)),      # Wärme- und Strombedarf Prosumer PV Bat
+                      PvWp=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),      # Wärme- und Strombedarf Prosumer PV Wp
+                      Pv=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),        # Wärme- und Strombedarf Consumer PV
+                      H0=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),        # Wärme- und Strombedarf Consumer H0
+                      G0=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)),        # Wärme- und Strombedarf Consumer G0
+                      RLM=(np.zeros_like(self.portfolio.t), np.zeros_like(self.portfolio.t)))       # Wärme- und Strombedarf Consumer RLM
+
+        heatTotal = np.zeros_like(power_dayAhead)
+
+        # aggregiere Energiesysteminformation
+        for key, value in self.portfolio.energySystems.items():
+            power = value['model'].powerDemand/10**3
+            heat = value['model'].heatDemand/10**3
+            for i in self.portfolio.t:
+                heatTotal[i] += heat[i]
+                demand[value['typ']][0][i] += heat[i]
+                demand[value['typ']][1][i] += power[i]
+
+        # Portfolioinformation
         time = self.date
         for i in self.portfolio.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_dayAhead', typ='DEM'),
+                    "tags": dict(typ='DEM',                                      # Typ Erneuerbare Energien
+                                 agent=self.name,                                # Name des Agenten
+                                 area=self.plz,                                  # Plz Gebiet
+                                 timestamp='post_dayAhead'),                     # Zeitstempel der Tagesplanung
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(Power=power[i])
+                    "fields": dict(powerTotal=power_dayAhead[i]/10**3,           # Gesamte Nachfrage Strom  [MW]
+                                   heatTotal=heatTotal[i]/10**3,                 # Gesamte Nachfrage Wärme  [MW]
+                                   powerPvBat=demand['PvBat'][1][i],
+                                   heatPvBat=demand['PvBat'][0][i],
+                                   powerPvHp=demand['PvWp'][1][i],
+                                   heatPvHp=demand['PvWp'][0][i],
+                                   powerPvSolo=demand['Pv'][1][i],
+                                   heatPvSolo=demand['Pv'][0][i],
+                                   powerH0=demand['H0'][1][i],
+                                   powerG0=demand['G0'][1][i],
+                                   powerRLM=demand['RLM'][1][i],
+                                   profit=profit[i])
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
+
         self.ConnectionInflux.saveData(json_body)
 
         logging.info('DayAhead Ergebnisse erhalten')
 
     def optimize_actual(self):
         """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
+        # TODO: Überarbeitung, wenn Regelleistung
         schedule = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'post_dayAhead')
         # Berechnung der Prognoseabweichung
         actual = np.asarray(self.portfolio.fixPlaning()/10**3, np.float).reshape((-1,))
@@ -143,7 +228,7 @@ class demAgent(basicAgent):
                     "measurement": 'Areas',
                     "tags": dict(agent=self.name, area=self.plz, timestamp='optimize_actual', typ='DEM'),
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(Difference=difference[i], Power=power[i])
+                    "fields": dict(Difference=difference[i], power=power[i])
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
@@ -153,6 +238,7 @@ class demAgent(basicAgent):
 
     def post_actual(self):
         """ Abschlussplanung des Tages """
+        # TODO: Überarbeitung, wenn Regelleistung
         power = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual')  # Letzter bekannter  Fahrplan
 
         # Abspeichern der Ergebnisse
@@ -164,7 +250,7 @@ class demAgent(basicAgent):
                     "measurement": 'Areas',
                     "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', typ='DEM'),
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(Power=power[i])
+                    "fields": dict(power=power[i])
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)

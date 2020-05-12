@@ -17,6 +17,10 @@ class port_model:
         self.t = np.arange(T)                       # -- array with single steps
         self.dt = dt                                # -- resolution
 
+        self.power = np.zeros(T)
+        self.emisson = np.zeros(T)
+        self.fuel = np.zeros(T)
+
         self.generation = dict(total=np.zeros_like(self.t),
                                solar=np.zeros_like(self.t),
                                wind=np.zeros_like(self.t),

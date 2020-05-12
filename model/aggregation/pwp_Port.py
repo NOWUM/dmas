@@ -9,6 +9,7 @@ class pwpPort(port_model):
     def __int__(self, T=24, dt=1, gurobi=True, date='2020-01-01', typ ='DEM'):
         super().__init__(T, dt, gurobi, date, typ)
 
+
     def addToPortfolio(self, name, energysystem):
         data = energysystem[name]
 
@@ -63,17 +64,43 @@ class pwpPort(port_model):
 
     def optimize(self):
         power = np.zeros_like(self.t)
+        emisson = np.zeros_like(self.t)
+        fuel = np.zeros_like(self.t)
+
         try:
             self.m.optimize()
+            # Einspeiseleitung
             power = np.asanyarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
             power = np.round(power, 2)
+            # Emissionskosten
+            emisson = np.asanyarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float)
+            emisson = np.round(emisson, 2)
+            # Brennstoffkosten
+            fuel = np.asanyarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float)
+            fuel = np.round(fuel, 2)
+
+            for key, value in self.energySystems.items():
+                value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
+                value['model'].volume = np.zeros_like(power)
+                if value['typ'] == 'storage':
+                    value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
+
         except Exception as e:
+            for key, value in self.energySystems.items():
+                value['model'].power = np.zeros_like(power)
+                value['model'].volume = np.zeros_like(power)
             print(e)
+
         self.power = power
+        self.emisson = emisson
+        self.fuel = fuel
+
         return power
 
     def fixPlaning(self):
         power = np.zeros_like(self.t)
+        emisson = np.zeros_like(self.t)
+        fuel = np.zeros_like(self.t)
         try:
             self.m.optimize()
             for key, value in self.energySystems.items():
@@ -95,10 +122,22 @@ class pwpPort(port_model):
                     value['P+0'] = [self.m.getVarByName('P+_%s[%i]' % (key, i)).x for i in self.t][-1]
                     value['P-0'] = [self.m.getVarByName('P-_%s[%i]' % (key, i)).x for i in self.t][-1]
                     value['V0'] = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t][-1]
-            power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
+
+            # Einspeiseleitung
+            power = np.asanyarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
+            power = np.round(power, 2)
+            # Emissionskosten
+            emisson = np.asanyarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float)
+            emisson = np.round(emisson, 2)
+            # Brennstoffkosten
+            fuel = np.asanyarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float)
+            fuel = np.round(fuel, 2)
+
         except Exception as e:
             print(e)
         self.power = power
+        self.emisson = emisson
+        self.fuel = fuel
         return power
 
 if __name__ == "__main__":
