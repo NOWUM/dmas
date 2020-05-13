@@ -70,6 +70,10 @@ class demAgent(basicAgent):
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['rlm']*10**6, 2), 'typ': 'RLM'}})
         logging.info('Industrie hinzugefügt')
 
+        if len(self.portfolio.energySystems) == 0:
+            logging.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
+            exit()
+
         logging.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):

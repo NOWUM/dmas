@@ -103,14 +103,53 @@ if __name__ == "__main__":
     gewerbe=0
     haushalte=0
 
-    for i in range(1,100):
+    Anlagen = 0
+
+    for i in range(1,24):
         try:
-            demand = mongoDB.getDemand(i)
-            haushalte += demand['h0']
-            gewerbe += demand['g0']
-            industrie += demand['rlm']
+            anz = mongoDB.getPvParks(i)
+            Anlagen += len(anz)
+            anz = mongoDB.getWindOn(i)
+            Anlagen += len(anz)
+            #haushalte += demand['h0']
+            #gewerbe += demand['g0']
+            #industrie += demand['rlm']
         except:
             print('keine Lastdaten')
+
+    print(Anlagen)
+
+    Anlagen = 0
+
+    for i in range(24,39):
+        try:
+            anz = mongoDB.getPvParks(i)
+            Anlagen += len(anz)
+            anz = mongoDB.getWindOn(i)
+            Anlagen += len(anz)
+            #haushalte += demand['h0']
+            #gewerbe += demand['g0']
+            #industrie += demand['rlm']
+        except:
+            print('keine Lastdaten')
+
+    print(Anlagen)
+
+    Anlagen = 0
+
+    for i in range(39,100):
+        try:
+            anz = mongoDB.getPvParks(i)
+            Anlagen += len(anz)
+            anz = mongoDB.getWindOn(i)
+            Anlagen += len(anz)
+            #haushalte += demand['h0']
+            #gewerbe += demand['g0']
+            #industrie += demand['rlm']
+        except:
+            print('keine Lastdaten')
+
+    print(Anlagen)
 
     #tmp = industrie
     #industrie = dict(demandP=177494*10**6)
@@ -132,7 +171,7 @@ if __name__ == "__main__":
     #totalg0 = np.asarray(totalg0).reshape((-1))
     #totalRlm = np.asarray(totalRlm).reshape((-1))
     # #plt.plot(totalRlm)
-    total = (totalRlm + totalh0 + totalg0)/1000000
+    # total = (totalRlm + totalh0 + totalg0)/1000000
     #total1 = total[1:2126]
     #total2 = total[2127:7176]
     #total3 = total[7201:]

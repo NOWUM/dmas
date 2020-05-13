@@ -98,6 +98,10 @@ class resAgent(basicAgent):
 
         logging.info('Parameter der Handelsstrategie festgelegt')
 
+        if len(self.portfolio.energySystems) == 0:
+            logging.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
+            exit()
+
         logging.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):
