@@ -89,7 +89,6 @@ if __name__ == "__main__":
 
     mongoDB = mongoInterface(database='MAS_XXXX')
 
-
     df = pd.read_excel(r'C:\Users\Administrator\Desktop\dmas\model\data\load.xlsx', index_col=0)
     df.index = pd.date_range(start='2019-01-01', periods=35040, freq='15min')
     df = df.resample('h').mean()
@@ -113,25 +112,25 @@ if __name__ == "__main__":
         except:
             print('keine Lastdaten')
 
-    tmp = industrie
-    industrie = dict(demandP=177494*10**6)
-    gewerbe = dict(demandP=gewerbe*10**6)
-    haushalte = dict(demandP=haushalte*10**6)
+    #tmp = industrie
+    #industrie = dict(demandP=177494*10**6)
+    #gewerbe = dict(demandP=gewerbe*10**6)
+    #haushalte = dict(demandP=haushalte*10**6)
 
-    days = pd.date_range(start='2019-01-01', freq='d',periods=365)
+    #days = pd.date_range(start='2019-01-01', freq='d',periods=365)
 
-    totalh0 = []
-    totalg0 = []
-    totalRlm = []
+    #totalh0 = []
+    #totalg0 = []
+    #totalRlm = []
 
-    for day in days:
-        totalh0.append(testh0.getPowerDemand(haushalte, day))
-        totalg0.append(testg0.getPowerDemand(gewerbe, day))
-        totalRlm.append(testRlm.getPowerDemand(industrie, day))
+    #for day in days:
+    #    totalh0.append(testh0.getPowerDemand(haushalte, day))
+    #    totalg0.append(testg0.getPowerDemand(gewerbe, day))
+    #    totalRlm.append(testRlm.getPowerDemand(industrie, day))
 
-    totalh0 = np.asarray(totalh0).reshape((-1))
-    totalg0 = np.asarray(totalg0).reshape((-1))
-    totalRlm = np.asarray(totalRlm).reshape((-1))
+    #totalh0 = np.asarray(totalh0).reshape((-1))
+    #totalg0 = np.asarray(totalg0).reshape((-1))
+    #totalRlm = np.asarray(totalRlm).reshape((-1))
     # #plt.plot(totalRlm)
     total = (totalRlm + totalh0 + totalg0)/1000000
     #total1 = total[1:2126]
@@ -139,8 +138,8 @@ if __name__ == "__main__":
     #total3 = total[7201:]
     #total4 = np.concatenate((total1, total2, total3))
     #
-    plt.plot(total)
-    plt.plot(values)
+    #plt.plot(total)
+    #plt.plot(values)
     #plt.plot(values)
     #plt.plot(total)
     #plt.plot(values[:-27]-total4)

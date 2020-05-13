@@ -10,6 +10,7 @@ import pandas as pd
 import geohash2
 import pika
 import numpy as np
+import sys
 
 
 class agent:
@@ -33,9 +34,9 @@ class agent:
             exit()
 
         # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
-        logging.basicConfig(filename=r'./logs/%s.log' % self.name, level=logging.WARNING,
+        logging.basicConfig(filename=r'./logs/%s.log' % self.name, level=logging.INFO,
                             format='%(levelname)s:%(message)s', filemode='w')
-
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
         # Verbindingen an die Datenbanken sowie den Marktplatz
         self.ConnectionInflux = influxInterface(host=influx, database=dbName)  # Datenbank zur Speicherung der Zeitreihen
         self.ConnectionMongo = mongoInterface(host=mongo, database=dbName)     # Datenbank zur Speicherung der Strukurdaten

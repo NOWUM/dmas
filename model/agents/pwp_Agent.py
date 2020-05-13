@@ -56,6 +56,10 @@ class pwpAgent(basicAgent):
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
         self.risk = np.random.choice([-2, -1, 0, 1, 2])
 
+        if len(self.portfolio.energySystems) == 0:
+            logging.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
+            exit()
+
         logging.info('Parameter der Handelsstrategie festgelegt')
 
         logging.info('Aufbau des Agenten abgeschlossen')
