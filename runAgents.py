@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
-    parser.add_argument('--dbName', type=str, required=False, default='MAS_XXXX', help='Name der Datenbank')
+    parser.add_argument('--dbName', type=str, required=False, default='MAS_2020', help='Name der Datenbank')
     return parser.parse_args()
 
 if __name__=="__main__":
