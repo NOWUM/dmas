@@ -239,22 +239,22 @@ class demAgent(basicAgent):
     def post_actual(self):
         """ Abschlussplanung des Tages """
         # TODO: Überarbeitung, wenn Regelleistung
-        power = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual')  # Letzter bekannter  Fahrplan
-
-        # Abspeichern der Ergebnisse
-        time = self.date
-        json_body = []
-        for i in self.portfolio.t:
-            json_body.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', typ='DEM'),
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(power=power[i])
-                }
-            )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
+        # power = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_actual')  # Letzter bekannter  Fahrplan
+        #
+        # # Abspeichern der Ergebnisse
+        # time = self.date
+        # json_body = []
+        # for i in self.portfolio.t:
+        #     json_body.append(
+        #         {
+        #             "measurement": 'Areas',
+        #             "tags": dict(agent=self.name, area=self.plz, timestamp='post_actual', typ='DEM'),
+        #             "time": time.isoformat() + 'Z',
+        #             "fields": dict(power=power[i])
+        #         }
+        #     )
+        #     time = time + pd.DateOffset(hours=self.portfolio.dt)
+        # self.ConnectionInflux.saveData(json_body)
 
         # Planung für den nächsten Tag
         # Anpassung der Prognosemethoden für den Verbrauch und die Preise

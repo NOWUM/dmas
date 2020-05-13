@@ -132,7 +132,10 @@ if __name__ == "__main__":
 
     tm.sleep(2)
 
-    influxCon.influx.drop_database(database)
+    try:
+        influxCon.influx.drop_database(database)
+    except:
+        pass
     influxCon.influx.create_database(database)
     for name in mongoCon.orderDB.list_collection_names():
         mongoCon.orderDB.drop_collection(name)

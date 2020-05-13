@@ -65,6 +65,7 @@ class rlm_model(es):
         super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters)
 
     def getPowerDemand(self, data, date):
+        data['demandP'] *= 0.775              # Korrektzur um Bahnnetz und Eigenerzeugung der Industrie
         power = data['demandP'] * 0.9         # Variabler Anteil
         base = data['demandP'] * 0.1          # Konstanter Anteil
         # --> Anpassung Aufgrund der überschätzten Gleichzeitigkeit in den SLP
@@ -83,6 +84,12 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
     import numpy as np
 
+    from interfaces.interface_mongo import mongoInterface
+
+
+    mongoDB = mongoInterface(database='MAS_XXXX')
+
+
     df = pd.read_excel(r'C:\Users\Administrator\Desktop\dmas\model\data\load.xlsx', index_col=0)
     df.index = pd.date_range(start='2019-01-01', periods=35040, freq='15min')
     df = df.resample('h').mean()
@@ -92,9 +99,24 @@ if __name__ == "__main__":
     testh0 = h0_model()
     testg0 = g0_model()
     testRlm = rlm_model()
-    industrie = dict(demandP=189*10**9)
-    gewerbe = dict(demandP=128*10**9)
-    haushalte = dict(demandP=185*10**9)
+
+    industrie=0
+    gewerbe=0
+    haushalte=0
+
+    for i in range(1,100):
+        try:
+            demand = mongoDB.getDemand(i)
+            haushalte += demand['h0']
+            gewerbe += demand['g0']
+            industrie += demand['rlm']
+        except:
+            print('keine Lastdaten')
+
+    tmp = industrie
+    industrie = dict(demandP=177494*10**6)
+    gewerbe = dict(demandP=gewerbe*10**6)
+    haushalte = dict(demandP=haushalte*10**6)
 
     days = pd.date_range(start='2019-01-01', freq='d',periods=365)
 
@@ -110,32 +132,32 @@ if __name__ == "__main__":
     totalh0 = np.asarray(totalh0).reshape((-1))
     totalg0 = np.asarray(totalg0).reshape((-1))
     totalRlm = np.asarray(totalRlm).reshape((-1))
-    #plt.plot(totalRlm)
-    total = (totalh0 + totalg0)/1000000
-    total1 = total[1:2126]
-    total2 = total[2127:7176]
-    total3 = total[7201:]
-    total4 = np.concatenate((total1,total2,total3))
-
-    #plt.plot(total)
-    #plt.plot(values/1000)
-    plt.plot(values)
+    # #plt.plot(totalRlm)
+    total = (totalRlm + totalh0 + totalg0)/1000000
+    #total1 = total[1:2126]
+    #total2 = total[2127:7176]
+    #total3 = total[7201:]
+    #total4 = np.concatenate((total1, total2, total3))
+    #
     plt.plot(total)
+    plt.plot(values)
+    #plt.plot(values)
+    #plt.plot(total)
     #plt.plot(values[:-27]-total4)
-    print('Mittelwert %s' % np.mean(total))
-    print('Minimum %s' % np.min(total))
-    print('Maximum %s' % np.max(total))
+    # print('Mittelwert %s' % np.mean(total))
+    # print('Minimum %s' % np.min(total))
+    # print('Maximum %s' % np.max(total))
 
     # sommer=np.asarray(np.load(open(r'./data/Time_Summer.array','rb')), np.int64)
     # winter = np.asarray(np.load(open(r'./data/Time_Winter.array', 'rb')), np.int64)
-    #x = values[:-27]-total4
-    #plt.plot(x)
-    #rlm = pd.DataFrame(x)
-    #print(np.sum(rlm))
-    #
+    # x = values-total
+    # plt.plot(x)
+    # rlm = pd.DataFrame(x)
+    # print(np.sum(rlm))
+    # #
     # rlm = rlm/np.sum(rlm)*1000000
-    # rlm.index = pd.date_range(start='2019-01-01', periods=8733, freq='h')
-    # rlm = rlm.iloc[:-21]
+    # rlm.index = pd.date_range(start='2019-01-01', periods=8760, freq='h')
+    # #rlm = rlm.iloc[:-21]
     # typDays = []
     #
     # result = rlm.loc[[i.dayofyear in winter for i in rlm.index]]
