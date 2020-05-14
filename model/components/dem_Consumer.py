@@ -65,9 +65,9 @@ class rlm_model(es):
         super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters)
 
     def getPowerDemand(self, data, date):
-        data['demandP'] *= 0.775              # Korrektzur um Bahnnetz und Eigenerzeugung der Industrie
-        power = data['demandP'] * 0.9         # Variabler Anteil
-        base = data['demandP'] * 0.1          # Konstanter Anteil
+        factor = 0.775                                 # Korrektzur um Bahnnetz und Eigenerzeugung der Industrie
+        power = data['demandP'] * 0.9 * factor         # Variabler Anteil
+        base = data['demandP'] * 0.1 * factor          # Konstanter Anteil
         # --> Anpassung Aufgrund der überschätzten Gleichzeitigkeit in den SLP
         # --> die Faktoren wurden empirisch ermittelt und sind eine grobe Schätzung
 
@@ -105,80 +105,52 @@ if __name__ == "__main__":
 
     Anlagen = 0
 
-    for i in range(1,24):
+    for i in range(1,100):
         try:
-            anz = mongoDB.getPvParks(i)
-            Anlagen += len(anz)
-            anz = mongoDB.getWindOn(i)
-            Anlagen += len(anz)
-            #haushalte += demand['h0']
-            #gewerbe += demand['g0']
-            #industrie += demand['rlm']
+            #anz = mongoDB.getPvParks(i)
+            #Anlagen += len(anz)
+            #anz = mongoDB.getWindOn(i)
+            #Anlagen += len(anz)
+            demand = mongoDB.getDemand(i)
+            haushalte += demand['h0']
+            gewerbe += demand['g0']
+            industrie += demand['rlm']# * 0.775
         except:
             print('keine Lastdaten')
 
     print(Anlagen)
 
-    Anlagen = 0
-
-    for i in range(24,39):
-        try:
-            anz = mongoDB.getPvParks(i)
-            Anlagen += len(anz)
-            anz = mongoDB.getWindOn(i)
-            Anlagen += len(anz)
-            #haushalte += demand['h0']
-            #gewerbe += demand['g0']
-            #industrie += demand['rlm']
-        except:
-            print('keine Lastdaten')
-
-    print(Anlagen)
-
-    Anlagen = 0
-
-    for i in range(39,100):
-        try:
-            anz = mongoDB.getPvParks(i)
-            Anlagen += len(anz)
-            anz = mongoDB.getWindOn(i)
-            Anlagen += len(anz)
-            #haushalte += demand['h0']
-            #gewerbe += demand['g0']
-            #industrie += demand['rlm']
-        except:
-            print('keine Lastdaten')
-
-    print(Anlagen)
+    energy = gewerbe + haushalte + industrie
+    energy /= 1000
 
     #tmp = industrie
-    #industrie = dict(demandP=177494*10**6)
-    #gewerbe = dict(demandP=gewerbe*10**6)
-    #haushalte = dict(demandP=haushalte*10**6)
+    industrie = dict(demandP=industrie*10**6)
+    gewerbe = dict(demandP=gewerbe*10**6)
+    haushalte = dict(demandP=haushalte*10**6)
 
-    #days = pd.date_range(start='2019-01-01', freq='d',periods=365)
+    days = pd.date_range(start='2019-01-01', freq='d',periods=365)
 
-    #totalh0 = []
-    #totalg0 = []
-    #totalRlm = []
+    totalh0 = []
+    totalg0 = []
+    totalRlm = []
 
-    #for day in days:
-    #    totalh0.append(testh0.getPowerDemand(haushalte, day))
-    #    totalg0.append(testg0.getPowerDemand(gewerbe, day))
-    #    totalRlm.append(testRlm.getPowerDemand(industrie, day))
+    for day in days:
+        totalh0.append(testh0.getPowerDemand(haushalte, day))
+        totalg0.append(testg0.getPowerDemand(gewerbe, day))
+        totalRlm.append(testRlm.getPowerDemand(industrie, day))
 
-    #totalh0 = np.asarray(totalh0).reshape((-1))
-    #totalg0 = np.asarray(totalg0).reshape((-1))
-    #totalRlm = np.asarray(totalRlm).reshape((-1))
+    totalh0 = np.asarray(totalh0).reshape((-1))
+    totalg0 = np.asarray(totalg0).reshape((-1))
+    totalRlm = np.asarray(totalRlm).reshape((-1))
     # #plt.plot(totalRlm)
-    # total = (totalRlm + totalh0 + totalg0)/1000000
+    total = (totalRlm + totalh0 + totalg0)/1000000
     #total1 = total[1:2126]
     #total2 = total[2127:7176]
     #total3 = total[7201:]
     #total4 = np.concatenate((total1, total2, total3))
     #
-    #plt.plot(total)
-    #plt.plot(values)
+    plt.plot(total)
+    plt.plot(values)
     #plt.plot(values)
     #plt.plot(total)
     #plt.plot(values[:-27]-total4)
@@ -188,8 +160,8 @@ if __name__ == "__main__":
 
     # sommer=np.asarray(np.load(open(r'./data/Time_Summer.array','rb')), np.int64)
     # winter = np.asarray(np.load(open(r'./data/Time_Winter.array', 'rb')), np.int64)
-    # x = values-total
-    # plt.plot(x)
+    #x = values-total
+    #plt.plot(x)
     # rlm = pd.DataFrame(x)
     # print(np.sum(rlm))
     # #
