@@ -34,7 +34,7 @@ class agent:
             exit()
 
         # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
-        logging.basicConfig(filename=r'./logs/%s.log' % self.name, level=logging.INFO,
+        logging.basicConfig(filename=r'./logs/%s.log' % self.name, level=logging.WARNING,
                             format='%(levelname)s:%(message)s', filemode='w')
         logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
         # Verbindingen an die Datenbanken sowie den Marktplatz
@@ -57,18 +57,33 @@ class agent:
             'price': priceTyp(self.ConnectionInflux, init=np.random.randint(8, 14 + 1))
         }
 
-    def weatherForecast(self):
+    def weatherForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
         """ Wetterprognose des jeweiligen PLZ-Gebietes"""
-        return self.forecasts['weather'].forecast(str(self.geo), self.date)
+        weather = dict(wind=[], dir=[], dif=[], temp=[])
+        for i in range(days):
+            w = self.forecasts['weather'].forecast(str(self.geo), date)
+            for key, value in w.items():
+                weather[key] += value
+        return weather
 
-    def priceForecast(self):
+    def priceForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
         """ Preisprognose für MCP, Braun- und Steinkohle, Kernkraft und Gas"""
-        demand = self.demandForecast()
-        return self.forecasts['price'].forecast(self.date, demand)
+        price = dict(power=[], gas=[], co=[], lignite=3.5, coal=8.5, nuc=1)
+        for i in range(days):
+            demand = self.forecasts['demand'].forecast(date)
+            p = self.forecasts['price'].forecast(date, demand)
+            for key, value in p.items():
+                if key in ['power', 'gas', 'co']:
+                    price[key] += value
 
-    def demandForecast(self):
+        return price
+
+    def demandForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
         """ Lastprognose für Gesamtdeutschland"""
-        return self.forecasts['demand'].forecast(self.date)
+        demand = []
+        for i in range(days):
+            demand += list(self.forecasts['demand'].forecast(date))
+        return np.asarray(demand).reshape((-1,))
 
     def post_actual(self):
         print('post actual')

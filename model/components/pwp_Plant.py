@@ -12,6 +12,15 @@ class powerPlant_gurobi(es):
 
     def build(self, name, data, ts):
 
+        if data['fuel'] == 'gas':
+            startCost = 60 * data['maxPower']
+        if data['fuel'] == 'lignite':
+            startCost = 100 * data['maxPower']
+        if data['fuel'] == 'coal':
+            startCost = 60 * data['maxPower']
+        if data['fuel']  == 'nuc':
+            startCost = 50 * data['maxPower']
+
         delta = data['maxPower'] - data['minPower']
         su = data['minPower']
         sd = data['minPower']
@@ -55,7 +64,7 @@ class powerPlant_gurobi(es):
         # Brennstoffkosten
         fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
         if data['fuel'] == 'lignite':
-            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['lignite'] for i in self.t)
+            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['lignite'] + v[i] * startCost for i in self.t)
         if data['fuel'] == 'coal':
             self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['coal'] for i in self.t)
         if data['fuel'] == 'gas':

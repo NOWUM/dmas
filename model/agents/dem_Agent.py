@@ -86,8 +86,9 @@ class demAgent(basicAgent):
         json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         # Prognosen für den kommenden Tag
-        weather = self.weatherForecast()  # Wetterdaten (dir,dif,temp,wind)
-        price = self.priceForecast()  # Preisdaten (power,gas,nuc,coal,lignite)
+        weather = self.weatherForecast(self.date)                           # Wetterdaten (dir,dif,temp,wind)
+        price = self.priceForecast(self.date)                               # Preisdaten (power,gas,nuc,coal,lignite)
+
 
         # Standardoptimierung
         self.portfolio.setPara(self.date, weather, price)

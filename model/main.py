@@ -83,7 +83,7 @@ def buildAreas():
 
 # ----- Simulation Task -----
 def simulation(start, end):
-    influxCon.generateWeather(start, end)
+    influxCon.generateWeather(start, end  + pd.DateOffset(days=1))
 
     for date in pd.date_range(start=start, end=end, freq='D'):
 

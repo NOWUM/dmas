@@ -145,30 +145,30 @@ class influxInterface:
     -->             Query DayAhead Vermarktung               <---    
     ----------------------------------------------------------"""
 
-    def getDayAheadAsk(self, date, name):
+    def getDayAheadAsk(self, date, name, days=1):
         """ Verkaufsvolumen in [MWh] """
         self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=days)).isoformat() + 'Z'
         # --> Abfrage
         query = 'select sum("power") from "DayAhead" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and' \
-                ' "order"=\'ask\' GROUP BY time(1h) fill(0)' % (start, end, name)
+                ' "order"=\'ask\' GROUP BY time(1h) fill(previous)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
             return np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
         else:
-            return np.zeros(24)
+            return np.zeros(days*24)
         return ask
 
-    def getDayAheadBid(self, date, name):
+    def getDayAheadBid(self, date, name, days=1):
         """ Kaufsvolumen in [MWh] """
         self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=days)).isoformat() + 'Z'
         # --> Abfrage
         query = 'select sum("power") from "DayAhead" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' ' \
                 'and "order"=\'bid\' GROUP BY time(1h) fill(0)' % (start, end, name)
@@ -176,16 +176,16 @@ class influxInterface:
         if result.__len__() > 0:
             bid = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
         else:
-            bid = np.zeros(24)
+            bid = np.zeros(days*24)
         return bid
 
-    def getDayAheadPrice(self, date):
+    def getDayAheadPrice(self, date, days=1):
         """ Marktclearing Preis in [€/MWh] """
         self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=days)).isoformat() + 'Z'
         # --> Abfrage
         query = 'select sum("price") from "DayAhead" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
                 % (start, end)
@@ -193,7 +193,7 @@ class influxInterface:
         if result.__len__() > 0:
             mcp = np.asarray([point['sum'] for point in result.get_points()])
         else:
-            mcp =  np.zeros(24)
+            mcp =  np.zeros(days*24)
         return np.asarray(mcp).reshape((-1, 1))
 
     """----------------------------------------------------------
@@ -302,13 +302,13 @@ class influxInterface:
     -->             Query Leistungsplanung                   <---    
     ----------------------------------------------------------"""
 
-    def getPowerScheduling(self, date, name, timestamp):
+    def getPowerScheduling(self, date, name, timestamp, days=1):
         """ Leistung zum jeweilgen Planungsschritt in [MW] """
         self.influx.switch_database(database=self.database)
         # Tag im ISO Format
         date = pd.to_datetime(date)
         start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=days)).isoformat() + 'Z'
         # --> Abfrage
         query = 'select sum("power") from "Areas" where time >= \'%s\' and time < \'%s\' and "agent" = \'%s\' and "timestamp" = \'%s\' GROUP BY time(1h) fill(0)' \
                 % (start, end, name, timestamp)
@@ -319,7 +319,7 @@ class influxInterface:
         if result.__len__() > 0:
            return np.asarray([point['sum'] for point in result.get_points()])
         else:
-            return np.zeros(24)
+            return np.zeros(days*24)
 
     def getTotalDemand(self, date):
         """ Gesamtlast in Deutschland in [MW] """

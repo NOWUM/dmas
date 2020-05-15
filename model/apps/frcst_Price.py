@@ -118,7 +118,7 @@ class annFrcst:
         coal = 8.5                                                                          # -- Hard Coal Price    [€/MWh]
         nuc = 1                                                                             # -- nuclear Price      [€/MWh]
 
-        return dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
+        return dict(power=list(power_price), gas=list(gas), co=list(co), lignite=lignite, coal=coal, nuc=nuc)
 
 class typFrcst:
 

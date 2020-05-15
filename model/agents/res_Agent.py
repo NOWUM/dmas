@@ -114,9 +114,9 @@ class resAgent(basicAgent):
         json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         # Prognosen für den kommenden Tag
-        weather = self.weatherForecast()                                    # Wetterdaten (dir,dif,temp,wind)
-        price = self.priceForecast()                                        # Preisdaten (power,gas,nuc,coal,lignite)
-        demand = self.demandForecast()                                      # Lastprognose
+        weather = self.weatherForecast(self.date)                           # Wetterdaten (dir,dif,temp,wind)
+        price = self.priceForecast(self.date)                               # Preisdaten (power,gas,nuc,coal,lignite)
+        demand = self.demandForecast(self.date)                             # Lastprognose
 
         # Standardoptimierung
         self.portfolio.setPara(self.date, weather, price, demand)
@@ -210,16 +210,27 @@ class resAgent(basicAgent):
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
-            # biete nie mehr als den maximalen Preis
             quantity = [-1*powerEEG[i]]
             for _ in range(2, 102, 2):
                 quantity.append(-1*(2/100 * powerDirect[i]))
             price = [-499.98]
-            for p in range(2, 102, 2):
-                if slopes[i] > 0:
-                    price.append(float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])))
+
+            ub = self.maxPrice[i]
+            lb = self.minPrice[i]
+            slope = slopes[i]
+
+            if (ub > 0) and (lb > ub):
+                for _ in range(2, 102, 2):
+                    price.append(float(ub))
+            else:
+                if slope > 0:
+                    for p in range(2, 102, 2):
+                        price.append(float(min(slope * p + lb, ub)))
                 else:
-                    price.append(float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i])))
+                    for p in range(2, 102, 2):
+                        price.append(float(min(-1*slope * p + ub, lb)))
+                    price = [float(min(-1*slope * p + ub, lb)) for p in range(2, 102, 2)]
+
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)

@@ -13,7 +13,7 @@ class port_model:
         self.capacities = dict(wind=0, solar=0, fossil=0, water=0, bio=0)
 
         # time data
-        self.T = 24                                 # -- steps per day
+        self.T = T                                  # -- steps per day
         self.t = np.arange(T)                       # -- array with single steps
         self.dt = dt                                # -- resolution
 

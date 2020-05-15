@@ -26,7 +26,7 @@ class pwpAgent(basicAgent):
         logging.info('Start des Agenten')
 
         # Aufbau des Portfolios mit den enstprechenden Kraftwerken und Speichern
-        self.portfolio = pwpPort(typ='PWP', gurobi=True)                    # Verwendung von Gurobi
+        self.portfolio = pwpPort(typ='PWP', gurobi=True, T=48)                  # Verwendung von Gurobi
 
         # Einbindung der Kraftwerksdaten aus der MongoDB
         totalPower = 0
@@ -100,9 +100,9 @@ class pwpAgent(basicAgent):
         json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         # Prognosen für den kommenden Tag
-        weather = self.weatherForecast()                                    # Wetterdaten (dir,dif,temp,wind)
-        price = self.priceForecast()                                        # Preisdaten (power,gas,nuc,coal,lignite)
-        demand = self.demandForecast()                                      # Lastprognose
+        weather = self.weatherForecast(self.date, 2)                        # Wetterdaten (dir,dif,temp,wind)
+        price = self.priceForecast(self.date, 2)                            # Preisdaten (power,gas,nuc,coal,lignite)
+        demand = self.demandForecast(self.date, 2)                          # Lastprognose
 
         # pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)  # Verpflichtungen Regelleistung
 
@@ -113,10 +113,10 @@ class pwpAgent(basicAgent):
 
         emission = self.portfolio.emisson
         fuel = self.portfolio.fuel
-        costs = [(emission[i] + fuel[i])/power_dayAhead[i] if power_dayAhead[i] else 0 for i in self.portfolio.t]
+        costs = [(emission[i] + fuel[i])/power_dayAhead[i] if power_dayAhead[i] != 0 else 0 for i in self.portfolio.t]
 
         # verdiene mindestens die variablen Kosten
-        self.minPrice = np.asarray(costs).reshape((-1,))                        # Minimalpreis      [€/MWh]
+        self.minPrice = np.asarray(costs[:24]).reshape((-1,))                        # Minimalpreis      [€/MWh]
 
         powerFuels = dict(lignite=np.zeros_like(self.portfolio.t, dtype=float),              # gesamte Erzeugung aus Braunkohle
                           coal=np.zeros_like(self.portfolio.t, dtype=float),                 # gesamte Erzeugung aus Steinkohle
@@ -150,6 +150,8 @@ class pwpAgent(basicAgent):
         # Berechne maximal verfügbare Leistung
         self.portfolio.buildModel(max_=True)
         power_max = np.asarray(self.portfolio.optimize(), np.float)
+        power_max[power_max <= 0] = self.portfolio.capacities['fossil']
+        # print(self.portfolio.capacities['fossil'])
         priceMax = (self.portfolio.emisson + self.portfolio.fuel) / power_max
         power_max = power_max - power_dayAhead
 
@@ -182,31 +184,53 @@ class pwpAgent(basicAgent):
 
         # Aufbau der linearen Gebotskurven
         actions = np.random.randint(1, 8, 24) * 10
-        prc = np.asarray(price['power']).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
+        prc = np.asarray(price['power'][:24]).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
 
         # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-        if self.qLearn.fitted and (self.espilion > np.random.uniform(0,1)):
-            wnd = np.asarray(weather['wind']).reshape((-1, 1))                          # Wind              [m/s]
-            rad = np.asarray(weather['dir']).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
-            tmp = np.asarray(weather['temp']).reshape((-1, 1))                          # Temperatur        [°C]
-            dem = np.asarray(demand).reshape((-1, 1))                                   # Lastprognose      [MW]
+        if self.qLearn.fitted and (self.espilion > np.random.uniform(0, 1)):
+            wnd = np.asarray(weather['wind'][:24]).reshape((-1, 1))                          # Wind              [m/s]
+            rad = np.asarray(weather['dir'][:24]).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
+            tmp = np.asarray(weather['temp'][:24]).reshape((-1, 1))                          # Temperatur        [°C]
+            dem = np.asarray(demand[:24]).reshape((-1, 1))                                   # Lastprognose      [MW]
             actions = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
-        self.actions = actions                                                          # abschpeichern der Aktionen
+        self.actions = actions                                                               # abschpeichern der Aktionen
 
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
 
         self.maxPrice = prc.reshape((-1,)) + max(self.risk*var, 1)                       # Maximalpreis      [€/MWh]
 
-        slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi)  # Preissteigung pro weitere MW
-
         # Füge für jede Stunde die entsprechenden Gebote hinzu
-        for i in range(self.portfolio.T):
-            # biete nie mehr als den maximalen Preis
-            quantity = [float(-1*(2/100 * power_dayAhead[i])) for _ in range(2, 102, 2)]
-            price = [float(min(slopes[i] * p + self.minPrice[i], self.maxPrice[i])) if slopes[i] > 0 else
-                     float(max(slopes[i] * p + self.minPrice[i], self.maxPrice[i]))
-                     for p in range(2, 102, 2)]
+        delta = 0.
+        nCounter = 0
+
+        for i in range(24):
+            if (self.maxPrice[i] > self.minPrice[i]) and power_dayAhead[i] > 0:
+                delta += float((self.maxPrice[i] - self.minPrice[i]) * power_dayAhead[i])
+            else:
+                nCounter += 1
+        if nCounter > 0:
+            delta /= nCounter
+
+        for i in range(24):
+
+            quantity = [float(-1 * (2 / 100 * power_dayAhead[i])) for _ in range(2, 102, 2)]
+
+            mcp = self.maxPrice[i]
+            cVar = self.minPrice[i]
+
+            if (cVar > mcp) and power_dayAhead[i] > 0:
+                if delta > 0:
+                    lb = mcp - min(3*var/power_dayAhead[i], delta/power_dayAhead[i])
+                    slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
+                    price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
+                else:
+                    price = [float(mcp) for _ in range(2, 102, 2)]
+            else:
+                lb = cVar
+                slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
+                price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
+
             if (power_max[i] > 0):
                 quantity.append(float(-1 * power_max[i]))
                 price.append(float(max(priceMax[i], self.maxPrice[i])))
@@ -222,23 +246,24 @@ class pwpAgent(basicAgent):
         json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         # Speichern der Daten und Aktionen, um aus diesen zu lernen
-        self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))
-        # Abfrage der DayAhead Ergebnisse
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)                # Angebotene Menge [MWh]
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)                # Nachgefragte Menge [MWh]
-        price = self.ConnectionInflux.getDayAheadPrice(self.date)                       # MCP [€/MWh]
-        profit = np.asarray([float((ask[i] - bid[i]) * price[i]) for i in range(24)])   # erzielte Erlöse
 
+        self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))
+
+        # Abfrage der DayAhead Ergebnisse
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name, days=2)                            # Angebotene Menge [MWh]
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name, days=2)                            # Nachgefragte Menge [MWh]
+        price = self.ConnectionInflux.getDayAheadPrice(self.date, days=2)                                   # MCP [€/MWh]
+
+        profit = np.asarray([float((ask[i] - bid[i]) * price[i]) for i in self.portfolio.t])                # erzielte Erlöse
         # Minimiere Differenz zu den bezuschlagten Geboten
         self.portfolio.buildModel(response=ask-bid)
         power_dayAhead = self.portfolio.fixPlaning()
-
         costs = self.portfolio.emisson + self.portfolio.fuel
-        profit = profit.reshape((24,)) - costs.reshape((24,))
+        profit = profit.reshape((-1,)) - costs.reshape((-1,))
         # Falls ein Modell des Energiesystems vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
         if self.qLearn.fitted:
             states = self.qLearn.getStates(self.date)
-            for i in self.portfolio.t:
+            for i in range(24):
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - oldValue) # np.abs(delta[i]) * 1000
 

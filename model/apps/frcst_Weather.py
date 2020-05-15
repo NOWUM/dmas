@@ -1,5 +1,3 @@
-import pandas as pd
-
 
 class weatherForecast:
 
@@ -8,5 +6,4 @@ class weatherForecast:
         self.influx = influx
 
     def forecast(self, geo, date):
-
         return self.influx.getWeather(geo, date)

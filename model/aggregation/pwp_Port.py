@@ -105,9 +105,8 @@ class pwpPort(port_model):
             self.m.optimize()
             for key, value in self.energySystems.items():
                 if value['typ'] == 'powerPlant':
-                    value['P0'] = [np.round(self.m.getVarByName('P_%s[%i]' % (key, i)).x, 2) for i in self.t][-1]
-
-                    z = np.asanyarray([self.m.getVarByName('z_%s[%i]' % (key, i)).x for i in self.t], np.float)
+                    value['P0'] = [np.round(self.m.getVarByName('P_%s[%i]' % (key, i)).x, 2) for i in self.t[:24]][-1]
+                    z = np.asanyarray([self.m.getVarByName('z_%s[%i]' % (key, i)).x for i in self.t[:24]], np.float)
 
                     if z[-1] > 0:
                         index = -1 * value['runTime']
@@ -122,9 +121,9 @@ class pwpPort(port_model):
                     value['model'].volume = np.zeros_like(power)
 
                 if value['typ'] == 'storage':
-                    value['P+0'] = [self.m.getVarByName('P+_%s[%i]' % (key, i)).x for i in self.t][-1]
-                    value['P-0'] = [self.m.getVarByName('P-_%s[%i]' % (key, i)).x for i in self.t][-1]
-                    value['V0'] = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t][-1]
+                    value['P+0'] = [self.m.getVarByName('P+_%s[%i]' % (key, i)).x for i in self.t[:24]][-1]
+                    value['P-0'] = [self.m.getVarByName('P-_%s[%i]' % (key, i)).x for i in self.t[:24]][-1]
+                    value['V0'] = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t[:24]][-1]
                     value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
 
             # Einspeiseleitung

@@ -35,7 +35,7 @@ def dayAheadClearing(connectionMongo, influx, date):
             else:
                 tm.sleep(0.05)
             end = tm.time()                                                 # aktueller Zeitstempel
-            if end - start >= 30:                                           # Warte maximal 30 Sekunden
+            if end - start >= 60:                                           # Warte maximal 30 Sekunden
                 print('get no orders of Agent %s' % id)
                 wait = False
     df = pd.DataFrame.from_dict(total_dict, "index")
