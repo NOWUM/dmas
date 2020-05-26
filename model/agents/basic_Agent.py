@@ -23,6 +23,9 @@ class agent:
         self.plz = plz  # Gebiet
         self.date = pd.to_datetime(date)  # aktueller Tag
         self.typ = typ  # Agententyp (RES,PWP,DEM,...)
+
+        self.errorCounter = 0
+
         # Laden der Geoinfomationen
         try:
             df = pd.read_csv('./data/PlzGeo.csv', index_col=0)
@@ -164,7 +167,10 @@ class agent:
         print('Error in ' + part)
         print('Error --> ' + str(inst))
         logging.error('%s --> %s' % (part, inst))
-
+        self.errorCounter += 1
+        if self.errorCounter == 5:
+            self.ConnectionMongo.logout(self.name)
+            self.errorCounter = 0
 
 if __name__ == "__main__":
     agent = agent(date='2019-01-01', plz=1)

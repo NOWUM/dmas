@@ -168,7 +168,7 @@ class influxInterface:
             return np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
         else:
             return np.zeros(days*24)
-        return ask
+        return np.asarray([a if a is not None else 0 for a in ask])
 
     def getDayAheadBid(self, date, name, days=1):
         """ Kaufsvolumen in [MWh] """
@@ -185,7 +185,7 @@ class influxInterface:
             bid = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
         else:
             bid = np.zeros(days*24)
-        return bid
+        return np.asarray([b if bid is not None else 0 for b in bid])
 
     def getDayAheadPrice(self, date, days=1):
         """ Marktclearing Preis in [€/MWh] """
@@ -202,7 +202,7 @@ class influxInterface:
             mcp = np.asarray([point['sum'] for point in result.get_points()])
         else:
             mcp =  np.zeros(days*24)
-        return np.asarray(mcp).reshape((-1, 1))
+        return np.asarray([m if m is not None else 0 for m in mcp]).reshape((-1, 1))
 
     """----------------------------------------------------------
     -->             Query Regelleistung                      <---    
@@ -340,7 +340,7 @@ class influxInterface:
         start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            demand =  np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
+            demand = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
         else:
             demand = 35000*np.ones(24)
         return np.asarray(demand).reshape((-1,1))
