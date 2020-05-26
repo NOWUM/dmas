@@ -25,7 +25,7 @@ class energySystem:
                  refSLP=np.asarray(np.load(open(r'./data/Ref_H0.array','rb')), np.float32),         # SLP Strom
                  refTemp=np.asarray(np.load(open(r'./data/Ref_Temp.array', 'rb')), np.float32),     # Referenztemperatur
                  factors=np.asarray(np.load(open(r'./data/Ref_Factors.array', 'rb')), np.float32),  # Stundenfaktoren
-                 parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32)):                         # Gebäudeparameter
+                 parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32), typ=0):                         # Gebäudeparameter
 
         # Meta Daten Zeitintervalle
         self.t = t                  # Array mit Zeitschritten
@@ -33,7 +33,7 @@ class energySystem:
         self.dt = dt                # Zeitschrittlänge
 
         # Verwendetes Standardlastprofil Strom
-        self.slpP = slpP(typ=0, refSLP=refSLP)
+        self.slpP = slpP(typ=typ, refSLP=refSLP)
 
         # Wärmelastprofil mit entsprechenden Parametern
         self.slpQ = slpQ(demandQ=demQ, parameters=parameters.reshape((-1,)),

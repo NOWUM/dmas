@@ -15,8 +15,8 @@ class h0_model(es):
         super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters)
 
     def getPowerDemand(self, data, date):
-        power = data['demandP'] * 0.3           # Variabler Anteil
-        base = data['demandP'] * 0.7            # Konstanter Anteil
+        power = data['demandP'] * 0.2           # Variabler Anteil
+        base = data['demandP'] * 0.8            # Konstanter Anteil
         # --> Anpassung Aufgrund der überschätzten Gleichzeitigkeit in den SLP
         # --> die Faktoren wurden empirisch ermittelt und sind eine grobe Schätzung
 
@@ -37,11 +37,11 @@ class g0_model(es):
                  refTemp=np.asarray(np.load(open(r'./data/Ref_Temp.array', 'rb')), np.float32),     # Referenztemperatur
                  factors=np.asarray(np.load(open(r'./data/Ref_Factors.array', 'rb')), np.float32),  # Stundenfaktoren
                  parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32)):                         # Gebäudeparameter
-        super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters)
+        super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters, 1)
 
     def getPowerDemand(self, data, date):
-        power = data['demandP'] * 0.3           # Variabler Anteil
-        base = data['demandP'] * 0.7            # Konstanter Anteil
+        power = data['demandP'] * 0.2           # Variabler Anteil
+        base = data['demandP'] * 0.8           # Konstanter Anteil
         # --> Anpassung Aufgrund der überschätzten Gleichzeitigkeit in den SLP
         # --> die Faktoren wurden empirisch ermittelt und sind eine grobe Schätzung
 
@@ -62,12 +62,12 @@ class rlm_model(es):
                  refTemp=np.asarray(np.load(open(r'./data/Ref_Temp.array', 'rb')), np.float32),  # Referenztemperatur
                  factors=np.asarray(np.load(open(r'./data/Ref_Factors.array', 'rb')), np.float32),  # Stundenfaktoren
                  parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32)):                         # Gebäudeparameter
-        super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters)
+        super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters, 1)
 
     def getPowerDemand(self, data, date):
-        factor = 0.775                                 # Korrektzur um Bahnnetz und Eigenerzeugung der Industrie
-        power = data['demandP'] * 0.9 * factor         # Variabler Anteil
-        base = data['demandP'] * 0.1 * factor          # Konstanter Anteil
+        factor = 0.775                              # Korrektzur um Bahnnetz und Eigenerzeugung der Industrie
+        power = data['demandP'] * 1 * factor        # Variabler Anteil
+        base = data['demandP'] * 0 * factor          # Konstanter Anteil
         # --> Anpassung Aufgrund der überschätzten Gleichzeitigkeit in den SLP
         # --> die Faktoren wurden empirisch ermittelt und sind eine grobe Schätzung
 
@@ -85,7 +85,9 @@ if __name__ == "__main__":
     import numpy as np
 
     from interfaces.interface_mongo import mongoInterface
+    from apps.misc_Holiday import getHolidays
 
+    holidays = getHolidays(2019)
 
     mongoDB = mongoInterface(database='MAS_XXXX')
 
@@ -144,38 +146,25 @@ if __name__ == "__main__":
     totalRlm = np.asarray(totalRlm).reshape((-1))
     # #plt.plot(totalRlm)
     total = (totalRlm + totalh0 + totalg0)/1000000
-    #total1 = total[1:2126]
-    #total2 = total[2127:7176]
-    #total3 = total[7201:]
-    #total4 = np.concatenate((total1, total2, total3))
-    #
-    plt.plot(total)
     plt.plot(values)
-    #plt.plot(values)
-    #plt.plot(total)
-    #plt.plot(values[:-27]-total4)
-    # print('Mittelwert %s' % np.mean(total))
-    # print('Minimum %s' % np.min(total))
-    # print('Maximum %s' % np.max(total))
+    plt.plot(total)
 
     # sommer=np.asarray(np.load(open(r'./data/Time_Summer.array','rb')), np.int64)
     # winter = np.asarray(np.load(open(r'./data/Time_Winter.array', 'rb')), np.int64)
-    #x = values-total
-    #plt.plot(x)
+    # x = values-total
+    # plt.plot(x)
     # rlm = pd.DataFrame(x)
-    # print(np.sum(rlm))
-    # #
     # rlm = rlm/np.sum(rlm)*1000000
     # rlm.index = pd.date_range(start='2019-01-01', periods=8760, freq='h')
-    # #rlm = rlm.iloc[:-21]
+    #
     # typDays = []
     #
     # result = rlm.loc[[i.dayofyear in winter for i in rlm.index]]
-    # so = result.loc[[i.dayofweek == 6 for i in result.index]]
+    # so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
     # so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
-    # sa = result.loc[[i.dayofweek == 5 for i in result.index]]
+    # sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
     # sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
-    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] for i in result.index]]
+    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
     # wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
     #
     # typDays.append([element for element in sa for _ in range(4)])
@@ -183,11 +172,11 @@ if __name__ == "__main__":
     # typDays.append([element for element in wt for _ in range(4)])
     #
     # result = rlm.loc[[i.dayofyear in sommer for i in rlm.index]]
-    # so = result.loc[[i.dayofweek == 6 for i in result.index]]
+    # so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
     # so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
-    # sa = result.loc[[i.dayofweek == 5 for i in result.index]]
+    # sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
     # sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
-    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] for i in result.index]]
+    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
     # wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
     #
     # typDays.append([element for element in sa for _ in range(4)])
@@ -195,11 +184,11 @@ if __name__ == "__main__":
     # typDays.append([element for element in wt for _ in range(4)])
     #
     # result = rlm.loc[[(i.dayofyear not in sommer) or i.dayofyear not in winter for i in rlm.index]]
-    # so = result.loc[[i.dayofweek == 6 for i in result.index]]
+    # so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
     # so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
-    # sa = result.loc[[i.dayofweek == 5 for i in result.index]]
+    # sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
     # sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
-    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] for i in result.index]]
+    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
     # wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
     #
     # typDays.append([element for element in sa for _ in range(4)])
@@ -210,6 +199,6 @@ if __name__ == "__main__":
     #
     # typDays = np.asarray(typDays)
     # x = typDays.T
-    # np.save(outfile,x)
+    # np.save(outfile, x)
     #
     # outfile.close()

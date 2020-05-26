@@ -25,29 +25,37 @@ class influxInterface:
     -->             Query Wetterdaten                        <---    
     ----------------------------------------------------------"""
 
-    def generateWeather(self, start, end):
+    def generateWeather(self, start, end, valid=False):
         """ Wettergenerator für die Simualtionsdauer (start --> end) """
         for date in pd.date_range(start=start, end=end, freq='D'):
-            if date.year != self.switchWeatherYear:
-                self.histWeatherYear = np.random.randint(low=2005, high=2015)
-                self.switchWeatherYear = date.year
-            # Zugriff auf die Datenbank mit den historischen Wetterdaten
-            self.influx.switch_database('weather')
-            try: # Fehler bei Schaltjahr abfangen
-                start = date.replace(self.histWeatherYear).isoformat() + 'Z'
-            except:
-                date = date - pd.DateOffset(days=1)
-                start = date.replace(self.histWeatherYear).isoformat() + 'Z'
-            end = (date.replace(self.histWeatherYear) + pd.DateOffset(days=1)).isoformat() + 'Z'
+            if valid:
+                # Zugriff auf die Datenbank mit den historischen Wetterdaten
+                self.influx.switch_database('weather')
+                start = date.isoformat() + 'Z'
+                end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+            else:
+                if date.year != self.switchWeatherYear:
+                    self.histWeatherYear = np.random.randint(low=2005, high=2015)
+                    self.switchWeatherYear = date.year
+                # Zugriff auf die Datenbank mit den historischen Wetterdaten
+                self.influx.switch_database('weather')
+                try: # Fehler bei Schaltjahr abfangen
+                    start = date.replace(self.histWeatherYear).isoformat() + 'Z'
+                except:
+                    date = date - pd.DateOffset(days=1)
+                    start = date.replace(self.histWeatherYear).isoformat() + 'Z'
+                end = (date.replace(self.histWeatherYear) + pd.DateOffset(days=1)).isoformat() + 'Z'
 
             if '0229' in start:
                 start = start.replace('2902', '2802')
             # --> Abfrage der Daten
-            query = 'select * from "germany" where time > \'%s\' and time < \'%s\'' % (start, end)
+            query = 'select * from "germany" where time >= \'%s\' and time < \'%s\'' % (start, end)
+            print(query)
             result = self.influx.query(query)
             # Wechsel zur Simulationsdatenbank
             self.influx.switch_database(self.database)
             json_body = []
+            print(result)
             for data in result['germany']:
                 json_body.append(
                     {
@@ -77,7 +85,7 @@ class influxInterface:
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
         # --> Abfrage der Daten
-        query = 'select * from "weather" where time >= \'%s\' and time <= \'%s\' and geohash = \'%s\'' \
+        query = 'select * from "weather" where time >= \'%s\' and time < \'%s\' and geohash = \'%s\'' \
                 % (start, end, geohash)
         result = self.influx.query(query)
         if result.__len__() > 0:

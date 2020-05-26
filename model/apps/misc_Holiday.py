@@ -22,8 +22,10 @@ def getHolidays(year):
     holidays.append(easter + timedelta(days=49))  # -- Pfingstsonntag
     holidays.append(easter + timedelta(days=50))  # -- Pfingstmontag
     holidays.append(easter + timedelta(days=60))  # -- Fronleichnam
+    holidays.append(date(year, 12, 24))  # -- 1. Weihnachtstag
     holidays.append(date(year, 12, 25))  # -- 1. Weihnachtstag
     holidays.append(date(year, 12, 26))  # -- 2. Weihnachtstag
+    holidays.append(date(year, 12, 31))  # -- 2. Weihnachtstag
     holidays.append(date(year, 1, 1))  # -- Neujahr
     holidays.append(date(year, 5, 1))  # -- 1. Mai
     holidays.append(date(year, 10, 3))  # -- Tag der deutschen Einheit
