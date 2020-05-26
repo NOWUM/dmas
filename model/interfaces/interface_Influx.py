@@ -165,10 +165,9 @@ class influxInterface:
                 ' "order"=\'ask\' GROUP BY time(1h) fill(previous)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            return np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
+            return np.asarray([np.round(point['sum'], 2) if point['sum'] is not None else 0 for point in result.get_points()])  # -- volume [MWh]
         else:
             return np.zeros(days*24)
-        return np.asarray([a if a is not None else 0 for a in ask])
 
     def getDayAheadBid(self, date, name, days=1):
         """ Kaufsvolumen in [MWh] """
@@ -182,10 +181,10 @@ class influxInterface:
                 'and "order"=\'bid\' GROUP BY time(1h) fill(0)' % (start, end, name)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            bid = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])  # -- volume [MWh]
+            return np.asarray([np.round(point['sum'], 2) if point['sum'] is not None else 0 for point in result.get_points()])  # -- volume [MWh]
         else:
-            bid = np.zeros(days*24)
-        return np.asarray([b if bid is not None else 0 for b in bid])
+            return np.zeros(days*24)
+
 
     def getDayAheadPrice(self, date, days=1):
         """ Marktclearing Preis in [€/MWh] """
@@ -199,10 +198,9 @@ class influxInterface:
                 % (start, end)
         result = self.influx.query(query)
         if result.__len__() > 0:
-            mcp = np.asarray([point['sum'] for point in result.get_points()])
+            return np.asarray([point['sum'] if point['sum'] is not None else 0 for point in result.get_points()])
         else:
-            mcp =  np.zeros(days*24)
-        return np.asarray([m if m is not None else 0 for m in mcp]).reshape((-1, 1))
+            return np.zeros(days*24)
 
     """----------------------------------------------------------
     -->             Query Regelleistung                      <---    
