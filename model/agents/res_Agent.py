@@ -127,14 +127,14 @@ class resAgent(basicAgent):
         powerEEG = np.zeros(24)
         for key, value in agent.portfolio.energySystems.items():
             # direkt-vermarktete Leistung
-            if value['typ'] == 'wind' or value['typ'] == 'solarpark':
+            if value['typ'] == 'wind' or value['typ'] == 'solarpark' or value['typ'] == 'biomass':
                 powerDirect += value['model'].generation['wind'].reshape(-1)     # Wind Onshore
                 powerDirect += value['model'].generation['solar'].reshape(-1)    # Freiflächen PV
+                powerDirect += value['model'].generation['bio'].reshape(-1)      # Biomasse-Kraftwerk
             # EEG-vermarktete Leistung
             else:
-                powerEEG += value['model'].generation['bio'].reshape(-1)        # alle Biomasse-Kraftwerke
-                powerEEG += value['model'].generation['water'].reshape(-1)      # alle Laufwasser-Kraftwerke
-                powerEEG += value['model'].generation['solar'].reshape(-1)      # alle PV-Anlagen vor 2013
+                powerEEG += value['model'].generation['water'].reshape(-1)      # Laufwasser-Kraftwerk
+                powerEEG += value['model'].generation['solar'].reshape(-1)      # PV-Anlage vor 2013
 
         powerFuels = dict(bio=np.zeros_like(self.portfolio.t, dtype=float),                  # gesamte Erzeugung aus Biomasse
                           water=np.zeros_like(self.portfolio.t, dtype=float),                # gesamte Erzeugung aus Wasserkraft
