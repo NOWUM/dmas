@@ -126,6 +126,9 @@ class pwpPort(port_model):
                     value['V0'] = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t[:24]][-1]
                     value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
 
+                    value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
+                    value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
+
             # Einspeiseleitung
             power = np.asanyarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
             power = np.round(power, 2)
