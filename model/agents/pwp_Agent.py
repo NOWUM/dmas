@@ -212,15 +212,13 @@ class pwpAgent(basicAgent):
         if nCounter > 0:
             delta /= nCounter
 
-        sortMCP = np.asarray(self.maxPrice).sort()
-
-        maxBuy = sortMCP[12:][-1]
+        sortMCP = np.sort(self.maxPrice)
+        maxBuy = sortMCP[:12][-1]
         minSell = sortMCP[12:][-1]
 
         for i in range(24):
 
             quantity = [float(-1 * (2 / 100 * (power_dayAhead[i]-powerFuels['water'][i]))) for _ in range(2, 102, 2)]
-            water = [float(-1 * (2 / 100 * powerFuels['water'][i])) for _ in range(2, 102, 2)]
 
             mcp = self.maxPrice[i]
             cVar = self.minPrice[i]

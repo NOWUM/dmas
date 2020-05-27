@@ -50,12 +50,10 @@ class influxInterface:
                 start = start.replace('2902', '2802')
             # --> Abfrage der Daten
             query = 'select * from "germany" where time >= \'%s\' and time < \'%s\'' % (start, end)
-            print(query)
             result = self.influx.query(query)
             # Wechsel zur Simulationsdatenbank
             self.influx.switch_database(self.database)
             json_body = []
-            print(result)
             for data in result['germany']:
                 json_body.append(
                     {
