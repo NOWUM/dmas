@@ -212,9 +212,15 @@ class pwpAgent(basicAgent):
         if nCounter > 0:
             delta /= nCounter
 
+        sortMCP = np.asarray(self.maxPrice).sort()
+
+        maxBuy = sortMCP[12:][-1]
+        minSell = sortMCP[12:][-1]
+
         for i in range(24):
 
-            quantity = [float(-1 * (2 / 100 * power_dayAhead[i])) for _ in range(2, 102, 2)]
+            quantity = [float(-1 * (2 / 100 * (power_dayAhead[i]-powerFuels['water'][i]))) for _ in range(2, 102, 2)]
+            water = [float(-1 * (2 / 100 * powerFuels['water'][i])) for _ in range(2, 102, 2)]
 
             mcp = self.maxPrice[i]
             cVar = self.minPrice[i]
@@ -234,6 +240,19 @@ class pwpAgent(basicAgent):
             if (power_max[i] > 0):
                 quantity.append(float(-1 * power_max[i]))
                 price.append(float(max(priceMax[i], self.maxPrice[i])))
+
+            if powerFuels['water'][i] > 0:
+                for p in range(2, 102, 2):
+                    lb = minSell
+                    slope = (mcp - lb) / 100 * np.tan(45/180 * np.pi)
+                    price.append(float(min(slope * p + lb, mcp)))
+                    quantity.append(float(-1 * (2 / 100 * powerFuels['water'][i])))
+            if powerFuels['water'][i] < 0:
+                for p in range(2, 102, 2):
+                    lb = maxBuy
+                    slope = (mcp - lb) / 100 * np.tan(45/180 * np.pi)
+                    price.append(float(min(slope * p + lb, mcp)))
+                    quantity.append(float(-1 * (2 / 100 * powerFuels['water'][i])))
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
