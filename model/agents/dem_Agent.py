@@ -23,7 +23,7 @@ class demAgent(basicAgent):
     def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_XXXX'):
         super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='DEM', dbName=dbName)
 
-        logging.info('Start des Agenten')
+        self.logger.info('Start des Agenten')
         # Aufbau des Portfolios mit den enstprechenden Haushalten, Gewerbe und Industrie
         self.portfolio = demPort(typ="DEM")                             # Keine Verwendung eines Solvers
 
@@ -35,7 +35,7 @@ class demAgent(basicAgent):
             self.portfolio.addToPortfolio(key, {key: value})
             powerH0 += value['demandP']
 
-        logging.info('Prosumer PV-Bat hinzugefügt')
+        self.logger.info('Prosumer PV-Bat hinzugefügt')
 
         # Einbindung der Prosumer PV mit Wärmepumpe
         pvHeatpumps = self.ConnectionMongo.getHeatPumps(plz)
@@ -43,7 +43,7 @@ class demAgent(basicAgent):
             self.portfolio.addToPortfolio(key, {key: value})
             powerH0 += value['demandP']
 
-        logging.info('Prosumer PV-WP hinzugefügt')
+        self.logger.info('Prosumer PV-WP hinzugefügt')
 
         # Einbindung Consumer mit PV
         pv = self.ConnectionMongo.getPVs(plz)
@@ -51,34 +51,34 @@ class demAgent(basicAgent):
             self.portfolio.addToPortfolio(key, {key: value})
             powerH0 += value['demandP']
 
-        logging.info('Consumer PV hinzugefügt')
+        self.logger.info('Consumer PV hinzugefügt')
 
         demand = self.ConnectionMongo.getDemand(plz)
 
         # Aufbau Standard Consumer H0
         name = 'plz_' + str(plz) + '_h0'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['h0']*10**6 - powerH0, 2), 'typ': 'H0'}})
-        logging.info('Consumer hinzugefügt')
+        self.logger.info('Consumer hinzugefügt')
 
         # Aufbau Standard Consumer G0
         name = 'plz_' + str(plz) + '_g0'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['g0']*10**6, 2), 'typ': 'G0'}})
-        logging.info('Gewerbe  hinzugefügt')
+        self.logger.info('Gewerbe  hinzugefügt')
 
         # Aufbau Standard Consumer RLM
         name = 'plz_' + str(plz) + '_rlm'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['rlm']*10**6, 2), 'typ': 'RLM'}})
-        logging.info('Industrie hinzugefügt')
+        self.logger.info('Industrie hinzugefügt')
 
         if len(self.portfolio.energySystems) == 0:
-            logging.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
+            self.logger.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
             exit()
 
-        logging.info('Aufbau des Agenten abgeschlossen')
+        self.logger.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):
         """Einsatzplanung für den Regelleistungsmarkt"""
-        logging.info('Planung Regelleistungsmarkt abgeschlossen')
+        self.logger.info('Planung Regelleistungsmarkt abgeschlossen')
 
     def optimize_dayAhead(self):
         """Einsatzplanung für den DayAhead-Markt"""
@@ -147,7 +147,7 @@ class demAgent(basicAgent):
             orderbook.update({'h_%s' % i: {'quantity': [power_dayAhead[i]/10**3, 0], 'price': [3000, -3000], 'hour': i, 'name': self.name}})
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
-        logging.info('Planung DayAhead-Markt abgeschlossen')
+        self.logger.info('Planung DayAhead-Markt abgeschlossen')
 
     def post_dayAhead(self):
         """Reaktion auf  die DayAhead-Ergebnisse"""
@@ -208,7 +208,7 @@ class demAgent(basicAgent):
 
         self.ConnectionInflux.saveData(json_body)
 
-        logging.info('DayAhead Ergebnisse erhalten')
+        self.logger.info('DayAhead Ergebnisse erhalten')
 
     def optimize_actual(self):
         """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
@@ -239,7 +239,7 @@ class demAgent(basicAgent):
             time = time + pd.DateOffset(hours=self.portfolio.dt)
         self.ConnectionInflux.saveData(json_body)
 
-    logging.info('Aktuellen Fahrplan erstellt')
+        self.logger.info('Aktuellen Fahrplan erstellt')
 
     def post_actual(self):
         """ Abschlussplanung des Tages """
@@ -271,7 +271,7 @@ class demAgent(basicAgent):
                     method.fitFunction()
                     method.counter = 0
 
-        logging.info('Tag %s abgeschlossen' % self.date)
+        self.logger.info('Tag %s abgeschlossen' % self.date)
 
         print('Agent %s %s done' % (self.name, self.date.date()))
 

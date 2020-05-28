@@ -23,8 +23,7 @@ class resAgent(basicAgent):
     def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_XXXX'):
         super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='RES', dbName=dbName)
 
-        logging.info('Start des Agenten')
-
+        self.logger.info('Start des Agenten')
         # Aufbau des Portfolios mit den enstprechenden EE-Anlagen
         self.portfolio = resPort(typ='RES', gurobi=False)                    # Keine Verwendung eines Solvers
 
@@ -38,7 +37,7 @@ class resAgent(basicAgent):
         generator = dict(maxPower=np.round(total, 2), eta=0.15, area=7, typ='solarsystem', fuel='solar')
         self.portfolio.addToPortfolio(name, {name: generator})
 
-        logging.info('PV(EEG)-Erzeugung hinzugefügt')                                       # Gesamte Solar (vor 2013) in [MW]
+        self.logger.info('PV(EEG)-Erzeugung hinzugefügt')                                       # Gesamte Solar (vor 2013) in [MW]
 
         # Einbindung der Laufwasserkraftwerke aus der MongoDB
         runRiver = self.ConnectionMongo.getRunRiver(plz)
@@ -50,7 +49,7 @@ class resAgent(basicAgent):
         generator = dict(maxPower=np.round(total, 2), typ='run-river', fuel='water')        # Gesamte Wasserkraft in [MW]
         self.portfolio.addToPortfolio(name, {name: generator})
 
-        logging.info('Laufwasserkraftwerk (EEG) hinzugefügt')
+        self.logger.info('Laufwasserkraftwerk (EEG) hinzugefügt')
 
         # Einbindung der Biomasseanlagen aus der MongoDB
         bioMass = self.ConnectionMongo.getBioMass(plz)
@@ -62,7 +61,7 @@ class resAgent(basicAgent):
         generator = dict(maxPower=np.round(total, 2), typ='biomass', fuel='bio')
         self.portfolio.addToPortfolio(name, {name: generator})
 
-        logging.info('Biomassekraftwerke (EEG) hinzugefügt')
+        self.logger.info('Biomassekraftwerke (EEG) hinzugefügt')
 
         # Einbindung der Winddaten aus der MongoDB
         windOnshore = self.ConnectionMongo.getWindOn(plz)
@@ -72,7 +71,7 @@ class resAgent(basicAgent):
             total += system['maxPower']
         self.portfolio.capacities['wind'] = np.round(total / 1000, 2)                       # Gesamte Windleistung in [MW]
 
-        logging.info('Winderzeugung hinzugefügt')
+        self.logger.info('Winderzeugung hinzugefügt')
 
         # Einbindung der Solardaten aus der MongoDB (nur PV-Anlagen > 750 kW)
         solarparks = self.ConnectionMongo.getPvParks(plz)
@@ -82,7 +81,7 @@ class resAgent(basicAgent):
             total += system['maxPower']
         self.portfolio.capacities['solar'] += np.round(total / 1000, 2)                     # Gesamte Solarleistung in [MW]
 
-        logging.info('PV-Erzeugung hinzugefügt')
+        self.logger.info('PV-Erzeugung hinzugefügt')
 
         # Parameter für die Handelsstrategie am Day Ahead Markt
         self.maxPrice = np.zeros(24)                                                        # Maximalgebote
@@ -96,17 +95,17 @@ class resAgent(basicAgent):
 
         self.risk = np.random.choice([-2, -1, 0, 1, 2])
 
-        logging.info('Parameter der Handelsstrategie festgelegt')
+        self.logger.info('Parameter der Handelsstrategie festgelegt')
 
         if len(self.portfolio.energySystems) == 0:
             logging.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
             exit()
 
-        logging.info('Aufbau des Agenten abgeschlossen')
+        self.logger.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):
         """Einsatzplanung für den Regelleistungsmarkt"""
-        logging.info('Planung Regelleistungsmarkt abgeschlossen')
+        self.logger.info('Planung Regelleistungsmarkt abgeschlossen')
 
     def optimize_dayAhead(self):
         """Einsatzplanung für den DayAhead-Markt"""
@@ -235,7 +234,7 @@ class resAgent(basicAgent):
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
-        logging.info('Planung DayAhead-Markt abgeschlossen')
+        self.logger.info('Planung DayAhead-Markt abgeschlossen')
 
     def post_dayAhead(self):
         """Reaktion auf  die DayAhead-Ergebnisse"""
@@ -314,7 +313,7 @@ class resAgent(basicAgent):
 
         self.ConnectionInflux.saveData(json_body)
 
-        logging.info('DayAhead Ergebnisse erhalten')
+        self.logger.info('DayAhead Ergebnisse erhalten')
 
     def optimize_actual(self):
         """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
@@ -351,7 +350,7 @@ class resAgent(basicAgent):
             time = time + pd.DateOffset(hours=self.portfolio.dt)
         self.ConnectionInflux.saveData(json_body)
 
-        logging.info('Aktuellen Fahrplan erstellt')
+        self.logger.info('Aktuellen Fahrplan erstellt')
 
     def post_actual(self):
         """Abschlussplanung des Tages"""
@@ -396,7 +395,7 @@ class resAgent(basicAgent):
             print(self.lr)
             print(self.espilion)
 
-        logging.info('Tag %s abgeschlossen' %self.date)
+        self.logger.info('Tag %s abgeschlossen' %self.date)
         print('Agent %s %s done' % (self.name, self.date.date()))
 
 if __name__ == "__main__":

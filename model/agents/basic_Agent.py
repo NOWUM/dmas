@@ -15,7 +15,7 @@ import sys
 
 class agent:
 
-    def __init__(self, date, plz, typ='RES', mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150',
+    def __init__(self, date, plz, typ='PWP', mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150',
                  exchange='Market', dbName='MAS_XXXX'):
 
         # Metadaten eines Agenten
@@ -25,6 +25,13 @@ class agent:
         self.typ = typ  # Agententyp (RES,PWP,DEM,...)
 
         self.errorCounter = 0
+
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.INFO)
+        fh = logging.FileHandler(r'./logs/%s.log' % self.name)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
 
         # Laden der Geoinfomationen
         try:
@@ -37,9 +44,8 @@ class agent:
             exit()
 
         # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
-        logging.basicConfig(filename=r'./logs/%s.log' % self.name, level=logging.WARNING,
-                            format='%(levelname)s:%(message)s', filemode='w')
-        logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+        # logging.basicConfig(filename=r'./logs/%s_fix.log' % self.name, level=logging.INFO, filemode='a')
+        # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
         # Verbindingen an die Datenbanken sowie den Marktplatz
         self.ConnectionInflux = influxInterface(host=influx, database=dbName)  # Datenbank zur Speicherung der Zeitreihen
         self.ConnectionMongo = mongoInterface(host=mongo, database=dbName)     # Datenbank zur Speicherung der Strukurdaten
@@ -166,7 +172,7 @@ class agent:
         print(self.name)
         print('Error in ' + part)
         print('Error --> ' + str(inst))
-        logging.error('%s --> %s' % (part, inst))
+        # logging.error('%s --> %s' % (part, inst))
         self.errorCounter += 1
         if self.errorCounter == 5:
             self.ConnectionMongo.logout(self.name)

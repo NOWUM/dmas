@@ -11,7 +11,7 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=44, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=25, help='PLZ-Agent')
     parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
@@ -23,7 +23,7 @@ class pwpAgent(basicAgent):
     def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_XXXX'):
         super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='PWP', dbName=dbName)
 
-        logging.info('Start des Agenten')
+        self.logger.info('Start des Agenten')
 
         # Aufbau des Portfolios mit den enstprechenden Kraftwerken und Speichern
         self.portfolio = pwpPort(typ='PWP', gurobi=True, T=48)                  # Verwendung von Gurobi
@@ -37,14 +37,14 @@ class pwpAgent(basicAgent):
                 totalPower += value['maxPower']                                 # Gesamte Kraftwerksleitung  in [MW]
         self.portfolio.capacities['fossil'] = totalPower
 
-        logging.info('Kraftwerke hinzugefügt')
+        self.logger.info('Kraftwerke hinzugefügt')
 
         # Einbindung der Speicherdaten aus der MongoDB
         storages = self.ConnectionMongo.getStorages(plz)
         for key, value in storages.items():
             self.portfolio.addToPortfolio(key, {key: value})
 
-        logging.info('Speicher hinzugefügt')
+        self.logger.info('Speicher hinzugefügt')
 
         # Parameter für die Handelsstrategie am Day Ahead Markt
         self.maxPrice = np.zeros(24)                                                             # Maximalgebote
@@ -57,12 +57,12 @@ class pwpAgent(basicAgent):
         self.risk = np.random.choice([-2, -1, 0, 1, 2])
 
         if len(self.portfolio.energySystems) == 0 or plz==79:           # TODO: Check PLZ Gebiet 79
-            logging.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
+            self.logger.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
             exit()
 
-        logging.info('Parameter der Handelsstrategie festgelegt')
+        self.logger.info('Parameter der Handelsstrategie festgelegt')
 
-        logging.info('Aufbau des Agenten abgeschlossen')
+        self.logger.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):
         # TODO Überarbeiten der Gebotsstrategie --> Biete immer 30 % der Verfügbaren Menge zu Random Preisen
@@ -92,7 +92,7 @@ class pwpAgent(basicAgent):
 
         self.ConnectionMongo.setBalancing(self.name, self.date, orderbook)
 
-        logging.info('Planung Regelleistungsmarkt abgeschlossen')
+        self.logger.info('Planung Regelleistungsmarkt abgeschlossen')
 
     def optimize_dayAhead(self):
         """Einsatzplanung für den DayAhead-Markt"""
@@ -256,7 +256,7 @@ class pwpAgent(basicAgent):
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
-        logging.info('Planung DayAhead-Markt abgeschlossen')
+        self.logger.info('Planung DayAhead-Markt abgeschlossen')
 
     def post_dayAhead(self):
         """Reaktion auf  die DayAhead-Ergebnisse"""
@@ -339,7 +339,7 @@ class pwpAgent(basicAgent):
 
         self.ConnectionInflux.saveData(json_body)
 
-        logging.info('DayAhead Ergebnisse erhalten')
+        self.logger.info('DayAhead Ergebnisse erhalten')
 
     def optimize_actual(self):
         """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
@@ -401,7 +401,7 @@ class pwpAgent(basicAgent):
         self.ConnectionInflux.saveData(json_body)
 
 
-    logging.info('Aktuellen Fahrplan erstellt')
+        self.logger.info('Aktuellen Fahrplan erstellt')
 
     def post_actual(self):
         """Abschlussplanung des Tages"""
@@ -479,7 +479,7 @@ class pwpAgent(basicAgent):
         self.espilion = max(0.9*self.espilion, 0.2)                     # Epsilion * 0.9 (mit steigender Simulationdauer
                                                                         # sind viele Bereiche schon bekannt
 
-        logging.info('Tag %s abgeschlossen' %self.date)
+        self.logger.info('Tag %s abgeschlossen' %self.date)
         print('Agent %s %s done' % (self.name, self.date.date()))
 
 if __name__ == "__main__":

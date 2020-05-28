@@ -69,15 +69,16 @@ def buildAreas():
         market = config['Market']['host']
         database = config['Results']['Database']
 
+        if request.form['pwp'] == 'true':  # -- if true build PWP
+            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
+                             % (i, mongo, influx, market, database), cwd=path, shell=True)
         if request.form['res'] == 'true':  # -- if true build RES
             subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
                              % (i, mongo, influx, market, database), cwd=path, shell=True)
         if request.form['dem'] == 'true':  # -- if true build DEM
             subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
                              % (i, mongo, influx, market, database), cwd=path, shell=True)
-        if request.form['pwp'] == 'true':  # -- if true build PWP
-            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
-                             % (i, mongo, influx, market, database), cwd=path, shell=True)
+
     return 'OK'
 
 

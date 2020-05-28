@@ -112,7 +112,7 @@ class annFrcst:
         else:
             power_price = 25*np.ones(24)
 
-        co = np.ones_like(power_price) * 25                                                 # -- Emission Price     [€/MWh]
+        co = np.ones_like(power_price) * 25                                                 # -- Emission Price     [€/t]
         gas = np.ones_like(power_price) * 18                                                # -- Gas Price          [€/MWh]
         lignite = 3.5                                                                       # -- Lignite Price      [€/MWh]
         coal = 8.5                                                                          # -- Hard Coal Price    [€/MWh]
