@@ -47,6 +47,7 @@ class port_model:
         if gurobi:
             self.m = Model('aggregation')             # -- gurobi model for milp model
             self.m.Params.OutputFlag = 0              # -- hide output
+            self.m.Params.TimeLimit = 30
             self.m.__len__ = 1
 
     # ----- Set Parameter for optimization -----
