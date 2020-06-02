@@ -43,6 +43,7 @@ taskkill /F /IM python.exe /T /fi "USERNAME eq Rieke"
 $ pip3 install -r requirements.txt
 
 **Install Gurobi in /usr/local** <br>
+$ cd /usr/local/
 $ sudo wget http://packages.gurobi.com/VERSION.tar.gz <br>
 (https://packages.gurobi.com/9.0/gurobi9.0.1_linux64.tar.gz) 
 Bsp: $ sudo wget https://packages.gurobi.com/9.0/gurobi9.0.1_linux64.tar.gz <br>
