@@ -9,6 +9,6 @@ class bioMass_model(energySystem):
     def build(self, data, ts, date):
 
         random = np.random.uniform(low=0.95, high=1, size=self.T)
-        powerBio = random*data['maxPower']
+        powerBio = random*data['maxPower']*0.65
         self.generation['bio'] = powerBio.reshape((-1,))/10**3
         self.power = powerBio.reshape((-1,))/10**3
