@@ -56,7 +56,10 @@ class pwpPort(port_model):
                 self.m.setObjective(profit - quicksum(fuel[i] + emission[i] for i in self.t), GRB.MAXIMIZE)
         else:
             powerReBAP = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='ReBA', lb=-GRB.INFINITY, ub=GRB.INFINITY)
-            self.m.addConstrs(float(response[i]) == power[i] + powerReBAP[i] for i in self.t)
+            minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
+            plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
+            self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
+            self.m.addConstrs(minus[i] + plus[i] == powerReBAP[i] for i in self.t)
             self.m.setObjective(quicksum(self.fuel[i] + self.emisson[i] + powerReBAP[i] * (self.prices['power'][i] + 35) for i in self.t), GRB.MINIMIZE)
         # ----- update model -----
         self.m.update()
