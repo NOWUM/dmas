@@ -218,7 +218,7 @@ class pwpAgent(basicAgent):
 
         for i in range(24):
 
-            quantity = [float(-1 * (2 / 100 * (power_dayAhead[i]-powerFuels['water'][i]))) for _ in range(2, 102, 2)]
+            quantity = [float(-1 * (10 / 100 * (power_dayAhead[i]-powerFuels['water'][i]))) for _ in range(10, 110, 10)]
 
             mcp = self.maxPrice[i]
             cVar = self.minPrice[i]
@@ -227,30 +227,30 @@ class pwpAgent(basicAgent):
                 if delta > 0:
                     lb = mcp - min(3*var/power_dayAhead[i], delta/power_dayAhead[i])
                     slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
-                    price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
+                    price = [float(min(slope * p + lb, mcp)) for p in (10, 110, 10)]
                 else:
-                    price = [float(mcp) for _ in range(2, 102, 2)]
+                    price = [float(mcp) for _ in (10, 110, 10)]
             else:
                 lb = cVar
                 slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
-                price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
+                price = [float(min(slope * p + lb, mcp)) for p in range(10, 110, 10)]
 
             if (power_max[i] > 0):
                 quantity.append(float(-1 * power_max[i]))
                 price.append(float(max(priceMax[i], self.maxPrice[i])))
 
             if powerFuels['water'][i] > 0:
-                for p in range(2, 102, 2):
+                for p in range(10, 110, 10):
                     lb = minSell
                     slope = (mcp - lb) / 100 * np.tan(45/180 * np.pi)
                     price.append(float(min(slope * p + lb, mcp)))
-                    quantity.append(float(-1 * (2 / 100 * powerFuels['water'][i])))
+                    quantity.append(float(-1 * (10 / 100 * powerFuels['water'][i])))
             if powerFuels['water'][i] < 0:
-                for p in range(2, 102, 2):
+                for p in range(10, 110, 10):
                     lb = maxBuy
                     slope = (mcp - lb) / 100 * np.tan(45/180 * np.pi)
                     price.append(float(min(slope * p + lb, mcp)))
-                    quantity.append(float(-1 * (2 / 100 * powerFuels['water'][i])))
+                    quantity.append(float(-1 * (10 / 100 * powerFuels['water'][i])))
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
