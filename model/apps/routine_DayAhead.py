@@ -2,54 +2,77 @@ from apps.market import dayAhead_clearing
 import pandas as pd
 import time as tm
 import random
+from interfaces.interface_mongo import mongoInterface
+import multiprocessing
+from joblib import Parallel, delayed
 
+
+def getOrders(id, date, database='MAS_2020', host='149.201.88.150'):
+    wait = True                     # Warte solange bis Gebot vorliegt
+    start = tm.time()               # Startzeitpunkt
+    orders = {}
+    i = 0
+    mongoCon = mongoInterface(database=database, host=host)
+    while wait:
+        x = mongoCon.orderDB[date].find_one({"_id": id})  # Abfrage der Gebote
+        # Wenn das Gebot vorliegt, füge es hinzu
+        if x is not None:
+            if 'DayAhead' in x.keys():
+               for hour in range(24):
+                    dict_ = x['DayAhead']['h_%s' % hour]
+                    num_ = len(dict_['price'])
+                    for k in range(num_):
+                        orders[i] = {'price': dict_['price'][k], 'quantity': dict_['quantity'][k],
+                                         'name': id, 'hour': hour}
+                        i += 1
+                    wait = False  # Warten beenden
+                    continue
+            else:
+                pass
+        else:
+            tm.sleep(0.05)
+        end = tm.time()  # aktueller Zeitstempel
+        if end - start >= 120:  # Warte maximal 120 Sekunden
+            print('get no orders of Agent %s' % id)
+            wait = False
+    return orders
 
 def dayAheadClearing(connectionMongo, influx, date):
-    # Dataframe für alle Gebote der Agenten
-    #df = pd.DataFrame(columns=['name', 'hour', 'price', 'quantity'])
+
+    num_cores = min(multiprocessing.cpu_count(), 24)
     # Abfrage der anmeldeten Agenten
     agent_ids = connectionMongo.status.find().distinct('_id')
     random.shuffle(agent_ids)
-    total_dict = {}
-    i = 0
-    # Sammel für jeden Agent die Gebote
-    for id in agent_ids:
-        print('waiting for Agent %s' % id)
-        wait = True                                                              # Warte solange bis Gebot vorliegt
-        start = tm.time()                                                        # Startzeitpunkt
-        while wait:
-            x = connectionMongo.orderDB[str(date.date())].find_one({"_id": id})  # Abfrage der Gebote
-            # Wenn das Gebot vorliegt, füge es hinzu
-            if x is not None:
-                if 'DayAhead' in x.keys():
-                    test = tm.time()
-                    for hour in range(24):
-                        dict_ = x['DayAhead']['h_%s' % hour]
-                        num_ = len(dict_['price'])
-                        for k in range(num_):
-                            total_dict[i] = {'price': dict_['price'][k], 'quantity': dict_['quantity'][k],
-                                                   'name': id, 'hour': hour}
-                            i += 1
-                    wait = False                                                # Warten beenden
-                    continue
-            else:
-                tm.sleep(0.05)
-            end = tm.time()                                                 # aktueller Zeitstempel
-            if end - start >= 120:                                          # Warte maximal 120 Sekunden
-                print('get no orders of Agent %s' % id)
-                wait = False
-    df = pd.DataFrame.from_dict(total_dict, "index")
-    df = df.set_index('hour', drop=True)
 
+    totalOrders = Parallel(n_jobs=num_cores)(delayed(getOrders)(i, str(date.date())) for i in agent_ids)
+
+    totalDict = {}
+    index = 0
+    for element in totalOrders:
+        for key, value in element.items():
+            totalDict[index] = value
+            index += 1
+
+    totalOrders = pd.DataFrame.from_dict(totalDict, "index")
+    totalOrders = totalOrders.set_index('hour', drop=True)
+
+    hourlyOrders = []
     for i in range(24):
+        hourlyOrder = totalOrders[totalOrders.index == i]
+        hourlyOrder.index = [k for k in range(len(hourlyOrder))]
+        hourlyOrders.append(hourlyOrder.to_dict())
 
-        time = date + pd.DateOffset(hours=i)
-        o = df[df.index == i]
+    processed_list = Parallel(n_jobs=num_cores)(delayed(dayAhead_clearing)(hourlyOrder) for hourlyOrder in hourlyOrders)
 
-        ask, bid, mcp, mcm, _ = dayAhead_clearing(o)
+    time = date
+    json_body = []
 
-        influx.influx.switch_database("MAS_2019")
-        json_body = []
+    for element in processed_list:
+
+        ask = pd.DataFrame.from_dict(element[0])
+        bid = pd.DataFrame.from_dict(element[1])
+        mcp = element[2]
+
         for r in ask.index:
             json_body.append(
                 {
@@ -76,4 +99,6 @@ def dayAheadClearing(connectionMongo, influx, date):
                 "fields": dict(price=mcp)
             }
         )
-        influx.saveData(json_body)
+        time += pd.DateOffset(hours=1)
+
+    influx.saveData(json_body)

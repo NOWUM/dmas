@@ -73,6 +73,8 @@ def balancing_clearing(orders, ask=1800, minimal=5):
 # Day Ahead Markt
 def dayAhead_clearing(orders):
 
+    orders = pd.DataFrame.from_dict(orders)
+
     ask0 = orders[orders['quantity'] < -0.1]
     ask0 = ask0.sort_values(by=['price'])
     ask0.loc[:,['quantity']] = -1*ask0['quantity'].round(1)
@@ -104,6 +106,7 @@ def dayAhead_clearing(orders):
     merit_order = merit_order.sort_index()
     merit_order = merit_order.bfill()
     merit_order = merit_order.dropna()
+
 
     index = list(np.round((np.diff((merit_order.index))),1))
     index.insert(0, merit_order.index[0])
@@ -137,11 +140,13 @@ def dayAhead_clearing(orders):
     for n in diff:
         bid_last.loc[n] = 0
 
-    return ask_last, bid_last, mcp, mcm, merit_order
+    result = (ask_last.to_dict(), bid_last.to_dict(), mcp, mcm)
+
+    return result
 
 if __name__ == "__main__":
 
-    df2 = orderGen(150)
+    df2 = orderGen(10000)
     df = pd.DataFrame(index=[7], data=dict(quantity=4000, price=250, name='Extra'))
     df2 = df2.append(df)
     #df2 = df2[df2['quantity'] <=0]
@@ -153,11 +158,12 @@ if __name__ == "__main__":
     #df = df[df.index == 5]k
     #df = df[df['quantity'] != 0]
 
+    orders = df2.to_dict()
+
     # df = pd.read_excel(r'./tmp/DA_2019-01-01_5.xlsx', index_col=0)
     #ask, bid, mcp, mcm, test = dayAhead_clearing(df, plot=True)
-    ask_last, bid_last, mcp, mcm, merit_order = dayAhead_clearing(df2)
-    buy = merit_order.loc[:, ['buy', 'buyNames']]
-    sell = merit_order.loc[:, ['sell', 'sellNames']]
+    x = dayAhead_clearing(orders)
+
 
 
 
