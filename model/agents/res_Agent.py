@@ -210,8 +210,8 @@ class resAgent(basicAgent):
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             quantity = [-1*powerEEG[i]]
-            for _ in range(10, 110, 10):
-                quantity.append(-1*(10/100 * powerDirect[i]))
+            for _ in range(2, 102, 2):
+                quantity.append(-1*(2/100 * powerDirect[i]))
             price = [-499.98]
 
             ub = self.maxPrice[i]
@@ -219,16 +219,16 @@ class resAgent(basicAgent):
             slope = slopes[i]
 
             if (ub > 0) and (lb > ub):
-                for _ in range(10, 110, 10):
+                for _ in range(2, 102, 2):
                     price.append(float(ub))
             else:
                 if slope > 0:
-                    for p in range(10, 110, 10):
+                    for p in range(2, 102, 2):
                         price.append(float(min(slope * p + lb, ub)))
                 else:
-                    for p in range(10, 110, 10):
+                    for p in range(2, 102, 2):
                         price.append(float(min(-1*slope * p + ub, lb)))
-                    price = [float(min(-1*slope * p + ub, lb)) for p in range(10, 110, 10)]
+                    price = [float(min(-1*slope * p + ub, lb)) for p in range(2, 102, 2)]
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
