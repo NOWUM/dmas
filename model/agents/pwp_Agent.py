@@ -497,16 +497,16 @@ if __name__ == "__main__":
     args = parse_args()
     agent = pwpAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx,
                      market=args.market, dbName=args.dbName)
-    # agent.ConnectionMongo.login(agent.name, True)
-    # try:
-    #     agent.run_agent()
-    # except Exception as e:
-    #     logging.error('Fehler in run_agent: %s' %e)
-    # finally:
-    #     agent.ConnectionInflux.influx.close()
-    #     agent.ConnectionMongo.logout(agent.name)
-    #     agent.ConnectionMongo.mongo.close()
-    #     if agent.receive.is_open:
-    #         agent.receive.close()
-    #         agent.connection.close()
-    #     exit()
+    agent.ConnectionMongo.login(agent.name, True)
+    try:
+        agent.run_agent()
+    except Exception as e:
+        logging.error('Fehler in run_agent: %s' %e)
+    finally:
+        agent.ConnectionInflux.influx.close()
+        agent.ConnectionMongo.logout(agent.name)
+        agent.ConnectionMongo.mongo.close()
+        if agent.receive.is_open:
+            agent.receive.close()
+            agent.connection.close()
+        exit()

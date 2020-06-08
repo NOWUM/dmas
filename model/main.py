@@ -17,11 +17,11 @@ config = configparser.ConfigParser()
 config.read('app.cfg')
 
 database = config['Results']['Database']
-mongoCon = mongoCon(host=config['MongoDB']['host'], database=database)
-influxCon = influxCon(host=config['InfluxDB']['host'], database=database)
+mongoCon = mongoCon(host=config['MongoDB']['Host'], database=database)
+influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)
 
 credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['host'],
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'],
                                                                heartbeat=0, credentials=credentials))
 send = connection.channel()
 send.exchange_declare(exchange='Market', exchange_type='fanout')
@@ -48,7 +48,7 @@ def index():
 
 @app.route('/Grid')
 @cross_origin()
-def index():
+def grid():
     gridView.powerFlow(date=pd.to_datetime('2019-01-01'), hour=1)
     fig = gridView.getPlot()
     return render_template('index.html', plot=fig)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     if config.getboolean('MongoDB', 'Local'):
         # ----- MongoDB -----
         mongoPath = config['MongoDB']['Path']
-        cmd = subprocess.Popen([mongoPath, '-bind_ip', config['MongoDB']['host']], shell=False,
+        cmd = subprocess.Popen([mongoPath, '-bind_ip', config['MongoDB']['Host']], shell=False,
                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         pids.append(cmd.pid)
 
