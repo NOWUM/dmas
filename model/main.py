@@ -2,13 +2,12 @@ import configparser
 import os
 import subprocess
 import time as tm
-import multiprocessing
-from joblib import Parallel, delayed
 import pandas as pd
 import pika
 import psutil
 from apps.routine_Balancing import balPowerClearing, balEnergyClearing
 from apps.routine_DayAhead import dayAheadClearing
+from apps.grid_Model import gridModel
 from flask import Flask, render_template, request
 from flask_cors import cross_origin
 from interfaces.interface_Influx import influxInterface as influxCon
@@ -31,6 +30,7 @@ app = Flask(__name__)
 path = os.path.dirname(os.path.dirname(__file__)) + r'/model'
 pd.set_option('mode.chained_assignment', None)
 
+gridView = gridModel()
 
 # ----- Starting View -----
 @app.route('/')
@@ -44,6 +44,14 @@ def index():
                 counter += 1
         num.append(counter)
     return render_template('index.html', **locals())
+
+
+@app.route('/Grid')
+@cross_origin()
+def index():
+    gridView.powerFlow(date=pd.to_datetime('2019-01-01'), hour=1)
+    fig = gridView.getPlot()
+    return render_template('index.html', plot=fig)
 
 
 # ----- Start Simulation -----

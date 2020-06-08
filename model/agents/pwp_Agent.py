@@ -11,7 +11,7 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=25, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=50, help='PLZ-Agent')
     parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
     parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
     parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
@@ -65,32 +65,42 @@ class pwpAgent(basicAgent):
         self.logger.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):
-        # TODO Überarbeiten der Gebotsstrategie --> Biete immer 30 % der Verfügbaren Menge zu Random Preisen
-        """Einsatzplanung für den Regelleistungsmarkt"""
-        orderbook = dict()                                                  # Oderbook für alle Blöcke (Stunde 1-6)
+        # Prognosen für den kommenden Tag
+        weather = self.weatherForecast(self.date, 2)                        # Wetterdaten (dir,dif,temp,wind)
+        price = self.priceForecast(self.date, 2)                            # Preisdaten (power,gas,nuc,coal,lignite)
+        demand = self.demandForecast(self.date, 2)                          # Lastprognose
 
-        states = [0, 0]
-        for _, value in self.portfolio.energySystems.items():
-            if value['typ'] == 'konv':
-                if value['P0'] == 0:
-                    states[0] += 0
-                    states[1] += 0
-                else:
-                    states[0] += min(value['maxPower'] - value['P0'], value['gradP'])
-                    states[1] += max(min(value['P0'] - value['powerMin'], value['gradM']), 0)
+        price['power'] = 50*np.ones_like(price['power'])
+        tau = 45
+        maxPrice = max([np.exp(-k / tau) for k in range(5 * tau)])
 
-        for i in range(6):
-            a = 0.3
-            powerPricePos = np.random.uniform(low=100, high=500)
-            powerPriceNeg = np.random.uniform(low=100, high=500)
-            energyPricePos = np.random.uniform(low=0, high=50)
-            energyPriceNeg = np.random.uniform(low=0, high=50)
-            orderbook.update({'neg_%s' % i: {'quantity': np.round(states[1] * a, 0), 'powerPrice': powerPriceNeg,
-                                             'energyPrice': energyPriceNeg, 'typ': 'neg', 'slot': i, 'name': self.name}})
-            orderbook.update({'pos_%s' % i: {'quantity': np.round(states[0] * a, 0), 'powerPrice': powerPricePos,
-                                             'energyPrice': energyPricePos, 'typ': 'pos', 'slot': i, 'name': self.name}})
+        best = 0
 
-        self.ConnectionMongo.setBalancing(self.name, self.date, orderbook)
+        for i in np.arange(0, self.portfolio.capacities['fossil']/4 + self.portfolio.capacities['fossil']/20, self.portfolio.capacities['fossil']/20):
+
+            # Standardoptimierung
+            self.portfolio.setPara(self.date, weather,  price, demand, posBalPower=i, negBalPower=i)
+            self.portfolio.buildModel()
+            _ = np.asarray(self.portfolio.optimize(), np.float)
+
+            emission = self.portfolio.emisson[:24]
+            fuel = self.portfolio.fuel[:24]
+            cash = self.portfolio.prices['power'][:24] * self.portfolio.power[:24]
+            sum_ = sum(cash) - sum(emission+fuel)
+            sum__ = 24*maxPrice * i
+            total = np.round(sum_ + sum__,1)
+
+            if i == 0:
+                best = total
+                power = 0
+            elif best < total:
+                best = total
+                power = i
+
+            print('%s: %s' % (i, total))
+
+        print(power)
+        print(best)
 
         self.logger.info('Planung Regelleistungsmarkt abgeschlossen')
 
@@ -487,16 +497,16 @@ if __name__ == "__main__":
     args = parse_args()
     agent = pwpAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx,
                      market=args.market, dbName=args.dbName)
-    agent.ConnectionMongo.login(agent.name, True)
-    try:
-        agent.run_agent()
-    except Exception as e:
-        logging.error('Fehler in run_agent: %s' %e)
-    finally:
-        agent.ConnectionInflux.influx.close()
-        agent.ConnectionMongo.logout(agent.name)
-        agent.ConnectionMongo.mongo.close()
-        if agent.receive.is_open:
-            agent.receive.close()
-            agent.connection.close()
-        exit()
+    # agent.ConnectionMongo.login(agent.name, True)
+    # try:
+    #     agent.run_agent()
+    # except Exception as e:
+    #     logging.error('Fehler in run_agent: %s' %e)
+    # finally:
+    #     agent.ConnectionInflux.influx.close()
+    #     agent.ConnectionMongo.logout(agent.name)
+    #     agent.ConnectionMongo.mongo.close()
+    #     if agent.receive.is_open:
+    #         agent.receive.close()
+    #         agent.connection.close()
+    #     exit()

@@ -35,9 +35,10 @@ class agent:
 
         # Laden der Geoinfomationen
         try:
-            df = pd.read_csv('./data/PlzGeo.csv', index_col=0)
-            geo = df.loc[df['PLZ'] == plz, ['Latitude', 'Longitude']]
-            self.geo = geohash2.encode(float(geo.Latitude), float(geo.Longitude))
+            if self.typ != 'NET':
+                df = pd.read_csv('./data/PlzGeo.csv', index_col=0)
+                geo = df.loc[df['PLZ'] == plz, ['Latitude', 'Longitude']]
+                self.geo = geohash2.encode(float(geo.Latitude), float(geo.Longitude))
         except:
             print('Nummer: %s ist kein offizielles PLZ-Gebiet' % plz)
             print(' --> Aufbau des Agenten %s_%s beendet' % (typ, plz))
