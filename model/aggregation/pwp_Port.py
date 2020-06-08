@@ -36,8 +36,8 @@ class pwpPort(port_model):
         self.m.addConstrs(power[i] == quicksum(p for p in [x for x in self.m.getVars() if 'P_' in x.VarName]
                                                if '[%i]' % i in p.VarName) for i in self.t)
 
-        self.m.addConstrs(power[i] <= self.capacities['fossil'] - self.posBalPower for i in self.t)
-        self.m.addConstrs(power[i] >= self.negBalPower for i in self.t)
+        #self.m.addConstrs(power[i] <= self.capacities['fossil'] - self.posBalPower for i in self.t)
+        #self.m.addConstrs(power[i] >= self.negBalPower for i in self.t)
 
         # Summe Brennstoffkosten
         fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F', lb=-GRB.INFINITY, ub=GRB.INFINITY)

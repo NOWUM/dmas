@@ -73,9 +73,9 @@ def buildAreas():
     end = int(request.form['end'])
 
     for i in range(start, end + 1):
-        influx = config['InfluxDB']['host']
-        mongo = config['MongoDB']['host']
-        market = config['Market']['host']
+        influx = config['InfluxDB']['Host']
+        mongo = config['MongoDB']['Host']
+        market = config['Market']['Host']
         database = config['Results']['Database']
 
         if request.form['pwp'] == 'true':  # -- if true build PWP
