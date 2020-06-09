@@ -4,12 +4,10 @@ psutil
 pandas
 requests
 numba
-tensorflow
 influxDB
 pika
 pymongo
 geohash2
 sklearn
-keras
-pyswarm
 xlrd
+jupyter
