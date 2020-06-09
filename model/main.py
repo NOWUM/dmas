@@ -5,7 +5,7 @@ import time as tm
 import pandas as pd
 import pika
 import psutil
-from apps.routine_Balancing import balPowerClearing, balEnergyClearing
+# from apps.routine_Balancing import balPowerClearing, balEnergyClearing
 from apps.routine_DayAhead import dayAheadClearing
 from apps.grid_Model import gridModel
 from flask import Flask, render_template, request
@@ -73,20 +73,16 @@ def buildAreas():
     end = int(request.form['end'])
 
     for i in range(start, end + 1):
-        influx = config['InfluxDB']['Host']
-        mongo = config['MongoDB']['Host']
-        market = config['Market']['Host']
-        database = config['Results']['Database']
 
         if request.form['pwp'] == 'true':  # -- if true build PWP
-            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
-                             % (i, mongo, influx, market, database), cwd=path, shell=True)
+            subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i'
+                             % (i), cwd=path, shell=True)
         if request.form['res'] == 'true':  # -- if true build RES
-            subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
-                             % (i, mongo, influx, market, database), cwd=path, shell=True)
+            subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i'
+                             % (i), cwd=path, shell=True)
         if request.form['dem'] == 'true':  # -- if true build DEM
-            subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i --mongo %s --influx %s --market %s --dbName %s'
-                             % (i, mongo, influx, market, database), cwd=path, shell=True)
+            subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i'
+                             % (i), cwd=path, shell=True)
 
     return 'OK'
 

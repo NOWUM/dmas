@@ -97,5 +97,27 @@ class gridModel:
 if __name__ == "__main__":
 
     test = gridModel()
-    test.powerFlow(pd.to_datetime('2019-05-05'), 7)
-    #fig = test.getPlot()
+
+    json_body = []
+    date = pd.to_datetime('2019-05-05')
+    lines = test.network.lines
+
+    for i in range(24):
+        time = date + pd.DateOffset(hours=i)
+        test.powerFlow(pd.to_datetime('2019-05-05'), i)
+        data = test.network.lines_t
+        power = data.p0.loc['now']
+
+        for element in power.items():
+            json_body.append(
+                {
+                    "measurement": 'Grid',
+                    "tags": dict(area1=int(element[0].split('_')[0].split('t')[0].replace('f','')),
+                                 area2=int(element[0].split('_')[0].split('t')[-1].split('V')[0].replace('t','')),
+                                 voltage=int(element[0].split('_')[0][-3:])),
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(power=element[1],
+                                   powerMax=lines.loc[element[0],'s_nom'],
+                                   load=(np.abs(element[1])/lines.loc[element[0],'s_nom'])*100)
+                }
+            )

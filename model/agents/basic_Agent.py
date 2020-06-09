@@ -1,5 +1,6 @@
 import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
+import configparser
 import logging
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface
@@ -15,8 +16,16 @@ import sys
 
 class agent:
 
-    def __init__(self, date, plz, typ='PWP', mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150',
-                 exchange='Market', dbName='MAS_XXXX'):
+    def __init__(self, date, plz, typ='PWP', exchange='Market'):
+
+        config = configparser.ConfigParser()
+        config.read(r'./app.cfg')
+
+        database = config['Results']['Database']
+        mongoHost = config['MongoDB']['Host']
+        influxHost = config['InfluxDB']['Host']
+        marketHost = config['Market']['Host']
+
 
         # Metadaten eines Agenten
         self.name = typ + '_%i' % plz  # Name
@@ -48,12 +57,12 @@ class agent:
         # logging.basicConfig(filename=r'./logs/%s_fix.log' % self.name, level=logging.INFO, filemode='a')
         # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
         # Verbindingen an die Datenbanken sowie den Marktplatz
-        self.ConnectionInflux = influxInterface(host=influx, database=dbName)  # Datenbank zur Speicherung der Zeitreihen
-        self.ConnectionMongo = mongoInterface(host=mongo, database=dbName)     # Datenbank zur Speicherung der Strukurdaten
+        self.ConnectionInflux = influxInterface(host=influxHost, database=database)  # Datenbank zur Speicherung der Zeitreihen
+        self.ConnectionMongo = mongoInterface(host=mongoHost, database=database)     # Datenbank zur Speicherung der Strukurdaten
 
         # Anbindung an MQTT
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=market,heartbeat=0, credentials=credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0, credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)

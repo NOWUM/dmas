@@ -11,17 +11,13 @@ import numpy as np
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--plz', type=int, required=False, default=6, help='PLZ-Agent')
-    parser.add_argument('--mongo', type=str, required=False, default='149.201.88.150', help='IP MongoDB')
-    parser.add_argument('--influx', type=str, required=False, default='149.201.88.150', help='IP InfluxDB')
-    parser.add_argument('--market', type=str, required=False, default='149.201.88.150', help='IP Market')
-    parser.add_argument('--dbName', type=str, required=False, default='MAS_XXXX', help='Name der Datenbank')
     return parser.parse_args()
 
 
 class demAgent(basicAgent):
 
-    def __init__(self, date, plz, mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_XXXX'):
-        super().__init__(date=date, plz=plz, mongo=mongo, influx=influx, market=market, exchange='Market', typ='DEM', dbName=dbName)
+    def __init__(self, date, plz):
+        super().__init__(date=date, plz=plz, exchange='Market', typ='DEM')
 
         self.logger.info('Start des Agenten')
         # Aufbau des Portfolios mit den enstprechenden Haushalten, Gewerbe und Industrie
@@ -278,8 +274,7 @@ class demAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = demAgent(date='2019-01-01', plz=args.plz, mongo=args.mongo, influx=args.influx,
-                     market=args.market, dbName=args.dbName)
+    agent = demAgent(date='2019-01-01', plz=args.plz)
     agent.ConnectionMongo.login(agent.name, False)
     try:
         agent.run_agent()
