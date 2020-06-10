@@ -42,12 +42,12 @@ class demAgent(basicAgent):
         # self.logger.info('Prosumer PV-WP hinzugefügt')
 
         # Einbindung Consumer mit PV
-        # pv = self.ConnectionMongo.getPVs(plz)
-        # for key, value in pv.items():
-        #     self.portfolio.addToPortfolio(key, {key: value})
-        #     powerH0 += value['demandP']
-        #
-        # self.logger.info('Consumer PV hinzugefügt')
+        pv = self.ConnectionMongo.getPVs(plz)
+        for key, value in pv.items():
+            self.portfolio.addToPortfolio(key, {key: value})
+            # powerH0 += value['demandP']
+
+        self.logger.info('Consumer PV hinzugefügt')
 
         demand = self.ConnectionMongo.getDemand(plz)
 

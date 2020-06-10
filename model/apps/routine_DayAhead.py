@@ -1,4 +1,5 @@
 from apps.market import dayAhead_clearing
+import configparser
 import pandas as pd
 import time as tm
 import random
@@ -12,7 +13,12 @@ def getOrders(id, date, database='MAS_2020', host='149.201.88.150'):
     start = tm.time()               # Startzeitpunkt
     orders = {}
     i = 0
-    mongoCon = mongoInterface(database=database, host=host)
+
+    config = configparser.ConfigParser()
+    config.read('app.cfg')
+    database = config['Results']['Database']
+    mongoCon = mongoInterface(host=config['MongoDB']['Host'], database=database)
+
     while wait:
         x = mongoCon.orderDB[date].find_one({"_id": id})  # Abfrage der Gebote
         # Wenn das Gebot vorliegt, füge es hinzu
