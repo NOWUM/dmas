@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     mongoDB = mongoInterface(database='MAS_XXXX')
 
-    df = pd.read_excel(r'C:\Users\Administrator\Desktop\dmas\model\data\load.xlsx', index_col=0)
+    df = pd.read_excel(r'C:\Users\Administrator\Desktop\dmas\model\data\Ref_Demand.xlsx', index_col=0)
     df.index = pd.date_range(start='2019-01-01', periods=35040, freq='15min')
     df = df.resample('h').mean()
 

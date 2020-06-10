@@ -34,20 +34,20 @@ class demAgent(basicAgent):
         self.logger.info('Prosumer PV-Bat hinzugefügt')
 
         # Einbindung der Prosumer PV mit Wärmepumpe
-        pvHeatpumps = self.ConnectionMongo.getHeatPumps(plz)
-        for key, value in pvHeatpumps.items():
-            self.portfolio.addToPortfolio(key, {key: value})
-            powerH0 += value['demandP']
-
-        self.logger.info('Prosumer PV-WP hinzugefügt')
+        # pvHeatpumps = self.ConnectionMongo.getHeatPumps(plz)
+        # for key, value in pvHeatpumps.items():
+        #     self.portfolio.addToPortfolio(key, {key: value})
+        #     powerH0 += value['demandP']
+        #
+        # self.logger.info('Prosumer PV-WP hinzugefügt')
 
         # Einbindung Consumer mit PV
-        pv = self.ConnectionMongo.getPVs(plz)
-        for key, value in pv.items():
-            self.portfolio.addToPortfolio(key, {key: value})
-            powerH0 += value['demandP']
-
-        self.logger.info('Consumer PV hinzugefügt')
+        # pv = self.ConnectionMongo.getPVs(plz)
+        # for key, value in pv.items():
+        #     self.portfolio.addToPortfolio(key, {key: value})
+        #     powerH0 += value['demandP']
+        #
+        # self.logger.info('Consumer PV hinzugefügt')
 
         demand = self.ConnectionMongo.getDemand(plz)
 

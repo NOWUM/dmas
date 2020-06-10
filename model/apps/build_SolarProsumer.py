@@ -193,8 +193,11 @@ if __name__ == '__main__':
                 d = {"$set": {'_id': plz, 'PVBatteries': data[i]}}
                 tableStructur.update_one(filter=query, update=d, upsert=True)
 
+    anz = []
+
     for i in range(1, 100):
         pvWPs, pv = getPVWPSystems(1)
+        anz.append(len(pv))
         query = {"_id": i}
         d = {"$set": {'_id': i, 'PVHeatpumps': pvWPs, 'PVs': pv}}
-        tableStructur.update_one(filter=query, update=d, upsert=True)
+        # tableStructur.update_one(filter=query, update=d, upsert=True)
