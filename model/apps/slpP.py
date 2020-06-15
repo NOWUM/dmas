@@ -34,7 +34,8 @@ class slpGen:
     def get_profile(self, doy=200, dow=5, demand=1000):
 
         if self.typ == 0:
-            f = self.x_4 * doy ** 4 + self.x_3 * doy ** 3 + self.x_2 * doy ** 2 + self.x_1 * doy + self.x_0
+            f = 1
+            #f = self.x_4 * doy ** 4 + self.x_3 * doy ** 3 + self.x_2 * doy ** 2 + self.x_1 * doy + self.x_0
         else:
             f = 1
         f *= demand/10**6

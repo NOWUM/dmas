@@ -67,12 +67,11 @@ class energySystem:
         rad = np.asarray(ts['dif']) + np.asarray(ts['dir'])
         return 7 * data['PV']['maxPower'] * rad * data['PV']['eta'] / 1000
 
-
     def getHeatDemand(self, data, ts):
-        """ Wärmebedarf des aktuellen Tages in Abhängigkeit des aktuellen Wetters in stündlicher Auflösung und [kW]"""
+        """ Wärmebedarf des aktuellen Tages in Abhängigkeit des aktuellen Wetters in stündlicher Auflösung und [kW] """
         return self.slpQ.get_profile(np.asarray(ts['temp'], np.float32))
 
     def build(self, name, data, ts):
-        """ Berechung der Zeitreiheninformationen (Strombedarf, Wärmebedarf, Erzeugung, ...) der Komponente"""
+        """ Berechung der Zeitreiheninformationen (Strombedarf, Wärmebedarf, Erzeugung, ...) der Komponente """
         pass
 

@@ -82,7 +82,6 @@ def readPVBatSys():
 
     return lst
 
-
 def getPVWPSystems(plz):
 
     mongo = pymongo.MongoClient('mongodb://' + '149.201.88.150' + ':27017/')
@@ -160,11 +159,22 @@ def getPVWPSystems(plz):
             except Exception as e:
                 print(e)
                 print('no data found')
+
             if pd.to_datetime(value['startUpDate']) > pd.to_datetime('2013-01-01'):
                 pv.update(dict_)
 
     return pvWps, pv
 
+
+def tmp(i):
+    print(i)
+    mongo = pymongo.MongoClient('mongodb://' + '149.201.88.150' + ':27017/')
+    structDB = mongo["systemdata"]
+    tableStructur = structDB["energysystems"]
+    pvWPs, pv = getPVWPSystems(i)
+    query = {"_id": i}
+    d = {"$set": {'_id': i, 'PVHeatpumps': pvWPs, 'PVs': pv}}
+    tableStructur.update_one(filter=query, update=d, upsert=True)
 
 if __name__ == '__main__':
 
@@ -193,11 +203,5 @@ if __name__ == '__main__':
                 d = {"$set": {'_id': plz, 'PVBatteries': data[i]}}
                 tableStructur.update_one(filter=query, update=d, upsert=True)
 
-    anz = []
-
-    for i in range(1, 100):
-        pvWPs, pv = getPVWPSystems(1)
-        anz.append(len(pv))
-        query = {"_id": i}
-        d = {"$set": {'_id': i, 'PVHeatpumps': pvWPs, 'PVs': pv}}
-        # tableStructur.update_one(filter=query, update=d, upsert=True)
+    num_cores = min(multiprocessing.cpu_count(), 60)
+    Parallel(n_jobs=num_cores)(delayed(tmp)(id) for id in range(1, 100))

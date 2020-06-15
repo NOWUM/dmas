@@ -146,6 +146,10 @@ if __name__ == "__main__":
     totalRlm = np.asarray(totalRlm).reshape((-1))
     # #plt.plot(totalRlm)
     total = (totalRlm + totalh0 + totalg0)/1000000
+
+    #plt.plot(totalRlm/ 10 ** 6)
+    #plt.plot(totalg0 / 10 ** 6)
+    #plt.plot(totalh0 / 10 ** 6)
     plt.plot(values)
     plt.plot(total)
 
