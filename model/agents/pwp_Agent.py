@@ -43,14 +43,14 @@ class pwpAgent(basicAgent):
         self.logger.info('Speicher hinzugefügt')
 
         # Parameter für die Handelsstrategie am Day Ahead Markt
-        self.maxPrice = np.zeros(24)                                                             # Maximalgebote
+        self.maxPrice = np.zeros(24)                                                            # Maximalgebote
         self.minPrice = np.zeros(24)                                                            # Minimalgenbote
         self.actions = np.zeros(24)                                                             # Steigung der Gebotsgeraden für jede Stunde
         self.espilion = 0.8                                                                     # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                                           # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))      # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
-        self.risk = np.random.choice([-2, -1, 0, 1, 2])
+        self.risk = np.random.choice([-1, 0, 1])
 
         if len(self.portfolio.energySystems) == 0 or plz==79:           # TODO: Check PLZ Gebiet 79
             self.logger.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
@@ -202,9 +202,9 @@ class pwpAgent(basicAgent):
         self.actions = actions                                                               # abschpeichern der Aktionen
 
         # Berechnung der Prognosegüte
-        var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
+        var = np.sqrt(np.var(self.forecasts['price'].y, axis=0) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + max(self.risk*var, 1)                       # Maximalpreis      [€/MWh]
+        self.maxPrice = prc.reshape((-1,)) + np.asarray(max(self.risk*v, 1) for v in var)                       # Maximalpreis      [€/MWh]
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         delta = 0.

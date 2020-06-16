@@ -78,12 +78,12 @@ class annFrcst:
         # Schritt 0: Aufbau der Arrays
         x = np.concatenate((self.dem, self.rad, self.wnd, self.tmp, self.prc_1, self.prc_7, self.dummies), axis=1)
         x = np.concatenate((self.x, x), axis=0)
-        y = np.concatenate((self.y, self.mcp), axis=0)
+        self.y = np.concatenate((self.y, self.mcp), axis=0)
         # Schritt 1: Skalieren der Daten
         self.scaler.partial_fit(x)
         x_std = self.scaler.transform(x)
         # Schritt 2: Aufteilung in Test- und Trainingsdaten
-        X_train, X_test, y_train, y_test = train_test_split(x_std, y, test_size=0.2)
+        X_train, X_test, y_train, y_test = train_test_split(x_std, self.y, test_size=0.2)
         # Schritt 3: Training des Models
         self.model.fit(X_train, y_train)
         # Schritt 4: Ausgabe der Ergebnisse

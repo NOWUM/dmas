@@ -89,7 +89,7 @@ class resAgent(basicAgent):
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * (self.portfolio.capacities['wind']
                                                       + self.portfolio.capacities['solar'])
 
-        self.risk = np.random.choice([-2, -1, 0, 1, 2])
+        self.risk = np.random.choice([-1, 0, 1])
 
         self.logger.info('Parameter der Handelsstrategie festgelegt')
 
@@ -196,10 +196,10 @@ class resAgent(basicAgent):
         self.actions = actions                                                          # abschpeichern der Aktionen
 
         # Berechnung der Prognosegüte
-        var = np.sqrt(np.var(self.forecasts['price'].y) * self.forecasts['price'].factor)
+        var = np.sqrt(np.var(self.forecasts['price'].y, axis=0) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + max(self.risk*var, 1)                      # Maximalpreis      [€/MWh]
-        self.minPrice = np.zeros_like(self.maxPrice)                                    # Minimalpreis      [€/MWh]
+        self.maxPrice = prc.reshape((-1,)) + np.asarray(max(self.risk*v, 1) for v in var)   # Maximalpreis      [€/MWh]
+        self.minPrice = np.zeros_like(self.maxPrice)                                        # Minimalpreis      [€/MWh]
 
         slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi) # Preissteigung pro weitere MW
 

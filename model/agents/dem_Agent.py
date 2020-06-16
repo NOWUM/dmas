@@ -10,7 +10,7 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=6, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=10, help='PLZ-Agent')
     return parser.parse_args()
 
 
@@ -275,16 +275,16 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = demAgent(date='2019-01-01', plz=args.plz)
-    agent.ConnectionMongo.login(agent.name, False)
-    try:
-        agent.run_agent()
-    except Exception as e:
-        logging.error('Fehler in run_agent: %s' %e)
-    finally:
-        agent.ConnectionInflux.influx.close()
-        agent.ConnectionMongo.logout(agent.name)
-        agent.ConnectionMongo.mongo.close()
-        if agent.receive.is_open:
-            agent.receive.close()
-            agent.connection.close()
-        exit()
+    # agent.ConnectionMongo.login(agent.name, False)
+    # try:
+    #     agent.run_agent()
+    # except Exception as e:
+    #     logging.error('Fehler in run_agent: %s' %e)
+    # finally:
+    #     agent.ConnectionInflux.influx.close()
+    #     agent.ConnectionMongo.logout(agent.name)
+    #     agent.ConnectionMongo.mongo.close()
+    #     if agent.receive.is_open:
+    #         agent.receive.close()
+    #         agent.connection.close()
+    #     exit()
