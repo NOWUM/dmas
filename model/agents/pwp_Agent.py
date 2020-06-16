@@ -203,7 +203,6 @@ class pwpAgent(basicAgent):
 
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].y, axis=0) * self.forecasts['price'].factor)
-
         self.maxPrice = prc.reshape((-1,)) + np.asarray([max(self.risk*v, 1) for v in var])                       # Maximalpreis      [€/MWh]
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
@@ -231,7 +230,7 @@ class pwpAgent(basicAgent):
 
             if (cVar > mcp) and power_dayAhead[i] > 0:
                 if delta > 0:
-                    lb = mcp - min(3*var/power_dayAhead[i], delta/power_dayAhead[i])
+                    lb = mcp - min(3*var[i]/power_dayAhead[i], delta/power_dayAhead[i])
                     slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
                     price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
                 else:
@@ -240,7 +239,6 @@ class pwpAgent(basicAgent):
                 lb = cVar
                 slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
                 price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
-
             if (power_max[i] > 0):
                 quantity.append(float(-1 * power_max[i]))
                 price.append(float(max(priceMax[i], self.maxPrice[i])))
