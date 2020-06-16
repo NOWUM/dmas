@@ -198,7 +198,7 @@ class resAgent(basicAgent):
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].y, axis=0) * self.forecasts['price'].factor)
 
-        self.maxPrice = prc.reshape((-1,)) + np.asarray(max(self.risk*v, 1) for v in var)   # Maximalpreis      [€/MWh]
+        self.maxPrice = prc.reshape((-1,)) + np.asarray([max(self.risk*v, 1) for v in var])   # Maximalpreis      [€/MWh]
         self.minPrice = np.zeros_like(self.maxPrice)                                        # Minimalpreis      [€/MWh]
 
         slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi) # Preissteigung pro weitere MW
