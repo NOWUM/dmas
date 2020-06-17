@@ -74,7 +74,7 @@ class agent:
         self.forecasts = {
             'demand': demTyp(self.ConnectionInflux),
             'weather': weatherForecast(self.ConnectionInflux),
-            'price': priceTyp(self.ConnectionInflux, init=np.random.randint(7, 30))
+            'price': priceTyp(self.ConnectionInflux, init=np.random.randint(15, 30))
         }
 
     def weatherForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
