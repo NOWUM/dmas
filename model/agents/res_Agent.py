@@ -197,39 +197,34 @@ class resAgent(basicAgent):
 
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
+        var = np.nan_to_num(var)
 
         self.maxPrice = prc.reshape((-1,)) + np.asarray([max(self.risk*v, 1) for v in var])   # Maximalpreis      [€/MWh]
-        self.minPrice = np.zeros_like(self.maxPrice)                                        # Minimalpreis      [€/MWh]
+        self.minPrice = np.zeros_like(self.maxPrice)                                          # Minimalpreis      [€/MWh]
 
         slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi) # Preissteigung pro weitere MW
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
         for i in range(self.portfolio.T):
             quantity = [-1*powerEEG[i]]
+            price = [-499.98]
             for _ in range(2, 102, 2):
                 quantity.append(-1*(2/100 * powerDirect[i]))
-            price = [-499.98]
 
             ub = self.maxPrice[i]
             lb = self.minPrice[i]
             slope = slopes[i]
 
-            if (ub > 0) and (lb > ub):
-                for _ in range(2, 102, 2):
-                    price.append(float(ub))
+            if slope > 0:
+                for p in range(2, 102, 2):
+                    price.append(float(min(slope * p + lb, ub)))
             else:
-                if slope > 0:
-                    for p in range(2, 102, 2):
-                        price.append(float(min(slope * p + lb, ub)))
-                else:
-                    for p in range(2, 102, 2):
-                        price.append(float(min(-1*slope * p + ub, lb)))
-                    price = [float(min(-1*slope * p + ub, lb)) for p in range(2, 102, 2)]
+                for p in range(2, 102, 2):
+                    price.append(float(min(-1*slope * p + ub, lb)))
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
-
         self.logger.info('Planung DayAhead-Markt abgeschlossen')
 
     def post_dayAhead(self):

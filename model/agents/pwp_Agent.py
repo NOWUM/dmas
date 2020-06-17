@@ -200,6 +200,7 @@ class pwpAgent(basicAgent):
 
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
+        var = np.nan_to_num(var)
         self.maxPrice = prc.reshape((-1,)) + np.asarray([max(self.risk*v, 1) for v in var])                       # Maximalpreis      [€/MWh]
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
