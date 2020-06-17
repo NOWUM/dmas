@@ -50,7 +50,7 @@ class pwpAgent(basicAgent):
         self.lr = 0.8                                                                           # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))      # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
-        self.risk = np.random.choice([-1, 0, 1])
+        self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
 
         if len(self.portfolio.energySystems) == 0 or plz==79:           # TODO: Check PLZ Gebiet 79
             self.logger.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
@@ -277,6 +277,18 @@ class pwpAgent(basicAgent):
 
         profit = np.asarray([float((ask[i] - bid[i]) * price[i]) for i in self.portfolio.t])                # erzielte Erlöse
         # Minimiere Differenz zu den bezuschlagten Geboten
+        print('Ask Agent %s %s' % (self.name, ask))
+
+        # Prognosen für den kommenden Tag
+        weather = self.weatherForecast(self.date, 2)                        # Wetterdaten (dir,dif,temp,wind)
+        price = self.priceForecast(self.date, 2)                            # Preisdaten (power,gas,nuc,coal,lignite)
+        demand = self.demandForecast(self.date, 2)                          # Lastprognose
+
+        # pos, neg = self.ConnectionInflux.getBalancingPower(self.date, self.name)  # Verpflichtungen Regelleistung
+
+        # Standardoptimierung
+        self.portfolio.setPara(self.date, weather,  price, demand)
+
         self.portfolio.buildModel(response=ask-bid)
         power_dayAhead = self.portfolio.fixPlaning()
         costs = self.portfolio.emisson + self.portfolio.fuel
@@ -464,24 +476,27 @@ class pwpAgent(basicAgent):
 
         # Planung für den nächsten Tag
         # Anpassung der Prognosemethoden für den Verbrauch und die Preise
-        for key, method in self.forecasts.items():
-            if key != 'weather':
-                method.collectData(self.date)
-                method.counter += 1
-                if method.counter >= method.collect:
-                    method.fitFunction()
-                    method.counter = 0
+        if self.delay <= 0:
+            for key, method in self.forecasts.items():
+                if key != 'weather':
+                    method.collectData(self.date)
+                    method.counter += 1
+                    if method.counter >= method.collect:
+                        method.fitFunction()
+                        method.counter = 0
 
-        # Ansappung der Statuspunkte des Energiesystems
-        self.qLearn.counter += 1
-        if self.qLearn.counter >= self.qLearn.collect:
-            self.qLearn.fit()
-            self.qLearn.counter = 0
+            # Ansappung der Statuspunkte des Energiesystems
+            self.qLearn.counter += 1
+            if self.qLearn.counter >= self.qLearn.collect:
+                self.qLearn.fit()
+                self.qLearn.counter = 0
 
-        self.lr = max(self.lr*0.9, 0.4)                                 # Lernrate * 0.9 (Annahme Markt ändert sich
-                                                                        # Zukunft nicht mehr so schnell)
-        self.espilion = max(0.9*self.espilion, 0.2)                     # Epsilion * 0.9 (mit steigender Simulationdauer
-                                                                        # sind viele Bereiche schon bekannt
+            self.lr = max(self.lr*0.9, 0.4)                                 # Lernrate * 0.9 (Annahme Markt ändert sich
+                                                                            # Zukunft nicht mehr so schnell)
+            self.espilion = max(0.9*self.espilion, 0.2)                     # Epsilion * 0.9 (mit steigender Simulationdauer
+                                                                            # sind viele Bereiche schon bekannt
+        else:
+            self.delay -= 1
 
         self.logger.info('Tag %s abgeschlossen' %self.date)
         print('Agent %s %s done' % (self.name, self.date.date()))

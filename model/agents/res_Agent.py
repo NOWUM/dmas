@@ -89,7 +89,7 @@ class resAgent(basicAgent):
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * (self.portfolio.capacities['wind']
                                                       + self.portfolio.capacities['solar'])
 
-        self.risk = np.random.choice([-1, 0, 1])
+        self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
 
         self.logger.info('Parameter der Handelsstrategie festgelegt')
 
@@ -370,26 +370,27 @@ class resAgent(basicAgent):
 
         # Planung für den nächsten Tag
         # Anpassung der Prognosemethoden für den Verbrauch und die Preise
-        for key, method in self.forecasts.items():
-            if key != 'weather':
-                method.collectData(self.date)
-                method.counter += 1
-                if method.counter >= method.collect:
-                    method.fitFunction()
-                    method.counter = 0
+        if self.delay <= 0:
+            for key, method in self.forecasts.items():
+                if key != 'weather':
+                    method.collectData(self.date)
+                    method.counter += 1
+                    if method.counter >= method.collect:
+                        method.fitFunction()
+                        method.counter = 0
 
-        # Ansappung der Statuspunkte des Energiesystems
-        self.qLearn.counter += 1
-        if self.qLearn.counter >= self.qLearn.collect:
-            self.qLearn.fit()
-            self.qLearn.counter = 0
+            # Ansappung der Statuspunkte des Energiesystems
+            self.qLearn.counter += 1
+            if self.qLearn.counter >= self.qLearn.collect:
+                self.qLearn.fit()
+                self.qLearn.counter = 0
 
-            self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
-                                                                             # Zukunft nicht mehr so schnell)
-            self.espilion = max(0.999*self.espilion, 0.1)                    # Epsilion * 0.999 (mit steigender Simulationdauer
-                                                                             # sind viele Bereiche schon bekannt
-            print(self.lr)
-            print(self.espilion)
+                self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
+                                                                                 # Zukunft nicht mehr so schnell)
+                self.espilion = max(0.999*self.espilion, 0.1)                    # Epsilion * 0.999 (mit steigender Simulationdauer
+                                                                                 # sind viele Bereiche schon bekannt
+        else:
+            self.delay -= 1
 
         self.logger.info('Tag %s abgeschlossen' %self.date)
         print('Agent %s %s done' % (self.name, self.date.date()))

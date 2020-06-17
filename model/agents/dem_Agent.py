@@ -259,13 +259,16 @@ class demAgent(basicAgent):
 
         # Planung für den nächsten Tag
         # Anpassung der Prognosemethoden für den Verbrauch und die Preise
-        for key, method in self.forecasts.items():
-            if key != 'weather':
-                method.collectData(self.date)
-                method.counter += 1
-                if method.counter >= method.collect:
-                    method.fitFunction()
-                    method.counter = 0
+        if self.delay <= 0:
+            for key, method in self.forecasts.items():
+                if key != 'weather':
+                    method.collectData(self.date)
+                    method.counter += 1
+                    if method.counter >= method.collect:
+                        method.fitFunction()
+                        method.counter = 0
+        else:
+            self.delay -= 1
 
         self.logger.info('Tag %s abgeschlossen' % self.date)
 

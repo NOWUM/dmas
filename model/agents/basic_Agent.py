@@ -32,6 +32,7 @@ class agent:
         self.plz = plz  # Gebiet
         self.date = pd.to_datetime(date)  # aktueller Tag
         self.typ = typ  # Agententyp (RES,PWP,DEM,...)
+        self.delay = 5
 
         self.errorCounter = 0
 
@@ -73,7 +74,7 @@ class agent:
         self.forecasts = {
             'demand': demTyp(self.ConnectionInflux),
             'weather': weatherForecast(self.ConnectionInflux),
-            'price': priceTyp(self.ConnectionInflux, init=np.random.randint(8, 14 + 1))
+            'price': priceTyp(self.ConnectionInflux, init=np.random.randint(7, 30))
         }
 
     def weatherForecast(self, date=pd.to_datetime('2019-01-01'), days=1):

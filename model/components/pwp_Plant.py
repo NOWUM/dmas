@@ -74,6 +74,6 @@ class powerPlant_gurobi(es):
 
         # CO2 Emissionskosten
         emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E_' + name, lb=0, ub=GRB.INFINITY)
-        self.m.addConstrs(emission[i] == p_out[i] * data['chi']/ data['eta'] * ts['co'][i] for i in self.t)
+        self.m.addConstrs(emission[i] == p_out[i] * data['chi'] / data['eta'] * ts['co'][i] for i in self.t)
 
         self.m.update()
