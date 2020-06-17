@@ -46,11 +46,11 @@ class pwpAgent(basicAgent):
         self.maxPrice = np.zeros(24)                                                            # Maximalgebote
         self.minPrice = np.zeros(24)                                                            # Minimalgenbote
         self.actions = np.zeros(24)                                                             # Steigung der Gebotsgeraden für jede Stunde
-        self.espilion = 0.8                                                                     # Faktor zum Abtasten der Möglichkeiten
+        self.espilion = 0.3                                                                     # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                                           # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))      # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
-        self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
+        self.risk = np.random.choice([-3, -2, -1, 0, 1, 2, 3])
 
         if len(self.portfolio.energySystems) == 0 or plz==79:           # TODO: Check PLZ Gebiet 79
             self.logger.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
@@ -94,9 +94,6 @@ class pwpAgent(basicAgent):
                 power = i
 
             print('%s: %s' % (i, total))
-
-        print(power)
-        print(best)
 
         self.logger.info('Planung Regelleistungsmarkt abgeschlossen')
 
@@ -259,7 +256,6 @@ class pwpAgent(basicAgent):
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
-
         self.logger.info('Planung DayAhead-Markt abgeschlossen')
 
     def post_dayAhead(self):
@@ -415,8 +411,6 @@ class pwpAgent(basicAgent):
             print('Error: %s' % e)
 
         self.ConnectionInflux.saveData(json_body)
-
-
         self.logger.info('Aktuellen Fahrplan erstellt')
 
     def post_actual(self):

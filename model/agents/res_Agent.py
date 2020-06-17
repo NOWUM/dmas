@@ -83,13 +83,13 @@ class resAgent(basicAgent):
         self.maxPrice = np.zeros(24)                                                        # Maximalgebote
         self.minPrice = np.zeros(24)                                                        # Minimalgebote
         self.actions = np.zeros(24)                                                         # Steigung der Gebotsgeraden für jede Stunde
-        self.espilion = 0.5                                                                 # Faktor zum Abtasten der Möglichkeiten
+        self.espilion = 0.3                                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))  # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * (self.portfolio.capacities['wind']
                                                       + self.portfolio.capacities['solar'])
 
-        self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
+        self.risk = np.random.choice([-3, -2, -1, 0, 1, 2, 3])
 
         self.logger.info('Parameter der Handelsstrategie festgelegt')
 

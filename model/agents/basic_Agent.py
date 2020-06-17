@@ -32,7 +32,7 @@ class agent:
         self.plz = plz  # Gebiet
         self.date = pd.to_datetime(date)  # aktueller Tag
         self.typ = typ  # Agententyp (RES,PWP,DEM,...)
-        self.delay = 5
+        self.delay = 2
 
         self.errorCounter = 0
 

@@ -271,7 +271,6 @@ class demAgent(basicAgent):
             self.delay -= 1
 
         self.logger.info('Tag %s abgeschlossen' % self.date)
-
         print('Agent %s %s done' % (self.name, self.date.date()))
 
 if __name__ == "__main__":
