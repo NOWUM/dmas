@@ -2,6 +2,7 @@ import numpy as np
 from apps.slpP import slpGen as slpP
 from apps.slpQ import slpGen as slpQ
 
+
 class energySystem:
     """
     Basis Energiesystem \n

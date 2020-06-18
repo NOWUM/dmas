@@ -7,6 +7,8 @@ import numpy as np
 import pymongo
 import multiprocessing
 from joblib import Parallel, delayed
+import pickle
+
 
 def getPVBatSys(id):
 
@@ -122,7 +124,16 @@ def getPVWPSystems(plz):
 
         A = int(np.random.normal(loc=105, scale=105 * 0.05))
 
+        Ref_PVSystem = pickle.load(open(r'./data/Ref_PVSystem.dict', 'rb'))
+
         if False:#(id not in ids) & (int(heatpumps) > 0):
+
+            classes = Ref_PVSystem['classes']
+            prob = Ref_PVSystem['prob']
+            index = np.where(prob > np.random.uniform() * 100)[0][0]
+
+            azimut = np.random.uniform(low=classes[index][0] + 180, high=classes[index][1] + 180)
+            tilt = np.random.normal(loc=35, scale=5)
 
             dict_ = {}
             try:
@@ -132,7 +143,7 @@ def getPVWPSystems(plz):
                               'para': para,
                               'demandP': int(value['maxPower'] * np.random.uniform(low=900, high=1500)),
                               'demandQ': int(A * dem),
-                              'PV': dict(eta=0.15, maxPower=value['maxPower'], direction=180, area=7),
+                              'PV': dict(eta=0.15, maxPower=value['maxPower'], azimut=azimut, tilt=tilt),
                               'HP': dict(cop=3, q_max=int(A * dem) * 0.0004 + 1.2, t1=20, t2=40),
                               'tank': dict(vmax=60 * 5 * 4.2 / 3600 * (40 - 20), vmin=0, v0=0)
                               }
@@ -145,6 +156,14 @@ def getPVWPSystems(plz):
             pvWps.update(dict_)
 
         else:
+
+            classes = Ref_PVSystem['classes']
+            prob = Ref_PVSystem['prob']
+            index = np.where(prob > np.random.uniform() * 100)[0][0]
+
+            azimut = np.random.uniform(low=classes[index][0] + 180, high=classes[index][1] + 180)
+            tilt = np.random.normal(loc=35, scale=5)
+
             dict_ = {}
             try:
                 dict_ = {id:
@@ -153,7 +172,7 @@ def getPVWPSystems(plz):
                               'para': para,
                               'demandP': int(value['maxPower'] * np.random.uniform(low=900, high=1500)),
                               'demandQ': int(A * dem),
-                              'PV': dict(eta=0.15, maxPower=value['maxPower'], direction=180, area=7)
+                              'PV': dict(eta=0.15, maxPower=value['maxPower'], azimut=azimut, tilt=tilt)
                               }
                          }
             except Exception as e:
@@ -164,7 +183,6 @@ def getPVWPSystems(plz):
                 pv.update(dict_)
 
     return pvWps, pv
-
 
 def tmp(i):
     print(i)
@@ -185,23 +203,25 @@ if __name__ == '__main__':
     structDB = mongo["systemdata"]
     tableStructur = structDB["energysystems"]
 
-    if KeyDataRegister:
-        df = pd.read_excel(r'./data/ids.xlsx')
-        ids = df.to_numpy().reshape((-1,))
-        num_cores = min(multiprocessing.cpu_count(), 60)
-        data = Parallel(n_jobs=num_cores)(delayed(getPVBatSys)(id) for id in ids)
+    Ref_PVSystem = pickle.load(open(r'./data/Ref_PVSystem.dict', 'rb'))
 
-        with open(r'./data/PVBat_Systems.json', 'w') as outfile:
-            json.dump(data, outfile)
-
-    else:
-        data = readPVBatSys()
-        if writeToMongo:
-            for i in range(99):
-                plz = i + 1
-                query = {"_id": plz}
-                d = {"$set": {'_id': plz, 'PVBatteries': data[i]}}
-                tableStructur.update_one(filter=query, update=d, upsert=True)
-
-    num_cores = min(multiprocessing.cpu_count(), 60)
-    Parallel(n_jobs=num_cores)(delayed(tmp)(id) for id in range(1, 100))
+    # if KeyDataRegister:
+    #     df = pd.read_excel(r'./data/ids.xlsx')
+    #     ids = df.to_numpy().reshape((-1,))
+    #     num_cores = min(multiprocessing.cpu_count(), 60)
+    #     data = Parallel(n_jobs=num_cores)(delayed(getPVBatSys)(id) for id in ids)
+    #
+    #     with open(r'./data/PVBat_Systems.json', 'w') as outfile:
+    #         json.dump(data, outfile)
+    #
+    # else:
+    #     data = readPVBatSys()
+    #     if writeToMongo:
+    #         for i in range(99):
+    #             plz = i + 1
+    #             query = {"_id": plz}
+    #             d = {"$set": {'_id': plz, 'PVBatteries': data[i]}}
+    #             tableStructur.update_one(filter=query, update=d, upsert=True)
+    #
+    # num_cores = min(multiprocessing.cpu_count(), 60)
+    # Parallel(n_jobs=num_cores)(delayed(tmp)(id) for id in range(1, 100))
