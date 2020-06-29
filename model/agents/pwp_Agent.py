@@ -3,7 +3,6 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 from aggregation.pwp_Port import pwpPort
 from agents.basic_Agent import agent as basicAgent
 from apps.qLearn_DayAhead import qLeran as daLearning
-import logging
 import argparse
 import pandas as pd
 import numpy as np
@@ -337,16 +336,16 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = pwpAgent(date='2019-01-01', plz=args.plz)
-    # agent.ConnectionMongo.login(agent.name, True)
-    # try:
-    #     agent.run_agent()
-    # except Exception as e:
-    #     logging.error('Fehler in run_agent: %s' %e)
-    # finally:
-    #     agent.ConnectionInflux.influx.close()
-    #     agent.ConnectionMongo.logout(agent.name)
-    #     agent.ConnectionMongo.mongo.close()
-    #     if agent.receive.is_open:
-    #         agent.receive.close()
-    #         agent.connection.close()
-    #     exit()
+    agent.ConnectionMongo.login(agent.name, True)
+    try:
+        agent.run_agent()
+    except Exception as e:
+        print(e)
+    finally:
+        agent.ConnectionInflux.influx.close()
+        agent.ConnectionMongo.logout(agent.name)
+        agent.ConnectionMongo.mongo.close()
+        if agent.receive.is_open:
+            agent.receive.close()
+            agent.connection.close()
+        exit()

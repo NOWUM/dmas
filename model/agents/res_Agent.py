@@ -3,7 +3,6 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 from aggregation.res_Port import resPort
 from agents.basic_Agent import agent as basicAgent
 from apps.qLearn_DayAhead import qLeran as daLearning
-import logging
 import argparse
 import pandas as pd
 import numpy as np
@@ -71,7 +70,7 @@ class resAgent(basicAgent):
         self.logger.info('Parameter der Handelsstrategie festgelegt')
 
         if len(self.portfolio.energySystems) == 0:
-            logging.info('Keine Energiesysteme im PLZ-Gebiet vorhanden')
+            self.logger.info('Keine Energiesysteme im PLZ-Gebiet vorhanden')
             exit()
 
         self.logger.info('Aufbau des Agenten abgeschlossen')
@@ -272,16 +271,16 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = resAgent(date='2019-01-01', plz=args.plz)
-    # agent.ConnectionMongo.login(agent.name, False)
-    # try:
-    #     agent.run_agent()
-    # except Exception as e:
-    #     logging.error('Fehler in run_agent: %s' %e)
-    # finally:
-    #     agent.ConnectionInflux.influx.close()
-    #     agent.ConnectionMongo.logout(agent.name)
-    #     agent.ConnectionMongo.mongo.close()
-    #     if agent.receive.is_open:
-    #         agent.receive.close()
-    #         agent.connection.close()
-    #     exit()
+    agent.ConnectionMongo.login(agent.name, False)
+    try:
+        agent.run_agent()
+    except Exception as e:
+        print(e)
+    finally:
+        agent.ConnectionInflux.influx.close()
+        agent.ConnectionMongo.logout(agent.name)
+        agent.ConnectionMongo.mongo.close()
+        if agent.receive.is_open:
+            agent.receive.close()
+            agent.connection.close()
+        exit()

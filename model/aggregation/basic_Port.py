@@ -39,7 +39,7 @@ class port_model:
                                lignite=np.zeros_like(self.t),               # Erzeugung aus Braunkohle
                                coal=np.zeros_like(self.t),                  # Erzeugung aus Steinkohle
                                gas=np.zeros_like(self.t),                   # Erzeugung aus Erdgas
-                               nuc=np.zeros_like(self.t))               # Erzeugung aus Kernkraft
+                               nuc=np.zeros_like(self.t))                   # Erzeugung aus Kernkraft
 
         self.demand = dict(power=np.zeros_like(self.t),                     # Strombedarf
                                 heat=np.zeros_like(self.t))                 # Wärmebedarf

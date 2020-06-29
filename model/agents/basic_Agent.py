@@ -47,13 +47,12 @@ class agent:
         self.ConnectionMongo = mongoInterface(host=mongoHost, database=database, area=plz)     # Datenbank zur Speicherung der Strukurdaten
 
         # Laden der Geoinfomationen
-        if len(self.ConnectionMongo.getPosition()) == 0:
+        if self.ConnectionMongo.getPosition() is None:
             print('Nummer: %s ist kein offizielles PLZ-Gebiet' % plz)
             print(' --> Aufbau des Agenten %s_%s beendet' % (typ, plz))
             exit()
         else:
             self.geo = self.ConnectionMongo.getPosition()['geohash']
-
 
         # Anbindung an MQTT
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')

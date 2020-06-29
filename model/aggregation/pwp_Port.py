@@ -80,14 +80,20 @@ class pwpPort(port_model):
             # Brennstoffkosten
             fuel = np.asanyarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float)
             fuel = np.round(fuel, 2)
+            generation = dict(lignite=np.zeros_like(self.t),          # Erzeugung aus Braunkohle
+                              coal=np.zeros_like(self.t),             # Erzeugung aus Steinkohle
+                              gas=np.zeros_like(self.t),              # Erzeugung aus Erdgas
+                              nuc=np.zeros_like(self.t))              # Erzeugung aus Kernkraft
+
             for key, value in self.energySystems.items():
                 value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
-                tmp = [self.generation[value['fuel']][i] + value['model'].power[i] for i in self.t]
-                self.generation[value['fuel']] = tmp
+                generation[value['fuel']] = [generation[value['fuel']][i] + value['model'].power[i] for i in self.t]
                 value['model'].volume = np.zeros_like(power)
-
                 if value['typ'] == 'storage':
                     value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
+
+            for key, value in generation.items():
+                self.generation[key] = value
 
         except Exception as e:
             for key, value in self.energySystems.items():
