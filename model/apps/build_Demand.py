@@ -52,7 +52,6 @@ if __name__ == "__main__":
     listSolar = Parallel(n_jobs=num_cores)(delayed(getSolarPower)(i) for i in range(1, 100))
     solar = np.sum(np.asarray([np.asarray(i).reshape((-1)) for i in listSolar]), axis=0) / 10 ** 6
 
-
     values = df.to_numpy()
     values = values.reshape((-1))/1000
     testh0 = h0_model()

@@ -8,10 +8,8 @@ from apps.frcst_DEM import typFrcst as demTyp
 from apps.frcst_Price import annFrcst as priceTyp
 from apps.frcst_Weather import weatherForecast
 import pandas as pd
-import geohash2
 import pika
 import numpy as np
-import sys
 
 
 class agent:
@@ -26,7 +24,6 @@ class agent:
         influxHost = config['InfluxDB']['Host']
         marketHost = config['Market']['Host']
 
-
         # Metadaten eines Agenten
         self.name = typ + '_%i' % plz  # Name
         self.plz = plz  # Gebiet
@@ -35,7 +32,6 @@ class agent:
         self.delay = 2
 
         self.errorCounter = 0
-
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
         fh = logging.FileHandler(r'./logs/%s.log' % self.name)
@@ -43,23 +39,21 @@ class agent:
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
 
-        # Laden der Geoinfomationen
-        try:
-            if self.typ != 'NET':
-                df = pd.read_csv('./data/PlzGeo.csv', index_col=0)
-                geo = df.loc[df['PLZ'] == plz, ['Latitude', 'Longitude']]
-                self.geo = geohash2.encode(float(geo.Latitude), float(geo.Longitude))
-        except:
-            print('Nummer: %s ist kein offizielles PLZ-Gebiet' % plz)
-            print(' --> Aufbau des Agenten %s_%s beendet' % (typ, plz))
-            exit()
-
         # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
         # logging.basicConfig(filename=r'./logs/%s_fix.log' % self.name, level=logging.INFO, filemode='a')
         # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
         # Verbindingen an die Datenbanken sowie den Marktplatz
-        self.ConnectionInflux = influxInterface(host=influxHost, database=database)  # Datenbank zur Speicherung der Zeitreihen
-        self.ConnectionMongo = mongoInterface(host=mongoHost, database=database)     # Datenbank zur Speicherung der Strukurdaten
+        self.ConnectionInflux = influxInterface(host=influxHost, database=database)            # Datenbank zur Speicherung der Zeitreihen
+        self.ConnectionMongo = mongoInterface(host=mongoHost, database=database, area=plz)     # Datenbank zur Speicherung der Strukurdaten
+
+        # Laden der Geoinfomationen
+        if len(self.ConnectionMongo.getPosition()) == 0:
+            print('Nummer: %s ist kein offizielles PLZ-Gebiet' % plz)
+            print(' --> Aufbau des Agenten %s_%s beendet' % (typ, plz))
+            exit()
+        else:
+            self.geo = self.ConnectionMongo.getPosition()['geohash']
+
 
         # Anbindung an MQTT
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')

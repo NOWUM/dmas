@@ -36,9 +36,6 @@ class pwpPort(port_model):
         self.m.addConstrs(power[i] == quicksum(p for p in [x for x in self.m.getVars() if 'P_' in x.VarName]
                                                if '[%i]' % i in p.VarName) for i in self.t)
 
-        #self.m.addConstrs(power[i] <= self.capacities['fossil'] - self.posBalPower for i in self.t)
-        #self.m.addConstrs(power[i] >= self.negBalPower for i in self.t)
-
         # Summe Brennstoffkosten
         fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F', lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstrs(fuel[i] == quicksum(f for f in [x for x in self.m.getVars() if 'F_' in x.VarName]
@@ -83,10 +80,12 @@ class pwpPort(port_model):
             # Brennstoffkosten
             fuel = np.asanyarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float)
             fuel = np.round(fuel, 2)
-
             for key, value in self.energySystems.items():
                 value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
+                tmp = [self.generation[value['fuel']][i] + value['model'].power[i] for i in self.t]
+                self.generation[value['fuel']] = tmp
                 value['model'].volume = np.zeros_like(power)
+
                 if value['typ'] == 'storage':
                     value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
 

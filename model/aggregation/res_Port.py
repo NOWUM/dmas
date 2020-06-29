@@ -11,16 +11,47 @@ class resPort(port_model):
         super().__init__(T, dt, gurobi, date, typ)
 
     def addToPortfolio(self, name, energysystem):
+
         data = energysystem[name]
 
-        if data['typ'] == 'wind':                                                       # Wind
-            data.update(dict(model=wind_model(t=self.t, T=self.T, dt=self.dt)))
-        elif data['typ'] == 'solarsystem' or data['typ'] == 'solarpark':                # Solar
-            data.update(dict(model=solar_model(t=self.t, T=self.T, dt=self.dt)))
+        # Windkraftanlagen
+        if data['typ'] == 'wind':
+            data.update(dict(model=wind_model(t=self.t,                                 # Array mit Zeitschritten
+                                              T=self.T,                                 # Anzahl an Zeitschritten
+                                              dt=self.dt)))                             # Zeitschrittlänge
+        # Photovoltaik-Dachanlagen EEG
+        elif data['typ'] == 'Pv':
+            data.update(dict(model=solar_model(lat=data['position'][0],                 # Längengrad
+                                               lon=data['position'][1],                 # Breitengrad
+                                               pdc0=data['PV']['maxPower'],             # Nennleistung
+                                               azimuth=data['PV']['azimuth'],           # Ausrichtung (180° = Süd)
+                                               tilt=data['PV']['tilt'],                 # Dachneigung
+                                               t=self.t,                                # Array mit Zeitschritten
+                                               T=self.T,                                # Anzahl an Zeitschritten
+                                               dt=self.dt)))                            # Zeitschrittlänge
+
+        # Gewerblich genutzte oder Freiflächen-PV
+        elif data['typ'] == 'PVPark' or data['typ'] == 'PVTrIn':
+            data.update(dict(model=solar_model(lat=data['position'][0],                 # Längengrad
+                                               lon=data['position'][1],                 # Breitengrad
+                                               pdc0=data['maxPower'],                   # Nennleistung
+                                               azimuth=data['azimuth'],                 # Ausrichtung (180° = Süd)
+                                               tilt=data['tilt'],                       # Dachneigung
+                                               t=self.t,                                # Array mit Zeitschritten
+                                               T=self.T,                                # Anzahl an Zeitschritten
+                                               dt=self.dt)))                            # Zeitschrittlänge
+        # Laufwasskraftwerke
         elif data['typ'] == 'run-river':
-            data.update(dict(model=runRiver_model(t=self.t, T=self.T, dt=self.dt)))
+            data.update(dict(model=runRiver_model(t=self.t,                             # Array mit Zeitschritten
+                                                  T=self.T,                             # Anzahl an Zeitschritte
+                                                  dt=self.dt)))                         # Zeitschrittlänge
+
+       # Biomassekraftwerke
         elif data['typ'] == 'biomass':
-            data.update(dict(model=bioMass_model(t=self.t, T=self.T, dt=self.dt)))
+            data.update(dict(model=bioMass_model(t=self.t,                              # Array mit Zeitschritten
+                                                 T=self.T,                              # Anzahl an Zeitschritte
+                                                 dt=self.dt)))                          # Zeitschrittlänge
+
         self.energySystems.update(energysystem)
 
     def buildModel(self, response=[]):
@@ -31,14 +62,15 @@ class resPort(port_model):
             self.generation['total'] = np.asarray(response).reshape((-1,))
 
     def optimize(self):
-        power = np.zeros_like(self.t)
+        power = np.zeros_like(self.t)                       # Leistungsbilanz des Gebietes
         try:
             # Wind Onshore-Erzeugung
             pWind = np.asarray([value['model'].generation['wind'] for _, value in self.energySystems.items()], np.float)
             self.generation['wind'] = np.sum(pWind, axis=0)
 
             # PV-Erzeugung
-            pSolar = np.asarray([value['model'].generation['solar'] for _, value in self.energySystems.items()], np.float)
+            pSolar = np.asarray([value['model'].generation['solar'] if value['typ'] != 'Pv' else value['model'].generation['solar'] * value['EEG']
+                                 for _, value in self.energySystems.items()], np.float)
             self.generation['solar'] = np.sum(pSolar, axis=0)
 
             # Laufwasserkraftwerke
@@ -55,6 +87,7 @@ class resPort(port_model):
         except Exception as e:
             print(e)
         self.generation['total'] = power
+        self.power = power
         return power
 
     def fixPlaning(self):
