@@ -223,7 +223,9 @@ class resAgent(basicAgent):
                                    powerBio=self.portfolio.generation['bio'][i],        # gesamte Biomasseeinspeisung   [MW]
                                    powerSolar=self.portfolio.generation['solar'][i],    # gesamte PV-Einspeisung        [MW]
                                    powerWater=self.portfolio.generation['water'][i],    # gesamte Wasserkraft           [MW]
-                                   profit=profit[i])                                    # erzielte Erlöse               [€]
+                                   profit=profit[i],                                    # erzielte Erlöse               [€]
+                                   state=states[i],
+                                   action=int((self.actions[i] - 10) / 10))
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)

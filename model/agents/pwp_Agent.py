@@ -264,7 +264,9 @@ class pwpAgent(basicAgent):
                                      timestamp='post_dayAhead'),            # Zeitstempel der Tagesplanung
                         "time": time.isoformat() + 'Z',
                         "fields": dict(power=power[i],                      # Gesamtleistung des Energiesystems [MW]
-                                       volume=volume[i])                    # Speichervolumen                   [MWh]
+                                       volume=volume[i],                    # Speichervolumen                   [MWh]
+                                       state=states[i],
+                                       action=int((self.actions[i]-10)/10))
                     }
                 )
                 time = time + pd.DateOffset(hours=self.portfolio.dt)

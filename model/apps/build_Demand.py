@@ -12,17 +12,18 @@ from aggregation.dem_Port import demPort
 
 def getSolarPower(plz):
 
-    mongoDB = mongoInterface(database='MAS_XXXX')
+    mongoDB = mongoInterface(database='MAS_XXXX', area=plz)
     influxDB = influxInterface(host='149.201.88.150', database='MAS_2020')
     geos = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
 
     portfolio = demPort(typ="DEM")
-    for key, value in mongoDB.getPVs(plz).items():
-        portfolio.addToPortfolio(key, {key: value})
+    for key, value in mongoDB.getPVs().items():
+       portfolio.addToPortfolio('Pv' + str(key), {'Pv' + str(key): value})
 
     listSolar = []
     days = pd.date_range(start='2019-01-01', freq='d', periods=365)
     for day in days:
+        print(day)
         totalSolar = np.zeros(24)
         try:
             geo = geos.loc[geos['PLZ'] == plz, 'hash'].to_numpy()[0]
@@ -34,7 +35,7 @@ def getSolarPower(plz):
             for k in range(24):
                     totalSolar[k] += power_dayAhead[k]
         except Exception as e:
-            print(e)
+            # print(e)
             print('no plz-area')
         listSolar.append(totalSolar)
 
@@ -49,6 +50,7 @@ if __name__ == "__main__":
     df = df.resample('h').mean()
 
     num_cores = min(multiprocessing.cpu_count(), 60)
+    # test = getSolarPower(3)
     listSolar = Parallel(n_jobs=num_cores)(delayed(getSolarPower)(i) for i in range(1, 100))
     solar = np.sum(np.asarray([np.asarray(i).reshape((-1)) for i in listSolar]), axis=0) / 10 ** 6
 
@@ -61,10 +63,11 @@ if __name__ == "__main__":
     iEnergy = 0
     gEnergy = 0
     hEnergy = 0
-    mongoDB = mongoInterface(database='MAS_XXXX')
+
     for i in range(1, 100):
+        mongoDB = mongoInterface(database='MAS_XXXX', area=i)
         try:
-            demand = mongoDB.getDemand(i)
+            demand = mongoDB.getDemand()
             hEnergy += demand['h0']
             gEnergy += demand['g0']
             iEnergy += demand['rlm']
@@ -73,82 +76,82 @@ if __name__ == "__main__":
 
     iEnergy = dict(demandP=iEnergy * 10 ** 6)
     gEnergy = dict(demandP=gEnergy * 10 ** 6)
-    hEnergy = dict(demandP=hEnergy * 10 ** 6 + 349 * 10 ** 6)
+    hEnergy = dict(demandP=hEnergy * 10 ** 6 + np.sum(solar) * 10 ** 6)
 
     days = pd.date_range(start='2019-01-01', freq='d', periods=365)
 
     totalh0 = []
     totalg0 = []
-    totalRlm = []
+    # totalRlm = []
 
     for day in days:
         totalh0.append(testh0.getPowerDemand(hEnergy, day))
         totalg0.append(testg0.getPowerDemand(gEnergy, day))
-        totalRlm.append(testRlm.getPowerDemand(iEnergy, day))
-
+        # totalRlm.append(testRlm.getPowerDemand(iEnergy, day))
+    #
     totalh0 = np.asarray(totalh0).reshape((-1))
     totalg0 = np.asarray(totalg0).reshape((-1))
-    totalRlm = np.asarray(totalRlm).reshape((-1))
-
+    # totalRlm = np.asarray(totalRlm).reshape((-1))
+    #
     totalh0PV = totalh0 / 10 ** 6 + solar
-
+    #
     total = (totalh0PV + totalg0 / 10 ** 6)
-
-    #plt.plot(totalRlm/10 ** 6)
-    #plt.plot(totalg0 / 10 ** 6)
-    #plt.plot(totalh0 / 10 ** 6)
-    plt.plot(values)
-
-    sommer=np.asarray(np.load(open(r'./data/Time_Summer.array','rb')), np.int64)
-    winter = np.asarray(np.load(open(r'./data/Time_Winter.array', 'rb')), np.int64)
-    x = values-total
-    plt.plot(x)
-    rlm = pd.DataFrame(x)
-    rlm = rlm/np.sum(rlm)*1000000
-    rlm.index = pd.date_range(start='2019-01-01', periods=8760, freq='h')
-
-    typDays = []
-
-    result = rlm.loc[[i.dayofyear in winter for i in rlm.index]]
-    so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
-    so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
-    sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
-    sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
-    wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
-    wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
-
-    typDays.append([element for element in sa for _ in range(4)])
-    typDays.append([element for element in so for _ in range(4)])
-    typDays.append([element for element in wt for _ in range(4)])
-
-    result = rlm.loc[[i.dayofyear in sommer for i in rlm.index]]
-    so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
-    so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
-    sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
-    sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
-    wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
-    wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
-
-    typDays.append([element for element in sa for _ in range(4)])
-    typDays.append([element for element in so for _ in range(4)])
-    typDays.append([element for element in wt for _ in range(4)])
-
-    result = rlm.loc[[(i.dayofyear not in sommer) or i.dayofyear not in winter for i in rlm.index]]
-    so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
-    so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
-    sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
-    sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
-    wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
-    wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
-
-    typDays.append([element for element in sa for _ in range(4)])
-    typDays.append([element for element in so for _ in range(4)])
-    typDays.append([element for element in wt for _ in range(4)])
-
-    outfile = open('./data/Ref_RLM.array','wb')
-
-    typDays = np.asarray(typDays)
-    x = typDays.T
-    np.save(outfile, x)
-
-    outfile.close()
+    #
+    # #plt.plot(totalRlm/10 ** 6)
+    # #plt.plot(totalg0 / 10 ** 6)
+    # #plt.plot(totalh0 / 10 ** 6)
+    # plt.plot(values)
+    #
+    # sommer=np.asarray(np.load(open(r'./data/Time_Summer.array','rb')), np.int64)
+    # winter = np.asarray(np.load(open(r'./data/Time_Winter.array', 'rb')), np.int64)
+    # x = values-total
+    # plt.plot(x)
+    # rlm = pd.DataFrame(x)
+    # rlm = rlm/np.sum(rlm)*1000000
+    # rlm.index = pd.date_range(start='2019-01-01', periods=8760, freq='h')
+    #
+    # typDays = []
+    #
+    # result = rlm.loc[[i.dayofyear in winter for i in rlm.index]]
+    # so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
+    # so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
+    # sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
+    # sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
+    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
+    # wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
+    #
+    # typDays.append([element for element in sa for _ in range(4)])
+    # typDays.append([element for element in so for _ in range(4)])
+    # typDays.append([element for element in wt for _ in range(4)])
+    #
+    # result = rlm.loc[[i.dayofyear in sommer for i in rlm.index]]
+    # so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
+    # so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
+    # sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
+    # sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
+    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
+    # wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
+    #
+    # typDays.append([element for element in sa for _ in range(4)])
+    # typDays.append([element for element in so for _ in range(4)])
+    # typDays.append([element for element in wt for _ in range(4)])
+    #
+    # result = rlm.loc[[(i.dayofyear not in sommer) or i.dayofyear not in winter for i in rlm.index]]
+    # so = result.loc[[i.dayofweek == 6 or i in holidays[0] for i in result.index]]
+    # so = so.groupby(so.index.hour).mean().to_numpy().reshape(-1)
+    # sa = result.loc[[i.dayofweek == 5 and i not in holidays[0] for i in result.index]]
+    # sa = sa.groupby(sa.index.hour).mean().to_numpy().reshape(-1)
+    # wt = result.loc[[i.dayofweek in [0, 1, 2, 3, 4] and i not in holidays[0] for i in result.index]]
+    # wt = wt.groupby(wt.index.hour).mean().to_numpy().reshape(-1)
+    #
+    # typDays.append([element for element in sa for _ in range(4)])
+    # typDays.append([element for element in so for _ in range(4)])
+    # typDays.append([element for element in wt for _ in range(4)])
+    #
+    # outfile = open('./data/Ref_RLM.array','wb')
+    #
+    # typDays = np.asarray(typDays)
+    # x = typDays.T
+    # np.save(outfile, x)
+    #
+    # outfile.close()
