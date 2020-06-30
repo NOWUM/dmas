@@ -246,6 +246,8 @@ class pwpAgent(basicAgent):
             for i in range(24):
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - oldValue) # np.abs(delta[i]) * 1000
+        else:
+            states = -1*np.zeros_like(self.portfolio.t)
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():

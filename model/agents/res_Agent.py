@@ -205,6 +205,8 @@ class resAgent(basicAgent):
             for i in self.portfolio.t:
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - missed[i] - oldValue)
+        else:
+            states = -1*np.zeros_like(self.portfolio.t)
 
         # Portfolioinformation
         time = self.date                                                                # Zeitstempel
