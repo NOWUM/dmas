@@ -83,7 +83,8 @@ class pwpPort(port_model):
             generation = dict(lignite=np.zeros_like(self.t),          # Erzeugung aus Braunkohle
                               coal=np.zeros_like(self.t),             # Erzeugung aus Steinkohle
                               gas=np.zeros_like(self.t),              # Erzeugung aus Erdgas
-                              nuc=np.zeros_like(self.t))              # Erzeugung aus Kernkraft
+                              nuc=np.zeros_like(self.t),              # Erzeugung aus Kernkraft
+                              water=np.zeros_like(self.t))
 
             for key, value in self.energySystems.items():
                 value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]

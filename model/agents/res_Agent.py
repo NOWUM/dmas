@@ -206,7 +206,7 @@ class resAgent(basicAgent):
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - missed[i] - oldValue)
         else:
-            states = -1*np.zeros_like(self.portfolio.t)
+            states = [-1 for _ in self.portfolio.t]
 
         # Portfolioinformation
         time = self.date                                                                # Zeitstempel
@@ -226,7 +226,7 @@ class resAgent(basicAgent):
                                    powerSolar=self.portfolio.generation['solar'][i],    # gesamte PV-Einspeisung        [MW]
                                    powerWater=self.portfolio.generation['water'][i],    # gesamte Wasserkraft           [MW]
                                    profit=profit[i],                                    # erzielte Erlöse               [€]
-                                   state=states[i],
+                                   state=int(states[i]),
                                    action=int((self.actions[i] - 10) / 10))
                 }
             )

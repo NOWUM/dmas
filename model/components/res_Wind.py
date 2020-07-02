@@ -3,8 +3,10 @@ from components.basic_EnergySystem import energySystem
 
 class wind_model(energySystem):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1):  # Metainfo Zeit t, T, dt
-        super().__init__(t, T, dt)
+    def __init__(self,
+                 t=np.arange(24), T=24, dt=1):  # Metainfo Zeit t, T, dt
+                 super().__init__(t, T, dt)
+
 
     def build(self, data, ts, date):
         powerWind = []
@@ -23,3 +25,4 @@ class wind_model(energySystem):
             powerWind.append(generation/10**3)
         self.generation['wind'] = np.asarray(powerWind, np.float).reshape((-1,))
         self.power = np.asarray(powerWind, np.float).reshape((-1,))
+

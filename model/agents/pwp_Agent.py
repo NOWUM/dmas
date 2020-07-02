@@ -247,7 +247,7 @@ class pwpAgent(basicAgent):
                 oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
                 self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - oldValue) # np.abs(delta[i]) * 1000
         else:
-            states = -1*np.zeros_like(self.portfolio.t)
+            states = [-1 for i in self.portfolio.t]
 
         # Energiesysteminformation
         for key, value in self.portfolio.energySystems.items():
@@ -266,15 +266,14 @@ class pwpAgent(basicAgent):
                                      timestamp='post_dayAhead'),            # Zeitstempel der Tagesplanung
                         "time": time.isoformat() + 'Z',
                         "fields": dict(power=power[i],                      # Gesamtleistung des Energiesystems [MW]
-                                       volume=volume[i],                    # Speichervolumen                   [MWh]
-                                       state=states[i],
-                                       action=int((self.actions[i]-10)/10))
+                                       volume=volume[i])                    # Speichervolumen                   [MWh]
                     }
                 )
                 time = time + pd.DateOffset(hours=self.portfolio.dt)
 
         # Portfolioinformation
         time = self.date
+        index = 0
         for i in self.portfolio.t:
             json_body.append(
                 {
@@ -292,9 +291,13 @@ class pwpAgent(basicAgent):
                                    powerGas=self.portfolio.generation['gas'][i],            # gesamt Erdgas                 [MW]
                                    powerNuc=self.portfolio.generation['nuc'][i],            # gesamt Kernkraft              [MW]
                                    powerStorage=self.portfolio.generation['water'][i],
-                                   profit=profit[i])                                        # erzielte Erlöse               [€]
+                                   profit=profit[i],                                        # erzielte Erlöse               [€]
+                                   state=int(states[index]),
+                                   action=int((self.actions[index] - 10) / 10))
                 }
             )
+            index += 1
+            index = min(index, 23)
             time = time + pd.DateOffset(hours=self.portfolio.dt)
 
         self.ConnectionInflux.saveData(json_body)

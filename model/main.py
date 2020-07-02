@@ -12,6 +12,7 @@ from flask import Flask, render_template, request
 from flask_cors import cross_origin
 from interfaces.interface_Influx import influxInterface as influxCon
 from interfaces.interface_mongo import mongoInterface as mongoCon
+from apps.View_MeritOrder import getMeritOrder
 
 config = configparser.ConfigParser()
 config.read('app.cfg')
@@ -53,6 +54,26 @@ def grid():
     fig = gridView.getPlot()
     return render_template('index.html', plot=fig)
 
+
+@app.route('/meritOrder', methods = ['POST','GET'])
+@cross_origin()
+def meritOrder():
+
+    seconds = int(request.args.get('from'))
+    date = pd.to_datetime(seconds)
+
+    return render_template('meritOrder.html', **locals())
+
+@app.route('/meritOrder/plot', methods = ['GET'])
+@cross_origin()
+def plotMeritOrderHourly():
+
+    seconds = int(request.args.get('from'))
+    date = pd.to_datetime(seconds)
+    hour = request.args.get('hour')
+    plot = getMeritOrder(mongoCon, date.date(), request.args.get('hour'))
+
+    return render_template('plotMeritOrder.html', **locals())
 
 # ----- Start Simulation -----
 @app.route('/run', methods=['POST'])
