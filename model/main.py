@@ -12,6 +12,7 @@ from flask import Flask, render_template, request
 from flask_cors import cross_origin
 from interfaces.interface_Influx import influxInterface as influxCon
 from interfaces.interface_mongo import mongoInterface as mongoCon
+from apps.View_MeritOrder import getMeritOrder
 
 config = configparser.ConfigParser()
 config.read('app.cfg')
@@ -20,9 +21,14 @@ database = config['Results']['Database']
 mongoCon = mongoCon(host=config['MongoDB']['Host'], database=database)
 influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)
 
-credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'],
-                                                               heartbeat=0, credentials=credentials))
+if config.getboolean('Market','Local'):
+    # credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'], heartbeat=0))
+else:
+    credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'],
+                                                                   heartbeat=0, credentials=credentials))
+
 send = connection.channel()
 send.exchange_declare(exchange='Market', exchange_type='fanout')
 
@@ -52,6 +58,28 @@ def grid():
     gridView.powerFlow(date=pd.to_datetime('2019-01-01'), hour=1)
     fig = gridView.getPlot()
     return render_template('index.html', plot=fig)
+
+
+@app.route('/meritOrder', methods = ['POST','GET'])
+@cross_origin()
+def meritOrder():
+
+    seconds = int(request.args.get('from'))
+    date = pd.to_datetime(seconds)
+
+    return render_template('meritOrder.html', **locals())
+
+@app.route('/meritOrder/plot', methods = ['GET'])
+@cross_origin()
+def plotMeritOrder():
+    seconds = int(request.args.get('from'))
+    date = pd.to_datetime(seconds)
+    hour = request.args.get('hour')
+    try:
+        plot = getMeritOrder(mongoCon, date.date(), request.args.get('hour'))
+        return render_template('plotMeritOrder.html', **locals())
+    except:
+        return 'Page not found - Error 404'
 
 
 # ----- Start Simulation -----
@@ -120,7 +148,6 @@ def simulation(start, end, valid=True):
             print('Error in Actual ' + str(date.date()))
             print(e)
 
-
 if __name__ == "__main__":
     pids = []
     # ----- InfluxDB -----
@@ -138,13 +165,14 @@ if __name__ == "__main__":
 
     tm.sleep(2)
 
-    try:
-        influxCon.influx.drop_database(database)
-    except:
-        pass
-    influxCon.influx.create_database(database)
-    for name in mongoCon.orderDB.list_collection_names():
-        mongoCon.orderDB.drop_collection(name)
+    if config.getboolean('Results', 'Delete'):
+        try:
+            influxCon.influx.drop_database(database)
+        except:
+            pass
+        influxCon.influx.create_database(database)
+        for name in mongoCon.orderDB.list_collection_names():
+            mongoCon.orderDB.drop_collection(name)
 
     init = mongoCon.orderDB["init"]
     query = {"_id": 'start'}
@@ -152,7 +180,10 @@ if __name__ == "__main__":
     init.update_one(filter=query, update=start, upsert=True)
 
     try:
-        app.run(debug=False, port=5010, host='0.0.0.0')
+        if config.getboolean('Market','Local'):
+            app.run(debug=False, port=config.getint('Market','Port'), host='127.0.0.1')
+        else:
+            app.run(debug=False, port=config.getint('Market','Port'), host='0.0.0.0')
     except Exception as e:
         print(e)
     finally:
