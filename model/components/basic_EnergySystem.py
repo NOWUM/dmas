@@ -2,6 +2,7 @@ import numpy as np
 from apps.slpP import slpGen as slpP
 from apps.slpQ import slpGen as slpQ
 
+
 class energySystem:
     """
     Basis Energiesystem \n
@@ -25,7 +26,7 @@ class energySystem:
                  refSLP=np.asarray(np.load(open(r'./data/Ref_H0.array','rb')), np.float32),         # SLP Strom
                  refTemp=np.asarray(np.load(open(r'./data/Ref_Temp.array', 'rb')), np.float32),     # Referenztemperatur
                  factors=np.asarray(np.load(open(r'./data/Ref_Factors.array', 'rb')), np.float32),  # Stundenfaktoren
-                 parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32), typ=0):                         # Gebäudeparameter
+                 parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32), typ=0):                  # Gebäudeparameter
 
         # Meta Daten Zeitintervalle
         self.t = t                  # Array mit Zeitschritten
@@ -36,15 +37,16 @@ class energySystem:
         self.slpP = slpP(typ=typ, refSLP=refSLP)
 
         # Wärmelastprofil mit entsprechenden Parametern
-        self.slpQ = slpQ(demandQ=demQ, parameters=parameters.reshape((-1,)),
+        self.slpQ = slpQ(demandQ=demQ, parameters=np.asarray(parameters, np.float32).reshape((-1,)),
                          refTemp=np.asarray(refTemp,np.float32).reshape((-1,)),
                          factors=np.asarray(factors,np.float32).reshape((24, -1)))
 
         # Zeitreiheninformationen
         self.powerYear = demP                                   # Strombedarf pro Jahr in kWh/a
-        self.heatYear = demQ                                    # Wärmebedarf pro Jahr in kwH/a
-        self.powerDemand = np.zeros_like(self.t)                # Strombedarf der Komponente
-        self.heatDemand = np.zeros_like(self.t)                 # Wärmebedarf der Komponente
+        self.heatYear = demQ                                    # Wärmebedarf pro Jahr in kWh/a
+
+        self.demand = dict(power=np.zeros_like(self.t),         # Strombedarf der Komponente in kW
+                           heat=np.zeros_like(self.t))          # Wärmebedarf der Komponente in kW
 
         self.generation = dict(wind=np.zeros_like(self.t),      # Winderzeugung der Komponente
                                solar=np.zeros_like(self.t),     # PV-Erzeugung der Komponente
@@ -53,7 +55,7 @@ class energySystem:
                                water=np.zeros_like(self.t),     # Erzeugung aus Laufwasserkraftwerken
                                storage=np.zeros_like(self.t))   # Speicherleistung der Komponente
 
-        self.power = np.zeros_like(self.t)
+        self.power = np.zeros_like(self.t)                      # Leistung am Netzbezugspunkt
         self.volume = np.zeros_like(self.t)
 
     def getPowerDemand(self, data, date):
@@ -61,11 +63,6 @@ class energySystem:
         demand = self.slpP.get_profile(date.dayofyear, date.dayofweek, data['demandP']).reshape((96, 1))
         demand = np.asarray([np.mean(demand[i:i+3]) for i in range(0, 96, 4)], np.float).reshape((-1,))
         return demand
-
-    def getPowerSolar(self, data, ts):
-        """ PV-Erzeugung des aktuellen Tages in Abhängigkeit des aktuellen Wetters in stündlicher Auflösung und [kW] """
-        rad = np.asarray(ts['dif']) + np.asarray(ts['dir'])
-        return 7 * data['PV']['maxPower'] * rad * data['PV']['eta'] / 1000
 
     def getHeatDemand(self, data, ts):
         """ Wärmebedarf des aktuellen Tages in Abhängigkeit des aktuellen Wetters in stündlicher Auflösung und [kW] """

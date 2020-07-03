@@ -6,47 +6,55 @@ class port_model:
 
     def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01', typ='RES'):
 
-        # -- meta data
-        self.date = pd.to_datetime(date)            # -- Date-Time
-        self.energySystems = {}                     # -- dict to save the meta data for the systems
-        self.typ = typ                              # -- Portfoliotyp (DEM,RES,PWP,...)
-        self.capacities = dict(wind=0, solar=0, fossil=0, water=0, bio=0)
+        self.date = pd.to_datetime(date)                                    # Aktueller Tag der der Optimierung
 
-        # time data
-        self.T = T                                  # -- steps per day
-        self.t = np.arange(T)                       # -- array with single steps
-        self.dt = dt                                # -- resolution
-
-        self.power = np.zeros(T)
-        self.emisson = np.zeros(T)
-        self.fuel = np.zeros(T)
-
-        self.generation = dict(total=np.zeros_like(self.t),
-                               solar=np.zeros_like(self.t),
-                               wind=np.zeros_like(self.t),
-                               water=np.zeros_like(self.t),
-                               bio=np.zeros_like(self.t))
-
-        # -- optimization data
-        self.weather = {}                           # -- weahter data dict(wind,dir,dif,temp)
-        self.prices = {}                            # -- price data dict(power,co,gas,lignite,coal,nuc)
-        self.posBalPower = []                       # -- postive Balancing Power
-        self.negBalPower = []                       # -- negative Balancing Power
-        self.demand = []
-
-        # SLP Power & Heat Data
+        # Einstellung der Standardlastprofile
+        # -- > Wärmebedarf
         self.Ref_Temperature = np.asarray(np.load(open(r'./data/Ref_Temp.array','rb')), np.float32)
         self.Ref_factors = np.asarray(np.load(open(r'./data/Ref_Factors.array','rb')), np.float32)
-
+        # -- > Strombedarf
         self.Ref_H0 = np.asarray(np.load(open(r'./data/Ref_H0.array','rb')), np.float32)
         self.Ref_G0 = np.asarray(np.load(open(r'./data/Ref_G0.array','rb')), np.float32)
         self.Ref_Rlm = np.asarray(np.load(open(r'./data/Ref_RLM.array','rb')), np.float32)
-        self.m = {}
 
-        # optimization model
+        self.energySystems = {}                                             # Verwaltung der Energiesysteme
+        self.typ = typ                                                      # Portfoliotyp (DEM,RES,PWP,...)
+        self.capacities = dict(wind=0, solar=0, fossil=0, water=0, bio=0)   # installierte Erzeugungskapazitäten
+
+        # Meta Daten Zeitintervalle
+        self.T = T                                                          # Anzahl an Zeitschritten
+        self.t = np.arange(T)                                               # Array mit Zeitschritten
+        self.dt = dt                                                        # Zeitschrittlänge
+
+        self.power = np.zeros(T)                                            # Leistung am Netzbezugspunkt
+
+        self.emisson = np.zeros(T)                                          # Kosten aus CO2 Emissionen
+        self.fuel = np.zeros(T)                                             # Brennstoffkosten
+
+        self.generation = dict(total=np.zeros_like(self.t),                 # Erzeugung Gesamt
+                               solar=np.zeros_like(self.t),                 # Erzeugung aus Solar
+                               wind=np.zeros_like(self.t),                  # Erzeugung aus Wind
+                               water=np.zeros_like(self.t),                 # Erzeugung aus Wasserkraft
+                               bio=np.zeros_like(self.t),                   # Erzeugung aus Biomasse
+                               lignite=np.zeros_like(self.t),               # Erzeugung aus Braunkohle
+                               coal=np.zeros_like(self.t),                  # Erzeugung aus Steinkohle
+                               gas=np.zeros_like(self.t),                   # Erzeugung aus Erdgas
+                               nuc=np.zeros_like(self.t))                   # Erzeugung aus Kernkraft
+
+        self.demand = dict(power=np.zeros_like(self.t),                     # Strombedarf
+                                heat=np.zeros_like(self.t))                 # Wärmebedarf
+
+        # Optimierungsrelevante Parameter
+        self.weather = {}                                                   # Wetterdaten (wind,dir,dif,temp)
+        self.prices = {}                                                    # Preiserwartung
+        self.posBalPower = []                                               # positive Regelleistungsverpflichtung
+        self.negBalPower = []                                               # negative Regelleistungsverpflichtung Power
+        self.frcstDemand = []                                               # Lasterwartung
+
+        # GGLP-Model für den Dispatch der Kraftwerke
         if gurobi:
-            self.m = Model('aggregation')             # -- gurobi model for milp model
-            self.m.Params.OutputFlag = 0              # -- hide output
+            self.m = Model('aggregation')
+            self.m.Params.OutputFlag = 0
             self.m.Params.TimeLimit = 30
             self.m.Params.MIPGap = 0.05
             self.m.__len__ = 1
@@ -56,7 +64,7 @@ class port_model:
         self.date = pd.to_datetime(date)
         self.weather = weather
         self.prices = prices
-        self.demand = demand
+        self.frcstDemand = demand
         self.posBalPower = np.asarray(posBalPower)
         self.negBalPower = np.asarray(negBalPower)
 

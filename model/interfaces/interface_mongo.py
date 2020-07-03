@@ -5,29 +5,43 @@ import numpy as np
 
 class mongoInterface:
 
-    def __init__(self, database, host='149.201.88.150'):
+    def __init__(self, database, area=1, host='149.201.88.150'):
 
         self.mongo = pymongo.MongoClient('mongodb://' + host + ':27017/')
-        self.structDB = self.mongo["systemdata"]
-        self.tableStructur = self.structDB["energysystems"]
+        self.structDB = self.mongo["testDB"]
+        self.tableStructur = self.structDB['PLZ_%s' %area]
 
         self.orderDB = self.mongo[database]
         self.status = self.orderDB['status']
 
-        # self.tableOrderbooks = self.mongodb["orderbooks"]
 
-    def getPowerPlants(self, area):
+    def getPosition(self):
         try:
-            powerplants = self.tableStructur.find_one({"_id": area})['powerPlants']
-            for key, value in powerplants.items():
-                value['P0'] = int(value['maxPower']*0.75)
-            return powerplants
+            position = self.tableStructur.find_one({'_id': 'Position'})
+            return position
         except:
             return {}
 
-    def getStorages(self, area):
+
+    def getPowerPlants(self):
         try:
-            return self.tableStructur.find_one({"_id": area})['storages']
+            powerplants = self.tableStructur.find_one({"_id": 'PowerPlantSystems'})
+            systems = {}
+            for key, value in powerplants.items():
+                if key != '_id':
+                    systems.update({key:value})
+            return systems
+        except:
+            return {}
+
+    def getStorages(self):
+        try:
+            storages = self.tableStructur.find_one({"_id": 'StorageSystems'})
+            systems = {}
+            for key, value in storages.items():
+                if key != '_id':
+                    systems.update({key:value})
+            return systems
         except:
             return {}
 
@@ -35,46 +49,48 @@ class mongoInterface:
                     Nachfrage und Prosumer
     """
 
-    def getPVBatteries(self, area):
+    def getPVBatteries(self):
         try:
-            tmp = self.tableStructur.find_one({'_id': area})['PVBatteries']
-            for _, value in tmp.items():
-                value['para'] = np.asarray([value['para']['A'], value['para']['B'],
-                                            value['para']['C'], value['para']['D']], np.float32)
-            return tmp
-        except Exception as e:
-            print(e)
+            pvbat = self.tableStructur.find_one({'_id': 'PVBatSystems'})
+            position = self.tableStructur.find_one({'_id': 'Position'})
+            systems = {}
+            for key, value in pvbat.items():
+                if key != '_id':
+                    value.update({'position': [position['lat'], position['lon']]})
+                    systems.update({key:value})
+            return systems
+        except:
             return {}
 
     def getHeatPumps(self, area):
         try:
-            tmp = self.tableStructur.find_one({'_id': area})['PVHeatpumps']
-            for _, value in tmp.items():
-                value['para'] = np.asarray([value['para']['A'], value['para']['B'],
-                                            value['para']['C'], value['para']['D']], np.float32)
-            return tmp
-        except Exception as e:
-            print(e)
+            return {}
+        except:
             return {}
 
-    def getPVs(self, area):
+    def getPVs(self):
         try:
-            tmp = self.tableStructur.find_one({'_id': area})['PVs']
-            for _, value in tmp.items():
-                value['para'] = np.asarray([value['para']['A'], value['para']['B'],
-                                            value['para']['C'], value['para']['D']], np.float32)
-            return tmp
-        except Exception as e:
-            print(e)
+            pv = self.tableStructur.find_one({'_id': 'PVSystems'})
+            position = self.tableStructur.find_one({'_id': 'Position'})
+            systems = {}
+            for key, value in pv.items():
+                if key != '_id':
+                    value.update({'position': [position['lat'], position['lon']]})
+                    systems.update({key:value})
+            return systems
+        except:
             return {}
 
-    def getDemand(self, area):
+    def getDemand(self):
         try:
-            return self.tableStructur.find_one({'_id': area})['demand']
-        except Exception as e:
-            print(e)
+            consumer = self.tableStructur.find_one({'_id': 'ConsumerSystems'})
+            systems = {}
+            for key, value in consumer.items():
+                if key != '_id':
+                    systems.update({key:value})
+            return systems
+        except:
             return {}
-
 
     """
                     Erneuerbare Energien
@@ -98,43 +114,45 @@ class mongoInterface:
             return dict_
 
     # Freiflächen Photovoltaik im entsprechenden PLZ-Gebiet
-    def getPvParks(self, area):
-        dict_ = {}
+    def getPvParks(self):
         try:
-            return self.tableStructur.find_one({"_id": area})['solarparks']
-        except Exception as e:
-            print(e)
-            return dict_
+            pv = self.tableStructur.find_one({'_id': 'PVParkSystems'})
+            position = self.tableStructur.find_one({'_id': 'Position'})
+            systems = {}
+            for key, value in pv.items():
+                if key != '_id':
+                    value.update({'position': [position['lat'], position['lon']]})
+                    systems.update({key:value})
+            return systems
+        except:
+            return {}
 
-    # EEG vergütete Photovoltaik Dachanlagen im entsprechenden PLZ-Gebiet
-    def getPvEEG(self, area):
-        dict_ = {}
-        try:
-            solarsystems = self.tableStructur.find_one({"_id": area})['solarsystems']
-            for key, system in solarsystems.items():
-                if system['startUpDate'] < pd.to_datetime('2013-01-01'):
-                    dict_.update({key: system})
-            return dict_
-        except Exception as e:
-            print(e)
-            return dict_
 
     # Laufwasserkraftwerke im entsprechenden PLZ-Gebiet
-    def getRunRiver(self, area):
-        dict_ = {}
+    def getRunRiver(self):
         try:
-            return self.tableStructur.find_one({"_id": area})['run-river']
+            water = self.tableStructur.find_one({'_id': 'RunRiverSystems'})
+            systems = {}
+            for key, value in water.items():
+                if key != '_id':
+                    if value['maxPower'] > 0:
+                        systems.update({key:value})
+            return systems
         except:
-            return dict_
+            return {}
 
     # Biomassekraftwerke im entsprechenden PLZ-Gebiet
-    def getBioMass(self, area):
-        dict_ = {}
+    def getBioMass(self):
         try:
-            return self.tableStructur.find_one({"_id": area})['biomass']
-        except Exception as e:
-            print(e)
-            return dict_
+            water = self.tableStructur.find_one({'_id': 'BiomassSystems'})
+            systems = {}
+            for key, value in water.items():
+                if key != '_id':
+                    if value['maxPower'] > 0:
+                        systems.update({key:value})
+            return systems
+        except:
+            return {}
 
     """
                     Simulations- und Marktnachrichten
