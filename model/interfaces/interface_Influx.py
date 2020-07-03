@@ -25,7 +25,7 @@ class influxInterface:
     -->             Query Wetterdaten                        <---    
     ----------------------------------------------------------"""
 
-    def generateWeather(self, start, end, valid=False):
+    def generateWeather(self, start, end, valid=True):
         """ Wettergenerator für die Simualtionsdauer (start --> end) """
         for date in pd.date_range(start=start, end=end, freq='D'):
             if valid:
