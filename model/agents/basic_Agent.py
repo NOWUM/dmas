@@ -20,7 +20,6 @@ class agent:
         config.read(r'./app.cfg')
 
         database = config['Results']['Database']
-        print(database)
         mongoHost = config['MongoDB']['Host']
         influxHost = config['InfluxDB']['Host']
         marketHost = config['Market']['Host']
@@ -56,8 +55,12 @@ class agent:
             self.geo = self.ConnectionMongo.getPosition()['geohash']
 
         # Anbindung an MQTT
-        credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0, credentials=credentials))
+        if config.getboolean('Market', 'Local'):
+            # credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0))
+        else:
+            credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0, credentials=credentials))
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
