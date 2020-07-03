@@ -9,8 +9,7 @@ import pandas as pd
 
 class wind_model(energySystem):
 
-    #    possible data: manufacturer, turbine_type, height, maxPower, plz
-    def __init__(self, turbine_type, rotor_diameter, hub_height=100, t=np.arange(24), T=24, dt=1):
+    def __init__(self, turbine_type, hub_height=112, rotor_diameter=102, t=np.arange(24), T=24, dt=1):
         """
         inits a wind model
         :param turbine_type: name of turbine_type corresponding to an entry in windpowerlib.wind_turbine.get_turbine_types
@@ -82,5 +81,3 @@ class wind_model(energySystem):
         # format: {24,}
         self.generation['wind'] = powerResult
         self.power = powerResult
-        # if format is not {24,}, use:
-        # self.power = np.asarray(powerResult).reshape((-1,))
