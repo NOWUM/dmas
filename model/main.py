@@ -21,9 +21,14 @@ database = config['Results']['Database']
 mongoCon = mongoCon(host=config['MongoDB']['Host'], database=database)
 influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)
 
-credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'],
-                                                               heartbeat=0, credentials=credentials))
+if config.getboolean('Market','Local'):
+    # credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'], heartbeat=0))
+else:
+    credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'],
+                                                                   heartbeat=0, credentials=credentials))
+
 send = connection.channel()
 send.exchange_declare(exchange='Market', exchange_type='fanout')
 
