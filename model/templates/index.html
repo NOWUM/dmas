@@ -40,18 +40,18 @@
     <!--Script Elements-->
     <script>
         $(document).ready(function(){
-            $("#run").click(function(){$.post("http://149.201.88.150:5010/run",{start: $("#start").val(),end: $("#end").val()},function(data){});});
-            var dem = false
-            var pwp = false
-            var res = false
+           $("#run").click(function(){$.post("run",{start: $("#start").val(),end: $("#end").val()},function(data){});});
+                var dem = false
+                var pwp = false
+                var res = false
 
-            $(function(){
-                $("#slider-range").slider({
-                    range: true,
-                    min: 0,
-                    max: 99,
-                    values: [ 40, 45 ],
-                    slide: function(event, ui){$( "#amount" ).val(ui.values[ 0 ] + " - " + ui.values[ 1 ]);}
+                $(function(){
+                    $("#slider-range").slider({
+                        range: true,
+                        min: 0,
+                        max: 99,
+                        values: [ 40, 45 ],
+                        slide: function(event, ui){$( "#amount" ).val(ui.values[ 0 ] + " - " + ui.values[ 1 ]);}
                 });
             $("#amount").val($("#slider-range").slider("values", 0) +" - " + $("#slider-range").slider("values", 1));});
 
@@ -67,7 +67,7 @@
                 }
             });
 
-            $("#start_area").click(function(){$.post("http://149.201.88.150:5010/build/start",
+            $("#start_area").click(function(){$.post("build/start",
                 {start: $("#slider-range").slider("values", 0),
                  end:   $("#slider-range").slider("values", 1),
                  dem:   dem,

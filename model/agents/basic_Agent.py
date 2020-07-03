@@ -20,6 +20,7 @@ class agent:
         config.read(r'./app.cfg')
 
         database = config['Results']['Database']
+        print(database)
         mongoHost = config['MongoDB']['Host']
         influxHost = config['InfluxDB']['Host']
         marketHost = config['Market']['Host']
