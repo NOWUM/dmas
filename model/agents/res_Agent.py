@@ -207,6 +207,10 @@ class resAgent(basicAgent):
         # Portfolioinformation
         time = self.date                                                                # Zeitstempel
         power = np.asarray(ask - bid).reshape((-1,))
+
+        self.portfolio.buildModel(response=power)
+        self.portfolio.optimize()
+
         for i in self.portfolio.t:
             json_body.append(
                 {

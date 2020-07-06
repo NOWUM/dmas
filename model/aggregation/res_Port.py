@@ -63,13 +63,14 @@ class resPort(port_model):
 
     def buildModel(self, response=[]):
         if len(response) == 0:
+            self.generation['total'] = np.zeros_like(self.t)
             for _, data in self.energySystems.items():
                 data['model'].build(data, self.weather, self.date)
         else:
             self.generation['total'] = np.asarray(response).reshape((-1,))
 
     def optimize(self):
-        power = np.zeros_like(self.t)                       # Leistungsbilanz des Gebietes
+        power = self.generation['total']                    # Leistungsbilanz des Gebietes
         try:
             # Wind Onshore-Erzeugung
             pWind = np.asarray([value['model'].generation['wind'] for _, value in self.energySystems.items()], np.float)
@@ -88,8 +89,12 @@ class resPort(port_model):
             pBio = np.asarray([value['model'].generation['bio'] for _, value in self.energySystems.items()], np.float)
             self.generation['bio'] = np.sum(pBio, axis=0)
 
-            # Gesamtleitung im Portfolio
-            power = self.generation['wind'] + self.generation['solar'] + self.generation['water'] + self.generation['bio']
+            if np.sum(self.generation['total']) == 0:
+                # Gesamtleitung im Portfolio
+                power = self.generation['wind'] + self.generation['solar'] + self.generation['water'] + self.generation['bio']
+            else:
+                power = self.generation['total']
+                self.generation['wind'] = power - self.generation['solar'] - self.generation['water'] - self.generation['bio']
 
         except Exception as e:
             print(e)
