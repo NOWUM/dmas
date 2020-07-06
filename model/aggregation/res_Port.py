@@ -16,7 +16,14 @@ class resPort(port_model):
 
         # Windkraftanlagen
         if data['typ'] == 'wind':
-            data.update(dict(model=wind_model(t=self.t,                                 # Array mit Zeitschritten
+            if np.isnan(data['height']):
+                height = 112
+            else:
+                height = data['height']
+            data.update(dict(model=wind_model(turbine_type=data['turbine_type'],
+                                              hub_height=height,
+                                              rotor_diameter=data['diameter'],
+                                              t=self.t,                                 # Array mit Zeitschritten
                                               T=self.T,                                 # Anzahl an Zeitschritten
                                               dt=self.dt)))                             # Zeitschrittlänge
         # Photovoltaik-Dachanlagen EEG

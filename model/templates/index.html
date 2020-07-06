@@ -44,6 +44,9 @@
                 var dem = false
                 var pwp = false
                 var res = false
+                var grd = false
+                var brd = false
+
 
                 $(function(){
                     $("#slider-range").slider({
@@ -65,6 +68,12 @@
                  if($("#res").prop("checked")==true){
                     res = true
                 }
+                if($("#grd").prop("checked")==true){
+                    grd = true
+                }
+                if($("#brd").prop("checked")==true){
+                    brd = true
+                }
             });
 
             $("#start_area").click(function(){$.post("build/start",
@@ -72,7 +81,9 @@
                  end:   $("#slider-range").slider("values", 1),
                  dem:   dem,
                  pwp:   pwp,
-                 res:   res},
+                 res:   res,
+                 grd:   grd,
+                 brd:   brd},
                  function(data){});});
 
         });
@@ -122,7 +133,7 @@
                     <li class="nav-item">
                         <div id="nav-powerplant" style="text-align: center;">
                             <a class="nav-link">
-                                <img class="img-thumbnail" height="50" src="../static/power-plant.png" width="50">
+                                <img class="img-thumbnail" height="50" src="../static/5.png" width="50">
                                 <input type="checkbox" class="form-check-input" id="pwp" value="" checked>
                                 <p>Power Plants</p>
                             </a>
@@ -131,7 +142,7 @@
                     <li class="nav-item">
                         <center id="nav-solar">
                             <a class="nav-link">
-                                <img class="img-thumbnail" height="50" src="../static/res-energy.png" width="50">
+                                <img class="img-thumbnail" height="50" src="../static/2.png" width="50">
                                 <input type="checkbox" class="form-check-input" id="res" value="" checked>
                                 <p>Renewable Energy</p>
                             </a>
@@ -140,16 +151,34 @@
                     <li class="nav-item">
                         <div id="nav-demand" style="text-align: center;">
                             <a class="nav-link">
-                                <img class="img-thumbnail" height="50" src="../static/socket.png" width="50">
+                                <img class="img-thumbnail" height="50" src="../static/12.png" width="50">
                                 <input type="checkbox" class="form-check-input" id="dem" value="1" checked>
                                 <p>Demand</p>
                             </a>
                         </div>
                     </li>
                     <li class="nav-item">
+                        <div id="nav-grid" style="text-align: center;">
+                            <a class="nav-link">
+                                <img class="img-thumbnail" height="50" src="../static/11.png" width="50">
+                                <input type="checkbox" class="form-check-input" id="grd" value="1" checked>
+                                <p>Grid</p>
+                            </a>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <div id="nav-CrossBorder" style="text-align: center;">
+                            <a class="nav-link">
+                                <img class="img-thumbnail" height="50" src="../static/16.png" width="50">
+                                <input type="checkbox" class="form-check-input" id="brd" value="1" checked>
+                                <p>Cross-Border</p>
+                            </a>
+                        </div>
+                    </li>
+                    <li class="nav-item">
                         <div id="nav-build" style="text-align: center;">
                             <a class="nav-link">
-                                <input class="btn btn-warning btn-sm" id="start_area" type="submit" value="Build Areas">
+                                <input class="btn btn-warning btn-sm" id="start_area" type="submit" value="Start Agents">
                             </a>
                         </div>
                     </li>
@@ -160,7 +189,7 @@
                 <br>
                 <div class="row">
                     <div class="col-4">
-                        <label for="amount">Start Areas:</label><br><br>
+                        <label for="amount">Start Agents:</label><br><br>
                         <input id="amount" readonly style="border:0; color:#04B4AE; font-weight:bold;" type="text">
                         <div id="slider-range"></div>
                     </div>
@@ -169,10 +198,17 @@
                     </div>
                 </div>
                 <br>
-                <img class="img-thumbnail" height="75" src="../static/power-plant.png" width="75"> <b>Agents: {{num[0]}}</b> <br><br>
-                <img class="img-thumbnail" height="75" src="../static/res-energy.png" width="75"> <b>Agents: {{num[1]}}</b> <br><br>
-                <img class="img-thumbnail" height="75" src="../static/socket.png" width="75"> <b>Agents: {{num[2]}}</b> <br><br>
-
+                <div class="row">
+                <div class="col-5">
+                    <img class="img-thumbnail" height="75" src="../static/5.png" width="75"> <b>Power Plants: {{num[0]}}</b> <br><br>
+                    <img class="img-thumbnail" height="75" src="../static/2.png" width="75"> <b>Renewable Energy: {{num[1]}}</b> <br><br>
+                    <img class="img-thumbnail" height="75" src="../static/12.png" width="75"> <b>Demand: {{num[2]}}</b> <br><br>
+                </div>
+                <div class="col-5">
+                    <img class="img-thumbnail" height="75" src="../static/11.png" width="75"> <b>Grid Operator: {{grid}}</b> <br><br>
+                    <img class="img-thumbnail" height="75" src="../static/16.png" width="75"> <b>Cross Border: {{grid}}</b> <br><br>
+                </div>
+                </div>
             </div>
             <div class="col-1" id="right"></div>
         </div>

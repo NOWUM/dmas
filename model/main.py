@@ -49,6 +49,9 @@ def index():
             if typ == id.split('_')[0]:
                 counter += 1
         num.append(counter)
+
+    grid = False
+
     return render_template('index.html', **locals())
 
 
@@ -112,6 +115,14 @@ def buildAreas():
             subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i'
                              % (i), cwd=path, shell=True)
 
+    if request.form['grd'] == 'true':
+        pass
+
+    if request.form['brd'] == 'true':
+        lands = []
+        for land in lands:
+            pass
+
     return 'OK'
 
 
@@ -140,6 +151,7 @@ def simulation(start, end, valid=True):
             print('Error in Day Ahead calculation ' + str(date.date()))
             print(e)
         try:
+            #send.basic_publish(exchange='Marktet', routing_key='', body='powerFlow ' + str(date))
             #send.basic_publish(exchange='Market', routing_key='', body='opt_actual ' + str(date))
             #balEnergyClearing(mongoCon, influxCon, date)
             send.basic_publish(exchange='Market', routing_key='', body='result_actual ' + str(date))

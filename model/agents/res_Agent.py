@@ -46,13 +46,9 @@ class resAgent(basicAgent):
         self.logger.info('Biomassekraftwerke hinzugefügt')
 
         # Einbindung der Winddaten aus der MongoDB
-        #windOnshore = self.ConnectionMongo.getWindOn(plz)
-        #total = 0
-        #for key, system in windOnshore.items():
-        #    self.portfolio.addToPortfolio(key, {key: system})
-        #    total += system['maxPower']
-        #self.portfolio.capacities['wind'] = np.round(total / 1000, 2)
-
+        for key, value in self.ConnectionMongo.getWind().items():
+            self.portfolio.capacities['wind'] += value['maxPower']
+            self.portfolio.addToPortfolio(key, {key: value})
         self.logger.info('Winderzeugung hinzugefügt')
 
         # Parameter für die Handelsstrategie am Day Ahead Markt

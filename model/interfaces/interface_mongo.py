@@ -96,22 +96,18 @@ class mongoInterface:
                     Erneuerbare Energien
     """
 
-    # Wind Onshore Anlagen im entsprechenden PLZ-Gebiet
-    def getWindOn(self, area):
-        dict_ = {}
+    # Wind  Anlagen im entsprechenden PLZ-Gebiet
+    def getWind(self):
         try:
-            tech = json.load(open(r'./data/Tech_Wind.json'))
-            wind = self.tableStructur.find_one({"_id": area})['windOnshore']
-            for key, system in wind.items():
-                generator = dict(maxPower=system['maxPower'],
-                                 height=system['height'], typ='wind',
-                                 fuel='wind')
-                generator.update(tech['5'])                                        # Daten der Einspeisekurve
-                dict_.update({key: generator})
-            return dict_
-        except Exception as e:
-            print(e)
-            return dict_
+            wind = self.tableStructur.find_one({'_id': 'WindSystems'})
+            systems = {}
+            for key, value in wind.items():
+                if key != '_id':
+                    value.update({'typ': 'wind'})
+                    systems.update({key: value})
+            return systems
+        except:
+            return {}
 
     # Freiflächen Photovoltaik im entsprechenden PLZ-Gebiet
     def getPvParks(self):
