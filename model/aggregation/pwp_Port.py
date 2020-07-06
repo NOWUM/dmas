@@ -114,6 +114,23 @@ class pwpPort(port_model):
         fuel = np.zeros_like(self.t)
         try:
             self.m.optimize()
+
+            generation = dict(lignite=np.zeros_like(self.t),          # Erzeugung aus Braunkohle
+                              coal=np.zeros_like(self.t),             # Erzeugung aus Steinkohle
+                              gas=np.zeros_like(self.t),              # Erzeugung aus Erdgas
+                              nuc=np.zeros_like(self.t),              # Erzeugung aus Kernkraft
+                              water=np.zeros_like(self.t))
+
+            for key, value in self.energySystems.items():
+                value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
+                generation[value['fuel']] = [generation[value['fuel']][i] + value['model'].power[i] for i in self.t]
+                value['model'].volume = np.zeros_like(power)
+                if value['typ'] == 'storage':
+                    value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
+
+            for key, value in generation.items():
+                self.generation[key] = value
+
             for key, value in self.energySystems.items():
                 if value['typ'] == 'powerPlant':
                     value['P0'] = [np.round(self.m.getVarByName('P_%s[%i]' % (key, i)).x, 2) for i in self.t[:24]][-1]
