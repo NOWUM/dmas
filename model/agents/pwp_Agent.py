@@ -144,7 +144,7 @@ class pwpAgent(basicAgent):
         prc = np.asarray(price['power'][:24]).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
 
         # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-        if self.qLearn.fitted and (self.espilion > np.random.uniform(0, 1)):
+        if self.qLearn.fitted: # and (self.espilion > np.random.uniform(0, 1)):
             wnd = np.asarray(weather['wind'][:24]).reshape((-1, 1))                          # Wind              [m/s]
             rad = np.asarray(weather['dir'][:24]).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
             tmp = np.asarray(weather['temp'][:24]).reshape((-1, 1))                          # Temperatur        [°C]

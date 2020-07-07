@@ -133,7 +133,7 @@ class resAgent(basicAgent):
         prc = np.asarray(price['power']).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
 
         # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-        if self.qLearn.fitted and (self.espilion > np.random.uniform(0, 1)):
+        if self.qLearn.fitted: # and (self.espilion < np.random.uniform(0, 1)):
             wnd = np.asarray(weather['wind']).reshape((-1, 1))                          # Wind              [m/s]
             rad = np.asarray(weather['dir']).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
             tmp = np.asarray(weather['temp']).reshape((-1, 1))                          # Temperatur        [°C]
@@ -176,7 +176,7 @@ class resAgent(basicAgent):
 
     def post_dayAhead(self):
         """Reaktion auf  die DayAhead-Ergebnisse"""
-        json_body = []                                                          # Liste zur Speicherung der Ergebnisse in der InfluxDB
+        json_body = []                                                              # Liste zur Speicherung der Ergebnisse in der InfluxDB
 
         # Speichern der Daten und Aktionen, um aus diesen zu lernen
         self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))

@@ -5,7 +5,8 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', 'MAS_2020')
+    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', 'MAS2020')
+    influx.create_database('MASValidation')
     table = 0
     validData = pd.read_excel(r'./data/Valid_Data.xlsx', sheet_name=table)
     # validData.index = pd.date_range(start='2019-01-01', freq='15min', periods=len(validData))
@@ -23,7 +24,8 @@ if __name__ == "__main__":
                     "fields": dict(powerWater=validData.loc[index, 'Laufwasser [MW]'],
                                    powerBio=validData.loc[index, 'Biomasse [MW]'],
                                    powerSolar=validData.loc[index, 'Solar [MW]'],
-                                   powerWind=validData.loc[index,'Wind [MW]'],
+                                   powerWindOnshore=validData.loc[index,'Wind Onshore[MW]'],
+                                   powerWindOffshore=validData.loc[index, 'Wind Offshore [MW]'],
                                    powerDemand=validData.loc[index,'Last [MW]'],
                                    powerNuc=validData.loc[index, 'Nuk [MW]'],
                                    powerCoal=validData.loc[index, 'Steinkohle [MW]'],

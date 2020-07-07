@@ -360,7 +360,7 @@ if __name__ == '__main__':
         totalPower = 0
         for key, value in allTurbines.items():
            totalPower += value['maxPower']
-        # print(totalPower/10**6)
+        print(totalPower/10**6)
 
         areas = [[] for _ in range(1, 100)]
         counter = 0
@@ -395,12 +395,15 @@ if __name__ == '__main__':
             query = {"_id": 'WindSystems'}
             d = {"$set": dict_}
             try:
-                tableStructur.update_one(filter=query, update=d, upsert=True)
+                # tableStructur.update_one(filter=query, update=d, upsert=True)
+                pass
             except Exception as e:
                 print(e)
 
     if offhsore:
         df = pd.read_excel(r'./data/toBuildData/windOffshore.xlsx', index_col=0)
+
+        totalPower = 0
 
         df18 = df[df['Plz'] == 18000]
         df26 = df[df['Plz'] == 26000]
@@ -421,9 +424,11 @@ if __name__ == '__main__':
             dict_.update({'plz' + str(18) + 'systemOff' + str(nameCounter): value})
             nameCounter += 1
 
+            totalPower += element[1].iloc[5]
+
         query = {"_id": 'WindSystems'}
         d = {"$set": dict_}
-        tableStructur.update_one(filter=query, update=d, upsert=True)
+        # tableStructur.update_one(filter=query, update=d, upsert=True)
 
         tableStructur = structDB["PLZ_26"]
         dict_ = {}
@@ -437,7 +442,9 @@ if __name__ == '__main__':
                         'land': False}
             dict_.update({'plz' + str(26) + 'systemOff' + str(nameCounter): value})
             nameCounter += 1
-
+            totalPower += element[1].iloc[5]
         query = {"_id": 'WindSystems'}
         d = {"$set": dict_}
-        tableStructur.update_one(filter=query, update=d, upsert=True)
+        # tableStructur.update_one(filter=query, update=d, upsert=True)
+
+        print(totalPower / 10 ** 6)

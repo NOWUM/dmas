@@ -50,7 +50,7 @@ class wind_model(energySystem):
                                                  )
                 #if is needed to check if there is a power_curve (or if there are data 4 the turbine_type)
                 if (self.__windTurbine.power_curve['value'] is None):
-                    1+1
+                    pass
 
             except Exception as e:
                 # default turbine typ E-82 by Enercon TODO
