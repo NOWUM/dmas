@@ -360,7 +360,7 @@ if __name__ == '__main__':
         totalPower = 0
         for key, value in allTurbines.items():
            totalPower += value['maxPower']
-        print(totalPower/10**6)
+        # print(totalPower/10**6)
 
         areas = [[] for _ in range(1, 100)]
         counter = 0
@@ -395,8 +395,7 @@ if __name__ == '__main__':
             query = {"_id": 'WindSystems'}
             d = {"$set": dict_}
             try:
-                # tableStructur.update_one(filter=query, update=d, upsert=True)
-                pass
+                tableStructur.update_one(filter=query, update=d, upsert=True)
             except Exception as e:
                 print(e)
 
@@ -428,7 +427,7 @@ if __name__ == '__main__':
 
         query = {"_id": 'WindSystems'}
         d = {"$set": dict_}
-        # tableStructur.update_one(filter=query, update=d, upsert=True)
+        tableStructur.update_one(filter=query, update=d, upsert=True)
 
         tableStructur = structDB["PLZ_26"]
         dict_ = {}
@@ -445,6 +444,6 @@ if __name__ == '__main__':
             totalPower += element[1].iloc[5]
         query = {"_id": 'WindSystems'}
         d = {"$set": dict_}
-        # tableStructur.update_one(filter=query, update=d, upsert=True)
+        tableStructur.update_one(filter=query, update=d, upsert=True)
 
         print(totalPower / 10 ** 6)

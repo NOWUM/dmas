@@ -55,7 +55,7 @@ class resAgent(basicAgent):
         self.maxPrice = np.zeros(24)                                                        # Maximalgebote
         self.minPrice = np.zeros(24)                                                        # Minimalgebote
         self.actions = np.zeros(24)                                                         # Steigung der Gebotsgeraden für jede Stunde
-        self.espilion = 0.15                                                                # Faktor zum Abtasten der Möglichkeiten
+        self.espilion = 0.7                                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))  # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * (self.portfolio.capacities['wind']
@@ -263,7 +263,7 @@ class resAgent(basicAgent):
 
                 self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
                                                                                  # Zukunft nicht mehr so schnell)
-                self.espilion = max(0.999*self.espilion, 0.1)                    # Epsilion * 0.999 (mit steigender Simulationdauer
+                self.espilion = max(0.99*self.espilion, 0.1)                     # Epsilion * 0.999 (mit steigender Simulationdauer
                                                                                  # sind viele Bereiche schon bekannt
         else:
             self.delay -= 1

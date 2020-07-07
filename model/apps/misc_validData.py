@@ -5,7 +5,7 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', 'MAS2020_1')
+    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', 'MAS2020_2')
     influx.create_database('MASValidation')
     table = 1
     validData = pd.read_excel(r'./data/Valid_Data.xlsx', sheet_name=table)
