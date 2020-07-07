@@ -41,13 +41,13 @@ class pwpAgent(basicAgent):
         self.maxPrice = np.zeros(24)                                                            # Maximalgebote
         self.minPrice = np.zeros(24)                                                            # Minimalgenbote
         self.actions = np.zeros(24)                                                             # Steigung der Gebotsgeraden für jede Stunde
-        self.espilion = 0.3                                                                     # Faktor zum Abtasten der Möglichkeiten
+        self.espilion = 0.15                                                                    # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                                           # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))      # Lernalgorithmus im x Tage Rythmus
         self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * self.portfolio.capacities['fossil']
-        self.risk = np.random.choice([-3, -2, -1, 0, 1, 2, 3])
+        self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
 
-        if len(self.portfolio.energySystems) == 0 or plz==79:           # TODO: Check PLZ Gebiet 79
+        if len(self.portfolio.energySystems) == 0:
             self.logger.info('Keine Kraftwerke im PLZ-Gebiet vorhanden')
             exit()
 
@@ -144,7 +144,7 @@ class pwpAgent(basicAgent):
         prc = np.asarray(price['power'][:24]).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
 
         # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-        if self.qLearn.fitted: # and (self.espilion > np.random.uniform(0, 1)):
+        if self.qLearn.fitted and (self.espilion < np.random.uniform(0, 1)):
             wnd = np.asarray(weather['wind'][:24]).reshape((-1, 1))                          # Wind              [m/s]
             rad = np.asarray(weather['dir'][:24]).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
             tmp = np.asarray(weather['temp'][:24]).reshape((-1, 1))                          # Temperatur        [°C]

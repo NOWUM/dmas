@@ -5,9 +5,9 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', 'MAS2020')
+    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', 'MAS2020_1')
     influx.create_database('MASValidation')
-    table = 0
+    table = 1
     validData = pd.read_excel(r'./data/Valid_Data.xlsx', sheet_name=table)
     # validData.index = pd.date_range(start='2019-01-01', freq='15min', periods=len(validData))
 
