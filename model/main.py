@@ -8,6 +8,7 @@ import psutil
 # from apps.routine_Balancing import balPowerClearing, balEnergyClearing
 from apps.routine_DayAhead import dayAheadClearing
 from apps.grid_Model import gridModel
+from apps.misc_validData import writeValidData
 from flask import Flask, render_template, request
 from flask_cors import cross_origin
 from interfaces.interface_Influx import influxInterface as influxCon
@@ -72,6 +73,7 @@ def meritOrder():
 
     return render_template('meritOrder.html', **locals())
 
+
 @app.route('/meritOrder/plot', methods = ['GET'])
 @cross_origin()
 def plotMeritOrder():
@@ -129,6 +131,10 @@ def buildAreas():
 # ----- Simulation Task -----
 def simulation(start, end, valid=True):
     influxCon.generateWeather(start, end  + pd.DateOffset(days=1), valid)
+
+    if valid:
+        writeValidData(database, 0)
+        writeValidData(database, 1)
 
     for date in pd.date_range(start=start, end=end, freq='D'):
 

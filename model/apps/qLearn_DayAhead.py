@@ -18,7 +18,7 @@ class qLeran:
         # -- Action Size (70)
         self.act = np.array([]).reshape((-1, 1))
         # -- Reward Values
-        self.qus = 10*np.ones((25, 7))
+        self.qus = np.random.uniform(0, 1, (25, 7))
 
         self.fitted = False
         self.counter = 0

@@ -58,8 +58,7 @@ class resAgent(basicAgent):
         self.espilion = 0.7                                                                 # Faktor zum Abtasten der Möglichkeiten
         self.lr = 0.8                                                                       # Lernrate des Q-Learning-Einsatzes
         self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))  # Lernalgorithmus im x Tage Rythmus
-        self.qLearn.qus[:, 0] = self.qLearn.qus[:, 0] * (self.portfolio.capacities['wind']
-                                                      + self.portfolio.capacities['solar'])
+        self.qLearn.qus *= 0.5 * (self.portfolio.capacities['wind'] + self.portfolio.capacities['solar'])
 
         self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
 
