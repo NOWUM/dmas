@@ -8,7 +8,7 @@ import psutil
 # from apps.routine_Balancing import balPowerClearing, balEnergyClearing
 from apps.routine_DayAhead import dayAheadClearing
 from apps.grid_Model import gridModel
-from apps.misc_validData import writeValidData
+from apps.misc_validData import writeValidData, writeDayAheadError
 from flask import Flask, render_template, request
 from flask_cors import cross_origin
 from interfaces.interface_Influx import influxInterface as influxCon
@@ -130,7 +130,7 @@ def buildAreas():
 
 # ----- Simulation Task -----
 def simulation(start, end, valid=True):
-    influxCon.generateWeather(start, end  + pd.DateOffset(days=1), valid)
+    influxCon.generateWeather(start, end + pd.DateOffset(days=1), valid)
 
     if valid:
         writeValidData(database, 0)
@@ -153,6 +153,8 @@ def simulation(start, end, valid=True):
             dayAheadClearing(mongoCon, influxCon, date)
             send.basic_publish(exchange='Market', routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
+            if valid:
+                writeDayAheadError(database, date)
         except Exception as e:
             print('Error in Day Ahead calculation ' + str(date.date()))
             print(e)
