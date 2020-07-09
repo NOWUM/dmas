@@ -22,6 +22,7 @@ class resPort(port_model):
                 height = data['height']
             data.update(dict(model=wind_model(turbine_type=data['turbine_type'],
                                               hub_height=height,
+                                              nominal_power_4turbine_without_power_curve=data['maxPower'],
                                               rotor_diameter=data['diameter'],
                                               t=self.t,                                 # Array mit Zeitschritten
                                               T=self.T,                                 # Anzahl an Zeitschritten

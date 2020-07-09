@@ -54,4 +54,6 @@ def writeValidData(database, table):
         influx.write_points(json_body)
 
 if __name__ == "__main__":
-    pass
+
+    writeValidData('MAS2020_3', 0)
+    writeValidData('MAS2020_3', 1)
