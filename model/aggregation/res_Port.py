@@ -20,6 +20,8 @@ class resPort(port_model):
                 height = 112
             else:
                 height = data['height']
+
+            print(name)
             data.update(dict(model=wind_model(turbine_type=data['turbine_type'],
                                               hub_height=height,
                                               nominal_power_4turbine_without_power_curve=data['maxPower'],
