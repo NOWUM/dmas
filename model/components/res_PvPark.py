@@ -49,7 +49,7 @@ class solar_model(es):
             self.generation['solar'] = self.number * np.asarray([min(p, 0.7 * data['maxPower']) for p in power]).reshape((-1,))
 
             # Strombedarf (Einspeisung) [MW]
-            self.power = self.number * np.asarray(self.generation['solar'], np.float).reshape((-1,))
+            self.power = np.asarray(self.generation['solar'], np.float).reshape((-1,))
         else:
             self.generation['solar'] = np.zeros_like(self.t)
             self.power = np.zeros_like(self.t)
