@@ -23,7 +23,10 @@ class resAgent(basicAgent):
 
         # Aufbau der Freiflächen PV und gewerblich genutzten Anlagen
         for key, value in self.ConnectionMongo.getPvParks().items():
-            self.portfolio.capacities['solar'] += value['maxPower']
+            if value['typ'] != 'PV70':
+                self.portfolio.capacities['solar'] += value['maxPower']
+            else:
+                self.portfolio.capacities['solar'] += value['maxPower'] * value['number']
             self.portfolio.addToPortfolio(key, {key: value})
         self.logger.info('PV(Gewerbe)-Erzeugung hinzugefügt')
 
@@ -132,14 +135,18 @@ class resAgent(basicAgent):
         prc = np.asarray(price['power']).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
 
         # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-        if self.qLearn.fitted and (self.espilion < np.random.uniform(0, 1)):
+        if self.qLearn.fitted:
             wnd = np.asarray(weather['wind']).reshape((-1, 1))                          # Wind              [m/s]
             rad = np.asarray(weather['dir']).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
             tmp = np.asarray(weather['temp']).reshape((-1, 1))                          # Temperatur        [°C]
             dem = np.asarray(demand).reshape((-1, 1))                                   # Lastprognose      [MW]
-            actions = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
+            actionsBest = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
 
-        self.actions = actions                                                          # abschpeichern der Aktionen
+            for i in range(24):
+                if self.espilion < np.random.uniform(0, 1):
+                    actions[i] = actionsBest[i]
+
+        self.actions = np.asarray(actions).reshape(24,)                                                            # abschpeichern der Aktionen
 
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
@@ -262,7 +269,7 @@ class resAgent(basicAgent):
 
                 self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
                                                                                  # Zukunft nicht mehr so schnell)
-                self.espilion = max(0.99*self.espilion, 0.1)                     # Epsilion * 0.999 (mit steigender Simulationdauer
+                self.espilion = max(0.99*self.espilion, 0.01)                    # Epsilion * 0.999 (mit steigender Simulationdauer
                                                                                  # sind viele Bereiche schon bekannt
         else:
             self.delay -= 1

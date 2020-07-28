@@ -38,10 +38,15 @@ class pv_model(es):
 
         self.generation['solar'] = self.mc.ac.to_numpy() / 1000                                     # PV-Erzeugung pro Stunde in [kW]
         self.demand['power'] = self.getPowerDemand(data, date)                                      # Stromverbrauch pro Stunde in [kW]
-        self.demand['heat'] = np.asarray(self.getHeatDemand(data, ts)).reshape((-1,))               # Wärmebedarf pro Stunde in [KW
+        self.demand['heat'] = np.asarray(self.getHeatDemand(data, ts)).reshape((-1,))               # Wärmebedarf pro Stunde in [KW]
 
         # Verbleibene Last, die es zu minimieren gilt --> maximiere den Eigenverbrauch
         residuum = self.getPowerDemand(data, date) - self.generation['solar']
+        for i in self.t:
+            if residuum[i] < -0.7 * data['PV']['maxPower']:                                               # Einspeisung > 70 % der Nennleistung
+                residuum[i] = -0.7 * data['PV']['maxPower']                                               # --> Kappung
+                self.generation['solar'][i] = self.demand['power'][i] + 0.7 * data['PV']['maxPower']     # Erzeugung PV = 70 % der Nennleistung + Aktueller Bedarf
+
         # Strombedarf (Einspeisung) [kW]
         self.power = np.asarray(residuum, np.float).reshape((-1,))
 

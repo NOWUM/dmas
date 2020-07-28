@@ -77,6 +77,12 @@ class pvbat_model(es):
 
         data['Bat']['v0'] = vt                                                                  # Atkueller Speicherfüllstand in [kWh]
         self.volume = volume                                                                    # Speicherfüllstand [kWh]
+
+        for i in self.t:
+            if grid[i] < -0.7 * data['PV']['maxPower']:                                               # Einspeisung > 70 % der Nennleistung
+                grid[i] = -0.7 * data['PV']['maxPower']                                               # --> Kappung
+                self.generation['solar'][i] = self.demand['power'][i] + 0.7 * data['PV']['maxPower']  # Erzeugung PV = 70 % der Nennleistung + Aktueller Bedarf
+
         self.power = np.asarray(grid, np.float).reshape((-1,))                                  # Strombedarf [kW]
 
 if __name__ == "__main__":

@@ -144,13 +144,18 @@ class pwpAgent(basicAgent):
         prc = np.asarray(price['power'][:24]).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
 
         # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-        if self.qLearn.fitted and (self.espilion < np.random.uniform(0, 1)):
-            wnd = np.asarray(weather['wind'][:24]).reshape((-1, 1))                          # Wind              [m/s]
-            rad = np.asarray(weather['dir'][:24]).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
-            tmp = np.asarray(weather['temp'][:24]).reshape((-1, 1))                          # Temperatur        [°C]
-            dem = np.asarray(demand[:24]).reshape((-1, 1))                                   # Lastprognose      [MW]
-            actions = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
-        self.actions = actions                                                               # abschpeichern der Aktionen
+        if self.qLearn.fitted:
+            wnd = np.asarray(weather['wind'][:24]).reshape((-1, 1))     # Wind              [m/s]
+            rad = np.asarray(weather['dir'][:24]).reshape((-1, 1))      # Dirkete Strahlung [W/m²]
+            tmp = np.asarray(weather['temp'][:24]).reshape((-1, 1))     # Temperatur        [°C]
+            dem = np.asarray(demand[:24]).reshape((-1, 1))              # Lastprognose      [MW]
+            actionsBest = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
+
+            for i in range(24):
+                if self.espilion < np.random.uniform(0, 1):
+                    actions[i] = actionsBest[i]
+
+        self.actions = np.asarray(actions).reshape(24,)                                                              # abschpeichern der Aktionen
 
         # Berechnung der Prognosegüte
         var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
@@ -331,7 +336,7 @@ class pwpAgent(basicAgent):
 
             self.lr = max(self.lr*0.9, 0.4)                                 # Lernrate * 0.9 (Annahme Markt ändert sich
                                                                             # Zukunft nicht mehr so schnell)
-            self.espilion = max(0.99*self.espilion, 0.1)                    # Epsilion * 0.9 (mit steigender Simulationdauer
+            self.espilion = max(0.99*self.espilion, 0.01)                   # Epsilion * 0.9 (mit steigender Simulationdauer
                                                                             # sind viele Bereiche schon bekannt
         else:
             self.delay -= 1

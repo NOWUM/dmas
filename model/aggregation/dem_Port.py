@@ -74,7 +74,7 @@ class demPort(port_model):
         power = np.zeros_like(self.t)               # Leistungsbilanz des Gebietes
 
         try:
-            # Leitungsbilanz
+            # Leistungsbilanz
             power = np.asarray([(value['model'].power * (value['num'] - value['EEG'])) if 'Pv' in key else value['model'].power
                                 for key, value in self.energySystems.items()], np.float)
             power = np.sum(power, axis=0)

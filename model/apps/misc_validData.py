@@ -13,14 +13,14 @@ def writeValidData(database, table):
 
     if table == 0:
         json_body = []
-        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=35040, freq='15min')
+        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=35040, freq='15min', tz='CET')
         index = 0
         for date in dateRange:
             json_body.append(
                 {
                     "measurement": "validation",
                     "tags": {},
-                    "time": date.isoformat() + 'Z',
+                    "time": date.isoformat().split('+')[0] + 'Z',
                     "fields": dict(powerWater=validData.loc[index, 'Laufwasser [MW]'],
                                    powerBio=validData.loc[index, 'Biomasse [MW]'],
                                    powerSolar=validData.loc[index, 'Solar [MW]'],
@@ -46,7 +46,7 @@ def writeValidData(database, table):
                 {
                     "measurement": "validation",
                     "tags": {},
-                    "time": date.isoformat() + 'Z',
+                    "time": date.isoformat().split('+')[0] + 'Z',
                     "fields": dict(price=validData.loc[index, 'Preis'])
                 }
             )
@@ -104,8 +104,8 @@ def writeDayAheadError(database, date):
 
 if __name__ == "__main__":
 
-    for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
-        writeDayAheadError('MAS2020_4', date)
+    #for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
+    #    writeDayAheadError('MAS2020_4', date)
 
-    #writeValidData('MAS2020_3', 0)
-    #writeValidData('MAS2020_3', 1)
+    writeValidData('MAS2020_5', 0)
+    writeValidData('MAS2020_5', 1)

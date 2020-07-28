@@ -118,7 +118,7 @@ class mongoInterface:
             for key, value in pv.items():
                 if key != '_id':
                     value.update({'position': [position['lat'], position['lon']]})
-                    systems.update({key:value})
+                    systems.update({key: value})
             return systems
         except:
             return {}

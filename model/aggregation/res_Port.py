@@ -21,7 +21,6 @@ class resPort(port_model):
             else:
                 height = data['height']
 
-            print(name)
             data.update(dict(model=wind_model(turbine_type=data['turbine_type'],
                                               hub_height=height,
                                               nominal_power_4turbine_without_power_curve=data['maxPower'],
@@ -47,6 +46,18 @@ class resPort(port_model):
                                                pdc0=data['maxPower'],                   # Nennleistung
                                                azimuth=data['azimuth'],                 # Ausrichtung (180° = Süd)
                                                tilt=data['tilt'],                       # Dachneigung
+                                               t=self.t,                                # Array mit Zeitschritten
+                                               T=self.T,                                # Anzahl an Zeitschritten
+                                               dt=self.dt)))                            # Zeitschrittlänge
+
+        # Gewerblich genutzte PV mit 70 % Begrenzung
+        elif data['typ'] == 'PV70':
+            data.update(dict(model=solar_model(lat=data['position'][0],                 # Längengrad
+                                               lon=data['position'][1],                 # Breitengrad
+                                               pdc0=data['maxPower'],                   # Nennleistung
+                                               azimuth=data['azimuth'],                 # Ausrichtung (180° = Süd)
+                                               tilt=data['tilt'],                       # Dachneigung
+                                               number=data['number'],                   # Anzahl der Anlagen
                                                t=self.t,                                # Array mit Zeitschritten
                                                T=self.T,                                # Anzahl an Zeitschritten
                                                dt=self.dt)))                            # Zeitschrittlänge

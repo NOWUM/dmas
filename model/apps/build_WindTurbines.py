@@ -14,7 +14,7 @@ def findEnerconTyp(df, number, typs, powers, mapping):
 
     for typ in typs:
         try:
-            if 'E' in typ and str(number) in typ:
+            if 'E-' in typ and str(number) in typ:
                 lst.append(typ)
         except:
             print('invalid typ')
@@ -28,6 +28,7 @@ def findEnerconTyp(df, number, typs, powers, mapping):
             system.update({'manufacturer': mapping[row[1].iloc[2]],
                            'turbine_type': 'E' + str(number) + '/' + str(powers[index]),
                            'height': row[1].iloc[6],
+                           'diameter': row[1].iloc[7],
                            'maxPower': row[1].iloc[5],
                            'plz': row[1].iloc[8]})
             totalDict.update({row[1].iloc[0]: system})
@@ -55,6 +56,7 @@ def findVestasTyp(df, number, typs, powers, mapping):
             system.update({'manufacturer': mapping[row[1].iloc[2]],
                            'turbine_type': 'V' + str(number) + '/' + str(powers[index]),
                            'height': row[1].iloc[6],
+                           'diameter': row[1].iloc[7],
                            'maxPower': row[1].iloc[5],
                            'plz': row[1].iloc[8]})
             totalDict.update({row[1].iloc[0]: system})
@@ -82,6 +84,7 @@ def findNordexTyp(df, number, typs, powers, mapping):
             system.update({'manufacturer': mapping[row[1].iloc[2]],
                            'turbine_type': 'N' + str(number) + '/' + str(powers[index]),
                            'height': row[1].iloc[6],
+                           'diameter': row[1].iloc[7],
                            'maxPower': row[1].iloc[5],
                            'plz': row[1].iloc[8]})
             totalDict.update({row[1].iloc[0]: system})
@@ -115,6 +118,7 @@ def findSenvionTyp(df, number, typs, powers, mapping):
             system.update({'manufacturer': mapping[row[1].iloc[2]],
                            'turbine_type': start + str(number) + '/' + str(powers[index]),
                            'height': row[1].iloc[6],
+                           'diameter': row[1].iloc[7],
                            'maxPower': row[1].iloc[5],
                            'plz': row[1].iloc[8]})
             totalDict.update({row[1].iloc[0]: system})
@@ -143,6 +147,7 @@ def findEnoTyp(df, number, typs, powers, mapping):
                            'turbine_type': 'ENO' + str(number) + '/' + str(powers[index]),
                            'height': row[1].iloc[6],
                            'maxPower': row[1].iloc[5],
+                           'diameter': row[1].iloc[7],
                            'plz': row[1].iloc[8]})
             totalDict.update({row[1].iloc[0]: system})
 
@@ -170,6 +175,7 @@ def findGETyp(df, number, typs, powers, mapping):
                            'turbine_type': 'GE' + str(number) + '/' + str(powers[index]),
                            'height': row[1].iloc[6],
                            'maxPower': row[1].iloc[5],
+                           'diameter': row[1].iloc[7],
                            'plz': row[1].iloc[8]})
             totalDict.update({row[1].iloc[0]: system})
 
@@ -196,6 +202,7 @@ def findSiemensTyp(df, number, typs, powers, mapping):
             system.update({'manufacturer': mapping[row[1].iloc[2]],
                            'turbine_type': 'SWT' + str(number) + '/' + str(powers[index]),
                            'height': row[1].iloc[6],
+                           'diameter': row[1].iloc[7],
                            'maxPower': row[1].iloc[5],
                            'plz': row[1].iloc[8]})
             totalDict.update({row[1].iloc[0]: system})
@@ -209,6 +216,7 @@ def setDefaultTyp(df, typ, com):
         system.update({'manufacturer': com,
                        'turbine_type': typ,
                        'height': row[1].iloc[6],
+                       'diameter': row[1].iloc[7],
                        'maxPower': row[1].iloc[5],
                        'plz': row[1].iloc[8]})
         totalDict.update({row[1].iloc[0]: system})
@@ -350,9 +358,13 @@ if __name__ == '__main__':
         for i in notUsed:
             element = df[df['Id'] == i]
             system = {}
+
+            typ = np.random.choice(['E-115/3000', 'E-82/3000', 'N131/3000', 'S122/3000', 'V126/3000', 'V90/3000'])
+
             system.update({'manufacturer': 'Enercon',
-                           'turbine_type': 'E-115/3000',
+                           'turbine_type': typ,
                            'height': element.iloc[0, 6],
+                           'diameter': 102,
                            'maxPower': 3000,
                            'plz': element.iloc[0, 8]})
             allTurbines.update({i: system})
@@ -385,12 +397,12 @@ if __name__ == '__main__':
             query = {"_id": 'WindSystems'}
             tableStructur.delete_one(query)
             dict_ = {}
+            nameCounter = 0
             for element in areas[i]:
-                nameCounter = 0
                 for key, value in element.items():
                     value.update({'plz': int(value['plz'])})
                     value.update({'land': True})
-                    dict_.update({'plz' + str(i+1) + 'systemOn' + str(nameCounter): value})
+                    dict_.update({'plz' + str(i+1) + 'onSystem' + str(nameCounter): value})
                     nameCounter += 1
             query = {"_id": 'WindSystems'}
             d = {"$set": dict_}
@@ -401,8 +413,6 @@ if __name__ == '__main__':
 
     if offhsore:
         df = pd.read_excel(r'./data/toBuildData/windOffshore.xlsx', index_col=0)
-
-        totalPower = 0
 
         df18 = df[df['Plz'] == 18000]
         df26 = df[df['Plz'] == 26000]
@@ -415,15 +425,14 @@ if __name__ == '__main__':
         tableStructur = structDB["PLZ_18"]
         for element in df18.iterrows():
             value = {   'manufacturer' : element[1].iloc[2],
-                        'turbine_tpye': element[1].iloc[4],
+                        'turbine_type': element[1].iloc[4],
                         'height': element[1].iloc[6],
+                        'diameter': element[1].iloc[7],
                         'maxPower': element[1].iloc[5],
                         'plz': element[1].iloc[8],
                         'land': False}
-            dict_.update({'plz' + str(18) + 'systemOff' + str(nameCounter): value})
+            dict_.update({'plz' + str(18) + 'offSystem' + str(nameCounter): value})
             nameCounter += 1
-
-            totalPower += element[1].iloc[5]
 
         query = {"_id": 'WindSystems'}
         d = {"$set": dict_}
@@ -434,16 +443,15 @@ if __name__ == '__main__':
         nameCounter = 0
         for element in df26.iterrows():
             value = {   'manufacturer' : element[1].iloc[2],
-                        'turbine_tpye': element[1].iloc[4],
+                        'turbine_type': element[1].iloc[4],
                         'height': element[1].iloc[6],
+                        'diameter': element[1].iloc[7],
                         'maxPower': element[1].iloc[5],
                         'plz': element[1].iloc[8],
                         'land': False}
             dict_.update({'plz' + str(26) + 'systemOff' + str(nameCounter): value})
             nameCounter += 1
-            totalPower += element[1].iloc[5]
+
         query = {"_id": 'WindSystems'}
         d = {"$set": dict_}
         tableStructur.update_one(filter=query, update=d, upsert=True)
-
-        print(totalPower / 10 ** 6)
