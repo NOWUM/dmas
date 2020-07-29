@@ -71,6 +71,26 @@ class resAgent(basicAgent):
             self.logger.info('Keine Energiesysteme im PLZ-Gebiet vorhanden')
             exit()
 
+        json_body = []
+        time = self.date                                                                # Zeitstempel = aktueller Tag
+
+        for i in range(365):
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
+                                 agent=self.name,                                       # Name des Agenten
+                                 area=self.plz),                                        # Plz Gebiet
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(capacitySolar=self.portfolio.capacities['solar'],
+                                   capacityWind=self.portfolio.capacities['wind'],
+                                   capacityWater=self.portfolio.capacities['water'],
+                                   capacityBio=self.portfolio.capacities['bio'])
+                }
+            )
+            time = time + pd.DateOffset(days=1)
+        self.ConnectionInflux.saveData(json_body)
+
         self.logger.info('Aufbau des Agenten abgeschlossen')
 
     def optimize_balancing(self):
@@ -224,6 +244,7 @@ class resAgent(basicAgent):
                     "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
                                  agent=self.name,                                       # Name des Agenten
                                  area=self.plz,                                         # Plz Gebiet
+                                 state=int(states(i)),
                                  timestamp='post_dayAhead'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(powerTotal=power[i],                                 # gesamte Einspeisung           [MW]
