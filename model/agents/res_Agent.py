@@ -244,7 +244,7 @@ class resAgent(basicAgent):
                     "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
                                  agent=self.name,                                       # Name des Agenten
                                  area=self.plz,                                         # Plz Gebiet
-                                 state=int(states(i)),
+                                 state=int(states[i]),
                                  timestamp='post_dayAhead'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(powerTotal=power[i],                                 # gesamte Einspeisung           [MW]

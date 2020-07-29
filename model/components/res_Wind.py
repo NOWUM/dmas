@@ -98,15 +98,13 @@ class wind_model(energySystem):
                                            temperature_hub_height=tempK)
         """
 
-
-        wind = np.asarray(ts['wind'])
         randomWind = []
         interval = np.linspace(0, 10, 11)
 
-        for ws in wind:
+        for ws in ts['wind']:
             for i in range(1, 11):
                 if interval[i-1] < ws <= interval[i]:
-                    randomWind.append(stats.exponweib(*list(self.weibullWind[i-1])))
+                    randomWind.append(stats.exponweib.rvs(*self.weibullWind[i-1]))
                     break
 
         wind = wind_speed.hellman(wind_speed=np.asarray(randomWind, dtype=np.float64),
