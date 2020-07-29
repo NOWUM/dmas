@@ -74,22 +74,22 @@ class resAgent(basicAgent):
         json_body = []
         time = self.date                                                                # Zeitstempel = aktueller Tag
 
-        for i in range(365):
-            json_body.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
-                                 agent=self.name,                                       # Name des Agenten
-                                 area=self.plz),                                        # Plz Gebiet
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(capacitySolar=self.portfolio.capacities['solar'],
-                                   capacityWind=self.portfolio.capacities['wind'],
-                                   capacityWater=self.portfolio.capacities['water'],
-                                   capacityBio=self.portfolio.capacities['bio'])
-                }
-            )
-            time = time + pd.DateOffset(days=1)
-        self.ConnectionInflux.saveData(json_body)
+        # for i in range(365):
+        #     json_body.append(
+        #         {
+        #             "measurement": 'Areas',
+        #             "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
+        #                          agent=self.name,                                       # Name des Agenten
+        #                          area=self.plz),                                        # Plz Gebiet
+        #             "time": time.isoformat() + 'Z',
+        #             "fields": dict(capacitySolar=self.portfolio.capacities['solar'],
+        #                            capacityWind=self.portfolio.capacities['wind'],
+        #                            capacityWater=self.portfolio.capacities['water'],
+        #                            capacityBio=self.portfolio.capacities['bio'])
+        #         }
+        #     )
+        #     time = time + pd.DateOffset(days=1)
+        # self.ConnectionInflux.saveData(json_body)
 
         self.logger.info('Aufbau des Agenten abgeschlossen')
 
