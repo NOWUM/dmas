@@ -99,10 +99,10 @@ class wind_model(energySystem):
         """
 
         randomWind = []
-        interval = np.linspace(0, 10, 11)
+        interval = [1,2,3,4,5,6,7,8,9,10]
 
         for ws in ts['wind']:
-            for i in range(1, 11):
+            for i in range(1, 10):
                 if interval[i-1] < ws <= interval[i]:
                     randomWind.append(stats.exponweib.rvs(*self.weibullWind[i-1]))
                     break
