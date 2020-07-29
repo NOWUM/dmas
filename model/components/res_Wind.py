@@ -1,5 +1,5 @@
 import os
-
+from scipy import stats
 import numpy as np
 from components.basic_EnergySystem import energySystem
 from windpowerlib import WindTurbine, power_output, wind_speed
@@ -38,7 +38,7 @@ class wind_model(energySystem):
 
         self.default_turbine_type = 'E-82/2300'
         self.__nominal_power_of_default_turbine = float(self.default_turbine_type.split('/')[1])
-
+        self.weibullWind = np.load(r'./data/Ref_Wind.array')
         df_lib_turbine_types = wt.get_turbine_types(print_out=False)
 
         if turbine_type in df_lib_turbine_types['turbine_type'].unique():
@@ -98,7 +98,16 @@ class wind_model(energySystem):
                                            temperature_hub_height=tempK)
         """
 
-        wind = wind_speed.hellman(wind_speed=np.asarray(ts['wind'], dtype=np.float64),
+        randomWind = []
+        interval = [1,2,3,4,5,6,7,8,9,10]
+
+        for ws in ts['wind']:
+            for i in range(1, 10):
+                if interval[i-1] < ws <= interval[i]:
+                    randomWind.append(stats.exponweib.rvs(*self.weibullWind[i-1]))
+                    break
+
+        wind = wind_speed.hellman(wind_speed=np.asarray(randomWind, dtype=np.float64),
                                   wind_speed_height=10.,
                                   hub_height=self.hub_height,
                                   roughness_length=None,
