@@ -108,7 +108,7 @@ class wind_model(energySystem):
                     break
             if ws > 9:
                 randomWind.append(stats.exponweib.rvs(*self.weibullWind[8]))
-            elif ws < 2:
+            elif ws <= 2:
                 randomWind.append(stats.exponweib.rvs(*self.weibullWind[0]))
 
         wind = wind_speed.hellman(wind_speed=np.asarray(randomWind, dtype=np.float64),
