@@ -99,13 +99,17 @@ class wind_model(energySystem):
         """
 
         randomWind = []
-        interval = [1,2,3,4,5,6,7,8,9,10]
+        interval = np.linspace(2, 9, 8)
 
         for ws in ts['wind']:
-            for i in range(1, 10):
-                if interval[i-1] < ws <= interval[i]:
-                    randomWind.append(stats.exponweib.rvs(*self.weibullWind[i-1]))
+            for i in range(1, 8):
+                if interval[i - 1] < ws <= interval[i]:
+                    randomWind.append(stats.exponweib.rvs(*self.weibullWind[i]))
                     break
+            if ws > 9:
+                randomWind.append(stats.exponweib.rvs(*self.weibullWind[8]))
+            elif ws < 2:
+                randomWind.append(stats.exponweib.rvs(*self.weibullWind[0]))
 
         wind = wind_speed.hellman(wind_speed=np.asarray(randomWind, dtype=np.float64),
                                   wind_speed_height=10.,
