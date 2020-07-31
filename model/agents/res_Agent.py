@@ -245,6 +245,7 @@ class resAgent(basicAgent):
                                  agent=self.name,                                       # Name des Agenten
                                  area=self.plz,                                         # Plz Gebiet
                                  state=int(states[i]),
+                                 action=int(self.actions[i]),
                                  timestamp='post_dayAhead'),
                     "time": time.isoformat() + 'Z',
                     "fields": dict(powerTotal=power[i],                                 # gesamte Einspeisung           [MW]

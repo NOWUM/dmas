@@ -55,23 +55,46 @@ class influxInterface:
             self.influx.switch_database(self.database)
             json_body = []
             for data in result['germany']:
-                json_body.append(
-                    {
-                        "measurement": "weather",
-                        "tags": {
-                            "geohash": data['geohash'],
-                            "plz": self.maphash.loc[self.maphash.index==data['geohash'], 'PLZ'].to_numpy()[0]
-                        },
-                        "time": str(date.year) + data['time'][4:],
-                        "fields": {
-                            "GHI": np.float(data['GHI']),               # Globalstrahlung           [W/m²]
-                            "DNI": np.float(data['DNI']),               # Direkte Strahlung         [W/m²]
-                            "DHI": np.float(data['DHI']),               # Diffuse Stahlung          [W/m²]
-                            "TAmb": np.float(data['TAmb']),             # Temperatur                [°C]
-                            "Ws": np.float(data['Ws'])                  # Windgeschwindigkeit       [m/s] (2m)
+                if data['TAmb'] != None:
+                    json_body.append(
+                        {
+                            "measurement": "weather",
+                            "tags": {
+                                "geohash": data['geohash'],
+                                "plz": self.maphash.loc[self.maphash.index == data['geohash'], 'PLZ'].to_numpy()[0]
+                            },
+                            "time": str(date.year) + data['time'][4:],
+                            "fields": {
+                                "GHI": np.float(data['GHI']),               # Globalstrahlung           [W/m²]
+                                "DNI": np.float(data['DNI']),               # Direkte Strahlung         [W/m²]
+                                "DHI": np.float(data['DHI']),               # Diffuse Stahlung          [W/m²]
+                                "TAmb": np.float(data['TAmb'])              # Temperatur                [°C]
+                            }
                         }
-                    }
-                )
+                    )
+            self.influx.write_points(json_body)
+            self.influx.switch_database('weather')
+            query = 'select mean("Ws") from "germany" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h), "area"  fill(0)' %(
+            start, end)
+            result = self.influx.query(query)
+            self.influx.switch_database(self.database)
+            json_body = []
+            for data in result.items():
+                if data[0][1]['area'] != '':
+                    for t in data[1]:
+                        json_body.append(
+                            {
+                                "measurement": "weather",
+                                "tags": {
+                                    "geohash": self.maphash.loc[self.maphash['PLZ'] == int(data[0][1]['area']), :].index[0],
+                                    "plz": int(data[0][1]['area'])
+                                },
+                                "time": str(date.year) + t['time'][4:],
+                                  "fields": {
+                                    "Ws": np.float(t['mean'])
+                                }
+                            }
+                        )
             self.influx.write_points(json_body)
             print('Wetter für %s geschrieben' % date.date())
 
@@ -200,7 +223,7 @@ class influxInterface:
         if result.__len__() > 0:
             mcp = np.asarray([point['sum'] for point in result.get_points()])
         else:
-            mcp =  np.zeros(days*24)
+            mcp = np.zeros(days*24)
         return np.asarray([m if m is not None else 0 for m in mcp]).reshape((-1, 1))
 
 

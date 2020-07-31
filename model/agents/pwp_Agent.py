@@ -286,7 +286,8 @@ class pwpAgent(basicAgent):
                     "tags": dict(typ='PWP',                                                 # Typ konventionelle Kraftwerke
                                  agent=self.name,                                           # Name des Agenten
                                  area=self.plz,                                             # Plz Gebiet
-                                 state=int(states[i]),
+                                 state=int(states[index]),
+                                 action=int(self.actions[index]),
                                  timestamp='post_dayAhead'),                                # Zeitstempel der Tagesplanung
                     "time": time.isoformat() + 'Z',
                     "fields": dict(powerTotal=power_dayAhead[i],                            # gesamte geplante Leistung     [MW]
