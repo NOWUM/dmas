@@ -1,5 +1,7 @@
 # Requirements
 
+**Software**
+
 | Programm | Link |
 | ------ | ------ |
 | Python 3.7 / 3.8           | / |
@@ -11,6 +13,30 @@
 | Erlang Server             | https://www.rabbitmq.com/which-erlang.html |
 
 install python modules: `pip3 install -r requirements.txt`
+
+
+**Hardware**
+
+Agents:
+- pwp (conventionell power plants) 250 MB RAM per Agent
+- res (renewable energy systems) 400 MB RAM per Agent
+- dem (demand systems) 300 MB RAM per Agent
+- net (grid operation) unkown
+
+Germany:
+For whole Germany with 100 Postleitzahl areas
+
+- pwp ~ 25 GB RAM 
+- res ~ 40 GB RAM 
+- dem ~ 30 GB RAM 
+- net ~ unkown
+
+Others:
+- InfluxDB ~ unkown
+- Clearing ~ unkown
+- Misc ~ unkown
+
+
 
 # Install Gurobi on Linux System
 
