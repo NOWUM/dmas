@@ -24,8 +24,6 @@ install python modules: `pip3 install -r requirements.txt`
 - net (grid operation) unkown
 
 **Germany:**
-For whole Germany with 100 Postleitzahl areas
-
 - pwp ~ 25 GB RAM 
 - res ~ 40 GB RAM 
 - dem ~ 30 GB RAM 
