@@ -55,12 +55,12 @@ class pwpPort(port_model):
                 # objective function (max cashflow)
                 self.m.setObjective(profit - quicksum(fuel[i] + emission[i] for i in self.t), GRB.MAXIMIZE)
         else:
-            powerReBAP = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='ReBA', lb=-GRB.INFINITY, ub=GRB.INFINITY)
+            powerReBAP = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='ReBA', lb=0, ub=GRB.INFINITY)
             minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
             plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
             self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
             self.m.addConstrs(minus[i] + plus[i] == powerReBAP[i] for i in self.t)
-            self.m.setObjective(quicksum(self.fuel[i] + self.emisson[i] + powerReBAP[i] * (self.prices['power'][i] + 35) for i in self.t), GRB.MINIMIZE)
+            self.m.setObjective(quicksum(self.fuel[i] + self.emisson[i] + powerReBAP[i] * (np.abs(self.prices['power'][i]) + 35) for i in self.t), GRB.MINIMIZE)
         # ----- update model -----
         self.m.update()
 
@@ -114,7 +114,6 @@ class pwpPort(port_model):
         fuel = np.zeros_like(self.t)
         try:
             self.m.optimize()
-
             generation = dict(lignite=np.zeros_like(self.t),          # Erzeugung aus Braunkohle
                               coal=np.zeros_like(self.t),             # Erzeugung aus Steinkohle
                               gas=np.zeros_like(self.t),              # Erzeugung aus Erdgas
@@ -178,4 +177,5 @@ class pwpPort(port_model):
         return power
 
 if __name__ == "__main__":
+
     test = pwpPort()

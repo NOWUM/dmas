@@ -178,10 +178,11 @@ class pwpAgent(basicAgent):
                     actions[i] = actionsBest[i]
 
         self.actions = np.asarray(actions).reshape(24,)                                                              # abschpeichern der Aktionen
-
         # Berechnung der Prognosegüte
-        var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
-        var = np.nan_to_num(var)
+        if self.forecasts['price'].mcp.shape[0] > 0:
+            var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
+        else:
+            var = np.sqrt(np.var(self.forecasts['price'].y, axis=0) * self.forecasts['price'].factor)
         self.maxPrice = prc.reshape((-1,)) + np.asarray([max(self.risk*v, 1) for v in var])                       # Maximalpreis      [€/MWh]
 
         # Füge für jede Stunde die entsprechenden Gebote hinzu
@@ -262,7 +263,6 @@ class pwpAgent(basicAgent):
 
         # Standardoptimierung
         self.portfolio.setPara(self.date, weather,  price, demand)
-
         self.portfolio.buildModel(response=ask-bid)
         power_dayAhead = self.portfolio.fixPlaning()
         costs = self.portfolio.emisson + self.portfolio.fuel
@@ -301,6 +301,9 @@ class pwpAgent(basicAgent):
         # Portfolioinformation
         time = self.date
         index = 0
+
+
+
         for i in self.portfolio.t:
             json_body.append(
                 {
@@ -372,6 +375,7 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = pwpAgent(date='2019-01-01', plz=args.plz)
+
     agent.ConnectionMongo.login(agent.name, True)
     try:
         agent.run_agent()
