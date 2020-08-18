@@ -19,7 +19,8 @@ class port_model:
 
         self.energySystems = {}                                             # Verwaltung der Energiesysteme
         self.typ = typ                                                      # Portfoliotyp (DEM,RES,PWP,...)
-        self.capacities = dict(wind=0, solar=0, fossil=0, water=0, bio=0)   # installierte Erzeugungskapazitäten
+        self.capacities = dict(wind=0, solar=0, fossil=0, water=0, bio=0,
+                               lignite=0, gas=0, coal=0, nuc=0)             # installierte Erzeugungskapazitäten
 
         # Meta Daten Zeitintervalle
         self.T = T                                                          # Anzahl an Zeitschritten

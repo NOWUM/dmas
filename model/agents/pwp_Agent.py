@@ -29,6 +29,7 @@ class pwpAgent(basicAgent):
             if value['maxPower'] > 1:
                 self.portfolio.addToPortfolio(key, {key: value})
                 self.portfolio.capacities['fossil'] += value['maxPower']        # Gesamte Kraftwerksleitung  in [MW]
+                self.portfolio.capacities[value['fuel']] += value['maxPower']
         self.logger.info('Kraftwerke hinzugefügt')
 
         # Einbindung der Speicherdaten aus der MongoDB
@@ -52,6 +53,27 @@ class pwpAgent(basicAgent):
             exit()
 
         self.logger.info('Parameter der Handelsstrategie festgelegt')
+
+        json_body = []
+        time = self.date                                                                # Zeitstempel = aktueller Tag
+
+        for i in range(365):
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(typ='PWP',                                             # Typ konventionelle Erzeugung
+                                 agent=self.name,                                       # Name des Agenten
+                                 area=self.plz),                                        # Plz Gebiet
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(capacityNuc=float(self.portfolio.capacities['nuc']),
+                                   capacityLignite=float(self.portfolio.capacities['lignite']),
+                                   capacityCoal=float(self.portfolio.capacities['coal']),
+                                   capacityGas=float(self.portfolio.capacities['gas']))
+                }
+            )
+            time = time + pd.DateOffset(days=1)
+        self.ConnectionInflux.saveData(json_body)
+
 
         self.logger.info('Aufbau des Agenten abgeschlossen')
 
@@ -300,7 +322,7 @@ class pwpAgent(basicAgent):
                                    powerStorage=self.portfolio.generation['water'][i],
                                    profit=profit[i],                                        # erzielte Erlöse               [€]
                                    state=int(states[index]),
-                                   action=int((self.actions[index] - 10) / 10))
+                                   action=int(self.actions[index]))
                 }
             )
             index += 1
@@ -359,7 +381,6 @@ if __name__ == "__main__":
         agent.ConnectionInflux.influx.close()
         agent.ConnectionMongo.logout(agent.name)
         agent.ConnectionMongo.mongo.close()
-        if agent.receive.is_open:
-            agent.receive.close()
+        if not agent.connection.is_closed:
             agent.connection.close()
         exit()

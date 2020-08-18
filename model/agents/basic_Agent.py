@@ -144,8 +144,7 @@ class agent:
             self.ConnectionInflux.influx.close()
             self.ConnectionMongo.logout(self.name)
             self.ConnectionMongo.mongo.close()
-            if self.receive.is_open:
-                self.receive.close()
+            if not self.connection.is_closed:
                 self.connection.close()
             print('terminate area')
             exit()

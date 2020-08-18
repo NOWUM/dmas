@@ -74,22 +74,22 @@ class resAgent(basicAgent):
         json_body = []
         time = self.date                                                                # Zeitstempel = aktueller Tag
 
-        # for i in range(365):
-        #     json_body.append(
-        #         {
-        #             "measurement": 'Areas',
-        #             "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
-        #                          agent=self.name,                                       # Name des Agenten
-        #                          area=self.plz),                                        # Plz Gebiet
-        #             "time": time.isoformat() + 'Z',
-        #             "fields": dict(capacitySolar=self.portfolio.capacities['solar'],
-        #                            capacityWind=self.portfolio.capacities['wind'],
-        #                            capacityWater=self.portfolio.capacities['water'],
-        #                            capacityBio=self.portfolio.capacities['bio'])
-        #         }
-        #     )
-        #     time = time + pd.DateOffset(days=1)
-        # self.ConnectionInflux.saveData(json_body)
+        for i in range(365):
+            json_body.append(
+                {
+                    "measurement": 'Areas',
+                    "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
+                                 agent=self.name,                                       # Name des Agenten
+                                 area=self.plz),                                        # Plz Gebiet
+                    "time": time.isoformat() + 'Z',
+                    "fields": dict(capacitySolar=float(self.portfolio.capacities['solar']),
+                                   capacityWind=float(self.portfolio.capacities['wind']),
+                                   capacityWater=float(self.portfolio.capacities['water']),
+                                   capacityBio=float(self.portfolio.capacities['bio']))
+                }
+            )
+            time = time + pd.DateOffset(days=1)
+        self.ConnectionInflux.saveData(json_body)
 
         self.logger.info('Aufbau des Agenten abgeschlossen')
 
@@ -255,7 +255,7 @@ class resAgent(basicAgent):
                                    powerWater=self.portfolio.generation['water'][i],    # gesamte Wasserkraft           [MW]
                                    profit=profit[i],                                    # erzielte Erlöse               [€]
                                    state=int(states[i]),
-                                   action=int((self.actions[i] - 10) / 10))
+                                   action=int(self.actions[i]))
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
@@ -312,7 +312,6 @@ if __name__ == "__main__":
         agent.ConnectionInflux.influx.close()
         agent.ConnectionMongo.logout(agent.name)
         agent.ConnectionMongo.mongo.close()
-        if agent.receive.is_open:
-            agent.receive.close()
+        if not agent.connection.is_close:
             agent.connection.close()
         exit()

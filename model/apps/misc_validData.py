@@ -53,6 +53,31 @@ def writeValidData(database, table):
             index += 1
         influx.write_points(json_body)
 
+    elif table == 2:
+        json_body = []
+        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=35040, freq='15min', tz='CET')
+        index = 0
+        for date in dateRange:
+            json_body.append(
+                {
+                    "measurement": "validation",
+                    "tags": {},
+                    "time": date.isoformat().split('+')[0] + 'Z',
+                    "fields": dict(capacityWater=validData.loc[index, 'Laufwasser [MW]'],
+                                   capacityBio=validData.loc[index, 'Biomasse [MW]'],
+                                   capacitySolar=validData.loc[index, 'Solar [MW]'],
+                                   capacityWindOnshore=validData.loc[index,'Wind Onshore [MW]'],
+                                   capacityWindOffshore=validData.loc[index, 'Wind Offshore [MW]'],
+                                   capacityWind=validData.loc[index, 'Wind [MW]'],
+                                   capacityNuc=validData.loc[index, 'Nuk [MW]'],
+                                   capacityCoal=validData.loc[index, 'Steinkohle [MW]'],
+                                   capacityLignite=validData.loc[index, 'Braunkohle [MW]'],
+                                   capacityGas=validData.loc[index, 'Gas [MW]'])
+                }
+            )
+            index += 1
+        influx.write_points(json_body)
+
 def writeDayAheadError(database, date):
 
     influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', database)
@@ -81,8 +106,8 @@ def writeDayAheadError(database, date):
     else:
         real = np.zeros(24)
 
-    errorAbs = np.asarray([np.abs(-real[i] + simulation[i])/real[i] if real[i] != 0 else 0.05 for i in range(24)])
-    errorNrm = np.asarray([(-real[i] + simulation[i])/real[i] if real[i] != 0 else 0.05 for i in range(24)])
+    errorAbs = np.asarray([np.abs(-real[i] + simulation[i])/real[i] if np.abs(real[i]) > 0.5 else 0.05 for i in range(24)])
+    errorNrm = np.asarray([(-real[i] + simulation[i])/real[i] if np.abs(real[i]) > 0.5 else 0.05 for i in range(24)])
 
     json_body = []
     time = date
@@ -104,8 +129,9 @@ def writeDayAheadError(database, date):
 
 if __name__ == "__main__":
 
-    #for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
-    #    writeDayAheadError('MAS2020_4', date)
+    #writeValidData('MAS2020_7', 0)
+    #writeValidData('MAS2020_7', 1)
+    #writeValidData('MAS2020_7', 2)
 
-    writeValidData('MAS2020_5', 0)
-    writeValidData('MAS2020_5', 1)
+    for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
+        writeDayAheadError('MAS2020_6', date)

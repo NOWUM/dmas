@@ -171,7 +171,6 @@ if __name__ == "__main__":
         agent.ConnectionInflux.influx.close()
         agent.ConnectionMongo.logout(agent.name)
         agent.ConnectionMongo.mongo.close()
-        if agent.receive.is_open:
-            agent.receive.close()
+        if not agent.connection.is_close:
             agent.connection.close()
         exit()

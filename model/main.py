@@ -135,6 +135,7 @@ def simulation(start, end, valid=True):
     if valid:
         writeValidData(database, 0)
         writeValidData(database, 1)
+        writeValidData(database, 2)
 
     for date in pd.date_range(start=start, end=end, freq='D'):
 
