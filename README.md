@@ -1,75 +1,83 @@
-# Windows Server
-**Agents Requirements:** 
-- Python 3.5 or newer includes: pandas, requests, numba, tensorflow, influxDB, 
-                                pika, pymongo, geohash2, sklearn, keras, pyswarm,
-                                xlrd
-- Gurobi 8 or newer
+# Requirements
 
-**Plattform Requirements:**
-- Python 3.5 or newer includes: pandas, requests, influxDB, pymongo, xlrd, flask, flask_cors, pika
-- InfluxDB v1.5 or newer (https://www.influxdata.com/get-influxdb/)
-- MongoDB (https://www.mongodb.com/download-center/community)
-- SQLite (https://www.sqlitetutorial.net/sqlite-python/)
-- Grafana v 6.4 or newer (https://grafana.com/grafana/download)
-- RabbitMQ (https://www.rabbitmq.com/download.html)
-- Erlang Server (see RabbitMQ Introduction // https://www.rabbitmq.com/which-erlang.html) 
+**Software**
 
-**Install python modules:** <br>
-$ pip install -r requirements.txt
+| Programm | Link |
+| ------ | ------ |
+| Python 3.7 / 3.8           | / |
+| Gurobi 9.0                | / |
+| Grafana 6.4               | https://grafana.com/grafana/download |
+| RabbitMQ 3.8              | https://www.rabbitmq.com/download.html |
+| InfluxDB 1.5.4            | https://www.influxdata.com/get-influxdb/ |
+| MongoDB                   | https://www.mongodb.com/download-center/community |
+| Erlang Server             | https://www.rabbitmq.com/which-erlang.html |
 
-**Install Gurobi** <br>
-ToDo
+install python modules: `pip3 install -r requirements.txt`
 
-**Wichtige Befehle** <br>
-taskkill /F /IM python.exe /T /fi "USERNAME eq Rieke"
 
-# Linux Server
-**Agents Requirements:**
-- Python 3.5 or newer includes: pandas, requests, numba, tensorflow, influxDB, 
-                                pika, pymongo, geohash2, sklearn, keras, pyswarm,
-                                xlrd
-- Gurobi 8 or newer
+**Hardware**
 
-**Plattform Requirements:**
-- Python 3.5 or newer includes: pandas, requests, influxDB, pymongo, xlrd, flask, flask_cors, pika
-- InfluxDB v1.5 or newer (https://www.influxdata.com/get-influxdb/)
-- MongoDB (https://www.mongodb.com/download-center/community)
-- SQLite (https://www.sqlitetutorial.net/sqlite-python/)
-- Grafana v 6.4 or newer (https://grafana.com/grafana/download)
-- RabbitMQ (https://www.rabbitmq.com/download.html)
-- Erlang Server (see RabbitMQ Introduction // https://www.rabbitmq.com/which-erlang.html) 
+**Agents:**
+- pwp (conventionell power plants) 250 MB RAM per Agent
+- res (renewable energy systems) 400 MB RAM per Agent
+- dem (demand systems) 300 MB RAM per Agent
+- net (grid operation) unkown
 
-**Install python modules:** <br>
-$ pip3 install -r requirements.txt
+**Germany:**
+- pwp ~ 25 GB RAM 
+- res ~ 40 GB RAM 
+- dem ~ 30 GB RAM 
+- net ~ unkown
 
-**Install Gurobi in /usr/local** <br>
-$ cd /usr/local/ <br>
-$ sudo wget http://packages.gurobi.com/VERSION.tar.gz <br>
-(https://packages.gurobi.com/9.0/gurobi9.0.1_linux64.tar.gz) 
-Bsp: $ sudo wget https://packages.gurobi.com/9.0/gurobi9.0.1_linux64.tar.gz <br>
-$ sudo tar xzvf gurobi9.0.1_linux64.tar.gz <br>
-$ cd gurobi_VERSION/linux64 <br>
-$ sudo python3 setup.py install <br>
+**Others:**
+- InfluxDB ~ unkown
+- Clearing ~ unkown
+- Misc ~ unkown
+
+
+
+# Install Gurobi on Linux System
+
+**Get and Istall Gurobi** <br>
+1. `cd /usr/local/` <br>
+2. `sudo wget http://packages.gurobi.com/VERSION.tar.gz` <br>
+    Source: https://packages.gurobi.com/9.0/gurobi9.0.1_linux64.tar.gz <br>
+    Command:  `sudo wget https://packages.gurobi.com/9.0/gurobi9.0.1_linux64.tar.gz`
+3. `sudo tar xzvf gurobi9.0.1_linux64.tar.gz` <br>
+4. `cd gurobi_VERSION/linux64` <br>
+5. `sudo python3 setup.py install` <br>
+
 
 **Add Gurobi Variables Globally:**<br>
-$ nano /etc/bash.bashrc (add the export lines to the end) <br>
-export GUROBI_HOME="/usr/local/gurobi901/linux64" <br>
-export PATH="${PATH}:${GUROBI_HOME}/bin" <br>
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib" <br>
-export PYTHONPATH="$HOME/dmas/model" <br>
-export GRB_LICENSE_FILE="$HOME/gurobi.lic" <br>
 
-refresh your bash
-$ source /etc/bash.bashrc <br>
+6. `sudo nano /etc/bash.bashrc` <br>
 
-**Register gurobi with key (Once for every User)**<br>
-$ grbgetkey KEY <br>
-save to your home directory usually "/home/$USERNAME" <br>
+> export GUROBI_HOME="/usr/local/gurobi901/linux64" <br>
+> export PATH="${PATH}:${GUROBI_HOME}/bin" <br>
+> export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib" <br>
+> export PYTHONPATH="$HOME/dmas/model" <br>
+> export GRB_LICENSE_FILE="$HOME/gurobi.lic" <br>
 
-Test if gurobi and links are working by calling $ gurobi_cl <br>
+add the export lines to the end
 
-**Bash-Screen** <br>
-Informationen: [Wiki](https://wiki.ubuntuusers.de/Screen/ ) <br> <br>
-Wichtige Befehle:
-*  Screen beenden:     $ screen -X -S NAME quit
-*  Alle beenden:       $ sudo pkill -2 python + $ sudo pkill screen 
+**Refresh your Bash:**<br>
+
+7. `source /etc/bash.bashrc` <br>
+
+**Register Gurobi with key (once for every user):**<br>
+
+8. `sudo grbgetkey KEY` save to your home directory <br>
+
+**Test if gurobi and links are working**
+
+9. `gurobi_cl`
+
+# Important Commands
+- kill all python tasks on windows:  `taskkill /F /IM pytho.exe /T /fi "USERNAME eq Rieke"` <br>
+- kill screen session on linux: `sudo screen -X -S NAME quit`<br>
+- kill all screens on linux:   `sudo pkill screen`<br>
+- kill all python tasks on linux: `sudo pkill -2 python3`<br>
+
+
+
+
