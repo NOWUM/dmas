@@ -46,7 +46,7 @@ class solar_model(es):
 
             # Berechnung der Erzeugung aus PV auf Basis der Wetterdaten
             self.mc.run_model(weather)
-            self.generation['solar'] = self.mc.ac.to_numpy()#/10**6                      # PV-Erzeugung in [kW]
+            self.generation['solar'] = self.mc.ac.to_numpy()/10**6                      # PV-Erzeugung in [kW]
 
             # Strombedarf (Einspeisung) [MW]
             self.power = np.asarray(self.generation['solar'], np.float).reshape((-1,))
