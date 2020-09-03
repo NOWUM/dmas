@@ -21,6 +21,9 @@ config.read('app.cfg')
 database = config['Results']['Database']
 mongoCon = mongoCon(host=config['MongoDB']['Host'], database=database)
 influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)
+marketIp = config['Market']['Host']
+marketPort = config['Market']['Port']
+exchange = config['Market']['Exchange']
 
 if config.getboolean('Market','Local'):
     # credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
@@ -31,7 +34,7 @@ else:
                                                                    heartbeat=0, credentials=credentials))
 
 send = connection.channel()
-send.exchange_declare(exchange='Market', exchange_type='fanout')
+send.exchange_declare(exchange=exchange, exchange_type='fanout')
 
 app = Flask(__name__)
 path = os.path.dirname(os.path.dirname(__file__)) + r'/model'
@@ -150,9 +153,9 @@ def simulation(start, end, valid=True):
             print('Error in  Balancing calculation ' + str(date.date()))
             print(e)
         try:
-            send.basic_publish(exchange='Market', routing_key='', body='opt_dayAhead ' + str(date))
+            send.basic_publish(exchange=exchange, routing_key='', body='opt_dayAhead ' + str(date))
             dayAheadClearing(mongoCon, influxCon, date)
-            send.basic_publish(exchange='Market', routing_key='', body='result_dayAhead ' + str(date))
+            send.basic_publish(exchange=exchange, routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
             if valid:
                 writeDayAheadError(database, date)
@@ -163,7 +166,7 @@ def simulation(start, end, valid=True):
             #send.basic_publish(exchange='Marktet', routing_key='', body='powerFlow ' + str(date))
             #send.basic_publish(exchange='Market', routing_key='', body='opt_actual ' + str(date))
             #balEnergyClearing(mongoCon, influxCon, date)
-            send.basic_publish(exchange='Market', routing_key='', body='result_actual ' + str(date))
+            send.basic_publish(exchange=exchange, routing_key='', body='result_actual ' + str(date))
             print('Actual calculation finish ' + str(date.date()))
         except Exception as e:
             print('Error in Actual ' + str(date.date()))
@@ -202,9 +205,9 @@ if __name__ == "__main__":
 
     try:
         if config.getboolean('Market','Local'):
-            app.run(debug=False, port=config.getint('Market','Port'), host='127.0.0.1')
+            app.run(debug=False, port=marketPort, host='127.0.0.1')
         else:
-            app.run(debug=False, port=config.getint('Market','Port'), host='0.0.0.0')
+            app.run(debug=False, port=marketPort, host=marketIp)
     except Exception as e:
         print(e)
     finally:
