@@ -34,15 +34,20 @@ class agent:
         self.errorCounter = 0
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
-        #fh = logging.FileHandler(r'./logs/%s.log' % self.name) #TODO: create if not exist, sonst error (FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Dateien\\+Git+\\SmartLad\\model\\logs\\RES_45.log')
+
+        # Create ./logs/ folder if not exist to prevent FileNotFoundError
+        if not os.path.exists("./logs/"):
+            os.makedirs("./logs/")
+
+        fh = logging.FileHandler(r'./logs/%s.log' % self.name)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        #fh.setFormatter(formatter)
-        #self.logger.addHandler(fh)
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
 
         # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
         # logging.basicConfig(filename=r'./logs/%s_fix.log' % self.name, level=logging.INFO, filemode='a')
         # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-        # Verbindingen an die Datenbanken sowie den Marktplatz
+        # Verbindungen an die Datenbanken sowie den Marktplatz
         self.ConnectionInflux = influxInterface(host=influxHost, database=database)            # Datenbank zur Speicherung der Zeitreihen
         self.ConnectionMongo = mongoInterface(host=mongoHost, database=database, area=plz)     # Datenbank zur Speicherung der Strukurdaten
 
