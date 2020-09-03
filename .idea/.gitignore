@@ -5,3 +5,4 @@
 /dataSources/
 **/__pycache__
 *.pyc
+**/logs
