@@ -34,10 +34,10 @@ class agent:
         self.errorCounter = 0
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
-        fh = logging.FileHandler(r'./logs/%s.log' % self.name)
+        #fh = logging.FileHandler(r'./logs/%s.log' % self.name) #TODO: create if not exist, sonst error (FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Dateien\\+Git+\\SmartLad\\model\\logs\\RES_45.log')
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        fh.setFormatter(formatter)
-        self.logger.addHandler(fh)
+        #fh.setFormatter(formatter)
+        #self.logger.addHandler(fh)
 
         # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
         # logging.basicConfig(filename=r'./logs/%s_fix.log' % self.name, level=logging.INFO, filemode='a')
