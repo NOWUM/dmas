@@ -23,9 +23,10 @@ class agent:
         mongoHost = config['MongoDB']['Host']
         influxHost = config['InfluxDB']['Host']
         marketHost = config['Market']['Host']
+        agentSuffix = config['Market']['agentSuffix']
 
         # Metadaten eines Agenten
-        self.name = typ + '_%i' % plz  # Name
+        self.name = typ + '_%i' % plz + agentSuffix # Name
         self.plz = plz  # Gebiet
         self.date = pd.to_datetime(date)  # aktueller Tag
         self.typ = typ  # Agententyp (RES,PWP,DEM,...)
