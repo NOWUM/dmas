@@ -304,7 +304,7 @@ class resAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = resAgent(date='2019-01-01', plz=args.plz)
+    agent = resAgent(date='2018-01-01', plz=args.plz)
     agent.ConnectionMongo.login(agent.name, False)
     try:
         agent.run_agent()

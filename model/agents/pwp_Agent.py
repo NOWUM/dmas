@@ -129,8 +129,7 @@ class pwpAgent(basicAgent):
         # Berechne maximal verfügbare Leistung
         self.portfolio.buildModel(max_=True)
         power_max = np.asarray(self.portfolio.optimize(), np.float)
-        power_max[power_max <= 0] = self.portfolio.capacities['fossil']
-        # print(self.portfolio.capacities['fossil'])
+        power_max[power_max <= 0] = 0.1
         priceMax = (self.portfolio.emisson + self.portfolio.fuel) / power_max
         power_max = power_max - power_dayAhead
 
@@ -300,19 +299,15 @@ class pwpAgent(basicAgent):
 
         # Portfolioinformation
         time = self.date
-        index = 0
-
-
-
-        for i in self.portfolio.t:
+        for i in self.portfolio.t[:24]:
             json_body.append(
                 {
                     "measurement": 'Areas',
                     "tags": dict(typ='PWP',                                                 # Typ konventionelle Kraftwerke
                                  agent=self.name,                                           # Name des Agenten
                                  area=self.plz,                                             # Plz Gebiet
-                                 state=int(states[index]),
-                                 action=int(self.actions[index]),
+                                 state=int(states[i]),
+                                 action=int(self.actions[i]),
                                  timestamp='post_dayAhead'),                                # Zeitstempel der Tagesplanung
                     "time": time.isoformat() + 'Z',
                     "fields": dict(powerTotal=power_dayAhead[i],                            # gesamte geplante Leistung     [MW]
@@ -324,12 +319,10 @@ class pwpAgent(basicAgent):
                                    powerNuc=self.portfolio.generation['nuc'][i],            # gesamt Kernkraft              [MW]
                                    powerStorage=self.portfolio.generation['water'][i],
                                    profit=profit[i],                                        # erzielte Erlöse               [€]
-                                   state=int(states[index]),
-                                   action=int(self.actions[index]))
+                                   state=int(states[i]),
+                                   action=int(self.actions[i]))
                 }
             )
-            index += 1
-            index = min(index, 23)
             time = time + pd.DateOffset(hours=self.portfolio.dt)
 
         self.ConnectionInflux.saveData(json_body)
@@ -374,8 +367,7 @@ class pwpAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = pwpAgent(date='2019-01-01', plz=args.plz)
-
+    agent = pwpAgent(date='2018-01-01', plz=args.plz)
     agent.ConnectionMongo.login(agent.name, True)
     try:
         agent.run_agent()

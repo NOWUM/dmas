@@ -10,24 +10,25 @@ class resPort(port_model):
     def __int__(self, T=24, dt=1, gurobi=False, date='2020-01-01', typ ='DEM'):
         super().__init__(T, dt, gurobi, date, typ)
 
+        self.hubheight = 0
+        self.totalPower = 0
+        self.powerCurve = []
+
     def addToPortfolio(self, name, energysystem):
 
         data = energysystem[name]
 
         # Windkraftanlagen
         if data['typ'] == 'wind':
-            if np.isnan(data['height']):
-                height = 112
-            else:
-                height = data['height']
 
             data.update(dict(model=wind_model(turbine_type=data['turbine_type'],
-                                              hub_height=height,
-                                              nominal_power_4turbine_without_power_curve=data['maxPower'],
+                                              hub_height=data['height'],
                                               rotor_diameter=data['diameter'],
                                               t=self.t,                                 # Array mit Zeitschritten
                                               T=self.T,                                 # Anzahl an Zeitschritten
                                               dt=self.dt)))                             # Zeitschrittlänge
+
+
         # Photovoltaik-Dachanlagen EEG
         elif data['typ'] == 'Pv':
             data.update(dict(model=solar_model(lat=data['position'][0],                 # Längengrad
@@ -35,17 +36,31 @@ class resPort(port_model):
                                                pdc0=data['PV']['maxPower'],             # Nennleistung
                                                azimuth=data['PV']['azimuth'],           # Ausrichtung (180° = Süd)
                                                tilt=data['PV']['tilt'],                 # Dachneigung
+                                               temp=False,                              # Dachanlage
                                                t=self.t,                                # Array mit Zeitschritten
                                                T=self.T,                                # Anzahl an Zeitschritten
                                                dt=self.dt)))                            # Zeitschrittlänge
 
-        # Gewerblich genutzte oder Freiflächen-PV
-        elif data['typ'] == 'PVPark' or data['typ'] == 'PVTrIn':
+        # Freiflächen-PV
+        elif data['typ'] == 'PVPark':
             data.update(dict(model=solar_model(lat=data['position'][0],                 # Längengrad
                                                lon=data['position'][1],                 # Breitengrad
                                                pdc0=data['maxPower'],                   # Nennleistung
                                                azimuth=data['azimuth'],                 # Ausrichtung (180° = Süd)
                                                tilt=data['tilt'],                       # Dachneigung
+                                               temp=True,                               # Freistehende Anlage
+                                               t=self.t,                                # Array mit Zeitschritten
+                                               T=self.T,                                # Anzahl an Zeitschritten
+                                               dt=self.dt)))                            # Zeitschrittlänge
+
+        # Gewerblich genutzte PV
+        elif data['typ'] == 'PVTrIn':
+            data.update(dict(model=solar_model(lat=data['position'][0],                 # Längengrad
+                                               lon=data['position'][1],                 # Breitengrad
+                                               pdc0=data['maxPower'],                   # Nennleistung
+                                               azimuth=data['azimuth'],                 # Ausrichtung (180° = Süd)
+                                               tilt=data['tilt'],                       # Dachneigung
+                                               temp=False,                              # Dachanlage
                                                t=self.t,                                # Array mit Zeitschritten
                                                T=self.T,                                # Anzahl an Zeitschritten
                                                dt=self.dt)))                            # Zeitschrittlänge

@@ -133,9 +133,10 @@ def simulation(start, end, valid=True):
     influxCon.generateWeather(start, end + pd.DateOffset(days=1), valid)
 
     if valid:
-        writeValidData(database, 0)
-        writeValidData(database, 1)
-        writeValidData(database, 2)
+        print('schreibe Validierungsdaten')
+        writeValidData(database, 0, start, end)
+        writeValidData(database, 1, start, end)
+        writeValidData(database, 2, start, end)
 
     for date in pd.date_range(start=start, end=end, freq='D'):
 

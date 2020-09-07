@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-def writeValidData(database, table):
+def writeValidData(database, table, start, end):
 
     influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', database)
     validData = pd.read_excel(r'./data/Valid_Data.xlsx', sheet_name=table)
@@ -13,7 +13,7 @@ def writeValidData(database, table):
 
     if table == 0:
         json_body = []
-        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=35040, freq='15min', tz='CET')
+        dateRange = pd.date_range(start=start, end=end, freq='15min', tz='CET')
         index = 0
         for date in dateRange:
             json_body.append(
@@ -27,7 +27,7 @@ def writeValidData(database, table):
                                    powerWindOnshore=validData.loc[index,'Wind Onshore [MW]'],
                                    powerWindOffshore=validData.loc[index, 'Wind Offshore [MW]'],
                                    powerWind=validData.loc[index, 'Wind [MW]'],
-                                   powerDemand=validData.loc[index,'Last [MW]'],
+                                   powerDemand=validData.loc[index, 'Last [MW]'],
                                    powerNuc=validData.loc[index, 'Nuk [MW]'],
                                    powerCoal=validData.loc[index, 'Steinkohle [MW]'],
                                    powerLignite=validData.loc[index, 'Braunkohle [MW]'],
@@ -39,7 +39,7 @@ def writeValidData(database, table):
 
     elif table == 1:
         json_body = []
-        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=8760, freq='60min')
+        dateRange = pd.date_range(start=start, end=end, freq='60min')
         index = 0
         for date in dateRange:
             json_body.append(
@@ -55,7 +55,7 @@ def writeValidData(database, table):
 
     elif table == 2:
         json_body = []
-        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=35040, freq='15min', tz='CET')
+        dateRange = pd.date_range(start=start, end=end, freq='15min', tz='CET')
         index = 0
         for date in dateRange:
             json_body.append(
@@ -129,9 +129,11 @@ def writeDayAheadError(database, date):
 
 if __name__ == "__main__":
 
+    writeValidData('MAS2020_9', 0)
+
     #writeValidData('MAS2020_7', 0)
     #writeValidData('MAS2020_7', 1)
     #writeValidData('MAS2020_7', 2)
 
-    for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
-        writeDayAheadError('MAS2020_6', date)
+    # for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
+    #     writeDayAheadError('MAS2020_6', date)

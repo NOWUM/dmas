@@ -2,9 +2,7 @@ import os
 from scipy import stats
 import numpy as np
 from components.basic_EnergySystem import energySystem
-from windpowerlib import WindTurbine, power_output, wind_speed
-from windpowerlib import temperature
-from windpowerlib import wind_turbine as wt
+from windpowerlib import WindTurbine, power_output, wind_speed, wind_turbine, temperature, ModelChain
 import pandas as pd
 import numpy as np
 
@@ -12,124 +10,103 @@ import numpy as np
 class wind_model(energySystem):
 
     def __init__(self, turbine_type, hub_height=112, rotor_diameter=102,
-                 t=np.arange(24), T=24, dt=1,
-                 nominal_power_4turbine_without_power_curve=None):
-        """
-        inits a wind model
-        :param turbine_type: name of turbine_type corresponding to an entry in windpowerlib.wind_turbine.get_turbine_types
-         or to an folder with a 'power_curve.csv' file in path 'data/windModel/'
-        :param hub_height: height of windturbine's hub in [m]. Default: 100 [m]
-        :param rotor_diameter: in [m]
-        :param t: Metainfo Zeit (see class energySystem in basic_EbergySystem.py)
-        :param T: Metainfo Zeit (see class energySystem in basic_EbergySystem.py)
-        :param dt: Metainfo Zeit (see class energySystem in basic_EbergySystem.py)
-        :param nominal_power_4turbine_without_power_curve: nominal power of wind turbine. This value is just used, if
-                                                           there is no power curve available 4 the turbine_type
-
-        self.generation['wind'] and self.power is in [MW]
-        """
+                 t=np.arange(24), T=24, dt=1, power_curve=None):
 
         super().__init__(t, T, dt)
 
-        self.__windTurbine = None
+        self.default_turbine_type = 'E-82/2300'
+        self.diameter = rotor_diameter
         self.hub_height = hub_height
 
-        self.__nominal_power_4turbine_without_power_curve = None
+        if power_curve is None:
 
-        self.default_turbine_type = 'E-82/2300'
-        self.__nominal_power_of_default_turbine = float(self.default_turbine_type.split('/')[1])
-        self.weibullWind = np.load(r'./data/Ref_Wind.array')
-        df_lib_turbine_types = wt.get_turbine_types(print_out=False)
+            if turbine_type in wind_turbine.get_turbine_types(print_out=False)['turbine_type'].unique():
+                self.windTurbine = WindTurbine(hub_height=self.hub_height, turbine_type=turbine_type)
+            elif turbine_type in ['AN/1000', 'AN/1300', 'E-66/1500']:
+                df = pd.read_excel(r'./data/Ref_TurbineData.xlsx', sheet_name=turbine_type.replace('/', ' '))
+                self.windTurbine = WindTurbine(hub_height=self.hub_height, rotor_diameter=rotor_diameter,
+                                               power_curve=df)
+            else:
+                self.windTurbine = WindTurbine(hub_height=self.hub_height, turbine_type=self.default_turbine_type)
 
-        if turbine_type in df_lib_turbine_types['turbine_type'].unique():
-            self.__windTurbine = WindTurbine(hub_height=self.hub_height,
-                                             turbine_type=turbine_type)
         else:
-            try:
-                path = os.getcwd() + os.sep + 'data' + os.sep + 'windModel'
+            pass
 
-                # https://windpowerlib.readthedocs.io/en/stable/temp/windpowerlib.wind_turbine.WindTurbine.html#windpowerlib.wind_turbine.WindTurbine
+        self.modelchain_data = {
 
+            'wind_speed_model': 'hellman',
+            'density_model': 'barometric',
+            'temperature_model': 'linear_gradient',
+            'power_output_model': 'power_curve',
+            'density_correction': False,
+            'obstacle_height': None,
+            'hellman_exp': 0.125}
 
-                self.__windTurbine = WindTurbine(hub_height=self.hub_height,
-                                                 # power_curve=                     # opt.
-                                                 # power_coefficient_curve=None,    # opt.
-                                                 turbine_type=turbine_type,         # opt.
-                                                 rotor_diameter=rotor_diameter,
-                                                 # nominal_power                    # opt.
-                                                 path=path
-                                                 )
-
-                #if is needed to check if there is a power_curve (or if there are data 4 the turbine_type)
-                if (self.__windTurbine.power_curve['value'] is None):
-                    # just doing anything to call the if-statement. If the statement fails,
-                    # the default_turbine is taken (see exception)
-                    pass
-
-            except Exception as e:
-                # default turbine typ E-82 by Enercon
-
-                # if power scale is needed, self.__nominal_power_4turbine_without_power_curve is set
-                if(not(nominal_power_4turbine_without_power_curve == 0
-                       or nominal_power_4turbine_without_power_curve == self.__nominal_power_of_default_turbine
-                       or nominal_power_4turbine_without_power_curve is None)):
-                    self.__nominal_power_4turbine_without_power_curve = nominal_power_4turbine_without_power_curve
-
-                print('\n\033[31m' + 'Turbine type ' + str(turbine_type) + ' not found.' + '\033[0m')
-                print('The default turbine type ' + str(self.default_turbine_type) + ' is used.')
-
-                self.__windTurbine = WindTurbine(hub_height=self.hub_height,
-                                                 turbine_type=self.default_turbine_type)
-
+        self.mc = ModelChain(self.windTurbine)
 
     def build(self, data, ts, date):
+        index = pd.date_range(start=date, periods=self.T, freq='H')
+        roughness = 0.2 * np.ones_like(self.t)
+        weather_df = pd.DataFrame(np.asarray([roughness, ts['wind'], ts['temp']]).reshape((self.T, -1)),
+                                  index=index,
+                                  columns=[np.asarray(['roughness_length', 'wind_speed', 'temperature']),
+                                           np.asarray([0, 10, 2])])
 
-        """
-        # not used:
-        #----------
+        self.mc.run_model(weather_df)
+        powerResult = np.asarray(self.mc.power_output, dtype=np.float64)
 
-        tempK = temperature.linear_gradient(temperature=pd.Series([x+273.15 for x in ts['TAmb']]),  # Temp from [C] in [K]
-                                            temperature_height=2,  # Temp Messung auf 2m
-                                            hub_height=self.__windTurbine.hub_height )
+        self.generation['wind'] = np.nan_to_num(powerResult)
+        self.power = np.nan_to_num(powerResult)
 
-        densityInKgQm = density.barometric(pressure=ts['density'], # [Pa]
-                                           pressure_height=2,      # Messung auf 2m
-                                           hub_height=wt.hub_height,
-                                           temperature_hub_height=tempK)
-        """
 
-        randomWind = []
-        interval = np.linspace(2, 9, 8)
+if __name__=="__main__":
 
-        for ws in ts['wind']:
-            for i in range(1, 8):
-                if interval[i - 1] < ws <= interval[i]:
-                    randomWind.append(stats.exponweib.rvs(*self.weibullWind[i]))
-                    break
-            if ws > 9:
-                randomWind.append(stats.exponweib.rvs(*self.weibullWind[8]))
-            elif ws <= 2:
-                randomWind.append(stats.exponweib.rvs(*self.weibullWind[0]))
+    from scipy import interpolate
+    import matplotlib.pyplot as plt
 
-        wind = wind_speed.hellman(wind_speed=np.asarray(randomWind, dtype=np.float64),
-                                  wind_speed_height=10.,
-                                  hub_height=self.hub_height,
-                                  roughness_length=None,
-                                  hellman_exponent=0.125)
+    ws = np.array([])
+    powerCurves = []
 
-        powerResult = power_output.power_curve(wind_speed=wind,
-                                               power_curve_wind_speeds=self.__windTurbine.power_curve['wind_speed'],
-                                               power_curve_values=self.__windTurbine.power_curve['value'],
-                                               # density=densityInKgQm,
-                                               density_correction=False)
+    a1 = wind_model(turbine_type='AD116/5000')
+    ws = np.concatenate((a1.windTurbine.power_curve['wind_speed'].to_numpy(), ws))
+    powerCurves.append((a1.windTurbine.power_curve['wind_speed'].to_numpy(),
+                        a1.windTurbine.power_curve['value'].to_numpy()))
 
-        # change result from [W] to [MW]
-        powerResult = np.asarray(([x/(10**6) for x in powerResult]), dtype=np.float64)
+    a2 = wind_model(turbine_type='E-101/3500')
+    ws = np.concatenate((a2.windTurbine.power_curve['wind_speed'].to_numpy(), ws))
+    powerCurves.append((a2.windTurbine.power_curve['wind_speed'].to_numpy(),
+                        a2.windTurbine.power_curve['value'].to_numpy()))
 
-        if(self.__nominal_power_4turbine_without_power_curve is not None):
-            # if the default turbine is taken and the nominal_power_4turbine_without_power_curve is !=0 or
-            # != the nominal power of the default_turbine (act.: 2300 W), the power result is scaled
-            powerResult = powerResult * (self.__nominal_power_4turbine_without_power_curve / self.__nominal_power_of_default_turbine)
+    a3 = wind_model(turbine_type='E-82/2000')
+    ws = np.concatenate((a3.windTurbine.power_curve['wind_speed'].to_numpy(), ws))
+    powerCurves.append((a3.windTurbine.power_curve['wind_speed'].to_numpy(),
+                        a3.windTurbine.power_curve['value'].to_numpy()))
 
-        self.generation['wind'] = powerResult
-        self.power = powerResult
+    a4 = wind_model(turbine_type='E-66/1500')
+    ws = np.concatenate((a4.windTurbine.power_curve['wind_speed'].to_numpy(), ws))
+    powerCurves.append((a4.windTurbine.power_curve['wind_speed'].to_numpy(),
+                        a4.windTurbine.power_curve['value'].to_numpy()))
+
+    a5 = wind_model(turbine_type='blablabla')
+    ws = np.concatenate((a5.windTurbine.power_curve['wind_speed'].to_numpy(), ws))
+    powerCurves.append((a5.windTurbine.power_curve['wind_speed'].to_numpy(),
+                        a5.windTurbine.power_curve['value'].to_numpy()))
+
+
+    # a5.build(date='2019-01-01', data={}, ts={})
+
+    ws = np.sort(np.unique(ws))
+    value = np.zeros_like(ws)
+    legend = []
+    counter = 1
+    for powerCurve in powerCurves:
+        f = interpolate.interp1d(powerCurve[0], powerCurve[1], fill_value=0, bounds_error=False)
+        plt.plot(powerCurve[0], powerCurve[1])
+        value += f(ws)
+        legend.append(counter)
+        counter += 1
+
+    totalCurve = (ws, value)
+    plt.plot(ws, value)
+    legend.append('total')
+    plt.legend(legend)
