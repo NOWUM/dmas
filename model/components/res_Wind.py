@@ -47,7 +47,7 @@ class wind_model(energySystem):
     def build(self, data, ts, date):
         index = pd.date_range(start=date, periods=self.T, freq='H')
         roughness = 0.2 * np.ones_like(self.t)
-        weather_df = pd.DataFrame(np.asarray([roughness, ts['wind'], ts['temp']]).reshape((self.T, -1)),
+        weather_df = pd.DataFrame(np.asarray([roughness, ts['wind'], ts['temp']]).T,
                                   index=index,
                                   columns=[np.asarray(['roughness_length', 'wind_speed', 'temperature']),
                                            np.asarray([0, 10, 2])])
@@ -55,8 +55,8 @@ class wind_model(energySystem):
         self.mc.run_model(weather_df)
         powerResult = np.asarray(self.mc.power_output, dtype=np.float64)
 
-        self.generation['wind'] = np.nan_to_num(powerResult)
-        self.power = np.nan_to_num(powerResult)
+        self.generation['wind'] = np.nan_to_num(powerResult)/10**6
+        self.power = np.nan_to_num(powerResult)/10**6
 
 
 if __name__=="__main__":

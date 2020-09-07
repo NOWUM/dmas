@@ -101,7 +101,7 @@ class resPort(port_model):
     def optimize(self):
         power = self.generation['total']                    # Leistungsbilanz des Gebietes
         try:
-            # Wind Onshore-Erzeugung
+            # Wind Erzeugung
             pWind = np.asarray([value['model'].generation['wind'] for _, value in self.energySystems.items()], np.float)
             self.generation['wind'] = np.sum(pWind, axis=0)
 
