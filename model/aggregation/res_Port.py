@@ -13,6 +13,7 @@ class resPort(port_model):
 
     def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01', typ='RES'):
         super().__init__(T, dt, gurobi, date, typ)
+        self.powerCurve = None
         self.windSpeed = np.array([])
         self.hubHeight = 0
         self.totalPower = 0
@@ -106,23 +107,23 @@ class resPort(port_model):
 
     def buildModel(self, response=[]):
 
-        self.windSpeed = np.sort(np.unique(self.windSpeed))
-        value = np.asarray(np.zeros_like(self.windSpeed), dtype=np.float64)
-        for powerCurve in self.powerCurves:
-            f = interpolate.interp1d(powerCurve[0], powerCurve[1], fill_value=0, bounds_error=False)
-            value += np.asarray(f(self.windSpeed), dtype=np.float64)
+        if self.powerCurve is None:
+            self.windSpeed = np.sort(np.unique(self.windSpeed))
+            value = np.asarray(np.zeros_like(self.windSpeed), dtype=np.float64)
+            for powerCurve in self.powerCurves:
+                f = interpolate.interp1d(powerCurve[0], powerCurve[1], fill_value=0, bounds_error=False)
+                value += np.asarray(f(self.windSpeed), dtype=np.float64)
 
-        powerCurve = power_curves.smooth_power_curve(power_curve_wind_speeds=pd.Series(self.windSpeed),
-                                                     power_curve_values=pd.Series(value),
-                                                     standard_deviation_method='turbulence_intensity',
-                                                     turbulence_intensity=0.15,
-                                                     mean_gauss=0, wind_speed_range=10)
+            self.powerCurve = power_curves.smooth_power_curve(power_curve_wind_speeds=pd.Series(self.windSpeed),
+                                                         power_curve_values=pd.Series(value),
+                                                         standard_deviation_method='turbulence_intensity',
+                                                         turbulence_intensity=0.15,
+                                                         mean_gauss=0, wind_speed_range=10)
 
+            self.hubHeight = self.hubHeight/self.totalPower
 
-        self.hubHeight = self.hubHeight/self.totalPower
-
-        self.windModel = wind_model('Area', hub_height=self.hubHeight, rotor_diameter=100,
-                                    t=np.arange(24), T=24, dt=1, power_curve=powerCurve)
+            self.windModel = wind_model('Area', hub_height=self.hubHeight, rotor_diameter=100,
+                                        t=np.arange(24), T=24, dt=1, power_curve=self.powerCurve)
 
         self.windModel.build({}, self.weather, self.date)
 
