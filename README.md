@@ -80,29 +80,30 @@ add the export lines to the end
 
 
 
-# FH specific IPs and Endpoints (can vary)
-[InfluxDB]
-Host = 149.201.88.150
-Port = 8086
-Local = True
-Path = C:\Program Files\SimEnv\database\influxdb\influxd.exe
+# FH specific IP and Endpoints (can vary)
 
-[MongoDB]
-Host = 149.201.88.150
-Port = 27017
-Local = True
-Path = C:\Program Files\SimEnv\database\mongodb\bin\mongod.exe
+[InfluxDB]<br>
+Host = 149.201.88.150<br>
+Port = 8086<br>
+Local = True<br>
+Path = C:\Program Files\SimEnv\database\influxdb\influxd.exe<br>
 
-[Market]
-Host = 149.201.88.150
-Port = 5010
-Local = False
-Exchange = Market
-Agentsuffix =
+[MongoDB]<br>
+Host = 149.201.88.150<br>
+Port = 27017<br>
+Local = True<br>
+Path = C:\Program Files\SimEnv\database\mongodb\bin\mongod.exe<br>
 
-[Results]
-Database = MAS2020_8
-Delete = True
+[Market]<br>
+Host = 149.201.88.150<br>
+Port = 5010<br>
+Local = False<br>
+Exchange = Market<br>
+Agentsuffix =<br>
+
+[Results]<br>
+Database = MAS2020_8<br>
+Delete = True<br>
 
 
 
