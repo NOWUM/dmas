@@ -77,8 +77,11 @@ class agent:
     def weatherForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
         """ Wetterprognose des jeweiligen PLZ-Gebietes"""
         weather = dict(wind=[], dir=[], dif=[], temp=[])
+        smooth = False
+        if self.typ == 'RES':
+            smooth = True
         for i in range(days):
-            w = self.forecasts['weather'].forecast(str(self.geo), date)
+            w = self.forecasts['weather'].forecast(str(self.geo), date, smooth)
             for key, value in w.items():
                 weather[key] += value
         return weather

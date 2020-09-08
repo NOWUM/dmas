@@ -130,7 +130,7 @@ def buildAreas():
 
 # ----- Simulation Task -----
 def simulation(start, end, valid=True):
-    influxCon.generateWeather(start, end + pd.DateOffset(days=1), valid)
+    influxCon.generateWeather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
 
     if valid:
         print('schreibe Validierungsdaten')

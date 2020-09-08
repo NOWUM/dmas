@@ -2,7 +2,7 @@ import os
 from scipy import stats
 import numpy as np
 from components.basic_EnergySystem import energySystem
-from windpowerlib import WindTurbine, power_output, wind_speed, wind_turbine, temperature, ModelChain
+from windpowerlib import WindTurbine, power_output, wind_speed, wind_turbine, temperature, ModelChain, power_curves
 import pandas as pd
 import numpy as np
 
@@ -30,7 +30,7 @@ class wind_model(energySystem):
                 self.windTurbine = WindTurbine(hub_height=self.hub_height, turbine_type=self.default_turbine_type)
 
         else:
-            pass
+            self.windTurbine = WindTurbine(hub_height=self.hub_height, power_curve=power_curve)
 
         self.modelchain_data = {
 
@@ -59,7 +59,7 @@ class wind_model(energySystem):
         self.power = np.nan_to_num(powerResult)/10**6
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
     from scipy import interpolate
     import matplotlib.pyplot as plt
@@ -92,7 +92,6 @@ if __name__=="__main__":
     powerCurves.append((a5.windTurbine.power_curve['wind_speed'].to_numpy(),
                         a5.windTurbine.power_curve['value'].to_numpy()))
 
-
     # a5.build(date='2019-01-01', data={}, ts={})
 
     ws = np.sort(np.unique(ws))
@@ -108,5 +107,17 @@ if __name__=="__main__":
 
     totalCurve = (ws, value)
     plt.plot(ws, value)
+
+    test = power_curves.smooth_power_curve(power_curve_wind_speeds=pd.Series(ws), power_curve_values=pd.Series(value),
+                                           standard_deviation_method='Staffell_Pfenninger',
+                                           mean_gauss=0,
+                                           # turbulence_intensity=0.15,
+                                           wind_speed_range=10)
+
     legend.append('total')
+
+    plt.plot(test['wind_speed'].to_numpy(), test['value'].to_numpy())
+    legend.append('smoothed')
+
     plt.legend(legend)
+

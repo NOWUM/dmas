@@ -304,16 +304,16 @@ class resAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = resAgent(date='2018-01-01', plz=args.plz)
-    agent.ConnectionMongo.login(agent.name, False)
-    try:
-        agent.run_agent()
-    except Exception as e:
-        print(e)
-    finally:
-        agent.ConnectionInflux.influx.close()
-        agent.ConnectionMongo.logout(agent.name)
-        agent.ConnectionMongo.mongo.close()
-        if not agent.connection.is_close:
-            agent.connection.close()
-        exit()
+    agent = resAgent(date='2018-01-02', plz=args.plz)
+    # agent.ConnectionMongo.login(agent.name, False)
+    # try:
+    #     agent.run_agent()
+    # except Exception as e:
+    #     print(e)
+    # finally:
+    #     agent.ConnectionInflux.influx.close()
+    #     agent.ConnectionMongo.logout(agent.name)
+    #     agent.ConnectionMongo.mongo.close()
+    #     if not agent.connection.is_close:
+    #         agent.connection.close()
+    #     exit()

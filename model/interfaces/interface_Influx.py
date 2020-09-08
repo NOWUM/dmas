@@ -17,6 +17,8 @@ class influxInterface:
         self.maphash = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
         self.maphash = self.maphash.set_index('hash')
 
+        self.windSmoothFactors = pd.read_csv(r'./data/smoothWind.csv', index_col=0)
+
         self.database = database
 
     def saveData(self, json_body):
@@ -114,13 +116,29 @@ class influxInterface:
         print('Starte Wetterziehung')
         Parallel(n_jobs=num_cores)(delayed(self.__writeWeatherdata)(i, valid) for i in dateRange)
 
-    def getWeather(self, geo, date):
+    def getWeather(self, geo, date, smoothWind=False):
         """ Wetter im jeweiligen PLZ-Gebiet am Tag X """
         self.influx.switch_database(database=self.database)
         geohash = str(geo)
         # Tag im ISO Format
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+
+        if smoothWind == True:
+            area = self.maphash.loc[self.maphash.index == geohash, 'PLZ'].to_numpy()[0]
+            N = self.windSmoothFactors.loc[self.windSmoothFactors.index == area, 'smooth factor'].to_numpy()[0]
+            if N > 0:
+                lb = int(N/2)
+                ub = int(N / 2) + int(N % 2 > 0)
+            else:
+                lb = 0
+                ub = 0
+            startWind = (date - pd.DateOffset(hours=lb)).isoformat() + 'Z'
+            endWind = (date + pd.DateOffset(days=1, hours=ub)).isoformat() + 'Z'
+        else:
+            N = 0
+            startWind = start
+            endWind = end
 
         keys = {'DNI': 'dir',           # Direkte Strahlung         [W/m²]          DNI
                 'DHI': 'dif',           # Diffuse Stahlung          [W/m²]          DHI
@@ -131,12 +149,28 @@ class influxInterface:
 
         for key, value in keys.items():
             # --> Abfrage der Daten
-            query = 'select mean("%s") from "weather" where time >= \'%s\' and time < \'%s\' and geohash = \'%s\' GROUP BY time(1h) fill(0)'\
-                    % (key, start, end, geohash)
+            if value == 'wind':
+                query = 'select mean("%s") from "weather" where time >= \'%s\' and time < \'%s\' and geohash = \'%s\' GROUP BY time(1h) fill(0)'\
+                        % (key, startWind, endWind, geohash)
+            else:
+                query = 'select mean("%s") from "weather" where time >= \'%s\' and time < \'%s\' and geohash = \'%s\' GROUP BY time(1h) fill(0)'\
+                        % (key, start, end, geohash)
+
             result = self.influx.query(query)
 
             if result.__len__() > 0:
-                dict_.update({value: [np.round(point['mean'], 2) for point in result.get_points()]})
+                if value == 'wind' and N > 0:
+                    values = [np.round(point['mean'], 2) for point in result.get_points()]
+                    smoothedWind = []
+                    for j in range(24):
+                        ws = 0
+                        for i in range(j, j + ub + lb + 1):
+                            ws += values[i]
+                        smoothedWind.append(ws/(N+1))
+                    dict_.update({value: smoothedWind})
+                else:
+                    dict_.update({value: [np.round(point['mean'], 2) for point in result.get_points()]})
+
             else:
                 dict_.update({value: list(np.zeros(24))})
 
