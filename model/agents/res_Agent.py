@@ -10,7 +10,7 @@ import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=25, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=81, help='PLZ-Agent')
     return parser.parse_args()
 
 class resAgent(basicAgent):

@@ -107,7 +107,7 @@ class resPort(port_model):
 
     def buildModel(self, response=[]):
 
-        if self.powerCurve is None:
+        if self.powerCurve is None and len(self.powerCurves) > 0:
             self.windSpeed = np.sort(np.unique(self.windSpeed))
             value = np.asarray(np.zeros_like(self.windSpeed), dtype=np.float64)
             for powerCurve in self.powerCurves:
@@ -125,7 +125,8 @@ class resPort(port_model):
             self.windModel = wind_model('Area', hub_height=self.hubHeight, rotor_diameter=100,
                                         t=np.arange(24), T=24, dt=1, power_curve=self.powerCurve)
 
-        self.windModel.build({}, self.weather, self.date)
+        if self.powerCurve is not None:
+            self.windModel.build({}, self.weather, self.date)
 
         if len(response) == 0:
             self.generation['total'] = np.zeros_like(self.t)
@@ -139,7 +140,8 @@ class resPort(port_model):
         try:
             # Wind Erzeugung
             # pWind = np.asarray([value['model'].generation['wind'] for _, value in self.energySystems.items()], np.float)
-            self.generation['wind'] = self.windModel.generation['wind']
+            if self.powerCurve is not None:
+                self.generation['wind'] = self.windModel.generation['wind']
 
             # PV-Erzeugung
             pSolar = np.asarray([value['model'].generation['solar'] if value['typ'] != 'Pv' else value['model'].generation['solar'] * value['EEG']
