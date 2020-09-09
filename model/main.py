@@ -1,3 +1,4 @@
+# third party modules
 import configparser
 import os
 import subprocess
@@ -5,45 +6,58 @@ import time as tm
 import pandas as pd
 import pika
 import psutil
-# from apps.routine_Balancing import balPowerClearing, balEnergyClearing
-from apps.routine_DayAhead import dayAheadClearing
-from apps.grid_Model import gridModel
-from apps.misc_validData import writeValidData, writeDayAheadError
 from flask import Flask, render_template, request
 from flask_cors import cross_origin
+
+# model modules
+from apps.routine_DayAhead import dayAheadClearing
+from apps.misc_validData import writeValidData, writeDayAheadError
 from interfaces.interface_Influx import influxInterface as influxCon
 from interfaces.interface_mongo import mongoInterface as mongoCon
-from apps.View_MeritOrder import getMeritOrder
 
-config = configparser.ConfigParser()
+
+"""
+    declare global variables for the application
+"""
+
+path = os.path.dirname(os.path.dirname(__file__)) + r'/model'                                                       # change working directory
+
+pd.set_option('mode.chained_assignment', None)                                                                      # ignore pd warnings
+
+config = configparser.ConfigParser()                                                                                # read config file
 config.read('app.cfg')
 
-database = config['Results']['Database']
-mongoCon = mongoCon(host=config['MongoDB']['Host'], database=database)
-influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)
+database = config['Results']['Database']                                                                            # name of influxdatabase to store the results
+mongoCon = mongoCon(host=config['MongoDB']['Host'], database=database)                                              # connection and interface to MongoDB
+influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)                                           # connection and interface to InfluxDB
 
-if config.getboolean('Market','Local'):
-    # credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+
+if config.getboolean('Market', 'Local'):                                                                            # check if plattform runs local and choose the right login method
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'], heartbeat=0))
 else:
     credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['Market']['Host'],
                                                                    heartbeat=0, credentials=credentials))
 
-send = connection.channel()
+send = connection.channel()                                                                                         # declare Market Excahnge
 send.exchange_declare(exchange='Market', exchange_type='fanout')
 
 app = Flask(__name__)
-path = os.path.dirname(os.path.dirname(__file__)) + r'/model'
-pd.set_option('mode.chained_assignment', None)
 
-gridView = gridModel()
 
-# ----- Starting View -----
+"""
+    methods for the web application
+"""
+
 @app.route('/')
 def index():
+    """
+    default view with agent counter
+    :return: index.html in templates
+    """
     num = []
     agent_ids = mongoCon.status.find().distinct('_id')
+
     for typ in ['PWP', 'RES', 'DEM']:
         counter = 0
         for id in agent_ids:
@@ -55,42 +69,13 @@ def index():
 
     return render_template('index.html', **locals())
 
-
-@app.route('/Grid')
-@cross_origin()
-def grid():
-    gridView.powerFlow(date=pd.to_datetime('2019-01-01'), hour=1)
-    fig = gridView.getPlot()
-    return render_template('index.html', plot=fig)
-
-
-@app.route('/meritOrder', methods = ['POST','GET'])
-@cross_origin()
-def meritOrder():
-
-    seconds = int(request.args.get('from'))
-    date = pd.to_datetime(seconds)
-
-    return render_template('meritOrder.html', **locals())
-
-
-@app.route('/meritOrder/plot', methods = ['GET'])
-@cross_origin()
-def plotMeritOrder():
-    seconds = int(request.args.get('from'))
-    date = pd.to_datetime(seconds)
-    hour = request.args.get('hour')
-    try:
-        plot = getMeritOrder(mongoCon, date.date(), request.args.get('hour'))
-        return render_template('plotMeritOrder.html', **locals())
-    except:
-        return 'Page not found - Error 404'
-
-
-# ----- Start Simulation -----
 @app.route('/run', methods=['POST'])
 @cross_origin()
 def run():
+    """
+    start the simulation over the web application
+    :return: 'OK'
+    """
     start = pd.to_datetime(request.form['start'])
     end = pd.to_datetime(request.form['end'])
     print('starte  Simulation von %s bis %s: ' % (start.date(), end.date()))
@@ -98,42 +83,41 @@ def run():
     return 'OK'
 
 
-# ----- Start Areas -----
 @app.route('/build/start', methods=['POST'])
 def buildAreas():
-    # -- Start and End Area
-    start = int(request.form['start'])
-    end = int(request.form['end'])
+    """
+    build up agents according to the setting of the webinterface
+    :return: 'OK'
+    """
+
+    start = int(request.form['start'])              # start area
+    end = int(request.form['end'])                  # end area
 
     for i in range(start, end + 1):
 
-        if request.form['pwp'] == 'true':  # -- if true build PWP
+        if request.form['pwp'] == 'true':  # if true build PWP
             subprocess.Popen('python ' + path + r'/agents/pwp_Agent.py ' + '--plz %i'
                              % (i), cwd=path, shell=True)
-        if request.form['res'] == 'true':  # -- if true build RES
+        if request.form['res'] == 'true':  # if true build RES
             subprocess.Popen('python ' + path + r'/agents/res_Agent.py ' + '--plz %i'
                              % (i), cwd=path, shell=True)
-        if request.form['dem'] == 'true':  # -- if true build DEM
+        if request.form['dem'] == 'true':  # if true build DEM
             subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i'
                              % (i), cwd=path, shell=True)
-
-    if request.form['grd'] == 'true':
-        pass
-
-    if request.form['brd'] == 'true':
-        lands = []
-        for land in lands:
-            pass
 
     return 'OK'
 
 
-# ----- Simulation Task -----
-def simulation(start, end, valid=True):
+"""
+    simualtion method with command messagases for the agents
+"""
+
+def simulation(start, end, valid=False):
+
     influxCon.generateWeather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
 
     if valid:
-        print('schreibe Validierungsdaten')
+        print('write validation data')
         writeValidData(database, 0, start, end)
         writeValidData(database, 1, start, end)
         writeValidData(database, 2, start, end)
@@ -142,14 +126,6 @@ def simulation(start, end, valid=True):
 
         mongoCon.orderDB[str(date.date)]
 
-        try:
-            #send.basic_publish(exchange='Market', routing_key='', body='opt_balancing ' + str(date))
-            #balPowerClearing(mongoCon, influxCon, date)
-            #send.basic_publish(exchange='Market', routing_key='', body='result_balancing ' + str(date))
-            print('Balancing calculation finish ' + str(date.date()))
-        except Exception as e:
-            print('Error in  Balancing calculation ' + str(date.date()))
-            print(e)
         try:
             send.basic_publish(exchange='Market', routing_key='', body='opt_dayAhead ' + str(date))
             dayAheadClearing(mongoCon, influxCon, date)
@@ -160,49 +136,40 @@ def simulation(start, end, valid=True):
         except Exception as e:
             print('Error in Day Ahead calculation ' + str(date.date()))
             print(e)
-        try:
-            #send.basic_publish(exchange='Marktet', routing_key='', body='powerFlow ' + str(date))
-            #send.basic_publish(exchange='Market', routing_key='', body='opt_actual ' + str(date))
-            #balEnergyClearing(mongoCon, influxCon, date)
-            send.basic_publish(exchange='Market', routing_key='', body='result_actual ' + str(date))
-            print('Actual calculation finish ' + str(date.date()))
-        except Exception as e:
-            print('Error in Actual ' + str(date.date()))
-            print(e)
+
 
 if __name__ == "__main__":
-    pids = []
-    # ----- InfluxDB -----
-    if config.getboolean('InfluxDB', 'Local'):
+
+    influxID = -1
+    mongoID = -1
+
+    if config.getboolean('InfluxDB', 'Local'):  # if influxdb should runs local -> start
         influxPath = config['InfluxDB']['Path']
         cmd = subprocess.Popen([influxPath], shell=False, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
-        pids.append(cmd.pid)
-    if config.getboolean('MongoDB', 'Local'):
-        # ----- MongoDB -----
+        influxID = cmd.pid
+
+    if config.getboolean('MongoDB', 'Local'):   # if mongodb should runs local -> start
         mongoPath = config['MongoDB']['Path']
         cmd = subprocess.Popen([mongoPath, '-bind_ip', config['MongoDB']['Host']], shell=False,
                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        pids.append(cmd.pid)
+        mongoID = cmd.pid
 
-    tm.sleep(2)
+    tm.sleep(1)                                 # wait one second till databases start up
 
-    if config.getboolean('Results', 'Delete'):
+    if config.getboolean('Results', 'Delete'):  # delete and clean up databases for new simulation
+        # clean influxdb
         try:
             influxCon.influx.drop_database(database)
-        except:
-            pass
+        except Exception as e:
+            print(e)
         influxCon.influx.create_database(database)
+        # clean mongodb
         for name in mongoCon.orderDB.list_collection_names():
             mongoCon.orderDB.drop_collection(name)
 
-    init = mongoCon.orderDB["init"]
-    query = {"_id": 'start'}
-    start = {"$set": {"_id": "start", "start": tm.ctime(), "config": config}}
-    init.update_one(filter=query, update=start, upsert=True)
-
     try:
-        if config.getboolean('Market','Local'):
+        if config.getboolean('Market','Local'): # if web application should runs local
             app.run(debug=False, port=config.getint('Market','Port'), host='127.0.0.1')
         else:
             app.run(debug=False, port=config.getint('Market','Port'), host='0.0.0.0')
@@ -211,9 +178,5 @@ if __name__ == "__main__":
     finally:
         send.basic_publish(exchange='Market', routing_key='', body='kill ' + str('1970-01-01'))
         send.close()
-        tm.sleep(2)
-        for pid in pids:
-            try:
-                psutil.Process(pid).kill()
-            except:
-                pass
+        psutil.Process(influxID).kill()
+        psutil.Process(mongoID).kill()

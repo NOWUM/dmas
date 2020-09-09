@@ -102,11 +102,11 @@ class pwpPort(port_model):
                 value['model'].volume = np.zeros_like(power)
             print(e)
 
-        self.power = power
-        self.emisson = emisson
-        self.fuel = fuel
+        self.power = np.asarray(power, np.float)
+        self.emisson = np.asarray(emisson, np.float)
+        self.fuel = np.asarray(fuel, np.float)
 
-        return power
+        return self.power, self.emisson, self.fuel
 
     def fixPlaning(self):
         power = np.zeros_like(self.t)
@@ -171,10 +171,12 @@ class pwpPort(port_model):
                 value['model'].power = np.zeros_like(power)
                 value['model'].volume = np.zeros_like(power)
             print(e)
-        self.power = power
-        self.emisson = emisson
-        self.fuel = fuel
-        return power
+
+        self.power = np.asarray(power, np.float)
+        self.emisson = np.asarray(emisson, np.float)
+        self.fuel = np.asarray(fuel, np.float)
+
+        return self.power, self.emisson, self.fuel
 
 if __name__ == "__main__":
 

@@ -1,10 +1,14 @@
+# third party modules
+import time as tme
 import os
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.dem_Port import demPort
-from agents.basic_Agent import agent as basicAgent
 import argparse
 import pandas as pd
 import numpy as np
+
+# model modules
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+from aggregation.dem_Port import demPort
+from agents.basic_Agent import agent as basicAgent
 
 
 def parse_args():
@@ -17,133 +21,160 @@ class demAgent(basicAgent):
 
     def __init__(self, date, plz):
         super().__init__(date=date, plz=plz, exchange='Market', typ='DEM')
-        # Aufbau des Portfolios mit den enstprechenden Haushalten, Gewerbe und Industrie
-        self.logger.info('Start des Agenten')
+        # Development of the portfolio with the corresponding households, trade and industry
+        self.logger.info('starting the agent')
+        start_time = tme.time()
         self.portfolio = demPort(typ="DEM")
 
-        # Aufbau der Prosumer mit PV und Batterie
+        # Construction of the prosumer with PV and battery
         for key, value in self.ConnectionMongo.getPVBatteries().items():
             self.portfolio.addToPortfolio('PvBat' + str(key), {'PvBat' + str(key): value})
-        self.logger.info('Prosumer PV-Bat hinzugefügt')
+        self.logger.info('Prosumer PV-Bat added')
 
-        # Aufbau Consumer mit PV
+        # Construction Consumer with PV
         for key, value in self.ConnectionMongo.getPVs().items():
             self.portfolio.addToPortfolio('Pv' + str(key), {'Pv' + str(key): value})
-        self.logger.info('Consumer PV hinzugefügt')
+        self.logger.info('Consumer PV added')
 
         demand = self.ConnectionMongo.getDemand()
 
-        # Aufbau Standard Consumer H0
+        # Construction Standard Consumer H0
         name = 'plz_' + str(plz) + '_h0'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['h0']*10**6, 2), 'typ': 'H0'}})
-        self.logger.info('Consumer hinzugefügt')
+        self.logger.info('H0 added')
 
-        # Aufbau Standard Consumer G0
+        # Construction Standard Consumer G0
         name = 'plz_' + str(plz) + '_g0'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['g0']*10**6, 2), 'typ': 'G0'}})
-        self.logger.info('Gewerbe  hinzugefügt')
+        self.logger.info('G0 added')
 
-        # Aufbau Standard Consumer RLM
+        # Construction Standard Consumer RLM
         name = 'plz_' + str(plz) + '_rlm'
         self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['rlm']*10**6, 2), 'typ': 'RLM'}})
-        self.logger.info('Industrie hinzugefügt')
+        self.logger.info('RLM added')
 
-        # Wenn keine Energiesysteme vorhanden sind, beende den Agenten
+        # If there are no power systems, terminate the agent
         if len(self.portfolio.energySystems) == 0:
-            print('Nummer: %s Keine Energiesysteme im Energiesystem' % plz)
-            print(' --> Aufbau des Agenten %s_%s beendet' % (self.typ, plz))
+            print('Number: %s No energy systems in the area' % plz)
             exit()
-        self.logger.info('Aufbau des Agenten abgeschlossen')
 
-    def optimize_balancing(self):
-        """Einsatzplanung für den Regelleistungsmarkt"""
-        self.logger.info('Planung Regelleistungsmarkt abgeschlossen')
+        timeDelta = tme.time() - start_time
+
+        self.logger.info('setup of the agent completed in %s' % timeDelta)
 
     def optimize_dayAhead(self):
-        """Einsatzplanung für den DayAhead-Markt"""
-        orderbook = dict()                                                  # Oderbook für alle Gebote (Stunde 1-24)
-        json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
+        """scheduling for the DayAhead market"""
+        self.logger.info('DayAhead market scheduling started')
+        start_time = tme.time()
 
-        # Prognosen für den kommenden Tag
-        weather = self.weatherForecast(self.date)                           # Wetterdaten (dir,dif,temp,wind)
-        price = self.priceForecast(self.date)                               # Preisdaten (power,gas,nuc,coal,lignite)
-
-        # Standardoptimierung
-        self.portfolio.setPara(self.date, weather, price)
+        # forecasts for the coming day
+        self.portfolio.setPara(self.date, self.weatherForecast(self.date), self.priceForecast(self.date))
         self.portfolio.buildModel()
-        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)  # Berechnung der Einspeiseleitung [kW]
 
-        # Portfolioinformation
+        # standard optimzation --> returns power timeseries in [kW]
+        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)
+
+        # save data in influxDB
         time = self.date
+        json_body = []
         for i in self.portfolio.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(typ='DEM',                                                         # Typ Nachfrage
-                                 agent=self.name,                                                   # Name des Agenten
-                                 area=self.plz,                                                     # Plz Gebiet
-                                 timestamp='optimize_dayAhead'),                                    # Zeitstempel
+                    "tags": dict(typ='DEM',                                                         # typ
+                                 agent=self.name,                                                   # name
+                                 area=self.plz,                                                     # area
+                                 timestamp='optimize_dayAhead'),                                    # processing step
                     "time": time.isoformat() + 'Z',
-                    "fields": dict(powerTotal=power_dayAhead[i]/10**3,                              # Gesamte Nachfrage Strom  [MW]
-                                   heatTotal=self.portfolio.demand['heat'][i]/10**3,                # Gesamte Nachfrage Wärme  [MW]
-                                   powerSolar=self.portfolio.generation['solar'][i]/10**3)          # Gesamte Erzeugung aus Solar [MW]
+                    "fields": dict(powerTotal=power_dayAhead[i]/10**3,                              # total demand power [MW]
+                                   heatTotal=self.portfolio.demand['heat'][i]/10**3,                # total demand heat [MW]
+                                   powerSolar=self.portfolio.generation['solar'][i]/10**3)          # total generation solar [MW]
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-
         self.ConnectionInflux.saveData(json_body)
 
-        # Aufbau der Gebotskurven
+        # build up oderbook and send to market (mongoDB)
+        orderbook = dict()
         for i in range(self.portfolio.T):
             orderbook.update({'h_%s' % i: {'quantity': [power_dayAhead[i]/10**3, 0], 'price': [3000, -3000], 'hour': i, 'name': self.name}})
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
-        self.logger.info('Planung DayAhead-Markt abgeschlossen')
+        # save performance in influxDB
+        timeDelta = tme.time() - start_time
+        procssingPerfomance = [
+            {
+                "measurement": 'Performance',
+                "tags": dict(typ='DEM',                         # typ
+                             agent=self.name,                   # name
+                             area=self.plz,                     # area
+                             timestamp='optimize_dayAhead'),    # processing step
+                "time": self.date.isoformat() + 'Z',
+                "fields": dict(processingTime=timeDelta)
+
+            }
+        ]
+        self.ConnectionInflux.saveData(procssingPerfomance)
+
+        self.logger.info('DayAhead market scheduling completed in %s' % timeDelta)
 
     def post_dayAhead(self):
-        """Reaktion auf  die DayAhead-Ergebnisse"""
-        json_body = []                                                              # Liste zur Speicherung der Ergebnisse in der InfluxDB
+        """Scheduling after DayAhead Market"""
+        self.logger.info('After DayAhead market scheduling started')
+        start_time = tme.time()
 
-        # Abfrage der DayAhead Ergebnisse
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)            # Angebotene Menge [MWh]
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)            # Nachgefragte Menge [MWh]
-        price = self.ConnectionInflux.getDayAheadPrice(self.date)                   # MCP [€/MWh]
-        profit = [float((ask[i] - bid[i]) * price[i]) for i in range(24)]           # erzielte Erlöse
+        # query the DayAhead results
+        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)            # [MWh]
+        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)            # [MWh]
+        price = self.ConnectionInflux.getDayAheadPrice(self.date)                   # [€/MWh]
 
-        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)            # Berechnung der Einspeiseleitung [kW]
+        # calculate the profit and the new power scheduling
+        profit = [float((ask[i] - bid[i]) * price[i]) for i in range(24)]           # revenue for each hour
+        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)            # [kW]
 
-        # Portfolioinformation
+        # save data in influxDB
         time = self.date
+        json_body = []
         for i in self.portfolio.t:
             json_body.append(
                 {
                     "measurement": 'Areas',
-                    "tags": dict(typ='DEM',                                         # Typ Erneuerbare Energien
-                                 agent=self.name,                                   # Name des Agenten
-                                 area=self.plz,                                     # Plz Gebiet
-                                 timestamp='post_dayAhead'),                        # Zeitstempel der Tagesplanung
+                    "tags": dict(typ='DEM',                                         # typ
+                                 agent=self.name,                                   # name
+                                 area=self.plz,                                     # area
+                                 timestamp='post_dayAhead'),                        # processing step
                     "time": time.isoformat() + 'Z',
 
-                    "fields": dict(powerTotal=power_dayAhead[i] / 10 ** 3,                      # Gesamte Nachfrage Strom  [MW]
-                                   heatTotal=self.portfolio.demand['heat'][i] / 10 ** 3,        # Gesamte Nachfrage Wärme  [MW]
-                                   powerSolar=self.portfolio.generation['solar'][i] / 10 ** 3,  # Gesamte Erzeugung aus Solar [MW]
+                    "fields": dict(powerTotal=power_dayAhead[i] / 10 ** 3,                      # total demand power [MW]
+                                   heatTotal=self.portfolio.demand['heat'][i] / 10 ** 3,        # total demand heat [MW]
+                                   powerSolar=self.portfolio.generation['solar'][i] / 10 ** 3,  # total generation solar [MW]
                                    profit=profit[i])
                 })
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-
         self.ConnectionInflux.saveData(json_body)
-        self.logger.info('DayAhead Ergebnisse erhalten')
 
-    def optimize_actual(self):
-        """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
-        # TODO: Überarbeitung, wenn Regelleistung
-        self.logger.info('Aktuellen Fahrplan erstellt')
+        # save performance in influxDB
+        timeDelta = tme.time() - start_time
+        procssingPerfomance = [
+            {
+                "measurement": 'Performance',
+                "tags": dict(typ='DEM',                         # typ
+                             agent=self.name,                   # name
+                             area=self.plz,                     # area
+                             timestamp='post_dayAhead'),        # processing step
+                "time": self.date.isoformat() + 'Z',
+                "fields": dict(processingTime=timeDelta)
 
-    def post_actual(self):
-        """ Abschlussplanung des Tages """
-        # TODO: Überarbeitung, wenn Regelleistung
-        # Planung für den nächsten Tag
-        # Anpassung der Prognosemethoden für den Verbrauch und die Preise
+            }
+        ]
+        self.ConnectionInflux.saveData(procssingPerfomance)
+
+        self.logger.info('After DayAhead market scheduling completed in %s' % timeDelta)
+
+        # scheduling for the next day
+        self.logger.info('Next day scheduling started')
+
+        start_time = tme.time()
         if self.delay <= 0:
             for key, method in self.forecasts.items():
                 if key != 'weather':
@@ -155,8 +186,24 @@ class demAgent(basicAgent):
         else:
             self.delay -= 1
 
-        self.logger.info('Tag %s abgeschlossen' % self.date)
-        print('Agent %s %s done' % (self.name, self.date.date()))
+        # save performance in influxDB
+        timeDelta = tme.time() - start_time
+        procssingPerfomance = [
+            {
+                "measurement": 'Performance',
+                "tags": dict(typ='DEM',                         # typ
+                             agent=self.name,                   # name
+                             area=self.plz,                     # area
+                             timestamp='nextDay_scheduling'),   # processing step
+                "time": self.date.isoformat() + 'Z',
+                "fields": dict(processingTime=timeDelta)
+
+            }
+        ]
+        self.ConnectionInflux.saveData(procssingPerfomance)
+
+        self.logger.info('Next day scheduling completed in %s' % timeDelta)
+
 
 if __name__ == "__main__":
 
