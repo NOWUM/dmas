@@ -65,20 +65,30 @@ class demAgent(basicAgent):
     def optimize_dayAhead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
+
+        # forecast and model build for the coming day
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # forecasts for the coming day
         self.portfolio.setPara(self.date, self.weatherForecast(self.date), self.priceForecast(self.date))
         self.portfolio.buildModel()
 
-        # standard optimzation --> returns power timeseries in [kW]
+        self.perfLog('initModel', start_time)
+
+        # optimzation --> returns power timeseries in [kW]
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)
 
-        # save data in influxDB
+        # save portfolio data in influxDB
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         time = self.date
-        json_body = []
+        portfolioData = []
         for i in self.portfolio.t:
-            json_body.append(
+            portfolioData.append(
                 {
                     "measurement": 'Areas',
                     "tags": dict(typ='DEM',                                                         # typ
@@ -92,35 +102,36 @@ class demAgent(basicAgent):
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
+        self.ConnectionInflux.saveData(portfolioData)
 
-        # build up oderbook and send to market (mongoDB)
+        self.perfLog('saveScheduling', start_time)
+
+        # build up orderbook
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         orderbook = dict()
         for i in range(self.portfolio.T):
             orderbook.update({'h_%s' % i: {'quantity': [power_dayAhead[i]/10**3, 0], 'price': [3000, -3000], 'hour': i, 'name': self.name}})
+
+        self.perfLog('buildOrderbook', start_time)
+
+        # send orderbook to market (mongoDB)
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='DEM',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='optimize_dayAhead'),    # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('sendOrderbook', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
-
-        self.logger.info('DayAhead market scheduling completed in %s' % timeDelta)
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('DayAhead market scheduling completed')
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('After DayAhead market scheduling started')
+
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         # query the DayAhead results
@@ -132,11 +143,16 @@ class demAgent(basicAgent):
         profit = [float((ask[i] - bid[i]) * price[i]) for i in range(24)]           # revenue for each hour
         power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)            # [kW]
 
-        # save data in influxDB
+        self.perfLog('optResults', start_time)
+
+        # save energy system data in influxDB
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         time = self.date
-        json_body = []
+        portfolioData = []
         for i in self.portfolio.t:
-            json_body.append(
+            portfolioData.append(
                 {
                     "measurement": 'Areas',
                     "tags": dict(typ='DEM',                                         # typ
@@ -151,30 +167,16 @@ class demAgent(basicAgent):
                                    profit=profit[i])
                 })
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
+        self.ConnectionInflux.saveData(portfolioData)
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='DEM',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='post_dayAhead'),        # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('saveResults', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
-
-        self.logger.info('After DayAhead market scheduling completed in %s' % timeDelta)
-
-        # scheduling for the next day
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('After DayAhead market scheduling completed')
         self.logger.info('Next day scheduling started')
-
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
+
         if self.delay <= 0:
             for key, method in self.forecasts.items():
                 if key != 'weather':
@@ -186,23 +188,10 @@ class demAgent(basicAgent):
         else:
             self.delay -= 1
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='DEM',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='nextDay_scheduling'),   # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('nextDay', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
-
-        self.logger.info('Next day scheduling completed in %s' % timeDelta)
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('Next day scheduling completed')
 
 
 if __name__ == "__main__":

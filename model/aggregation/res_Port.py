@@ -131,7 +131,8 @@ class resPort(port_model):
         if len(response) == 0:
             self.generation['total'] = np.zeros_like(self.t)
             for _, data in self.energySystems.items():
-                data['model'].build(data, self.weather, self.date)
+                if data['typ'] != 'wind':
+                    data['model'].build(data, self.weather, self.date)
         else:
             self.generation['total'] = np.asarray(response).reshape((-1,))
 

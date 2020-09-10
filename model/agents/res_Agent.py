@@ -102,19 +102,28 @@ class resAgent(basicAgent):
     def optimize_dayAhead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
+
+
+        # forecast and model build for the coming day
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # forecasts for the coming day
         weather = self.weatherForecast(self.date)
         price = self.priceForecast(self.date)
         demand = self.demandForecast(self.date)
         self.portfolio.setPara(self.date, weather, price, demand)
         self.portfolio.buildModel()
 
+        self.perfLog('initModel', start_time)
+
         # standard optimzation --> returns power timeseries in [MW]
+		# -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)
 
         # split power in eeg and direct marketing part
+
         powerDirect = np.zeros(24)
         powerEEG = np.zeros(24)
         for key, value in agent.portfolio.energySystems.items():
@@ -128,7 +137,12 @@ class resAgent(basicAgent):
                 powerEEG += value['model'].generation['water'].reshape(-1)              # run river
                 powerEEG += value['model'].generation['solar'].reshape(-1)              # pv systems before 2013
 
+        self.perfLog('optModel', start_time)
+
         # save portfolio data in influxDB
+		# -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         time = self.date
         json_body = []
         for i in self.portfolio.t:
@@ -153,7 +167,12 @@ class resAgent(basicAgent):
             time = time + pd.DateOffset(hours=self.portfolio.dt)
         self.ConnectionInflux.saveData(json_body)
 
+        self.perfLog('saveScheduling', start_time)
+
         # build up oderbook and send to market (mongoDB)
+		# -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         orderbook = dict()
 
         actions = np.random.randint(1, 8, 24) * 10
@@ -201,29 +220,26 @@ class resAgent(basicAgent):
                     price.append(float(min(-1*slope * p + ub, lb)))
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
+
+        self.perfLog('buildOrderbook', start_time)
+
+		# send orderbook to market (mongoDB)
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='RES',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='optimize_dayAhead'),    # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('sendOrderbook', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
+        # -------------------------------------------------------------------------------------------------------------
 
-        self.logger.info('DayAhead market scheduling completed in %s' % timeDelta)
+        self.logger.info('DayAhead market scheduling completed')
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('After DayAhead market scheduling started')
+
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         # save data and actions to learn from them
@@ -239,6 +255,10 @@ class resAgent(basicAgent):
 
         # calculate the profit and the new power scheduling
         profit = [float((ask[i] - bid[i]) * price[i]) for i in range(24)]           # erzielte Erlöse
+        power = np.asarray(ask - bid).reshape((-1,))
+
+        self.portfolio.buildModel(response=power)
+        self.portfolio.optimize()
 
         # Differenz aus Planung und Ergebnissen
         difference = np.asarray(planing).reshape((-1,)) - np.asarray(ask - bid).reshape((-1,))
@@ -254,17 +274,16 @@ class resAgent(basicAgent):
         else:
             states = [-1 for _ in self.portfolio.t]
 
-        # Portfolioinformation
-        time = self.date                                                                # Zeitstempel
-        power = np.asarray(ask - bid).reshape((-1,))
+        self.perfLog('optResults', start_time)
 
-        self.portfolio.buildModel(response=power)
-        self.portfolio.optimize()
+        # save energy system data in influxDB
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
-        # save portfolio data in influxDB
-        json_body = []
+        portfolioData = []
+        time = self.date
         for i in self.portfolio.t:
-            json_body.append(
+            portfolioData.append(
                 {
                     "measurement": 'Areas',
                     "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
@@ -285,29 +304,14 @@ class resAgent(basicAgent):
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
+        self.ConnectionInflux.saveData(portfolioData)
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='RES',                                     # typ
-                             agent=self.name,                               # name
-                             area=self.plz,                                 # area
-                             timestamp='post_dayAhead'),                    # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('saveResults', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
-
-        self.logger.info('After DayAhead market scheduling completed in %s' % timeDelta)
-
-        # scheduling for the next day
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('After DayAhead market scheduling completed')
         self.logger.info('Next day scheduling started')
-
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         if self.delay <= 0:
@@ -325,30 +329,16 @@ class resAgent(basicAgent):
                 self.qLearn.fit()
                 self.qLearn.counter = 0
 
-                self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
-                                                                                 # Zukunft nicht mehr so schnell)
-                self.espilion = max(0.99*self.espilion, 0.01)                    # Epsilion * 0.999 (mit steigender Simulationdauer
-                                                                                 # sind viele Bereiche schon bekannt
+            self.lr = max(self.lr*0.999, 0.4)
+            self.espilion = max(0.99*self.espilion, 0.01)
         else:
             self.delay -= 1
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='RES',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='nextDay_scheduling'),   # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
+        self.perfLog('nextDay', start_time)
 
-        self.logger.info('Next day scheduling completed in %s' % timeDelta)
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('Next day scheduling completed')
 
 
 if __name__ == "__main__":

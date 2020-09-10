@@ -2,6 +2,7 @@ import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 import configparser
 import logging
+import time as tme
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface
 from apps.frcst_DEM import typFrcst as demTyp
@@ -104,8 +105,24 @@ class agent:
             demand += list(self.forecasts['demand'].forecast(date))
         return np.asarray(demand).reshape((-1,))
 
-    def post_actual(self):
-        print('post actual')
+    def perfLog(self, function, start):
+
+        # save performance in influxDB
+        timeDelta = tme.time() - start
+        procssingPerfomance = [
+            {
+                "measurement": 'Performance',
+                "tags": dict(typ=self.typ,                      # typ
+                             agent=self.name,                   # name
+                             area=self.plz,                     # area
+                             function=function,                 # processing step
+                             date=str(self.date.date())),
+                "time": pd.to_datetime(tme.time(), unit='s').isoformat() + 'Z',
+                "fields": dict(processingTime=timeDelta)
+
+            }
+        ]
+        self.ConnectionInflux.saveData(procssingPerfomance)
 
     def callback(self, ch, method, properties, body):
         """ Methodenaufruf zugehörig zum Marktsignal"""
@@ -133,24 +150,6 @@ class agent:
             print('terminate area')
             exit()
 
-    # ----- Learning Next Day -----
-    def nextDay(self):
-
-        for key, method in self.forecasts.items():
-            if key != 'weather':
-                method.collectData(self.date)
-                method.counter += 1
-
-                if method.counter >= method.collect:
-                    method.fitFunction()
-                    method.counter = 0
-
-        if self.typ != 'DEM':
-            for key, func in self.intelligence.items():
-                func.counter += 1
-                if func.counter >= func.collect:
-                    func.fit()
-                    func.counter = 0
 
     def run_agent(self):
         """ Verbinden des Agenten mit der Marktplattform und Warten auf Anweisungen """

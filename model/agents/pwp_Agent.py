@@ -82,58 +82,38 @@ class pwpAgent(basicAgent):
     def optimize_dayAhead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
+
+
+        # forecast and model build for the coming day
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # forecasts for the coming day
         prices = self.priceForecast(self.date, 2)
         weather = self.weatherForecast(self.date, 2)
         demand = self.demandForecast(self.date, 2)
         self.portfolio.setPara(self.date, weather, prices, demand)
         self.portfolio.buildModel()
 
-        # standard optimzation --> returns power timeseries in [MW] and var. cost in [€]
+        self.perfLog('initModel', start_time)
+
+        # optimzation --> returns power timeseries in [MW] and var. cost in [€]
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         power_dayAhead, emissionOpt, fuelOpt = self.portfolio.optimize()
-        # calculate var. cost in [€/MWh] and set as minimal price
-        costs = [(emissionOpt[i] + fuelOpt[i])/power_dayAhead[i] if power_dayAhead[i] != 0 else 0 for i in self.portfolio.t]
-        self.minPrice = np.asarray(costs[:24]).reshape((-1,))
-
-        # save energy system data in influxDB
-        json_body = []
-        for key, value in self.portfolio.energySystems.items():
-            time = self.date
-            power = value['model'].power
-            volume = value['model'].volume
-            for i in self.portfolio.t:
-                json_body.append(
-                    {
-                        "measurement": 'Areas',
-                        "tags": dict(typ='PWP',                                             # typ
-                                     fuel=value['fuel'],                                    # fuel
-                                     asset=key,                                             # energy system name
-                                     agent=self.name,                                       # agent name
-                                     area=self.plz,                                         # area
-                                     timestamp='optimize_dayAhead'),                        # processing step
-                        "time": time.isoformat() + 'Z',
-                        "fields": dict(power=power[i],                                      # total power [MW]
-                                       volume=volume[i])                                    # volume [MWh]
-                    }
-                )
-                time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
-
-        # maximal power optimization --> returns power timeseries in [MW] and var. cost in [€]
         self.portfolio.buildModel(max_=True)
         power_max, emissionMax, fuelMax = self.portfolio.optimize()
-        powerDelta = power_max - power_dayAhead
-        powerDelta[powerDelta <= 0] = 1 * 10**-6
-        # calculate var. cost in [€/MWh] and set as maximal price
-        priceMax = (emissionMax + fuelMax) - (emissionOpt + fuelOpt) / powerDelta
+
+        self.perfLog('optModel', start_time)
 
         # save portfolio data in influxDB
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         time = self.date
-        json_body = []
+        portfolioData = []
         for i in self.portfolio.t:
-            json_body.append(
+            portfolioData.append(
                 {
                     "measurement": 'Areas',
                     "tags": dict(typ='PWP',                                                 # typ
@@ -156,9 +136,19 @@ class pwpAgent(basicAgent):
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
+        self.ConnectionInflux.saveData(portfolioData)
 
-        # build up oderbook and send to market (mongoDB)
+        self.perfLog('saveScheduling', start_time)
+
+        # build up orderbook
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
+        # calculate var. cost in [€/MWh] and set as minimal price
+        costs = [(emissionOpt[i] + fuelOpt[i])/power_dayAhead[i] if power_dayAhead[i] != 0 else 0 for i in self.portfolio.t]
+        self.minPrice = np.asarray(costs[:24]).reshape((-1,))
+        # calculate var. cost in [€/MWh] and set as maximal price
+        priceMax = np.abs(prices['power']) * 5
         orderbook = dict()
 
         actions = np.random.randint(1, 8, 24) * 10
@@ -219,7 +209,7 @@ class pwpAgent(basicAgent):
                 lb = cVar
                 slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
                 price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
-            if (power_max[i] > 0):
+            if power_max[i] > 0:
                 quantity.append(float(-1 * power_max[i]))
                 price.append(float(max(priceMax[i], self.maxPrice[i])))
 
@@ -238,30 +228,24 @@ class pwpAgent(basicAgent):
 
             orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
 
+        self.perfLog('buildOrderbook', start_time)
+
+        # send orderbook to market (mongoDB)
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
         self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='PWP',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='optimize_dayAhead'),    # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('sendOrderbook', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
-
-        self.logger.info('DayAhead market scheduling completed in %s' % timeDelta)
-
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('DayAhead market scheduling completed')
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('After DayAhead market scheduling started')
+
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         # save data and actions to learn from them
@@ -274,6 +258,7 @@ class pwpAgent(basicAgent):
 
         # calculate the profit and the new power scheduling
         profit = np.asarray([float((ask[i] - bid[i]) * price[i]) for i in self.portfolio.t])    # revenue for each hour
+
         self.portfolio.buildModel(response=ask-bid)
         power_dayAhead, emission, fuel = self.portfolio.fixPlaning()
         profit = profit.reshape((-1,)) - (emission + fuel).reshape((-1,))
@@ -287,35 +272,17 @@ class pwpAgent(basicAgent):
         else:
             states = [-1 for i in self.portfolio.t]
 
+        self.perfLog('optResults', start_time)
+
         # save energy system data in influxDB
-        json_body = []
-        for key, value in self.portfolio.energySystems.items():
-            time = self.date
-            power = value['model'].power
-            volume = value['model'].volume
-            for i in self.portfolio.t:
-                json_body.append(
-                    {
-                        "measurement": 'Areas',
-                        "tags": dict(typ='PWP',                                             # typ
-                                     fuel=value['fuel'],                                    # fuel
-                                     asset=key,                                             # energy system name
-                                     agent=self.name,                                       # agent name
-                                     area=self.plz,                                         # area
-                                     timestamp='post_dayAhead'),                            # processing step
-                        "time": time.isoformat() + 'Z',
-                        "fields": dict(power=power[i],                                      # total power [MW]
-                                       volume=volume[i])                                    # volume      [MWh]
-                    }
-                )
-                time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
         # save portfolio data in influxDB
-        json_body = []
+        portfolioData = []
         time = self.date
         for i in self.portfolio.t[:24]:
-            json_body.append(
+            portfolioData.append(
                 {
                     "measurement": 'Areas',
                     "tags": dict(typ='PWP',                                                 # typ
@@ -339,29 +306,14 @@ class pwpAgent(basicAgent):
                 }
             )
             time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(json_body)
+        self.ConnectionInflux.saveData(portfolioData)
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='PWP',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='post_dayAhead'),        # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('saveResults', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
-
-        self.logger.info('After DayAhead market scheduling completed in %s' % timeDelta)
-
-        # scheduling for the next day
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('After DayAhead market scheduling completed')
         self.logger.info('Next day scheduling started')
-
+        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         if self.delay <= 0:
@@ -379,30 +331,15 @@ class pwpAgent(basicAgent):
                 self.qLearn.fit()
                 self.qLearn.counter = 0
 
-            self.lr = max(self.lr*0.9, 0.4)                                 # Lernrate * 0.9 (Annahme Markt ändert sich
-                                                                            # Zukunft nicht mehr so schnell)
-            self.espilion = max(0.99*self.espilion, 0.01)                   # Epsilion * 0.9 (mit steigender Simulationdauer
-                                                                            # sind viele Bereiche schon bekannt
+            self.lr = max(self.lr*0.9, 0.4)
+            self.espilion = max(0.99*self.espilion, 0.01)
         else:
             self.delay -= 1
 
-        # save performance in influxDB
-        timeDelta = tme.time() - start_time
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ='PWP',                         # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             timestamp='nextDay_scheduling'),   # processing step
-                "time": self.date.isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
+        self.perfLog('nextDay', start_time)
 
-            }
-        ]
-        self.ConnectionInflux.saveData(procssingPerfomance)
-
-        self.logger.info('Next day scheduling completed in %s' % timeDelta)
+        # -------------------------------------------------------------------------------------------------------------
+        self.logger.info('Next day scheduling completed')
 
 
 if __name__ == "__main__":
