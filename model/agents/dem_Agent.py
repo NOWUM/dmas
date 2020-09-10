@@ -20,7 +20,7 @@ def parse_args():
 class demAgent(basicAgent):
 
     def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, exchange='Market', typ='DEM')
+        super().__init__(date=date, plz=plz, typ='DEM')
         # Development of the portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = tme.time()

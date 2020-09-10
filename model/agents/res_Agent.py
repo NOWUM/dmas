@@ -20,7 +20,7 @@ def parse_args():
 class resAgent(basicAgent):
 
     def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, exchange='Market', typ='RES')
+        super().__init__(date=date, plz=plz, typ='RES')
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = tme.time()

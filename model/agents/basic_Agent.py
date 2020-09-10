@@ -15,13 +15,16 @@ import numpy as np
 
 class agent:
 
-    def __init__(self, date, plz, typ='PWP', exchange='Market'):
+    def __init__(self, date, plz, typ='PWP'):
 
         config = configparser.ConfigParser()
         config.read(r'./app.cfg')
 
+        self.exchange = config['Market']['Exchange']
+        self.agentSuffix = config['Market']['agentSuffix']
+
         # declare meta data for each agent
-        self.name = typ + '_%i' % plz                               # name
+        self.name = typ + '_%i' % plz + self.agentSuffix                 # name
         self.plz = plz                                              # area
         self.date = pd.to_datetime(date)                            # current day
         self.typ = typ                                              # generation or consumer typ
@@ -53,10 +56,10 @@ class agent:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost, heartbeat=0, credentials=credentials))
 
         self.receive = self.connection.channel()
-        self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
+        self.receive.exchange_declare(exchange=self.exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
         self.queue_name = self.result.method.queue
-        self.receive.queue_bind(exchange=exchange, queue=self.queue_name)
+        self.receive.queue_bind(exchange=self.exchange, queue=self.queue_name)
 
         # declare logging options
         self.errorCounter = 0
