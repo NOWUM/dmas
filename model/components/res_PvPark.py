@@ -12,27 +12,24 @@ class solar_model(es):
     def __init__(self,
                  lat=50.77, lon=6.09,                                               # Längen- und Breitengrad
                  pdc0=0.24, azimuth=180, tilt=35,
-                 number=-1, tempModel=False,
+                 number=-1, temp=False,
                  t=np.arange(24), T=24, dt=1):                                      # Metainfo Zeit t, T, dt
         super().__init__(t, T, dt)
 
         self.location = Location(lat, lon)
-        temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['pvsyst']['insulated']
-
-        if tempModel:
-            self.mySys = PVSystem(module_parameters=dict(pdc0=1000*pdc0, gamma_pdc=-0.004),
-                                  inverter_parameters=dict(pdc0=1000*pdc0),
-                                  surface_tilt=tilt, surface_azimuth=azimuth, albedo=0.25,
-                                  temperature_model_parameters = temperature_model_parameters,
-                                  losses_parameters=dict(availability=0, lid=0, shading=1, soiling=1))      # https://pvlib-python.readthedocs.io/en/stable/generated/pvlib.pvsystem.pvwatts_losses.html
-
-            self.mc = ModelChain(self.mySys, Location(lat, lon), aoi_model='physical', spectral_model='no_loss',
-                                 temperature_model='pvsyst', losses_model='pvwatts', ac_model='pvwatts')
+        if temp:
+            temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['pvsyst']['freestanding']
         else:
-            self.mySys = PVSystem(module_parameters=dict(pdc0=1000*pdc0, gamma_pdc=-0.004), inverter_parameters=dict(pdc0=1000*pdc0),
-                             surface_tilt=tilt, surface_azimuth=azimuth, albedo=0.25,
-                                  losses_parameters=dict(availability=0, lid=0, shading=1, soiling=1))
-            self.mc = ModelChain(self.mySys, Location(lat, lon), aoi_model='physical', spectral_model='no_loss', losses_model='pvwatts')
+            temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['pvsyst']['insulated']
+
+        self.mySys = PVSystem(module_parameters=dict(pdc0=1000*pdc0, gamma_pdc=-0.004),
+                              inverter_parameters=dict(pdc0=1000*pdc0),
+                              surface_tilt=tilt, surface_azimuth=azimuth, albedo=0.25,
+                              temperature_model_parameters = temperature_model_parameters,
+                              losses_parameters=dict(availability=0, lid=0, shading=1, soiling=1))      # https://pvlib-python.readthedocs.io/en/stable/generated/pvlib.pvsystem.pvwatts_losses.html
+
+        self.mc = ModelChain(self.mySys, Location(lat, lon), aoi_model='physical', spectral_model='no_loss',
+                             temperature_model='pvsyst', losses_model='pvwatts', ac_model='pvwatts')
 
         self.number = number
 

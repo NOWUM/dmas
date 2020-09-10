@@ -11,7 +11,7 @@ class pvwp_model(es):
     """ Haushalt mit Photovoltaik und Wärmepumpe """
     def __init__(self,
                  lat=50.77, lon=6.09,
-                 pdc0=240, azimut=180, tilt=0,
+                 pdc0=240, azimuth=180, tilt=0,
                  t=np.arange(24), T=24, dt=1,                                                       # Metainfo Zeit
                  demQ=1000, demP=3000,                                                              # Jahresverbräuche
                  refSLP=np.asarray(np.load(open(r'./data/Ref_H0.array','rb')), np.float32),         # SLP Strom
@@ -20,11 +20,16 @@ class pvwp_model(es):
                  parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32)):                         # Gebäudeparameter
         super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters)
 
-        temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
-        mySys = PVSystem(module_parameters=dict(pdc0=pdc0, gamma_pdc=-0.004), inverter_parameters=dict(pdc0=pdc0),
-                         surface_tilt=tilt, surface_azimuth=azimut, albedo=0.25,
-                         temperature_model_parameters=temperature_model_parameters)
-        self.mc = ModelChain(mySys, Location(lat, lon), aoi_model='physical', spectral_model='no_loss')
+        self.mySys = PVSystem(module_parameters=dict(pdc0=1000 * pdc0, gamma_pdc=-0.004),
+                              inverter_parameters=dict(pdc0=1000 * pdc0),
+                              surface_tilt=tilt, surface_azimuth=azimuth, albedo=0.25,
+                              temperature_model_parameters=TEMPERATURE_MODEL_PARAMETERS['pvsyst']['insulated'],
+                              losses_parameters=dict(availability=0, lid=0, shading=1, soiling=1))
+
+        self.location = Location(lat, lon)
+
+        self.mc = ModelChain(self.mySys, Location(lat, lon), aoi_model='physical', spectral_model='no_loss',
+                             temperature_model='pvsyst', losses_model='pvwatts', ac_model='pvwatts')
 
 
     def build(self, data, ts, date):

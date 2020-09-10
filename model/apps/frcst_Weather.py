@@ -5,5 +5,5 @@ class weatherForecast:
 
         self.influx = influx
 
-    def forecast(self, geo, date):
-        return self.influx.getWeather(geo, date)
+    def forecast(self, geo, date, smooth):
+        return self.influx.getWeather(geo, date, smooth)

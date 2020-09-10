@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from influxdb import InfluxDBClient
+import multiprocessing
+from joblib import Parallel, delayed
 
 class influxInterface:
 
@@ -15,6 +17,8 @@ class influxInterface:
         self.maphash = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
         self.maphash = self.maphash.set_index('hash')
 
+        self.windSmoothFactors = pd.read_csv(r'./data/smoothWind.csv', index_col=0)
+
         self.database = database
 
     def saveData(self, json_body):
@@ -25,102 +29,152 @@ class influxInterface:
     -->             Query Wetterdaten                        <---    
     ----------------------------------------------------------"""
 
+    def __writeWeatherdata(self, date, valid):
+
+        if valid:
+
+            self.influx.switch_database('weatherData')
+            start = date.isoformat() + 'Z'
+            end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+            query = 'select * from "DWD_REA6" where time >= \'%s\' and time < \'%s\'' % (start, end)
+            result = self.influx.query(query)
+            self.influx.switch_database(self.database)
+            json_body = []
+
+            for point in result.get_points():
+
+                json_body.append(
+                    {
+                        "measurement": "weather",
+                        "tags": {
+                            "geohash": point['geohash'],
+                            "area": point['area'],
+                            "lat": point['lat'],
+                            "lon": point['lon']
+                        },
+                        "time": point['time'],
+                        "fields": {
+                            "GHI": np.float(point['dir'] + point['dif']),       # Globalstrahlung           [W/m²]
+                            "DNI": np.float(point['dir']),                      # Direkte Strahlung         [W/m²]
+                            "DHI": np.float(point['dif']),                      # Diffuse Stahlung          [W/m²]
+                            "TAmb": np.float(point['temp']-273.15),             # Temperatur                [°C]
+                            "Ws": min(20.0, np.float(point['ws']))              # Windgeschindigkeit        [m/s]
+                        }
+                    }
+                )
+
+            self.influx.write_points(json_body)
+
+        else:
+
+            if date.year != self.switchWeatherYear:
+                self.histWeatherYear = np.random.randint(low=1995, high=2017)
+                self.switchWeatherYear = date.year
+            self.influx.switch_database('weatherData')
+
+            if '02-29' in str(date):
+                date -= pd.DateOffset(days = 1)
+
+            start = date.replace(self.histWeatherYear).isoformat() + 'Z'
+            end = (date.replace(self.histWeatherYear) + pd.DateOffset(days=1)).isoformat() + 'Z'
+            query = 'select * from "DWD_REA6" where time >= \'%s\' and time < \'%s\'' % (start, end)
+            result = self.influx.query(query)
+            self.influx.switch_database(self.database)
+            json_body = []
+
+            for point in result.get_points():
+                json_body.append(
+                    {
+                        "measurement": "weather",
+                        "tags": {
+                            "geohash": point['geohash'],
+                            "area": point['area'],
+                            "lat": point['lat'],
+                            "lon": point['lon']
+                        },
+                        "time": str(date.year) + point['time'][4:],
+                        "fields": {
+                            "GHI": np.float(point['dir'] + point['dif']),       # Globalstrahlung           [W/m²]
+                            "DNI": np.float(point['dir']),                      # Direkte Strahlung         [W/m²]
+                            "DHI": np.float(point['dif']),                      # Diffuse Stahlung          [W/m²]
+                            "TAmb": np.float(point['temp']-273.15),             # Temperatur                [°C]
+                            "Ws": min(20.0, np.float(point['ws']))              # Windgeschindigkeit        [m/s]
+                        }
+                    }
+                )
+
+            self.influx.write_points(json_body)
+
+        print('Wetter für %s geschrieben' % date.date())
+
+
     def generateWeather(self, start, end, valid=True):
         """ Wettergenerator für die Simualtionsdauer (start --> end) """
-        for date in pd.date_range(start=start, end=end, freq='D'):
-            if valid:
-                # Zugriff auf die Datenbank mit den historischen Wetterdaten
-                self.influx.switch_database('weather')
-                start = date.isoformat() + 'Z'
-                end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-            else:
-                if date.year != self.switchWeatherYear:
-                    self.histWeatherYear = np.random.randint(low=2005, high=2015)
-                    self.switchWeatherYear = date.year
-                # Zugriff auf die Datenbank mit den historischen Wetterdaten
-                self.influx.switch_database('weather')
-                try: # Fehler bei Schaltjahr abfangen
-                    start = date.replace(self.histWeatherYear).isoformat() + 'Z'
-                except:
-                    date = date - pd.DateOffset(days=1)
-                    start = date.replace(self.histWeatherYear).isoformat() + 'Z'
-                end = (date.replace(self.histWeatherYear) + pd.DateOffset(days=1)).isoformat() + 'Z'
 
-            if '0229' in start:
-                start = start.replace('2902', '2802')
-            # --> Abfrage der Daten
-            query = 'select * from "germany" where time >= \'%s\' and time < \'%s\'' % (start, end)
-            result = self.influx.query(query)
-            # Wechsel zur Simulationsdatenbank
-            self.influx.switch_database(self.database)
-            json_body = []
-            for data in result['germany']:
-                if data['TAmb'] != None:
-                    json_body.append(
-                        {
-                            "measurement": "weather",
-                            "tags": {
-                                "geohash": data['geohash'],
-                                "plz": self.maphash.loc[self.maphash.index == data['geohash'], 'PLZ'].to_numpy()[0]
-                            },
-                            "time": str(date.year) + data['time'][4:],
-                            "fields": {
-                                "GHI": np.float(data['GHI']),               # Globalstrahlung           [W/m²]
-                                "DNI": np.float(data['DNI']),               # Direkte Strahlung         [W/m²]
-                                "DHI": np.float(data['DHI']),               # Diffuse Stahlung          [W/m²]
-                                "TAmb": np.float(data['TAmb'])              # Temperatur                [°C]
-                            }
-                        }
-                    )
-            self.influx.write_points(json_body)
-            self.influx.switch_database('weather')
-            query = 'select mean("Ws") from "germany" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h), "area"  fill(0)' %(
-            start, end)
-            result = self.influx.query(query)
-            self.influx.switch_database(self.database)
-            json_body = []
-            for data in result.items():
-                if data[0][1]['area'] != '':
-                    for t in data[1]:
-                        json_body.append(
-                            {
-                                "measurement": "weather",
-                                "tags": {
-                                    "geohash": self.maphash.loc[self.maphash['PLZ'] == int(data[0][1]['area']), :].index[0],
-                                    "plz": int(data[0][1]['area'])
-                                },
-                                "time": str(date.year) + t['time'][4:],
-                                  "fields": {
-                                    "Ws": np.float(t['mean'])
-                                }
-                            }
-                        )
-            self.influx.write_points(json_body)
-            print('Wetter für %s geschrieben' % date.date())
+        dateRange = pd.date_range(start=start, end=end, freq='D')
+        num_cores = min(multiprocessing.cpu_count(), 50, len(dateRange))
+        print('Starte Wetterziehung')
+        Parallel(n_jobs=num_cores)(delayed(self.__writeWeatherdata)(i, valid) for i in dateRange)
 
-    def getWeather(self, geo, date):
+    def getWeather(self, geo, date, smoothWind=False):
         """ Wetter im jeweiligen PLZ-Gebiet am Tag X """
         self.influx.switch_database(database=self.database)
         geohash = str(geo)
         # Tag im ISO Format
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-        # --> Abfrage der Daten
-        query = 'select * from "weather" where time >= \'%s\' and time < \'%s\' and geohash = \'%s\'' \
-                % (start, end, geohash)
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            dir = [point['DNI'] for point in result.get_points()]           # Direkte Strahlung         [W/m²]
-            dif = [point['DHI'] for point in result.get_points()]           # Diffuse Stahlung          [W/m²]
-            wind = [point['Ws'] for point in result.get_points()]           # Windgeschwindigkeit       [m/s] (2m)
-            TAmb = [point['TAmb'] for point in result.get_points()]         # Temperatur                [°C]
-        else:
-            dir = list(np.zeros(24))
-            dif = list(np.zeros(24))
-            wind = list(np.zeros(24))
-            TAmb = list(np.zeros(24))
 
-        return dict(wind=wind, dir=dir, dif=dif, temp=TAmb)
+        if smoothWind == True:
+            area = self.maphash.loc[self.maphash.index == geohash, 'PLZ'].to_numpy()[0]
+            N = self.windSmoothFactors.loc[self.windSmoothFactors.index == area, 'smooth factor'].to_numpy()[0]
+            if N > 0:
+                lb = int(N/2)
+                ub = int(N / 2) + int(N % 2 > 0)
+            else:
+                lb = 0
+                ub = 0
+            startWind = (date - pd.DateOffset(hours=lb)).isoformat() + 'Z'
+            endWind = (date + pd.DateOffset(days=1, hours=ub)).isoformat() + 'Z'
+        else:
+            N = 0
+            startWind = start
+            endWind = end
+
+        keys = {'DNI': 'dir',           # Direkte Strahlung         [W/m²]          DNI
+                'DHI': 'dif',           # Diffuse Stahlung          [W/m²]          DHI
+                'Ws': 'wind',           # Windgeschwindigkeit       [m/s] (2m)      Ws
+                'TAmb': 'temp'}         # Temperatur                [°C]            TAmb
+
+        dict_ = {}
+
+        for key, value in keys.items():
+            # --> Abfrage der Daten
+            if value == 'wind':
+                query = 'select mean("%s") from "weather" where time >= \'%s\' and time < \'%s\' and geohash = \'%s\' GROUP BY time(1h) fill(0)'\
+                        % (key, startWind, endWind, geohash)
+            else:
+                query = 'select mean("%s") from "weather" where time >= \'%s\' and time < \'%s\' and geohash = \'%s\' GROUP BY time(1h) fill(0)'\
+                        % (key, start, end, geohash)
+
+            result = self.influx.query(query)
+
+            if result.__len__() > 0:
+                if value == 'wind' and N > 0:
+                    values = [np.round(point['mean'], 2) for point in result.get_points()]
+                    smoothedWind = []
+                    for j in range(24):
+                        ws = 0
+                        for i in range(j, j + ub + lb + 1):
+                            ws += values[i]
+                        smoothedWind.append(ws/(N+1))
+                    dict_.update({value: smoothedWind})
+                else:
+                    dict_.update({value: [np.round(point['mean'], 2) for point in result.get_points()]})
+
+            else:
+                dict_.update({value: list(np.zeros(24))})
+
+        return dict_
 
     def getWind(self, date):
         """ mittlere Windgeschwindigkeit in [m/s] """

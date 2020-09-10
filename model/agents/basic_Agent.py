@@ -2,6 +2,7 @@ import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 import configparser
 import logging
+import time as tme
 from interfaces.interface_Influx import influxInterface
 from interfaces.interface_mongo import mongoInterface
 from apps.frcst_DEM import typFrcst as demTyp
@@ -19,40 +20,24 @@ class agent:
         config = configparser.ConfigParser()
         config.read(r'./app.cfg')
 
-        database = config['Results']['Database']
-        mongoHost = config['MongoDB']['Host']
-        influxHost = config['InfluxDB']['Host']
-        marketHost = config['Market']['Host']
-        agentSuffix = config['Market']['agentSuffix']
-
-        # Metadaten eines Agenten
-        self.name = typ + '_%i' % plz + agentSuffix # Name
-        self.plz = plz  # Gebiet
-        self.date = pd.to_datetime(date)  # aktueller Tag
-        self.typ = typ  # Agententyp (RES,PWP,DEM,...)
+        # declare meta data for each agent
+        self.name = typ + '_%i' % plz                               # name
+        self.plz = plz                                              # area
+        self.date = pd.to_datetime(date)                            # current day
+        self.typ = typ                                              # generation or consumer typ
         self.delay = 2
 
-        self.errorCounter = 0
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO)
+        database = config['Results']['Database']                    # database name
+        mongoHost = config['MongoDB']['Host']                       # connection and interface to mongodb
+        self.ConnectionMongo = mongoInterface(host=mongoHost,
+                                              database=database,
+                                              area=plz)
+        influxHost = config['InfluxDB']['Host']                     # connection and interface to influxdb
+        self.ConnectionInflux = influxInterface(host=influxHost,
+                                                database=database)
 
-        # Create ./logs/ folder if not exist to prevent FileNotFoundError
-        if not os.path.exists("./logs/"):
-            os.makedirs("./logs/")
 
-        fh = logging.FileHandler(r'./logs/%s.log' % self.name)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        fh.setFormatter(formatter)
-        self.logger.addHandler(fh)
-
-        # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
-        # logging.basicConfig(filename=r'./logs/%s_fix.log' % self.name, level=logging.INFO, filemode='a')
-        # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-        # Verbindungen an die Datenbanken sowie den Marktplatz
-        self.ConnectionInflux = influxInterface(host=influxHost, database=database)            # Datenbank zur Speicherung der Zeitreihen
-        self.ConnectionMongo = mongoInterface(host=mongoHost, database=database, area=plz)     # Datenbank zur Speicherung der Strukurdaten
-
-        # Laden der Geoinfomationen
+        # check if area is valid
         if self.ConnectionMongo.getPosition() is None:
             print('Nummer: %s ist kein offizielles PLZ-Gebiet' % plz)
             print(' --> Aufbau des Agenten %s_%s beendet' % (typ, plz))
@@ -60,18 +45,27 @@ class agent:
         else:
             self.geo = self.ConnectionMongo.getPosition()['geohash']
 
-        # Anbindung an MQTT
+        marketHost = config['Market']['Host']                       # connection to market plattform
         if config.getboolean('Market', 'Local'):
-            # credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0))
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost, heartbeat=0))
         else:
             credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0, credentials=credentials))
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost, heartbeat=0, credentials=credentials))
+
         self.receive = self.connection.channel()
         self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
         self.queue_name = self.result.method.queue
         self.receive.queue_bind(exchange=exchange, queue=self.queue_name)
+
+        # declare logging options
+        self.errorCounter = 0
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.INFO)
+        fh = logging.FileHandler(r'./logs/%s.log' % self.name)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
 
         # Prognosemethoden eines Agenten
         self.forecasts = {
@@ -83,8 +77,11 @@ class agent:
     def weatherForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
         """ Wetterprognose des jeweiligen PLZ-Gebietes"""
         weather = dict(wind=[], dir=[], dif=[], temp=[])
+        smooth = False
+        if self.typ == 'RES':
+            smooth = True
         for i in range(days):
-            w = self.forecasts['weather'].forecast(str(self.geo), date)
+            w = self.forecasts['weather'].forecast(str(self.geo), date, smooth)
             for key, value in w.items():
                 weather[key] += value
         return weather
@@ -108,19 +105,29 @@ class agent:
             demand += list(self.forecasts['demand'].forecast(date))
         return np.asarray(demand).reshape((-1,))
 
-    def post_actual(self):
-        print('post actual')
+    def perfLog(self, function, start):
+
+        # save performance in influxDB
+        timeDelta = tme.time() - start
+        procssingPerfomance = [
+            {
+                "measurement": 'Performance',
+                "tags": dict(typ=self.typ,                      # typ
+                             agent=self.name,                   # name
+                             area=self.plz,                     # area
+                             function=function,                 # processing step
+                             date=str(self.date.date())),
+                "time": pd.to_datetime(tme.time(), unit='s').isoformat() + 'Z',
+                "fields": dict(processingTime=timeDelta)
+
+            }
+        ]
+        self.ConnectionInflux.saveData(procssingPerfomance)
 
     def callback(self, ch, method, properties, body):
         """ Methodenaufruf zugehörig zum Marktsignal"""
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-        # Aufruf Regelleistungsmarkt
-        if 'opt_balancing' in message:
-            try:
-                self.optimize_balancing()
-            except Exception as inst:
-                self.exceptionHandle(part='Balancing Plan', inst=inst)
         # Aufruf DayAhead-Markt
         if 'opt_dayAhead' in message:
             try:
@@ -133,18 +140,6 @@ class agent:
                 self.post_dayAhead()
             except Exception as inst:
                 self.exceptionHandle(part='Day Ahead Result', inst=inst)
-        # Aufruf Berechnung der aktuellen Erzeugung und Verbrauch
-        if 'opt_actual' in message:
-            try:
-                self.optimize_actual()
-            except Exception as inst:
-                self.exceptionHandle(part='Actual Plan', inst=inst)
-        # Aufruf Bereitstellung Regelenergie und Planung des nächsten Tages
-        if 'result_actual' in message:
-            try:
-                self.post_actual()
-            except Exception as inst:
-                self.exceptionHandle(part='Actual Results', inst=inst)
         # Aufruf zum Beenden
         if 'kill' in message:
             self.ConnectionInflux.influx.close()
@@ -155,29 +150,11 @@ class agent:
             print('terminate area')
             exit()
 
-    # ----- Learning Next Day -----
-    def nextDay(self):
-
-        for key, method in self.forecasts.items():
-            if key != 'weather':
-                method.collectData(self.date)
-                method.counter += 1
-
-                if method.counter >= method.collect:
-                    method.fitFunction()
-                    method.counter = 0
-
-        if self.typ != 'DEM':
-            for key, func in self.intelligence.items():
-                func.counter += 1
-                if func.counter >= func.collect:
-                    func.fit()
-                    func.counter = 0
 
     def run_agent(self):
         """ Verbinden des Agenten mit der Marktplattform und Warten auf Anweisungen """
         self.receive.basic_consume(queue=self.queue_name, on_message_callback=self.callback, auto_ack=True)
-        print(' --> Agent %s hat sich mit dem Marktplatz verbunden, wartet auf Anweisungen (To exit press CTRL+C)'
+        print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
               % self.name)
         self.receive.start_consuming()
 
@@ -185,13 +162,13 @@ class agent:
         print(self.name)
         print('Error in ' + part)
         print('Error --> ' + str(inst))
-        # logging.error('%s --> %s' % (part, inst))
         self.errorCounter += 1
         if self.errorCounter == 5:
             self.ConnectionMongo.logout(self.name)
             self.errorCounter = 0
 
+
 if __name__ == "__main__":
+
     agent = agent(date='2019-01-01', plz=1)
-    # agent.ConnectionRest.login(agent.name, agent.typ)
-    # agent.run_agent()
+

@@ -3,6 +3,7 @@ from components.basic_EnergySystem import energySystem as es
 from pvlib.pvsystem import PVSystem
 from pvlib.location import Location
 from pvlib.modelchain import ModelChain
+from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
 import pandas as pd
 
 
@@ -20,11 +21,16 @@ class pv_model(es):
                  parameters=np.asarray([2.8, -37, 5.4, 0.17], np.float32)):                         # Gebäudeparameter
         super().__init__(t, T, dt, demQ, demP, refSLP, refTemp, factors, parameters)
 
-        self.mySys = PVSystem(module_parameters=dict(pdc0=1000*pdc0, gamma_pdc=-0.004), inverter_parameters=dict(pdc0=1000*pdc0),
-                         surface_tilt=tilt, surface_azimuth=azimuth, albedo=0.25)
+        self.mySys = PVSystem(module_parameters=dict(pdc0=1000 * pdc0, gamma_pdc=-0.004),
+                              inverter_parameters=dict(pdc0=1000 * pdc0),
+                              surface_tilt=tilt, surface_azimuth=azimuth, albedo=0.25,
+                              temperature_model_parameters=TEMPERATURE_MODEL_PARAMETERS['pvsyst']['insulated'],
+                              losses_parameters=dict(availability=0, lid=0, shading=1, soiling=1))
 
         self.location = Location(lat, lon)
-        self.mc = ModelChain(self.mySys, Location(lat, lon), aoi_model='physical', spectral_model='no_loss')
+
+        self.mc = ModelChain(self.mySys, Location(lat, lon), aoi_model='physical', spectral_model='no_loss',
+                             temperature_model='pvsyst', losses_model='pvwatts', ac_model='pvwatts')
 
     def build(self, data, ts, date):
 
