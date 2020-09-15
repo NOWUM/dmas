@@ -29,27 +29,25 @@ class port_model:
 
         self.power = np.zeros(T)                                            # Leistung am Netzbezugspunkt
 
-        self.emisson = np.zeros(T)                                          # Kosten aus CO2 Emissionen
+        self.emission = np.zeros(T)                                         # Kosten aus CO2 Emissionen
         self.fuel = np.zeros(T)                                             # Brennstoffkosten
 
-        self.generation = dict(total=np.zeros_like(self.t),                 # Erzeugung Gesamt
-                               solar=np.zeros_like(self.t),                 # Erzeugung aus Solar
-                               wind=np.zeros_like(self.t),                  # Erzeugung aus Wind
-                               water=np.zeros_like(self.t),                 # Erzeugung aus Wasserkraft
-                               bio=np.zeros_like(self.t),                   # Erzeugung aus Biomasse
-                               lignite=np.zeros_like(self.t),               # Erzeugung aus Braunkohle
-                               coal=np.zeros_like(self.t),                  # Erzeugung aus Steinkohle
-                               gas=np.zeros_like(self.t),                   # Erzeugung aus Erdgas
-                               nuc=np.zeros_like(self.t))                   # Erzeugung aus Kernkraft
+        self.generation = dict(powerTotal=np.zeros_like(self.t, dtype=float),                 # Erzeugung Gesamt
+                               powerSolar=np.zeros_like(self.t, dtype=float),                 # Erzeugung aus Solar
+                               powerWind=np.zeros_like(self.t, dtype=float),                  # Erzeugung aus Wind
+                               powerWater=np.zeros_like(self.t, dtype=float),                 # Erzeugung aus Wasserkraft
+                               powerBio=np.zeros_like(self.t, dtype=float),                   # Erzeugung aus Biomasse
+                               powerLignite=np.zeros_like(self.t, dtype=float),               # Erzeugung aus Braunkohle
+                               powerCoal=np.zeros_like(self.t, dtype=float),                  # Erzeugung aus Steinkohle
+                               powerGas=np.zeros_like(self.t, dtype=float),                   # Erzeugung aus Erdgas
+                               powerNuc=np.zeros_like(self.t, dtype=float))                   # Erzeugung aus Kernkraft
 
-        self.demand = dict(power=np.zeros_like(self.t),                     # Strombedarf
-                                heat=np.zeros_like(self.t))                 # Wärmebedarf
+        self.demand = dict(power=np.zeros_like(self.t, dtype=float),                     # Strombedarf
+                                heat=np.zeros_like(self.t, dtype=float))                 # Wärmebedarf
 
         # Optimierungsrelevante Parameter
         self.weather = {}                                                   # Wetterdaten (wind,dir,dif,temp)
         self.prices = {}                                                    # Preiserwartung
-        self.posBalPower = []                                               # positive Regelleistungsverpflichtung
-        self.negBalPower = []                                               # negative Regelleistungsverpflichtung Power
         self.frcstDemand = []                                               # Lasterwartung
 
         # GGLP-Model für den Dispatch der Kraftwerke
@@ -61,13 +59,12 @@ class port_model:
             self.m.__len__ = 1
 
     # ----- Set Parameter for optimization -----
-    def setPara(self, date, weather, prices, demand=np.zeros(24), posBalPower=np.zeros(24), negBalPower=np.zeros(24)):
+    def setPara(self, date, weather, prices, demand=np.zeros(24)):
         self.date = pd.to_datetime(date)
         self.weather = weather
         self.prices = prices
         self.frcstDemand = demand
-        self.posBalPower = np.asarray(posBalPower)
-        self.negBalPower = np.asarray(negBalPower)
+
 
     # ----- Add Energysystem to Portfolio -----
     def addToPortfolio(self, name, energysystem):

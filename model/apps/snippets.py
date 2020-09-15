@@ -549,7 +549,7 @@ class learnDayAheadMarginal:
 
         def getStates(self):
 
-            self.portfolio.setPara(weather=self.weatherForecast(), date=self.date, prices={})
+            self.portfolio.setPara(weather=self.weather_forecast(), date=self.date, prices={})
             self.portfolio.buildModel()
             power = np.asarray(self.portfolio.optimize(), np.float) * 0.95
 

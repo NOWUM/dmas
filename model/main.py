@@ -10,9 +10,9 @@ from flask import Flask, render_template, request
 from flask_cors import cross_origin
 
 # model modules
-from apps.routine_DayAhead import dayAheadClearing
-from apps.misc_validData import writeValidData, writeDayAheadError
-from interfaces.interface_Influx import influxInterface as influxCon
+from apps.routine_DayAhead import da_clearing
+from apps.misc_validData import write_valid_data, writeDayAheadError
+from interfaces.interface_Influx import InfluxInterface as influxCon
 from interfaces.interface_mongo import mongoInterface as mongoCon
 
 
@@ -78,7 +78,7 @@ def run():
     """
     start = pd.to_datetime(request.form['start'])
     end = pd.to_datetime(request.form['end'])
-    print('starte  Simulation von %s bis %s: ' % (start.date(), end.date()))
+    print('starts simulation from %s to %s: ' % (start.date(), end.date()))
     simulation(start, end)
     return 'OK'
 
@@ -112,15 +112,15 @@ def buildAreas():
     simualtion method with command messagases for the agents
 """
 
-def simulation(start, end, valid=False):
+def simulation(start, end, valid=True):
 
-    influxCon.generateWeather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
+    influxCon.generate_weather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
 
     if valid:
         print('write validation data')
-        writeValidData(database, 0, start, end)
-        writeValidData(database, 1, start, end)
-        writeValidData(database, 2, start, end)
+        write_valid_data(database, 0, start, end)
+        write_valid_data(database, 1, start, end)
+        write_valid_data(database, 2, start, end)
 
     for date in pd.date_range(start=start, end=end, freq='D'):
 
@@ -128,11 +128,11 @@ def simulation(start, end, valid=False):
 
         try:
             send.basic_publish(exchange='Market', routing_key='', body='opt_dayAhead ' + str(date))
-            dayAheadClearing(mongoCon, influxCon, date)
+            da_clearing(mongoCon, influxCon, date)
             send.basic_publish(exchange='Market', routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
-            if valid:
-                writeDayAheadError(database, date)
+            # if valid:
+            #     writeDayAheadError(database, date)
         except Exception as e:
             print('Error in Day Ahead calculation ' + str(date.date()))
             print(e)

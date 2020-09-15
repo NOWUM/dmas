@@ -13,11 +13,11 @@ from agents.basic_Agent import agent as basicAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=15, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=24, help='PLZ-Agent')
     return parser.parse_args()
 
 
-class demAgent(basicAgent):
+class DemAgent(basicAgent):
 
     def __init__(self, date, plz):
         super().__init__(date=date, plz=plz, exchange='Market', typ='DEM')
@@ -27,16 +27,16 @@ class demAgent(basicAgent):
         self.portfolio = demPort(typ="DEM")
 
         # Construction of the prosumer with PV and battery
-        for key, value in self.ConnectionMongo.getPVBatteries().items():
+        for key, value in self.connections['mongoDB'].getPVBatteries().items():
             self.portfolio.addToPortfolio('PvBat' + str(key), {'PvBat' + str(key): value})
         self.logger.info('Prosumer PV-Bat added')
 
         # Construction Consumer with PV
-        for key, value in self.ConnectionMongo.getPVs().items():
+        for key, value in self.connections['mongoDB'].getPVs().items():
             self.portfolio.addToPortfolio('Pv' + str(key), {'Pv' + str(key): value})
         self.logger.info('Consumer PV added')
 
-        demand = self.ConnectionMongo.getDemand()
+        demand = self.connections['mongoDB'].getDemand()
 
         # Construction Standard Consumer H0
         name = 'plz_' + str(plz) + '_h0'
@@ -58,155 +58,139 @@ class demAgent(basicAgent):
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
-        timeDelta = tme.time() - start_time
-
-        self.logger.info('setup of the agent completed in %s' % timeDelta)
+        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def optimize_dayAhead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
 
-        # forecast and model build for the coming day
+        # Step 1: forecast input data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
+        start_time = tme.time()                                         # performance timestamp
 
-        self.portfolio.setPara(self.date, self.weatherForecast(self.date), self.priceForecast(self.date))
+        weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
+        prices = self.price_forecast(self.date)                          # price forecast dayAhead
+        demand = self.demand_forecast(self.date)                         # demand forecast dayAhead
+        self.portfolio.setPara(self.date, weather, prices, demand)
         self.portfolio.buildModel()
 
-        self.perfLog('initModel', start_time)
+        self.performance['initModel'] = tme.time() - start_time
 
-        # optimzation --> returns power timeseries in [kW]
+        # Step 2: standard optimization --> returns power series in [kW]
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()                                         # performance timestamp
+
+        power_da = self.portfolio.optimize()                            # total portfolio power
+
+        self.performance['optModel'] = tme.time() - start_time
+
+        # Step 3: save optimization results in influxDB
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)
+        df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
+                                    powerSolar=self.portfolio.generation['solar']/10**3),
+                          index=pd.date_range(start=self.date, freq='60min', periods=self.portfolio.T))
 
-        # save portfolio data in influxDB
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+                                                                 timestamp='optimize_dayAhead'))
+
+        self.performance['saveSchedule'] = tme.time() - start_time
+
+        # Step 4: build orders from optimization results
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        time = self.date
-        portfolioData = []
-        for i in self.portfolio.t:
-            portfolioData.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='DEM',                                                         # typ
-                                 agent=self.name,                                                   # name
-                                 area=self.plz,                                                     # area
-                                 timestamp='optimize_dayAhead'),                                    # processing step
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(powerTotal=power_dayAhead[i]/10**3,                              # total demand power [MW]
-                                   heatTotal=self.portfolio.demand['heat'][i]/10**3,                # total demand heat [MW]
-                                   powerSolar=self.portfolio.generation['solar'][i]/10**3)          # total generation solar [MW]
-                }
-            )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(portfolioData)
-
-        self.perfLog('saveScheduling', start_time)
-
-        # build up orderbook
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
-
-        orderbook = dict()
+        order_book = dict()
         for i in range(self.portfolio.T):
-            orderbook.update({'h_%s' % i: {'quantity': [power_dayAhead[i]/10**3, 0], 'price': [3000, -3000], 'hour': i, 'name': self.name}})
+            order_book.update({'h_%s' % i: {'quantity': [power_da[i]/10**3, 0], 'price': [3000, -3000],
+                                            'hour': i, 'name': self.name}})
 
-        self.perfLog('buildOrderbook', start_time)
+        self.performance['buildOrders'] = tme.time() - start_time
 
-        # send orderbook to market (mongoDB)
+        # Step 5: send orders to market resp. to mongodb
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
+        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=order_book)
 
-        self.perfLog('sendOrderbook', start_time)
+        self.performance['sendOrders'] = tme.time() - start_time
 
-        # -------------------------------------------------------------------------------------------------------------
         self.logger.info('DayAhead market scheduling completed')
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('After DayAhead market scheduling started')
 
+        # Step 6: get market results and adjust generation an strategy
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         # query the DayAhead results
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)            # [MWh]
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)            # [MWh]
-        price = self.ConnectionInflux.getDayAheadPrice(self.date)                   # [€/MWh]
+        ask = self.connections['influxDB'].get_ask_da(self.date, self.name)            # volume to buy
+        bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
+        prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
+        profit = (ask - bid) * prc
 
-        # calculate the profit and the new power scheduling
-        profit = [float((ask[i] - bid[i]) * price[i]) for i in range(24)]           # revenue for each hour
-        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)            # [kW]
+        power_da = np.asarray(self.portfolio.optimize(), np.float)                     # [kW]
 
-        self.perfLog('optResults', start_time)
+        self.performance['adjustResult'] = tme.time() - start_time
 
-        # save energy system data in influxDB
+        # Step 7: save adjusted results in influxdb
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        time = self.date
-        portfolioData = []
-        for i in self.portfolio.t:
-            portfolioData.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='DEM',                                         # typ
-                                 agent=self.name,                                   # name
-                                 area=self.plz,                                     # area
-                                 timestamp='post_dayAhead'),                        # processing step
-                    "time": time.isoformat() + 'Z',
+        df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
+                                    powerSolar=self.portfolio.generation['solar']/10**3,
+                                    profit=profit))
+        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+                                                                 timestamp='post_dayAhead'))
 
-                    "fields": dict(powerTotal=power_dayAhead[i] / 10 ** 3,                      # total demand power [MW]
-                                   heatTotal=self.portfolio.demand['heat'][i] / 10 ** 3,        # total demand heat [MW]
-                                   powerSolar=self.portfolio.generation['solar'][i] / 10 ** 3,  # total generation solar [MW]
-                                   profit=profit[i])
-                })
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(portfolioData)
+        self.performance['saveResult'] = tme.time() - start_time
 
-        self.perfLog('saveResults', start_time)
-
-        # -------------------------------------------------------------------------------------------------------------
-        self.logger.info('After DayAhead market scheduling completed')
+        self.logger.info('After DayAhead market adjustment completed')
         self.logger.info('Next day scheduling started')
+
+        # Step 8: retrain forecast methods and learning algorithm
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        if self.delay <= 0:
+        if self.strategy['delay'] <= 0:                                                         # offset factor start
+            # collect data an retrain forecast method
+            dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
+            weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+            prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
+            prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
             for key, method in self.forecasts.items():
-                if key != 'weather':
-                    method.collectData(self.date)
-                    method.counter += 1
-                    if method.counter >= method.collect:
-                        method.fitFunction()
-                        method.counter = 0
+                method.collect_data(date=self.date, dem=dem, prc=prc, prc_1=prc_1, prc_7=prc_7, weather=weather)
+                method.counter += 1
+                if method.counter >= method.collect:                                        # retrain forecast method
+                    method.fit_function()
+                    method.counter = 0
         else:
-            self.delay -= 1
+            self.strategy['delay'] -= 1
 
-        self.perfLog('nextDay', start_time)
+        self.performance['nextDay'] = tme.time() - start_time
 
-        # -------------------------------------------------------------------------------------------------------------
+        df = pd.DataFrame(data=self.performance, index=[self.date])
+        self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
+
         self.logger.info('Next day scheduling completed')
 
 
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = demAgent(date='2018-01-01', plz=args.plz)
-    agent.ConnectionMongo.login(agent.name, False)
+    agent = DemAgent(date='2018-02-05', plz=args.plz)
+    agent.connections['mongoDB'].login(agent.name, False)
     try:
-        agent.run_agent()
+        agent.run()
     except Exception as e:
         print(e)
     finally:
-        agent.ConnectionInflux.influx.close()
-        agent.ConnectionMongo.logout(agent.name)
-        agent.ConnectionMongo.mongo.close()
-        if not agent.connection.is_close:
-            agent.connection.close()
+        agent.connections['influxDB'].influx.close()
+        agent.connections['mongoDB'].mongo.close()
+        if not agent.connections['connectionMQTT'].is_closed:
+            agent.connections['connectionMQTT'].close()
         exit()

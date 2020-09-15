@@ -65,29 +65,3 @@ class solar_model(es):
         else:
             self.generation['solar'] = np.zeros_like(self.t)
             self.power = np.zeros_like(self.t)
-
-
-if __name__ == "__main__":
-
-    from interfaces.interface_Influx import influxInterface as influxCon
-    import pandas as pd
-    from matplotlib import pyplot as plt
-    geo = 'u281z222vvyf'
-    date = pd.to_datetime('2019-08-06')
-
-    myInflux = influxCon(database='MAS2020_7')
-    weather = myInflux.getWeather(geo, date)
-    # weather['temp'] = [i for i in weather['temp']]
-    #weather['dif'] = [i * 6 for i in weather['dif']]
-    myPVTemp = solar_model(tempModel=True, pdc0=5000)
-    myPV = solar_model(tempModel=False, pdc0=5000)
-    data = {}
-    myPV.build(data, weather, date)
-    myPVTemp.build(data, weather, date)
-
-    print(myPV.generation['solar'])
-    print(myPVTemp.generation['solar'])
-    plt.plot(myPV.generation['solar'])
-    plt.plot(myPVTemp.generation['solar'])
-
-    x = 100* (np.asarray(myPV.generation['solar'])-np.asarray(myPVTemp.generation['solar']))/np.asarray(myPVTemp.generation['solar'])

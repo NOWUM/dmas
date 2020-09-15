@@ -3,7 +3,7 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 import pandas as pd
 import numpy as np
 import pypsa
-from interfaces.interface_Influx import influxInterface
+from interfaces.interface_Influx import InfluxInterface
 from plotly.colors import label_rgb, find_intermediate_color
 import json
 import plotly
@@ -16,7 +16,7 @@ class gridModel:
 
     def __init__(self, influx='149.201.88.150', dbName='MAS_2020'):
 
-        self.ConnectionInflux = influxInterface(database=dbName, host=influx)
+        self.ConnectionInflux = InfluxInterface(database=dbName, host=influx)
 
         self.network = pypsa.Network()
         buses = pd.read_excel(r'./data/Grid_Buses.xlsx', index_col=0)

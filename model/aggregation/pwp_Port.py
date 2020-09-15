@@ -60,41 +60,51 @@ class pwpPort(port_model):
             plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
             self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
             self.m.addConstrs(minus[i] + plus[i] == powerReBAP[i] for i in self.t)
-            self.m.setObjective(quicksum(self.fuel[i] + self.emisson[i] + powerReBAP[i] * (np.abs(self.prices['power'][i]) + 35) for i in self.t), GRB.MINIMIZE)
+            self.m.setObjective(quicksum(self.fuel[i] + self.emission[i] +
+                                         powerReBAP[i] * (np.abs(self.prices['power'][i]) + 35) for i in self.t),
+                                GRB.MINIMIZE)
         # ----- update model -----
         self.m.update()
 
     def optimize(self):
-        power = np.zeros_like(self.t)
-        emisson = np.zeros_like(self.t)
-        fuel = np.zeros_like(self.t)
+
+        power = np.zeros_like(self.t, np.float)               # total portfolio generation
+        emission = np.zeros_like(self.t, np.float)            # total portfolio emission costs
+        fuel = np.zeros_like(self.t, np.float)                # total portfolio fuel costs
 
         try:
             self.m.optimize()
-            # Einspeiseleitung
-            power = np.asanyarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
+            #  total power [MW] for each hour
+            power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
             power = np.round(power, 2)
-            # Emissionskosten
-            emisson = np.asanyarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float)
-            emisson = np.round(emisson, 2)
-            # Brennstoffkosten
-            fuel = np.asanyarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float)
+            # total emissions costs [€] for each hour
+            emission = np.asarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+            emission = np.round(emission, 2)
+            # total fuel costs [€] for each hour
+            fuel = np.asarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float).reshape((-1,))
             fuel = np.round(fuel, 2)
-            generation = dict(lignite=np.zeros_like(self.t),          # Erzeugung aus Braunkohle
-                              coal=np.zeros_like(self.t),             # Erzeugung aus Steinkohle
-                              gas=np.zeros_like(self.t),              # Erzeugung aus Erdgas
-                              nuc=np.zeros_like(self.t),              # Erzeugung aus Kernkraft
-                              water=np.zeros_like(self.t))
+            # initialize dict for fuel sum calculation
+            generation = dict(powerLignite=np.zeros_like(self.t, np.float),          # total generation lignite   [MW]
+                              powerCoal=np.zeros_like(self.t, np.float),             # total generation caol      [MW]
+                              powerGas=np.zeros_like(self.t, np.float),              # total generation gas       [MW]
+                              powerNuc=np.zeros_like(self.t, np.float),              # total generation nuc       [MW]
+                              powerWater=np.zeros_like(self.t, np.float))            # total generation storages  [MW]
 
             for key, value in self.energySystems.items():
-                value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
-                generation[value['fuel']] = [generation[value['fuel']][i] + value['model'].power[i] for i in self.t]
+                # set output power for each energy system (power plant)
+                value['model'].power = np.asarray([self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x
+                                                   for i in self.t], np.float).reshape((-1,))
+                # add generation to corresponding fuel typ
+                generation['power%s' % value['fuel'].capitalize()] += value['model'].power
                 value['model'].volume = np.zeros_like(power)
+                # if power plant typ = storage set volume [MWh]
                 if value['typ'] == 'storage':
-                    value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
-
+                    value['model'].volume = np.asarray([self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x
+                                                        for i in self.t], np.float).reshape((-1,))
+            # save result in generation dictionary
             for key, value in generation.items():
                 self.generation[key] = value
+            self.generation['totalPower'] = power
 
         except Exception as e:
             for key, value in self.energySystems.items():
@@ -102,33 +112,50 @@ class pwpPort(port_model):
                 value['model'].volume = np.zeros_like(power)
             print(e)
 
-        self.power = np.asarray(power, np.float)
-        self.emisson = np.asarray(emisson, np.float)
-        self.fuel = np.asarray(fuel, np.float)
+        self.power = power
+        self.emission = emission
+        self.fuel = fuel
 
-        return self.power, self.emisson, self.fuel
+        return self.power, self.emission, self.fuel
 
     def fixPlaning(self):
-        power = np.zeros_like(self.t)
-        emisson = np.zeros_like(self.t)
-        fuel = np.zeros_like(self.t)
+        power = np.zeros_like(self.t, np.float)               # total portfolio generation
+        emission = np.zeros_like(self.t, np.float)            # total portfolio emission costs
+        fuel = np.zeros_like(self.t, np.float)                # total portfolio fuel costs
         try:
             self.m.optimize()
-            generation = dict(lignite=np.zeros_like(self.t),          # Erzeugung aus Braunkohle
-                              coal=np.zeros_like(self.t),             # Erzeugung aus Steinkohle
-                              gas=np.zeros_like(self.t),              # Erzeugung aus Erdgas
-                              nuc=np.zeros_like(self.t),              # Erzeugung aus Kernkraft
-                              water=np.zeros_like(self.t))
+            #  total power [MW] for each hour
+            power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+            power = np.round(power, 2)
+            # total emissions costs [€] for each hour
+            emission = np.asarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+            emission = np.round(emission, 2)
+            # total fuel costs [€] for each hour
+            fuel = np.asarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+            fuel = np.round(fuel, 2)
+            # initialize dict for fuel sum calculation
+            generation = dict(powerLignite=np.zeros_like(self.t, np.float),          # total generation lignite   [MW]
+                              powerCoal=np.zeros_like(self.t, np.float),             # total generation caol      [MW]
+                              powerGas=np.zeros_like(self.t, np.float),              # total generation gas       [MW]
+                              powerNuc=np.zeros_like(self.t, np.float),              # total generation nuc       [MW]
+                              powerWater=np.zeros_like(self.t, np.float))            # total generation storages  [MW]
 
             for key, value in self.energySystems.items():
-                value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
-                generation[value['fuel']] = [generation[value['fuel']][i] + value['model'].power[i] for i in self.t]
+                # set output power for each energy system (power plant)
+                value['model'].power = np.asarray([self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x
+                                                   for i in self.t], np.float).reshape((-1,))
+                # add generation to corresponding fuel typ
+                generation['power%s' % value['fuel'].capitalize()] += value['model'].power
                 value['model'].volume = np.zeros_like(power)
+                # if power plant typ = storage set volume [MWh]
                 if value['typ'] == 'storage':
-                    value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
+                    value['model'].volume = np.asarray([self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x
+                                                        for i in self.t], np.float).reshape((-1,))
 
+            # save result in generation dictionary
             for key, value in generation.items():
                 self.generation[key] = value
+            self.generation['totalPower'] = power
 
             for key, value in self.energySystems.items():
                 if value['typ'] == 'powerPlant':
@@ -156,28 +183,18 @@ class pwpPort(port_model):
                     value['model'].power = [self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x for i in self.t]
                     value['model'].volume = [self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x for i in self.t]
 
-            # Einspeiseleitung
-            power = np.asanyarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float)
-            power = np.round(power, 2)
-            # Emissionskosten
-            emisson = np.asanyarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float)
-            emisson = np.round(emisson, 2)
-            # Brennstoffkosten
-            fuel = np.asanyarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float)
-            fuel = np.round(fuel, 2)
-
         except Exception as e:
             for key, value in self.energySystems.items():
                 value['model'].power = np.zeros_like(power)
                 value['model'].volume = np.zeros_like(power)
             print(e)
 
-        self.power = np.asarray(power, np.float)
-        self.emisson = np.asarray(emisson, np.float)
-        self.fuel = np.asarray(fuel, np.float)
+        self.power = power
+        self.emission = emission
+        self.fuel = fuel
 
-        return self.power, self.emisson, self.fuel
+        return self.power, self.emission, self.fuel
+
 
 if __name__ == "__main__":
-
-    test = pwpPort()
+    pass

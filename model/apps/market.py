@@ -22,54 +22,6 @@ def orderGen(n):
 
     return df4
 
-# Reservemarkt
-def balancing_clearing(orders, ask=1800, minimal=5):
-
-    orders = orders.sort_values(by=['price'])
-    orders['quantity'] = orders['quantity'].cumsum()
-    orders = orders.set_index('quantity')
-    namesOrders = set(orders['name'].to_numpy())
-
-    result = orders[orders.index <= ask]
-
-    if len(result) == 0:
-        result = orders.iloc[[0], :]
-        result.loc[result.index[0],'volume'] = ask
-        result.set_index('name', inplace=True)
-        diff = list(namesOrders.difference(set(result.index)))
-        for n in diff:
-            result.loc[n] = 0
-
-        return result
-
-    rest = ask - result.index[-1]
-
-    if rest >= minimal:
-        df = orders.loc[(orders.index > result.index[-1])]
-        if len(df) > 0:
-            result = result.append(df.iloc[0,:])
-            lst = list(result.index[:-1])
-            lst.append(ask)
-            result.index = lst
-    else:
-        df = orders.loc[(orders.index > result.index[-1])]
-        if len(df) > 0:
-            result = result.append(df.iloc[0,:])
-            lst = list(result.index[:-1])
-            lst.append(lst[-1]+minimal)
-            result.index = lst
-
-    volume = result.index
-    result.set_index('name', inplace=True)
-    result['volume'] = np.diff(volume.insert(0,0))
-    result = result.groupby(['name']).sum()
-
-    diff = list(namesOrders.difference(set(result.index)))
-    for n in diff:
-        result.loc[n] = 0
-
-    return result
-
 # Day Ahead Markt
 def dayAhead_clearing(orders):
 
@@ -94,7 +46,7 @@ def dayAhead_clearing(orders):
         maxPrice = ask0['price'].max() + 1
         df = pd.DataFrame(index=[diff + ask0['mo'].max()],
                           data=dict(quantity=diff, mo=diff + ask0['mo'].max(), price=maxPrice, name='extra'))
-        ask0 = ask0.append(df)
+        ask0 = ask0.append(df, sort=True)
 
     merit_order = pd.DataFrame(index=np.concatenate((ask0.index, bid0.index)))
 
@@ -144,26 +96,11 @@ def dayAhead_clearing(orders):
 
     return result
 
+
 if __name__ == "__main__":
 
-    df2 = orderGen(10000)
-    df = pd.DataFrame(index=[7], data=dict(quantity=4000, price=250, name='Extra'))
-    df2 = df2.append(df)
-    #df2 = df2[df2['quantity'] <=0]
-
-    #test = [(0, -300, 'Nils'), (3000, 3000, 'Nils')]
-    #df = pd.DataFrame(test, columns=['quantity', 'price', 'name'])
-    #df2 = df2.append(df)
-    #df = pd.read_excel(r'./tmp/DA_2019-01-02_20.xlsx', index_col=0)
-    #df = df[df.index == 5]k
-    #df = df[df['quantity'] != 0]
-
-    orders = df2.to_dict()
-
-    # df = pd.read_excel(r'./tmp/DA_2019-01-01_5.xlsx', index_col=0)
-    #ask, bid, mcp, mcm, test = dayAhead_clearing(df, plot=True)
-    x = dayAhead_clearing(orders)
-
+    df2 = orderGen(1000)
+    result = dayAhead_clearing(df2)
 
 
 

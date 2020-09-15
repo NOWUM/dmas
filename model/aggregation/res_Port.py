@@ -105,9 +105,9 @@ class resPort(port_model):
 
         self.energySystems.update(energysystem)
 
-    def buildModel(self, response=[]):
 
-        if self.powerCurve is None and len(self.powerCurves) > 0:
+    def mergeWind(self):
+        if len(self.powerCurves) > 0:
             self.windSpeed = np.sort(np.unique(self.windSpeed))
             value = np.asarray(np.zeros_like(self.windSpeed), dtype=np.float64)
             for powerCurve in self.powerCurves:
@@ -115,71 +115,82 @@ class resPort(port_model):
                 value += np.asarray(f(self.windSpeed), dtype=np.float64)
 
             self.powerCurve = power_curves.smooth_power_curve(power_curve_wind_speeds=pd.Series(self.windSpeed),
-                                                         power_curve_values=pd.Series(value),
-                                                         standard_deviation_method='turbulence_intensity',
-                                                         turbulence_intensity=0.15,
-                                                         mean_gauss=0, wind_speed_range=10)
+                                                              power_curve_values=pd.Series(value),
+                                                              standard_deviation_method='turbulence_intensity',
+                                                              turbulence_intensity=0.15,
+                                                              mean_gauss=0, wind_speed_range=10)
 
-            self.hubHeight = self.hubHeight/self.totalPower
+            self.hubHeight = self.hubHeight / self.totalPower
 
             self.windModel = wind_model('Area', hub_height=self.hubHeight, rotor_diameter=100,
                                         t=np.arange(24), T=24, dt=1, power_curve=self.powerCurve)
 
-        if self.powerCurve is not None:
-            self.windModel.build({}, self.weather, self.date)
+    def buildModel(self, response=[]):
+
+        self.generation['powerTotal'] = np.zeros_like(self.t)
 
         if len(response) == 0:
-            self.generation['total'] = np.zeros_like(self.t)
+            if self.powerCurve is not None:
+                self.windModel.build({}, self.weather, self.date)
             for _, data in self.energySystems.items():
                 if data['typ'] != 'wind':
                     data['model'].build(data, self.weather, self.date)
         else:
-            self.generation['total'] = np.asarray(response).reshape((-1,))
+            self.generation['powerTotal'] = np.asarray(response).reshape((-1,))
+
 
     def optimize(self):
-        power = self.generation['total']                    # Leistungsbilanz des Gebietes
         try:
-            # Wind Erzeugung
-            # pWind = np.asarray([value['model'].generation['wind'] for _, value in self.energySystems.items()], np.float)
-            if self.powerCurve is not None:
-                self.generation['wind'] = self.windModel.generation['wind']
+            if np.sum(self.generation['powerTotal']) == 0:          # opt. dayAhead
+                power = np.zeros_like(self.t)
+                # generation wind
+                if self.powerCurve is not None:
+                    self.generation['powerWind'] = self.windModel.generation['wind']
 
-            # PV-Erzeugung
-            pSolar = np.asarray([value['model'].generation['solar'] if value['typ'] != 'Pv' else value['model'].generation['solar'] * value['EEG']
-                                 for _, value in self.energySystems.items()], np.float)
-            self.generation['solar'] = np.sum(pSolar, axis=0)
+                # generation pv
+                p_solar = np.asarray([value['model'].generation['solar'] if value['typ'] != 'Pv' else
+                                     value['model'].generation['solar'] * value['EEG']
+                                     for _, value in self.energySystems.items()], np.float)
+                self.generation['powerSolar'] = np.sum(p_solar, axis=0)
 
-            # Laufwasserkraftwerke
-            pWater = np.asarray([value['model'].generation['water'] for _, value in self.energySystems.items()], np.float)
-            self.generation['water'] = np.sum(pWater, axis=0)
+                # generation run river
+                p_water = np.asarray([value['model'].generation['water'] for _, value in self.energySystems.items()], np.float)
+                self.generation['powerWater'] = np.sum(p_water, axis=0)
 
-            # Laufwasserkraftwerke
-            pBio = np.asarray([value['model'].generation['bio'] for _, value in self.energySystems.items()], np.float)
-            self.generation['bio'] = np.sum(pBio, axis=0)
+                # generation biomass
+                p_bio = np.asarray([value['model'].generation['bio'] for _, value in self.energySystems.items()], np.float)
+                self.generation['powerBio'] = np.sum(p_bio, axis=0)
 
-            if np.sum(self.generation['total']) == 0:
-                # Gesamtleitung im Portfolio
-                power = self.generation['wind'] + self.generation['solar'] + self.generation['water'] + self.generation['bio']
-            else:
-                power = self.generation['total']
-                self.generation['wind'] = power - self.generation['solar'] - self.generation['water'] - self.generation['bio']
+                # sum generation
+                power = self.generation['powerWind'] + self.generation['powerSolar'] \
+                        + self.generation['powerWater'] + self.generation['powerBio']
+
+            else:                                                  # result dayAhead
+                power_da = self.generation['powerTotal']
+                power = self.generation['powerWind'] + self.generation['powerSolar'] \
+                        + self.generation['powerWater'] + self.generation['powerBio']
+
+                for i in self.t:
+                    power_delta = power[i] - power_da[i]
+                    if power_delta > 0:
+                        if self.generation['powerWind'][i] >= power_delta:
+                            self.generation['powerWind'] -= power_delta
+                        else:
+                            power_delta -= self.generation['powerWind'][i]
+                            self.generation['powerWind'][i] = 0.0
+
+                power = self.generation['powerWind'] + self.generation['powerSolar'] \
+                        + self.generation['powerWater'] + self.generation['powerBio']
 
         except Exception as e:
             print(e)
-        self.generation['total'] = power
-        self.power = power
-        return power
 
-    def fixPlaning(self):
-        power = np.zeros_like(self.t)
-        try:
-            err = np.random.normal(loc=0.013, scale=0.037, size=self.T)
-            power = self.generation['total'] / (1 - err)
-        except Exception as e:
-            print(e)
-        self.generation['total'] = power
-        return power
+        self.generation['powerTotal'] = np.asarray(power, np.float).reshape((-1,))
+        self.power = np.asarray(power, np.float).reshape((-1,))
+
+        return self.power
+
 
 if __name__ == "__main__":
+    pass
 
-    test = resPort()

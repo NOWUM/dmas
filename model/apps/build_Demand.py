@@ -5,7 +5,7 @@ import multiprocessing
 from joblib import Parallel, delayed
 
 from interfaces.interface_mongo import mongoInterface
-from interfaces.interface_Influx import influxInterface
+from interfaces.interface_Influx import InfluxInterface
 from apps.misc_Holiday import getHolidays
 from components.dem_Consumer import h0_model, g0_model, rlm_model
 from aggregation.dem_Port import demPort
@@ -13,7 +13,7 @@ from aggregation.dem_Port import demPort
 def getSolarPower(plz):
 
     mongoDB = mongoInterface(database='MAS_XXXX', area=plz)
-    influxDB = influxInterface(host='149.201.88.150', database='MAS_2020')
+    influxDB = InfluxInterface(host='149.201.88.150', database='MAS_2020')
     geos = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
 
     portfolio = demPort(typ="DEM")
@@ -27,7 +27,7 @@ def getSolarPower(plz):
         totalSolar = np.zeros(24)
         try:
             geo = geos.loc[geos['PLZ'] == plz, 'hash'].to_numpy()[0]
-            weather = influxDB.getWeather(geo, day)
+            weather = influxDB.get_weather(geo, day)
             # Standardoptimierung
             portfolio.setPara(day, weather, np.zeros(24))
             portfolio.buildModel()

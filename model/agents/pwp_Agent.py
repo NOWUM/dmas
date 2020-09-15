@@ -4,20 +4,21 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
+from math import radians
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 from aggregation.pwp_Port import pwpPort
 from agents.basic_Agent import agent as basicAgent
-from apps.qLearn_DayAhead import qLeran as daLearning
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=50, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=57, help='PLZ-Agent')
     return parser.parse_args()
 
-class pwpAgent(basicAgent):
+
+class PwpAgent(basicAgent):
 
     def __init__(self, date, plz):
         super().__init__(date=date, plz=plz, exchange='Market', typ='PWP')
@@ -27,7 +28,7 @@ class pwpAgent(basicAgent):
         self.portfolio = pwpPort(typ='PWP', gurobi=True, T=48)
 
         # Construction power plants
-        for key, value in self.ConnectionMongo.getPowerPlants().items():
+        for key, value in self.connections['mongoDB'].getPowerPlants().items():
             if value['maxPower'] > 1:
                 self.portfolio.addToPortfolio(key, {key: value})
                 self.portfolio.capacities['fossil'] += value['maxPower']                        # total power [MW]
@@ -35,326 +36,240 @@ class pwpAgent(basicAgent):
         self.logger.info('Power Plants added')
 
         # Construction storages
-        for key, value in self.ConnectionMongo.getStorages().items():
+        for key, value in self.connections['mongoDB'].getStorages().items():
             self.portfolio.addToPortfolio(key, {key: value})
         self.logger.info('Storages added')
-
-        # Parameters for the trading strategy on the day-ahead market
-        self.maxPrice = np.zeros(24)                                                            # maximal price of each hour
-        self.minPrice = np.zeros(24)                                                            # minimal price of each hour
-        self.actions = np.zeros(24)                                                             # different actions (slopes)
-        self.espilion = 0.7                                                                     # factor to find new actions
-        self.lr = 0.8                                                                           # learning rate
-        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))      # interval for learning
-        self.qLearn.qus *= 0.5 * self.portfolio.capacities['fossil']
-        self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
-        self.logger.info('Parameters of the trading strategy defined')
 
         # If there are no power systems, terminate the agent
         if len(self.portfolio.energySystems) == 0:
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
-        # save capacities in influxDB
-        json_body = []
-        time = self.date
-        for i in range(365):
-            json_body.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='PWP',                                                 # typ
-                                 agent=self.name,                                           # name
-                                 area=self.plz),                                            # area
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(capacityNuc=float(self.portfolio.capacities['nuc']),
-                                   capacityLignite=float(self.portfolio.capacities['lignite']),
-                                   capacityCoal=float(self.portfolio.capacities['coal']),
-                                   capacityGas=float(self.portfolio.capacities['gas']))
-                }
-            )
-            time = time + pd.DateOffset(days=1)
-        self.ConnectionInflux.saveData(json_body)
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)],
+                          data=dict(capacityNuc=float(self.portfolio.capacities['nuc']),
+                                    capacityLignite=float(self.portfolio.capacities['lignite']),
+                                    capacityCoal=float(self.portfolio.capacities['coal']),
+                                    capacityGas=float(self.portfolio.capacities['gas'])))
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
-        timeDelta = tme.time() - start_time
-
-        self.logger.info('setup of the agent completed in %s' % timeDelta)
+        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def optimize_dayAhead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
 
-
-        # forecast and model build for the coming day
+        # Step 1: forecast input data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        prices = self.priceForecast(self.date, 2)
-        weather = self.weatherForecast(self.date, 2)
-        demand = self.demandForecast(self.date, 2)
+        weather = self.weather_forecast(self.date, 2, mean=False)           # local weather forecast dayAhead
+        prices = self.price_forecast(self.date, 2)                          # price forecast dayAhead
+        demand = self.demand_forecast(self.date, 2)                         # demand forecast dayAhead
         self.portfolio.setPara(self.date, weather, prices, demand)
         self.portfolio.buildModel()
 
-        self.perfLog('initModel', start_time)
+        self.performance['initModel'] = tme.time() - start_time
 
-        # optimzation --> returns power timeseries in [MW] and var. cost in [€]
+        # Step 2: standard optimization --> returns power series in [MW]
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        power_dayAhead, emissionOpt, fuelOpt = self.portfolio.optimize()
+        power_da, emission_opt, fuel_opt = self.portfolio.optimize()
         self.portfolio.buildModel(max_=True)
-        power_max, emissionMax, fuelMax = self.portfolio.optimize()
+        power_max, emission_max, fuel_max = self.portfolio.optimize()
 
-        self.perfLog('optModel', start_time)
+        self.performance['optModel'] = tme.time() - start_time
 
-        # save portfolio data in influxDB
+        # Step 3: save optimization results in influxDB
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        time = self.date
-        portfolioData = []
-        for i in self.portfolio.t:
-            portfolioData.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='PWP',                                                 # typ
-                                 agent=self.name,                                           # name
-                                 area=self.plz,                                             # area
-                                 timestamp='optimize_dayAhead'),                            # processing step
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(powerMax=power_max[i],                                   # maximal power      [MW]
-                                   powerTotal=power_dayAhead[i],                            # total power        [MW]
-                                   emissionOpt=emissionOpt[i],                              # optimal cost CO2   [€]
-                                   fuelOpt=fuelOpt[i],                                      # optimal cost fuel  [€]
-                                   emissionMax=emissionMax[i],                              # maximal cost CO2   [€]
-                                   fuelMax=fuelMax[i],                                      # maximal cost fuel  [€]
-                                   priceForcast=prices['power'][i],                         # day Ahead forecast [€/MWh]
-                                   powerLignite=self.portfolio.generation['lignite'][i],    # total lignite      [MW]
-                                   powerCoal=self.portfolio.generation['coal'][i],          # total coal         [MW]
-                                   powerGas=self.portfolio.generation['gas'][i],            # total gas          [MW]
-                                   powerNuc=self.portfolio.generation['nuc'][i],            # total nuc          [MW]
-                                   powerStorage=self.portfolio.generation['water'][i])      # total storage      [MW]
-                }
-            )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(portfolioData)
+        # build dataframe to save results in ifluxdb
+        df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
+                        pd.DataFrame(data=dict(powerMax=power_max, emissionMax=emission_max, fuelMax=fuel_max,
+                                               emissionOpt=emission_opt, fuelOpt=fuel_opt, frcst=prices['power']))],
+                       axis=1)
+        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
+        df['powerTotal'] = power_da
 
-        self.perfLog('saveScheduling', start_time)
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+                                                                 timestamp='optimize_dayAhead'))
 
-        # build up orderbook
+        self.performance['saveSchedule'] = tme.time() - start_time
+
+        # Step 4: build orders from optimization results
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # calculate var. cost in [€/MWh] and set as minimal price
-        costs = [(emissionOpt[i] + fuelOpt[i])/power_dayAhead[i] if power_dayAhead[i] != 0 else 0 for i in self.portfolio.t]
-        self.minPrice = np.asarray(costs[:24]).reshape((-1,))
-        # calculate var. cost in [€/MWh] and set as maximal price
-        priceMax = np.abs(prices['power']) * 5
-        orderbook = dict()
+        order_book = dict()
 
-        actions = np.random.randint(1, 8, 24) * 10
-        prc = np.asarray(prices['power'][:24]).reshape((-1, 1))
+        self.strategy['minPrice'] = np.zeros_like(power_da)             # set minimal price in [€/MWh]
+        on_hour = power_da > 0                                          # generation hours
+        off_hour = power_da == 0                                        # non-running hours
 
-        # if a model is available/trained find best actions
-        if self.qLearn.fitted:
-            wnd = np.asarray(weather['wind'][:24]).reshape((-1, 1))                         # wind              [m/s]
-            rad = np.asarray(weather['dir'][:24]).reshape((-1, 1))                          # direct rad.       [W/m²]
-            tmp = np.asarray(weather['temp'][:24]).reshape((-1, 1))                         # temperatur        [°C]
-            dem = np.asarray(demand[:24]).reshape((-1, 1))                                  # demand            [MW]
-            actionsBest = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
+        self.strategy['minPrice'][on_hour] = (emission_opt[on_hour] + fuel_opt[on_hour])/power_da[on_hour]
+        self.strategy['minPrice'][off_hour] = 0
 
-            for i in range(24):
-                if self.espilion < np.random.uniform(0, 1):
-                    actions[i] = actionsBest[i]
-        self.actions = np.asarray(actions).reshape(24,)
+        self.strategy['maxPrice'] = np.zeros_like(power_da)              # set maximal price in [€/MWh]
+        on_hour = power_max > 0                                          # generation hours
+        off_hour = power_max == 0                                        # non-running hours
 
-        # calculation of the forecast quality
-        var = np.sqrt(np.var(self.forecasts['price'].y, axis=0) * self.forecasts['price'].factor)
-        if self.forecasts['price'].mcp.shape[0] > 0:
-            var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
+        self.strategy['maxPrice'][on_hour] = (emission_max[on_hour] + fuel_max[on_hour]) / power_max[on_hour]
+        self.strategy['maxPrice'][off_hour] = 0
 
-        # set maximal price in [€/MWh]
-        self.maxPrice = prc.reshape((-1,)) + np.asarray([max(self.risk*v, 1) for v in var])
+        # initialize learning algorithm
+        self.strategy['qLearn'].collect_data(dem=demand, prc=prices['power'], weather=weather)
+        # find best action according to the actual situation
+        if self.strategy['qLearn'].fitted:              # if a model is available/trained find best actions
+            opt_actions = self.strategy['qLearn'].get_actions()
+            actions = [opt_actions[i] if self.strategy['epsilon'] < np.random.uniform(0, 1) else
+                       np.random.randint(1, 8) for i in range(24)]
+        else:                                           # else try random actions to get new hints
+            actions = np.random.randint(1, 8, 24) * 10
 
-        delta = 0.
-        nCounter = 0
+        self.strategy['actions'] = np.asarray(actions).reshape(-1, )
 
-        for i in range(24):
-            if (self.maxPrice[i] > self.minPrice[i]) and power_dayAhead[i] > 0:
-                delta += float((self.maxPrice[i] - self.minPrice[i]) * power_dayAhead[i])
-            else:
-                nCounter += 1
-        if nCounter > 0:
-            delta /= nCounter
-
-        sortMCP = np.sort(self.maxPrice)
-        maxBuy = sortMCP[:12][-1]
-        minSell = sortMCP[12:][-1]
-
-        for i in range(24):
-
-            quantity = [float(-1 * (2 / 100 * (power_dayAhead[i]-self.portfolio.generation['water'][i])))
-                        for _ in range(2, 102, 2)]
-
-            mcp = self.maxPrice[i]
-            cVar = self.minPrice[i]
-
-            if (cVar > mcp) and power_dayAhead[i] > 0:
+        for i in range(int(self.portfolio.T/2)):
+            if power_da[i] > 0:                                     # check if portfolio generate power
+                # calculate slope for linear order function
+                delta = (prices['power'][i] - self.strategy['minPrice'][i]) / 100
+                slope = np.max(delta, 0) * np.tan(radians(self.strategy['actions'][i] + 10))
+                # set price limits
+                lb = self.strategy['minPrice'][i]                   # get at least variable costs (emission + fuel)
+                ub = prices['power'][i]                             # get maximal the expected market clearing
+                # get price volume combinations
+                price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
+                volume = [(-2 / 100 * power_da[i]) for _ in range(2, 102, 2)]
+                if power_max[i] > power_da[i]:                      # check if portfolio not generate maximal power
+                    price.append(self.strategy['maxPrice'][i])      # add maximal variable costs
+                    volume.append(-1*(power_max[i] - power_da[i]))  # add delta between scheduled and maximal power
+                # add order for the corresponding hour
+                order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
+            elif power_da[i] < 0:                                   # check if portfolio consume power
+                # calculate slope for linear order function
+                delta = (prices['power'][i] - 0) / 100
+                slope = np.abs(delta) * np.tan(radians(self.strategy['actions'][i] + 10))
                 if delta > 0:
-                    lb = mcp - min(3*var[i]/power_dayAhead[i], delta/power_dayAhead[i])
-                    slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
-                    price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
+                    lb = 0                                          # pay at least 0
+                    ub = prices['power'][i]                         # pay maximal the expected market clearing
+                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
                 else:
-                    price = [float(mcp) for _ in range(2, 102, 2)]
+                    lb = prices['power'][i]                         # pay at least the expected market clearing
+                    ub = 0                                          # pay maximal 0
+                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
+                volume = [(-2 / 100 * power_da[i]) for _ in range(2, 102, 2)]
+                # add order for the corresponding hour
+                order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
             else:
-                lb = cVar
-                slope = (mcp - lb) / 100 * np.tan((actions[i] + 10) / 180 * np.pi)
-                price = [float(min(slope * p + lb, mcp)) for p in range(2, 102, 2)]
-            if power_max[i] > 0:
-                quantity.append(float(-1 * power_max[i]))
-                price.append(float(max(priceMax[i], self.maxPrice[i])))
+                if power_max[i] > 0:
+                    price = (emission_max[i] + fuel_max[i])/power_max[i]
+                    order_book.update({'h_%s' % i: {'quantity': [-power_max[i]], 'price': [price], 'hour': i,
+                                                    'name': self.name}})
+                else:
+                    order_book.update({'h_%s' % i: {'quantity': [0], 'price': [0], 'hour': i, 'name': self.name}})
 
-            if self.portfolio.generation['water'][i] > 0:
-                for p in range(2, 102, 2):
-                    lb = minSell
-                    slope = (mcp - lb) / 100 * np.tan(45/180 * np.pi)
-                    price.append(float(min(slope * p + lb, mcp)))
-                    quantity.append(float(-1 * (2 / 100 * self.portfolio.generation['water'][i])))
-            if self.portfolio.generation['water'][i] < 0:
-                for p in range(2, 102, 2):
-                    lb = maxBuy
-                    slope = (mcp - lb) / 100 * np.tan(45/180 * np.pi)
-                    price.append(float(min(slope * p + lb, mcp)))
-                    quantity.append(float(-1 * (2 / 100 * self.portfolio.generation['water'][i])))
+        self.performance['buildOrders'] = tme.time() - start_time
 
-            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
-
-        self.perfLog('buildOrderbook', start_time)
-
-        # send orderbook to market (mongoDB)
+        # Step 5: send orders to market resp. to mongodb
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
+        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=order_book)
 
-        self.perfLog('sendOrderbook', start_time)
+        self.performance['sendOrders'] = tme.time() - start_time
 
-        # -------------------------------------------------------------------------------------------------------------
         self.logger.info('DayAhead market scheduling completed')
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('After DayAhead market scheduling started')
 
+        # Step 6: get market results and adjust generation an strategy
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
-
-        # save data and actions to learn from them
-        self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))
 
         # query the DayAhead results
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name, days=2)                # [MWh]
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name, days=2)                # [MWh]
-        price = self.ConnectionInflux.getDayAheadPrice(self.date, days=2)                       # [€/MWh]
+        ask = self.connections['influxDB'].get_ask_da(self.date, self.name, days=2)            # volume to buy
+        bid = self.connections['influxDB'].get_bid_da(self.date, self.name, days=2)            # volume to sell
+        prc = self.connections['influxDB'].get_prc_da(self.date, days=2)                       # market clearing price
+        profit = (ask - bid) * prc
 
-        # calculate the profit and the new power scheduling
-        profit = np.asarray([float((ask[i] - bid[i]) * price[i]) for i in self.portfolio.t])    # revenue for each hour
-
-        self.portfolio.buildModel(response=ask-bid)
-        power_dayAhead, emission, fuel = self.portfolio.fixPlaning()
-        profit = profit.reshape((-1,)) - (emission + fuel).reshape((-1,))
-
-        # if a model is available, adjust the profit expectation according to the learning rate
-        if self.qLearn.fitted:
-            states = self.qLearn.getStates(self.date)
+        # adjust market strategy
+        if self.strategy['qLearn'].fitted:
             for i in range(24):
-                oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
-                self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - oldValue)
-        else:
-            states = [-1 for i in self.portfolio.t]
+                old_val = self.strategy['qLearn'].qus[self.strategy['qLearn'].sts[i],
+                                                      int((self.strategy['actions'][i]-10)/10)]
+                self.strategy['qLearn'].qus[self.strategy['qLearn'].sts[i], int((self.strategy['actions'][i]-10)/10)] \
+                    = old_val + self.strategy['lr'] * (profit[i] - old_val)
 
-        self.perfLog('optResults', start_time)
+        # adjust power generation
+        self.portfolio.buildModel(response=ask - bid)
+        power_da, emission, fuel = self.portfolio.fixPlaning()
 
-        # save energy system data in influxDB
+        self.performance['adjustResult'] = tme.time() - start_time
+
+        # Step 7: save adjusted results in influxdb
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # save portfolio data in influxDB
-        portfolioData = []
-        time = self.date
-        for i in self.portfolio.t[:24]:
-            portfolioData.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='PWP',                                                 # typ
-                                 agent=self.name,                                           # name
-                                 area=self.plz,                                             # area
-                                 state=int(states[i]),
-                                 action=int(self.actions[i]),
-                                 timestamp='post_dayAhead'),                                # processing step
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(powerTotal=power_dayAhead[i],                            # total power     [MW]
-                                   emissionCost=self.portfolio.emisson[i],                  # cost  CO2       [€]
-                                   fuelCost=self.portfolio.fuel[i],                         # cost  fuel      [€]
-                                   powerLignite=self.portfolio.generation['lignite'][i],    # total lignite   [MW]
-                                   powerCoal=self.portfolio.generation['coal'][i],          # total coal      [MW]
-                                   powerGas=self.portfolio.generation['gas'][i],            # total gas       [MW]
-                                   powerNuc=self.portfolio.generation['nuc'][i],            # total nuc       [MW]
-                                   powerStorage=self.portfolio.generation['water'][i],      # total Storage   [MW]
-                                   profit=profit[i],                                        # profit          [€]
-                                   state=int(states[i]),
-                                   action=int(self.actions[i]))
-                }
-            )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
-        self.ConnectionInflux.saveData(portfolioData)
+        df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
+                        pd.DataFrame(data=dict(profit=profit, emissionAdjust=emission, fuelAdjust=fuel))], axis=1)
+        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+                                                                 timestamp='post_dayAhead'))
 
-        self.perfLog('saveResults', start_time)
+        self.performance['saveResult'] = tme.time() - start_time
 
-        # -------------------------------------------------------------------------------------------------------------
-        self.logger.info('After DayAhead market scheduling completed')
+        self.logger.info('After DayAhead market adjustment completed')
         self.logger.info('Next day scheduling started')
+
+        # Step 8: retrain forecast methods and learning algorithm
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        if self.delay <= 0:
+        if self.strategy['delay'] <= 0:                                                         # offset factor start
+            # collect data an retrain forecast method
+            dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
+            weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+            prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
+            prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
             for key, method in self.forecasts.items():
-                if key != 'weather':
-                    method.collectData(self.date)
-                    method.counter += 1
-                    if method.counter >= method.collect:
-                        method.fitFunction()
-                        method.counter = 0
+                method.collect_data(date=self.date, dem=dem, prc=prc[:24], prc_1=prc_1, prc_7=prc_7, weather=weather)
+                method.counter += 1
+                if method.counter >= method.collect:                                        # retrain forecast method
+                    method.fit_function()
+                    method.counter = 0
 
-            # Ansappung der Statuspunkte des Energiesystems
-            self.qLearn.counter += 1
-            if self.qLearn.counter >= self.qLearn.collect:
-                self.qLearn.fit()
-                self.qLearn.counter = 0
-
-            self.lr = max(self.lr*0.9, 0.4)
-            self.espilion = max(0.99*self.espilion, 0.01)
+            # collect data for learning method
+            self.strategy['qLearn'].counter += 1
+            if self.strategy['qLearn'].counter >= self.strategy['qLearn'].collect:
+                self.strategy['qLearn'].fit()
+                self.strategy['qLearn'].counter = 0
+            self.strategy['lr'] = max(self.strategy['lr']*0.99, 0.2)                # reduce learning rate during the simulation
+            self.strategy['epsilon'] = max(0.99*self.strategy['epsilon'], 0.01)     # reduce random factor to find new opportunities
         else:
-            self.delay -= 1
+            self.strategy['delay'] -= 1
 
-        self.perfLog('nextDay', start_time)
+        self.performance['nextDay'] = tme.time() - start_time
 
-        # -------------------------------------------------------------------------------------------------------------
+        df = pd.DataFrame(data=self.performance, index=[self.date])
+        self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
+
         self.logger.info('Next day scheduling completed')
 
 
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = pwpAgent(date='2018-01-01', plz=args.plz)
-    agent.ConnectionMongo.login(agent.name, True)
+    agent = PwpAgent(date='2018-01-01', plz=args.plz)
+    agent.connections['mongoDB'].login(agent.name, False)
     try:
-        agent.run_agent()
+        agent.run()
     except Exception as e:
         print(e)
     finally:
-        agent.ConnectionInflux.influx.close()
-        agent.ConnectionMongo.logout(agent.name)
-        agent.ConnectionMongo.mongo.close()
-        if not agent.connection.is_closed:
-            agent.connection.close()
+        agent.connections['influxDB'].influx.close()
+        agent.connections['mongoDB'].mongo.close()
+        if not agent.connections['connectionMQTT'].is_closed:
+            agent.connections['connectionMQTT'].close()
         exit()
