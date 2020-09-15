@@ -8,8 +8,8 @@ from joblib import Parallel, delayed
 
 class InfluxInterface:
 
-    def __init__(self, host='149.201.88.150', port=8086, user='root', password='root', database='MAS_XXXX',
-                 year=2019):
+    def __init__(self, host='149.201.88.150', port=8086, user='root', password='root', database='MAS2020_12',
+                 year=2018):
         # self.influx = InfluxDBClient(host, port, user, password, database)
         self.influx = DataFrameClient(host, port, user, password, database)
         self.influx.switch_database(database)

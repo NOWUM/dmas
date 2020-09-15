@@ -232,7 +232,7 @@ class ResAgent(basicAgent):
                 self.strategy['qLearn'].fit()
                 self.strategy['qLearn'].counter = 0
             self.strategy['lr'] = max(self.strategy['lr']*0.99, 0.2)                # reduce learning rate during the simulation
-            self.strategy['epsilon'] = max(0.99*self.strategy['epsilon'], 0.01)   # reduce random factor to find new opportunities
+            self.strategy['epsilon'] = max(0.99*self.strategy['epsilon'], 0.01)     # reduce random factor to find new opportunities
         else:
             self.strategy['delay'] -= 1
 

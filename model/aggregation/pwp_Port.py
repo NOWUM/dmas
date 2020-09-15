@@ -104,7 +104,7 @@ class pwpPort(port_model):
             # save result in generation dictionary
             for key, value in generation.items():
                 self.generation[key] = value
-            self.generation['totalPower'] = power
+            self.generation['powerTotal'] = power
 
         except Exception as e:
             for key, value in self.energySystems.items():
@@ -155,7 +155,7 @@ class pwpPort(port_model):
             # save result in generation dictionary
             for key, value in generation.items():
                 self.generation[key] = value
-            self.generation['totalPower'] = power
+            self.generation['powerTotal'] = power
 
             for key, value in self.energySystems.items():
                 if value['typ'] == 'powerPlant':

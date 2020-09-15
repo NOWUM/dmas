@@ -104,7 +104,7 @@ def da_clearing(mongo_con, influx_con, date):
 
 if __name__ == "__main__":
 
-    date = pd.to_datetime('2018-01-01')
+    date = pd.to_datetime('2018-01-28')
     config = configparser.ConfigParser()  # read config file
     config.read('app.cfg')
 
