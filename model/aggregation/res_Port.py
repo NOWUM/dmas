@@ -171,12 +171,12 @@ class resPort(port_model):
                         + self.generation['powerWater'] + self.generation['powerBio']
 
                 for i in self.t:
-                    power_delta = power[i] - power_da[i]
-                    if power_delta > 0:
-                        if self.generation['powerWind'][i] >= power_delta:
-                            self.generation['powerWind'] -= power_delta
+                    power_delta = power_da[i] - power[i]
+                    if power_delta < 0:
+                        if self.generation['powerWind'][i] >= np.abs(power_delta):
+                            self.generation['powerWind'][i] += power_delta
                         else:
-                            power_delta -= self.generation['powerWind'][i]
+                            power_delta += self.generation['powerWind'][i]
                             self.generation['powerWind'][i] = 0.0
 
                 power = self.generation['powerWind'] + self.generation['powerSolar'] \
