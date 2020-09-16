@@ -45,6 +45,11 @@ class PwpAgent(basicAgent):
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
+        self.strategy['qLearn'].qus *= 0.5 * (self.portfolio.capacities['capacityCoal'] +
+                                              self.portfolio.capacities['capacityLignite'] +
+                                              self.portfolio.capacities['capacityCoal'] +
+                                              self.portfolio.capacities['capacityNuc'])
+
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
