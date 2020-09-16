@@ -129,6 +129,9 @@ def simulation(start, end, valid=True):
         try:
             send.basic_publish(exchange='Market', routing_key='', body='opt_dayAhead ' + str(date))
             da_clearing(mongoCon, influxCon, date)
+            """
+            send.basic_publish(exchange='Market', routing_key='', body='power_flow ' + str(date))
+            """
             send.basic_publish(exchange='Market', routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
             # if valid:
