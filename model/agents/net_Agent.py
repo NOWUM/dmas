@@ -10,8 +10,6 @@ import plotly
 
 
 
-    def __init__(self, date=pd.to_datetime('2019-02-01'), mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_2020'):
-        super().__init__(date=date, plz=0, mongo=mongo, influx=influx, market=market, typ='NET', dbName=dbName)
 class NetAgent(basicAgent):
 
     def __init__(self):
