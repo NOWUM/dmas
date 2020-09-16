@@ -21,7 +21,7 @@ def parse_args():
 class PwpAgent(basicAgent):
 
     def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, exchange='Market', typ='PWP')
+        super().__init__(date=date, plz=plz, typ='PWP')
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()

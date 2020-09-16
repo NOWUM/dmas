@@ -10,7 +10,7 @@ import plotly
 class netAgent(basicAgent):
 
     def __init__(self, date=pd.to_datetime('2019-02-01'), mongo='149.201.88.150', influx='149.201.88.150', market='149.201.88.150', dbName='MAS_2020'):
-        super().__init__(date=date, plz=0, mongo=mongo, influx=influx, market=market, exchange='Market', typ='NET', dbName=dbName)
+        super().__init__(date=date, plz=0, mongo=mongo, influx=influx, market=market, typ='NET', dbName=dbName)
 
         print('Start Building Grid')
         self.network = pypsa.Network()

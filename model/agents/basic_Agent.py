@@ -19,13 +19,16 @@ from apps.qLearn_DayAhead import qLeran as daLearning
 
 class agent:
 
-    def __init__(self, date, plz, typ='PWP', exchange='Market'):
+    def __init__(self, date, plz, typ='PWP'):
 
         config = configparser.ConfigParser()                        # read config to initialize connection
         config.read(r'./app.cfg')
 
+        self.exchange = config['Market']['Exchange']
+        self.agentSuffix = config['Market']['agentSuffix']
+
         # declare meta data for each agent
-        self.name = typ + '_%i' % plz                               # name
+        self.name = typ + '_%i' % plz + self.agentSuffix                 # name
         self.plz = plz                                              # area
         self.date = pd.to_datetime(date)                            # current day
         self.typ = typ                                              # generation or consumer typ
