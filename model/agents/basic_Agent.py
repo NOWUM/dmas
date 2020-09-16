@@ -161,6 +161,13 @@ class agent:
             except Exception as inst:
                 self.exception_handle(part='Day Ahead Plan', inst=inst)
         # Aufruf Ergebnisse DayAhead-Markt
+        """
+        message = body.decode("utf-8")
+        self.date = pd.to_datetime(message.split(' ')[1])
+        if 'gird_calc' in message:
+            if typ == net:
+                self.calc_power_flow()
+        """
         if 'result_dayAhead' in message:
             try:
                 self.post_dayAhead()
