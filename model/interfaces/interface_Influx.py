@@ -23,6 +23,7 @@ class InfluxInterface:
         self.database = database
 
     def save_data(self, df, measurement, tags={}):
+        df.tz_localize('UTC')
         self.influx.switch_database(database=self.database)
         self.influx.write_points(df, measurement, tags, protocol='line')
 

@@ -68,6 +68,9 @@ class ResAgent(basicAgent):
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
+        self.strategy['qLearn'].qus *= 0.5 * (self.portfolio.capacities['capacityWind'] +
+                                              self.portfolio.capacities['capacitySolar'])
+
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def optimize_dayAhead(self):
