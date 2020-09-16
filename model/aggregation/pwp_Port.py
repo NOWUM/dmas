@@ -1,16 +1,16 @@
 import numpy as np
 from components.pwp_Plant import powerPlant_gurobi as power_plant
 from components.pwp_Storage import storage_gurobi as storage
-from aggregation.basic_Port import port_model
+from aggregation.basic_Port import PortfolioModel
 from gurobipy import *
 
-class pwpPort(port_model):
 
-    def __int__(self, T=24, dt=1, gurobi=True, date='2020-01-01', typ ='DEM'):
+class PwpPort(PortfolioModel):
+
+    def __int__(self, T=24, dt=1, gurobi=True, date='2020-01-01'):
         super().__init__(T, dt, gurobi, date, typ)
 
-
-    def addToPortfolio(self, name, energysystem):
+    def add_energy_system(self, name, energysystem):
         data = energysystem[name]
 
         # -- PWP
@@ -21,7 +21,7 @@ class pwpPort(port_model):
 
         self.energySystems.update(energysystem)
 
-    def buildModel(self, response=[], max_=False):
+    def build_model(self, response=[], max_=False):
         # ----- remove all constrains and vars -----
         self.m.remove(self.m.getVars())
         self.m.remove(self.m.getConstrs())
@@ -71,7 +71,7 @@ class pwpPort(port_model):
         power = np.zeros_like(self.t, np.float)               # total portfolio generation
         emission = np.zeros_like(self.t, np.float)            # total portfolio emission costs
         fuel = np.zeros_like(self.t, np.float)                # total portfolio fuel costs
-
+        self.volume = np.zeros_like(self.t, np.float)
         try:
             self.m.optimize()
             #  total power [MW] for each hour
@@ -99,8 +99,10 @@ class pwpPort(port_model):
                 value['model'].volume = np.zeros_like(power)
                 # if power plant typ = storage set volume [MWh]
                 if value['typ'] == 'storage':
-                    value['model'].volume = np.asarray([self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x
-                                                        for i in self.t], np.float).reshape((-1,))
+                    volume = np.asarray([self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x
+                                         for i in self.t], np.float).reshape((-1,))
+                    value['model'].volume = volume
+                    self.volume += volume
             # save result in generation dictionary
             for key, value in generation.items():
                 self.generation[key] = value
@@ -118,10 +120,11 @@ class pwpPort(port_model):
 
         return self.power, self.emission, self.fuel
 
-    def fixPlaning(self):
+    def fix_planing(self):
         power = np.zeros_like(self.t, np.float)               # total portfolio generation
         emission = np.zeros_like(self.t, np.float)            # total portfolio emission costs
         fuel = np.zeros_like(self.t, np.float)                # total portfolio fuel costs
+        self.volume = np.zeros_like(self.t, np.float)
         try:
             self.m.optimize()
             #  total power [MW] for each hour
@@ -149,8 +152,10 @@ class pwpPort(port_model):
                 value['model'].volume = np.zeros_like(power)
                 # if power plant typ = storage set volume [MWh]
                 if value['typ'] == 'storage':
-                    value['model'].volume = np.asarray([self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x
-                                                        for i in self.t], np.float).reshape((-1,))
+                    volume = np.asarray([self.m.getVarByName('V' + '_%s[%i]' % (key, i)).x
+                                         for i in self.t], np.float).reshape((-1,))
+                    value['model'].volume = volume
+                    self.volume += volume
 
             # save result in generation dictionary
             for key, value in generation.items():

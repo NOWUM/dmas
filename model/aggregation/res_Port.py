@@ -4,15 +4,15 @@ from components.res_Wind import wind_model
 from components.res_PvPark import solar_model
 from components.res_runRiver import runRiver_model
 from components.res_bioMass import bioMass_model
-from aggregation.basic_Port import port_model
+from aggregation.basic_Port import PortfolioModel
 from scipy import interpolate
 from windpowerlib import power_curves
 
 
-class resPort(port_model):
+class ResPort(PortfolioModel):
 
-    def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01', typ='RES'):
-        super().__init__(T, dt, gurobi, date, typ)
+    def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
+        super().__init__(T, dt, gurobi, date)
         self.powerCurve = None
         self.windSpeed = np.array([])
         self.hubHeight = 0
@@ -20,7 +20,7 @@ class resPort(port_model):
         self.powerCurves = []
         self.windModel = None
 
-    def addToPortfolio(self, name, energysystem):
+    def add_energy_system(self, name, energysystem):
 
         data = energysystem[name]
 
@@ -125,7 +125,7 @@ class resPort(port_model):
             self.windModel = wind_model('Area', hub_height=self.hubHeight, rotor_diameter=100,
                                         t=np.arange(24), T=24, dt=1, power_curve=self.powerCurve)
 
-    def buildModel(self, response=[]):
+    def build_model(self, response=[]):
 
         self.generation['powerTotal'] = np.zeros_like(self.t)
 

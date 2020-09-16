@@ -7,7 +7,7 @@ import numpy as np
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.res_Port import resPort
+from aggregation.res_Port import ResPort
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -24,40 +24,40 @@ class ResAgent(basicAgent):
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = resPort(typ="RES")
+        self.portfolio = ResPort()
 
         # Construction Windenergy
         for key, value in self.connections['mongoDB'].getWind().items():
-            self.portfolio.capacities['wind'] += value['maxPower']
-            self.portfolio.addToPortfolio(key, {key: value})
+            self.portfolio.capacities['capacityWind'] += value['maxPower']
+            self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('Windenergy added')
         self.portfolio.mergeWind()
 
         # Construction of the pv systems (free area)
         for key, value in self.connections['mongoDB'].getPvParks().items():
             if value['typ'] != 'PV70':
-                self.portfolio.capacities['solar'] += value['maxPower']
+                self.portfolio.capacities['capacitySolar'] += value['maxPower']/10**3
             else:
-                self.portfolio.capacities['solar'] += value['maxPower'] * value['number']
-            self.portfolio.addToPortfolio(key, {key: value})
+                self.portfolio.capacities['capacitySolar'] += value['maxPower']/10**3 * value['number']
+            self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('PV(free area) Generation added')
 
         # Construction of the pv systems (h0)
         for key, value in self.connections['mongoDB'].getPVs().items():
-            self.portfolio.capacities['solar'] += value['PV']['maxPower'] * value['EEG']
-            self.portfolio.addToPortfolio('Pv' + str(key), {'Pv' + str(key): value})
+            self.portfolio.capacities['capacitySolar'] += value['PV']['maxPower']/10**3 * value['EEG']
+            self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
         self.logger.info('PV(H0) Generation added')
 
         # Construction Run River
         for key, value in self.connections['mongoDB'].getRunRiver().items():
-            self.portfolio.addToPortfolio('runRiver', {'runRiver': value})
-            self.portfolio.capacities['water'] = value['maxPower']
+            self.portfolio.add_energy_system('runRiver', {'runRiver': value})
+            self.portfolio.capacities['capacityWater'] += value['maxPower']/10**3
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
         for key, value in self.connections['mongoDB'].getBioMass().items():
-            self.portfolio.addToPortfolio('bioMass', {'bioMass': value})
-            self.portfolio.capacities['bio'] = value['maxPower']
+            self.portfolio.add_energy_system('bioMass', {'bioMass': value})
+            self.portfolio.capacities['capacityBio'] += value['maxPower']/10**3
         self.logger.info('Biomass Power Plants added')
 
         # If there are no power systems, terminate the agent
@@ -65,11 +65,7 @@ class ResAgent(basicAgent):
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)],
-                          data=dict(capacitySolar=float(self.portfolio.capacities['solar']),
-                                    capacityWind=float(self.portfolio.capacities['wind']),
-                                    capacityWater=float(self.portfolio.capacities['water']),
-                                    capacityBio=float(self.portfolio.capacities['bio'])))
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
@@ -85,8 +81,8 @@ class ResAgent(basicAgent):
         weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
         prices = self.price_forecast(self.date)                          # price forecast dayAhead
         demand = self.demand_forecast(self.date)                         # demand forecast dayAhead
-        self.portfolio.setPara(self.date, weather, prices, demand)
-        self.portfolio.buildModel()
+        self.portfolio.set_parameter(self.date, weather, prices)
+        self.portfolio.build_model()
 
         self.performance['initModel'] = tme.time() - start_time
 
@@ -189,7 +185,7 @@ class ResAgent(basicAgent):
                     = old_val + self.strategy['lr'] * (profit[i] - old_val)
 
         # adjust power generation
-        self.portfolio.buildModel(response=ask-bid)
+        self.portfolio.build_model(response=ask - bid)
         _ = self.portfolio.optimize()
 
         self.performance['adjustResult'] = tme.time() - start_time
@@ -235,6 +231,9 @@ class ResAgent(basicAgent):
             self.strategy['epsilon'] = max(0.99*self.strategy['epsilon'], 0.01)     # reduce random factor to find new opportunities
         else:
             self.strategy['delay'] -= 1
+
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.performance['nextDay'] = tme.time() - start_time
 

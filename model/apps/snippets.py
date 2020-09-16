@@ -503,7 +503,7 @@ class learnDayAheadMarginal:
 
     def optimize_balancing(self):
         # -- set parameter for optimization
-        self.portfolio.setPara(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast())
+        self.portfolio.set_parameter(self.date, self.weatherForecast(), self.priceForecast(), self.demandForecast())
 
         # -- save the status for learning
         self.intelligence['Balancing'].input['weather'].append([x[1] for x in agent.portfolio.weather.items()])
@@ -549,8 +549,8 @@ class learnDayAheadMarginal:
 
         def getStates(self):
 
-            self.portfolio.setPara(weather=self.weather_forecast(), date=self.date, prices={})
-            self.portfolio.buildModel()
+            self.portfolio.set_parameter(weather=self.weather_forecast(), date=self.date, prices={})
+            self.portfolio.build_model()
             power = np.asarray(self.portfolio.optimize(), np.float) * 0.95
 
             states = [[min(power[i:i + 4]) / 2 for i in range(0, 24, 4)],

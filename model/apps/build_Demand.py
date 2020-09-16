@@ -8,7 +8,7 @@ from interfaces.interface_mongo import mongoInterface
 from interfaces.interface_Influx import InfluxInterface
 from apps.misc_Holiday import getHolidays
 from components.dem_Consumer import h0_model, g0_model, rlm_model
-from aggregation.dem_Port import demPort
+from aggregation.dem_Port import DemPort
 
 def getSolarPower(plz):
 
@@ -16,9 +16,9 @@ def getSolarPower(plz):
     influxDB = InfluxInterface(host='149.201.88.150', database='MAS_2020')
     geos = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
 
-    portfolio = demPort(typ="DEM")
+    portfolio = DemPort(typ="DEM")
     for key, value in mongoDB.getPVs().items():
-       portfolio.addToPortfolio('Pv' + str(key), {'Pv' + str(key): value})
+       portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
 
     listSolar = []
     days = pd.date_range(start='2019-01-01', freq='d', periods=365)
@@ -29,8 +29,8 @@ def getSolarPower(plz):
             geo = geos.loc[geos['PLZ'] == plz, 'hash'].to_numpy()[0]
             weather = influxDB.get_weather(geo, day)
             # Standardoptimierung
-            portfolio.setPara(day, weather, np.zeros(24))
-            portfolio.buildModel()
+            portfolio.set_parameter(day, weather, np.zeros(24))
+            portfolio.build_model()
             power_dayAhead = np.asarray(portfolio.optimize(), np.float)  # Berechnung der Einspeiseleitung [kW]
             for k in range(24):
                     totalSolar[k] += power_dayAhead[k]

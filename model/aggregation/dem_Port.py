@@ -2,14 +2,15 @@ import numpy as np
 from components.dem_PvBat import pvbat_model as pvBattery
 from components.dem_PvSolo import pv_model as pvSolo
 from components.dem_Consumer import h0_model, g0_model, rlm_model
-from aggregation.basic_Port import port_model
+from aggregation.basic_Port import PortfolioModel
 
-class demPort(port_model):
 
-    def __int__(self, T=24, dt=1, gurobi=False, date='2020-01-01', typ ='DEM'):
-        super().__init__(T, dt, gurobi, date, typ)
+class DemPort(PortfolioModel):
 
-    def addToPortfolio(self, name, energysystem):
+    def __int__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
+        super().__init__(T, dt, gurobi, date)
+
+    def add_energy_system(self, name, energysystem):
 
         data = energysystem[name]
 
@@ -64,7 +65,7 @@ class demPort(port_model):
 
         self.energySystems.update(energysystem)
 
-    def buildModel(self, response=[]):
+    def build_model(self, response=[]):
         for _, data in self.energySystems.items():
             data['model'].build(data, self.weather, self.date)
 
@@ -96,7 +97,7 @@ class demPort(port_model):
         self.power = power                              # Leistungsbilanz des Gebietes
         return power
 
-    def fixPlaning(self):
+    def fix_planing(self):
         power = np.zeros_like(self.t)
         try:
             err = np.random.normal(loc=0.013, scale=0.037, size=self.T)
@@ -107,4 +108,4 @@ class demPort(port_model):
         return power
 
 if __name__ == "__main__":
-    test = demPort()
+    test = DemPort()

@@ -7,7 +7,7 @@ import numpy as np
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.dem_Port import demPort
+from aggregation.dem_Port import DemPort
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -24,33 +24,33 @@ class DemAgent(basicAgent):
         # Development of the portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = demPort(typ="DEM")
+        self.portfolio = DemPort()
 
         # Construction of the prosumer with PV and battery
         for key, value in self.connections['mongoDB'].getPVBatteries().items():
-            self.portfolio.addToPortfolio('PvBat' + str(key), {'PvBat' + str(key): value})
+            self.portfolio.add_energy_system('PvBat' + str(key), {'PvBat' + str(key): value})
         self.logger.info('Prosumer PV-Bat added')
 
         # Construction Consumer with PV
         for key, value in self.connections['mongoDB'].getPVs().items():
-            self.portfolio.addToPortfolio('Pv' + str(key), {'Pv' + str(key): value})
+            self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
         self.logger.info('Consumer PV added')
 
         demand = self.connections['mongoDB'].getDemand()
 
         # Construction Standard Consumer H0
         name = 'plz_' + str(plz) + '_h0'
-        self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['h0']*10**6, 2), 'typ': 'H0'}})
+        self.portfolio.add_energy_system(name, {name: {'demandP': np.round(demand['h0'] * 10 ** 6, 2), 'typ': 'H0'}})
         self.logger.info('H0 added')
 
         # Construction Standard Consumer G0
         name = 'plz_' + str(plz) + '_g0'
-        self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['g0']*10**6, 2), 'typ': 'G0'}})
+        self.portfolio.add_energy_system(name, {name: {'demandP': np.round(demand['g0'] * 10 ** 6, 2), 'typ': 'G0'}})
         self.logger.info('G0 added')
 
         # Construction Standard Consumer RLM
         name = 'plz_' + str(plz) + '_rlm'
-        self.portfolio.addToPortfolio(name, {name: {'demandP': np.round(demand['rlm']*10**6, 2), 'typ': 'RLM'}})
+        self.portfolio.add_energy_system(name, {name: {'demandP': np.round(demand['rlm'] * 10 ** 6, 2), 'typ': 'RLM'}})
         self.logger.info('RLM added')
 
         # If there are no power systems, terminate the agent
@@ -66,13 +66,13 @@ class DemAgent(basicAgent):
 
         # Step 1: forecast input data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()                                         # performance timestamp
+        start_time = tme.time()                                          # performance timestamp
 
         weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
         prices = self.price_forecast(self.date)                          # price forecast dayAhead
         demand = self.demand_forecast(self.date)                         # demand forecast dayAhead
-        self.portfolio.setPara(self.date, weather, prices, demand)
-        self.portfolio.buildModel()
+        self.portfolio.set_parameter(self.date, weather, prices)
+        self.portfolio.build_model()
 
         self.performance['initModel'] = tme.time() - start_time
 

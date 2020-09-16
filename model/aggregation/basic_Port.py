@@ -1,56 +1,65 @@
+# third party modules
 import numpy as np
 import pandas as pd
 from gurobipy import *
 
-class port_model:
 
-    def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01', typ='RES'):
+class PortfolioModel:
 
-        self.date = pd.to_datetime(date)                                    # Aktueller Tag der der Optimierung
+    def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
 
-        # Einstellung der Standardlastprofile
-        # -- > Wärmebedarf
-        self.Ref_Temperature = np.asarray(np.load(open(r'./data/Ref_Temp.array','rb')), np.float32)
-        self.Ref_factors = np.asarray(np.load(open(r'./data/Ref_Factors.array','rb')), np.float32)
-        # -- > Strombedarf
-        self.Ref_H0 = np.asarray(np.load(open(r'./data/Ref_H0.array','rb')), np.float32)
-        self.Ref_G0 = np.asarray(np.load(open(r'./data/Ref_G0.array','rb')), np.float32)
-        self.Ref_Rlm = np.asarray(np.load(open(r'./data/Ref_RLM.array','rb')), np.float32)
+        self.date = pd.to_datetime(date)                    # current day
+        self.energySystems = {}                             # energy systems in portfolio
 
-        self.energySystems = {}                                             # Verwaltung der Energiesysteme
-        self.typ = typ                                                      # Portfoliotyp (DEM,RES,PWP,...)
-        self.capacities = dict(wind=0, solar=0, fossil=0, water=0, bio=0,
-                               lignite=0, gas=0, coal=0, nuc=0)             # installierte Erzeugungskapazitäten
+        # load reference profiles
+        # heat
+        self.Ref_Temperature = np.asarray(np.load(open(r'./data/Ref_Temp.array', 'rb')), np.float32)
+        self.Ref_factors = np.asarray(np.load(open(r'./data/Ref_Factors.array', 'rb')), np.float32)
+        # power
+        self.Ref_H0 = np.asarray(np.load(open(r'./data/Ref_H0.array', 'rb')), np.float32)
+        self.Ref_G0 = np.asarray(np.load(open(r'./data/Ref_G0.array', 'rb')), np.float32)
+        self.Ref_Rlm = np.asarray(np.load(open(r'./data/Ref_RLM.array', 'rb')), np.float32)
 
-        # Meta Daten Zeitintervalle
-        self.T = T                                                          # Anzahl an Zeitschritten
-        self.t = np.arange(T)                                               # Array mit Zeitschritten
-        self.dt = dt                                                        # Zeitschrittlänge
+        # calculation and optimization parameters
+        self.T = T                                          # number of steps
+        self.t = np.arange(T)                               # array with steps
+        self.dt = dt                                        # step length [h]
 
-        self.power = np.zeros(T)                                            # Leistung am Netzbezugspunkt
+        self.weather = {}                                   # weather data (forecast)
+        self.prices = {}                                    # price (forecast)
 
-        self.emission = np.zeros(T)                                         # Kosten aus CO2 Emissionen
-        self.fuel = np.zeros(T)                                             # Brennstoffkosten
+        # sum parameters
+        self.power = np.zeros(T, dtype=np.float)            # sum power         [MW]
+        self.emission = np.zeros(T, dtype=np.float)         # sum emissions     [€]
+        self.fuel = np.zeros(T, dtype=np.float)             # sum fuel          [€]
+        self.volume = np.zeros(T, dtype=np.float)           # total volume      [MWh]
 
-        self.generation = dict(powerTotal=np.zeros_like(self.t, dtype=float),                 # Erzeugung Gesamt
-                               powerSolar=np.zeros_like(self.t, dtype=float),                 # Erzeugung aus Solar
-                               powerWind=np.zeros_like(self.t, dtype=float),                  # Erzeugung aus Wind
-                               powerWater=np.zeros_like(self.t, dtype=float),                 # Erzeugung aus Wasserkraft
-                               powerBio=np.zeros_like(self.t, dtype=float),                   # Erzeugung aus Biomasse
-                               powerLignite=np.zeros_like(self.t, dtype=float),               # Erzeugung aus Braunkohle
-                               powerCoal=np.zeros_like(self.t, dtype=float),                  # Erzeugung aus Steinkohle
-                               powerGas=np.zeros_like(self.t, dtype=float),                   # Erzeugung aus Erdgas
-                               powerNuc=np.zeros_like(self.t, dtype=float))                   # Erzeugung aus Kernkraft
+        # installed capacities [MW]
+        self.capacities = dict(capacityBio=0.,
+                               capacityCoal=0.,
+                               capacityGas=0.,
+                               capacityLignite=0.,
+                               capacityNuc=0.,
+                               capacitySolar=0.,
+                               capacityWater=0.,
+                               capacityWind=0.)
 
-        self.demand = dict(power=np.zeros_like(self.t, dtype=float),                     # Strombedarf
-                                heat=np.zeros_like(self.t, dtype=float))                 # Wärmebedarf
+        # current generation series [MW]
+        self.generation = dict(powerTotal=np.zeros_like(self.t, dtype=float),       # total generation
+                               powerSolar=np.zeros_like(self.t, dtype=float),       # solar generation
+                               powerWind=np.zeros_like(self.t, dtype=float),        # wind generation
+                               powerWater=np.zeros_like(self.t, dtype=float),       # run river or storage generation
+                               powerBio=np.zeros_like(self.t, dtype=float),         # biomass generation
+                               powerLignite=np.zeros_like(self.t, dtype=float),     # lignite generation
+                               powerCoal=np.zeros_like(self.t, dtype=float),        # hard coal generation
+                               powerGas=np.zeros_like(self.t, dtype=float),         # gas generation
+                               powerNuc=np.zeros_like(self.t, dtype=float))         # nuclear generation
 
-        # Optimierungsrelevante Parameter
-        self.weather = {}                                                   # Wetterdaten (wind,dir,dif,temp)
-        self.prices = {}                                                    # Preiserwartung
-        self.frcstDemand = []                                               # Lasterwartung
+        # current demand series [MW]
+        self.demand = dict(power=np.zeros_like(self.t, dtype=float),                # total power demand
+                           heat=np.zeros_like(self.t, dtype=float))                 # total heat demand
 
-        # GGLP-Model für den Dispatch der Kraftwerke
+        # initialize milp optimization for power plant dispatch
         if gurobi:
             self.m = Model('aggregation')
             self.m.Params.OutputFlag = 0
@@ -58,36 +67,31 @@ class port_model:
             self.m.Params.MIPGap = 0.05
             self.m.__len__ = 1
 
-    # ----- Set Parameter for optimization -----
-    def setPara(self, date, weather, prices, demand=np.zeros(24)):
+    # set parameter for optimization
+    def set_parameter(self, date, weather, prices):
         self.date = pd.to_datetime(date)
         self.weather = weather
         self.prices = prices
-        self.frcstDemand = demand
 
-
-    # ----- Add Energysystem to Portfolio -----
-    def addToPortfolio(self, name, energysystem):
+    # ddd energy system to portfolio
+    def add_energy_system(self, name, energysystem):
         pass
 
-    # ----- build model with constrains for optimization -----
-    def buildModel(self, response=[]):
+    # build model with constrains for optimization
+    def build_model(self, response=[]):
         pass
 
     def optimize(self):
         power = np.zeros_like(self.t)
         return power
 
-    def getActual(self):
+    def fix_planing(self):
         power = np.zeros_like(self.t)
         return power
 
-    def fixPlaning(self):
-        power = np.zeros_like(self.t)
-        return power
 
 if __name__ == "__main__":
-    test = port_model()
+    test = PortfolioModel()
     pass
 
 

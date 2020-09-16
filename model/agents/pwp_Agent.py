@@ -8,7 +8,7 @@ from math import radians
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.pwp_Port import pwpPort
+from aggregation.pwp_Port import PwpPort
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -25,19 +25,19 @@ class PwpAgent(basicAgent):
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = pwpPort(typ='PWP', gurobi=True, T=48)
+        self.portfolio = PwpPort(gurobi=True, T=48)
 
         # Construction power plants
         for key, value in self.connections['mongoDB'].getPowerPlants().items():
             if value['maxPower'] > 1:
-                self.portfolio.addToPortfolio(key, {key: value})
-                self.portfolio.capacities['fossil'] += value['maxPower']                        # total power [MW]
-                self.portfolio.capacities[value['fuel']] += value['maxPower']
+                self.portfolio.add_energy_system(key, {key: value})
+                self.portfolio.capacities['capacity%s' % value['fuel'].capitalize()] += value['maxPower']
         self.logger.info('Power Plants added')
 
         # Construction storages
         for key, value in self.connections['mongoDB'].getStorages().items():
-            self.portfolio.addToPortfolio(key, {key: value})
+            self.portfolio.capacities['capacityWater'] += value['P+_Max']
+            self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('Storages added')
 
         # If there are no power systems, terminate the agent
@@ -45,11 +45,7 @@ class PwpAgent(basicAgent):
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)],
-                          data=dict(capacityNuc=float(self.portfolio.capacities['nuc']),
-                                    capacityLignite=float(self.portfolio.capacities['lignite']),
-                                    capacityCoal=float(self.portfolio.capacities['coal']),
-                                    capacityGas=float(self.portfolio.capacities['gas'])))
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
@@ -65,8 +61,8 @@ class PwpAgent(basicAgent):
         weather = self.weather_forecast(self.date, 2, mean=False)           # local weather forecast dayAhead
         prices = self.price_forecast(self.date, 2)                          # price forecast dayAhead
         demand = self.demand_forecast(self.date, 2)                         # demand forecast dayAhead
-        self.portfolio.setPara(self.date, weather, prices, demand)
-        self.portfolio.buildModel()
+        self.portfolio.set_parameter(self.date, weather, prices)
+        self.portfolio.build_model()
 
         self.performance['initModel'] = tme.time() - start_time
 
@@ -75,7 +71,12 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         power_da, emission_opt, fuel_opt = self.portfolio.optimize()
-        self.portfolio.buildModel(max_=True)
+        df = pd.DataFrame.from_dict(self.portfolio.generation)
+        power_water = df['powerWater'].to_numpy()
+        volume = self.portfolio.volume
+        power_da -= power_water
+
+        self.portfolio.build_model(max_=True)
         power_max, emission_max, fuel_max = self.portfolio.optimize()
 
         self.performance['optModel'] = tme.time() - start_time
@@ -85,10 +86,9 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         # build dataframe to save results in ifluxdb
-        df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
-                        pd.DataFrame(data=dict(powerMax=power_max, emissionMax=emission_max, fuelMax=fuel_max,
-                                               emissionOpt=emission_opt, fuelOpt=fuel_opt, frcst=prices['power']))],
-                       axis=1)
+        df = pd.concat([df, pd.DataFrame(data=dict(powerMax=power_max, emissionMax=emission_max, fuelMax=fuel_max,
+                                                   emissionOpt=emission_opt, fuelOpt=fuel_opt, frcst=prices['power'],
+                                                   volume=volume))], axis=1)
         df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
         df['powerTotal'] = power_da
 
@@ -130,6 +130,8 @@ class PwpAgent(basicAgent):
         self.strategy['actions'] = np.asarray(actions).reshape(-1, )
 
         for i in range(int(self.portfolio.T/2)):
+
+            # power plant strategy
             if power_da[i] > 0:                                     # check if portfolio generate power
                 # calculate slope for linear order function
                 delta = (prices['power'][i] - self.strategy['minPrice'][i]) / 100
@@ -145,10 +147,19 @@ class PwpAgent(basicAgent):
                     volume.append(-1*(power_max[i] - power_da[i]))  # add delta between scheduled and maximal power
                 # add order for the corresponding hour
                 order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
-            elif power_da[i] < 0:                                   # check if portfolio consume power
+            else:
+                if power_max[i] > 0:
+                    price = (emission_max[i] + fuel_max[i])/power_max[i]
+                    order_book.update({'h_%s' % i: {'quantity': [-power_max[i]], 'price': [price], 'hour': i,
+                                                    'name': self.name}})
+                else:
+                    order_book.update({'h_%s' % i: {'quantity': [0], 'price': [0], 'hour': i, 'name': self.name}})
+
+            # storage strategy
+            if power_water[i] < 0:
                 # calculate slope for linear order function
                 delta = (prices['power'][i] - 0) / 100
-                slope = np.abs(delta) * np.tan(radians(self.strategy['actions'][i] + 10))
+                slope = np.abs(delta) * np.tan(radians(45))
                 if delta > 0:
                     lb = 0                                          # pay at least 0
                     ub = prices['power'][i]                         # pay maximal the expected market clearing
@@ -157,16 +168,24 @@ class PwpAgent(basicAgent):
                     lb = prices['power'][i]                         # pay at least the expected market clearing
                     ub = 0                                          # pay maximal 0
                     price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
-                volume = [(-2 / 100 * power_da[i]) for _ in range(2, 102, 2)]
+                volume = [(-2 / 100 * power_water[i]) for _ in range(2, 102, 2)]
                 # add order for the corresponding hour
                 order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
-            else:
-                if power_max[i] > 0:
-                    price = (emission_max[i] + fuel_max[i])/power_max[i]
-                    order_book.update({'h_%s' % i: {'quantity': [-power_max[i]], 'price': [price], 'hour': i,
-                                                    'name': self.name}})
+            if power_water[i] > 0:                                     # check if portfolio generate power
+                # calculate slope for linear order function
+                delta = (prices['power'][i] - 0) / 100
+                slope = np.max(delta, 0) * np.tan(radians(45))
+                if delta > 0:
+                    lb = 0                                          # get at least 0
+                    ub = prices['power'][i]                         # get maximal the expected market clearing
+                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
                 else:
-                    order_book.update({'h_%s' % i: {'quantity': [0], 'price': [0], 'hour': i, 'name': self.name}})
+                    lb = prices['power'][i]                         # get at least the expected market clearing
+                    ub = 0                                          # pay maximal 0
+                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
+                volume = [(-2 / 100 * power_water[i]) for _ in range(2, 102, 2)]
+                # add order for the corresponding hour
+                order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
 
         self.performance['buildOrders'] = tme.time() - start_time
 
@@ -203,9 +222,9 @@ class PwpAgent(basicAgent):
                     = old_val + self.strategy['lr'] * (profit[i] - old_val)
 
         # adjust power generation
-        self.portfolio.buildModel(response=ask - bid)
-        power_da, emission, fuel = self.portfolio.fixPlaning()
-
+        self.portfolio.build_model(response=ask - bid)
+        power_da, emission, fuel = self.portfolio.fix_planing()
+        volume = self.portfolio.volume
         self.performance['adjustResult'] = tme.time() - start_time
 
         # Step 7: save adjusted results in influxdb
@@ -213,7 +232,8 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
-                        pd.DataFrame(data=dict(profit=profit, emissionAdjust=emission, fuelAdjust=fuel))], axis=1)
+                        pd.DataFrame(data=dict(profit=profit, emissionAdjust=emission, fuelAdjust=fuel,
+                                               volume=volume))], axis=1)
         df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='post_dayAhead'))
@@ -249,6 +269,9 @@ class PwpAgent(basicAgent):
             self.strategy['epsilon'] = max(0.99*self.strategy['epsilon'], 0.01)     # reduce random factor to find new opportunities
         else:
             self.strategy['delay'] -= 1
+
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.performance['nextDay'] = tme.time() - start_time
 
