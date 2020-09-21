@@ -221,5 +221,5 @@ class InfluxInterface:
 
 
 if __name__ == "__main__":
-    myInterface = InfluxInterface()
+    myInterface = InfluxInterface(database='MAS2020_10')
     pass

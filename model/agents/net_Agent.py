@@ -72,6 +72,9 @@ class NetAgent(basicAgent):
         #        self.network.generators.loc['Gen_%s' % index, 'p_set'] = gen[hour]
         #    index += 1
 
+        #'SELECT sum("powerTotal") FROM "Areas" WHERE ("area" = \'%s\' AND "typ" != 'DEM') AND time >= \'%s\' and time < \'%s\'' \
+        #                                                                               ' GROUP BY time(1h) fill(null)'
+
         #self.network.pf(distribute_slack=True)
 
         # Step 3 build Dataframe to save results in influxDB/MongoDB

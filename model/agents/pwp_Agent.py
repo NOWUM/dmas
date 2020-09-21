@@ -45,7 +45,7 @@ class PwpAgent(basicAgent):
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
-        self.strategy['qLearn'].qus *= 0.5 * (self.portfolio.capacities['capacityCoal'] +
+        self.strategy['qLearn'].qus *= 0.5 * (self.portfolio.capacities['capacityGas'] +
                                               self.portfolio.capacities['capacityLignite'] +
                                               self.portfolio.capacities['capacityCoal'] +
                                               self.portfolio.capacities['capacityNuc'])
@@ -291,13 +291,13 @@ if __name__ == "__main__":
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
     agent.connections['mongoDB'].login(agent.name, False)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)
-    finally:
-        agent.connections['influxDB'].influx.close()
-        agent.connections['mongoDB'].mongo.close()
-        if not agent.connections['connectionMQTT'].is_closed:
-            agent.connections['connectionMQTT'].close()
-        exit()
+    # try:
+    #     agent.run()
+    # except Exception as e:
+    #     print(e)
+    # finally:
+    #     agent.connections['influxDB'].influx.close()
+    #     agent.connections['mongoDB'].mongo.close()
+    #     if not agent.connections['connectionMQTT'].is_closed:
+    #         agent.connections['connectionMQTT'].close()
+    #     exit()
