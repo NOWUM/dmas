@@ -13,7 +13,7 @@ from agents.basic_Agent import agent as basicAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=41, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=50, help='PLZ-Agent')
     return parser.parse_args()
 
 
@@ -68,9 +68,6 @@ class ResAgent(basicAgent):
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
-        self.strategy['qLearn'].qus *= 0.5 * (self.portfolio.capacities['capacityWind'] +
-                                              self.portfolio.capacities['capacitySolar'])
-
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def optimize_dayAhead(self):
@@ -118,40 +115,11 @@ class ResAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        order_book = dict()                                                     # dictionary to send the orders to the market
-        self.strategy['maxPrice'] = prices['power']                             # set maximal price in [€/MWh]
-        self.strategy['minPrice'] = np.zeros_like(self.strategy['maxPrice'])    # set minimal price in [€/MWh]
-        # initialize learning algorithm
-        self.strategy['qLearn'].collect_data(dem=demand, prc=prices['power'], weather=weather)
-        # find best action according to the actual situation
-        if self.strategy['qLearn'].fitted:              # if a model is available/trained find best actions
-            opt_actions = self.strategy['qLearn'].get_actions()
-            actions = [opt_actions[i] if self.strategy['epsilon'] < np.random.uniform(0, 1) else
-                       np.random.randint(1, 8) for i in range(24)]
-        else:                                           # else try random actions to get new hints
-            actions = np.random.randint(1, 8, 24) * 10
-
-        self.strategy['actions'] = np.asarray(actions).reshape(-1,)
-
-        # build linear order function
-        slopes = ((self.strategy['maxPrice'] - self.strategy['minPrice'])/100) * \
-                 np.tan((self.strategy['actions']+10)/180*np.pi)
-
-        # define volumes and prices for each hour
+        ask_orders = {}                                                     # all block orders for current day
         for i in range(self.portfolio.T):
-            # direct strategy
-            volume = [(-2/100 * power_direct[i]) for _ in range(2, 102, 2)]
-            if slopes[i] > 0:
-                prices = [float(min(slopes[i] * p + self.strategy['minPrice'][i], self.strategy['maxPrice'][i]))
-                          for p in range(2, 102, 2)]
-            else:
-                prices = [float(min(-slopes[i] * p + self.strategy['maxPrice'][i], self.strategy['minPrice'][i]))
-                          for p in range(2, 102, 2)]
-            # eeg strategy
-            volume.insert(0, -power_eeg[i])
-            prices.insert(0, -499.98)
-
-            order_book.update({'h_%s' % i: {'quantity': volume, 'price': prices, 'hour': i, 'name': self.name}})
+            var_cost = 0
+            ask_orders.update({str(('gen%s' % i, i, 0, str(self.name))): (var_cost, power_direct[i], 'x')})
+            ask_orders.update({str(('gen%s' % (i+24), i, 0, str(self.name))): (-499, power_eeg[i], 'x')})
 
         self.performance['buildOrders'] = tme.time() - start_time
 
@@ -159,7 +127,7 @@ class ResAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=order_book)
+        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=ask_orders)
 
         self.performance['sendOrders'] = tme.time() - start_time
 
@@ -178,14 +146,6 @@ class ResAgent(basicAgent):
         bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
-
-        # adjust market strategy
-        if self.strategy['qLearn'].fitted:
-            for i in self.portfolio.t:
-                old_val = self.strategy['qLearn'].qus[self.strategy['qLearn'].sts[i],
-                                                      int((self.strategy['actions'][i]-10)/10)]
-                self.strategy['qLearn'].qus[self.strategy['qLearn'].sts[i], int((self.strategy['actions'][i]-10)/10)] \
-                    = old_val + self.strategy['lr'] * (profit[i] - old_val)
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
@@ -212,28 +172,17 @@ class ResAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        if self.strategy['delay'] <= 0:                                                         # offset factor start
-            # collect data an retrain forecast method
-            dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-            weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
-            prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
-            prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
-            for key, method in self.forecasts.items():
-                method.collect_data(date=self.date, dem=dem, prc=prc, prc_1=prc_1, prc_7=prc_7, weather=weather)
-                method.counter += 1
-                if method.counter >= method.collect:                                        # retrain forecast method
-                    method.fit_function()
-                    method.counter = 0
-
-            # collect data for learning method
-            self.strategy['qLearn'].counter += 1
-            if self.strategy['qLearn'].counter >= self.strategy['qLearn'].collect:
-                self.strategy['qLearn'].fit()
-                self.strategy['qLearn'].counter = 0
-            self.strategy['lr'] = max(self.strategy['lr']*0.99, 0.2)                # reduce learning rate during the simulation
-            self.strategy['epsilon'] = max(0.99*self.strategy['epsilon'], 0.01)     # reduce random factor to find new opportunities
-        else:
-            self.strategy['delay'] -= 1
+        # collect data an retrain forecast method
+        dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
+        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
+        prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
+        for key, method in self.forecasts.items():
+            method.collect_data(date=self.date, dem=dem, prc=prc, prc_1=prc_1, prc_7=prc_7, weather=weather)
+            method.counter += 1
+            if method.counter >= method.collect:                                            # retrain forecast method
+                method.fit_function()
+                method.counter = 0
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))

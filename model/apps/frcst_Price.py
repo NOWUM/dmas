@@ -91,9 +91,9 @@ class annFrcst:
             power_price = 25*np.ones(24)
 
         co = np.ones_like(power_price) * 25 * np.random.uniform(0.95, 1.05, 24)   # -- Emission Price     [€/t]
-        gas = np.ones_like(power_price) * 18 * np.random.uniform(0.95, 1.05, 24)  # -- Gas Price          [€/MWh]
+        gas = np.ones_like(power_price) * 20 * np.random.uniform(0.95, 1.05, 24)  # -- Gas Price          [€/MWh]
         lignite = 3.5 * np.random.uniform(0.95, 1.05)                             # -- Lignite Price      [€/MWh]
-        coal = 8.5 * np.random.uniform(0.95, 1.05)                                # -- Hard Coal Price    [€/MWh]
-        nuc = 1 * np.random.uniform(0.95, 1.05)                                   # -- nuclear Price      [€/MWh]
+        coal = 5.5 * np.random.uniform(0.95, 1.05)                                # -- Hard Coal Price    [€/MWh]
+        nuc = 1.25 * np.random.uniform(0.95, 1.05)                                # -- nuclear Price      [€/MWh]
 
         return dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)

@@ -58,14 +58,12 @@ def index():
     num = []
     agent_ids = mongoCon.status.find().distinct('_id')
 
-    for typ in ['PWP', 'RES', 'DEM']:
+    for typ in ['PWP', 'RES', 'DEM', 'STR']:
         counter = 0
-        for id in agent_ids:
-            if typ == id.split('_')[0]:
+        for id_ in agent_ids:
+            if typ == id_.split('_')[0]:
                 counter += 1
         num.append(counter)
-
-    grid = False
 
     return render_template('index.html', **locals())
 
@@ -104,9 +102,11 @@ def buildAreas():
         if request.form['dem'] == 'true':  # if true build DEM
             subprocess.Popen('python ' + path + r'/agents/dem_Agent.py ' + '--plz %i'
                              % (i), cwd=path, shell=True)
+        if request.form['str'] == 'true':  # if true build STR
+            subprocess.Popen('python ' + path + r'/agents/str_Agent.py ' + '--plz %i'
+                             % (i), cwd=path, shell=True)
 
     return 'OK'
-
 
 """
     simualtion method with command messagases for the agents
@@ -172,7 +172,7 @@ if __name__ == "__main__":
             mongoCon.orderDB.drop_collection(name)
 
     try:
-        if config.getboolean('Market','Local'): # if web application should runs local
+        if config.getboolean('Market', 'Local'): # if web application should runs local
             app.run(debug=False, port=config.getint('Market','Port'), host='127.0.0.1')
         else:
             app.run(debug=False, port=config.getint('Market','Port'), host='0.0.0.0')

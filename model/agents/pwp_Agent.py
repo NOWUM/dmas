@@ -4,7 +4,6 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
-from math import radians
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
@@ -14,7 +13,7 @@ from agents.basic_Agent import agent as basicAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=57, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=50, help='PLZ-Agent')
     return parser.parse_args()
 
 
@@ -25,7 +24,7 @@ class PwpAgent(basicAgent):
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = PwpPort(gurobi=True, T=48)
+        self.portfolio = PwpPort(gurobi=True, T=24)
 
         # Construction power plants
         for key, value in self.connections['mongoDB'].getPowerPlants().items():
@@ -34,21 +33,10 @@ class PwpAgent(basicAgent):
                 self.portfolio.capacities['capacity%s' % value['fuel'].capitalize()] += value['maxPower']
         self.logger.info('Power Plants added')
 
-        # Construction storages
-        for key, value in self.connections['mongoDB'].getStorages().items():
-            self.portfolio.capacities['capacityWater'] += value['P+_Max']
-            self.portfolio.add_energy_system(key, {key: value})
-        self.logger.info('Storages added')
-
         # If there are no power systems, terminate the agent
         if len(self.portfolio.energySystems) == 0:
             print('Number: %s No energy systems in the area' % plz)
             exit()
-
-        self.strategy['qLearn'].qus *= 0.5 * (self.portfolio.capacities['capacityGas'] +
-                                              self.portfolio.capacities['capacityLignite'] +
-                                              self.portfolio.capacities['capacityCoal'] +
-                                              self.portfolio.capacities['capacityNuc'])
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
@@ -63,40 +51,48 @@ class PwpAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        weather = self.weather_forecast(self.date, 2, mean=False)           # local weather forecast dayAhead
-        prices = self.price_forecast(self.date, 2)                          # price forecast dayAhead
-        demand = self.demand_forecast(self.date, 2)                         # demand forecast dayAhead
-        self.portfolio.set_parameter(self.date, weather, prices)
-        self.portfolio.build_model()
-
+        weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
+        demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
+        prices = self.price_forecast(self.date)                        # price forecast dayAhead
+        dayAhead_prc = prices['power']
         self.performance['initModel'] = tme.time() - start_time
 
-        # Step 2: standard optimization --> returns power series in [MW]
+        # Step 2: optimization --> returns power series in [MW]
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        power_da, emission_opt, fuel_opt = self.portfolio.optimize()
-        df = pd.DataFrame.from_dict(self.portfolio.generation)
-        power_water = df['powerWater'].to_numpy()
-        volume = self.portfolio.volume
-        power_da -= power_water
-
-        self.portfolio.build_model(max_=True)
-        power_max, emission_max, fuel_max = self.portfolio.optimize()
+        offsets = [-7, -5, 0, 5, 7, 'max']
+        results = {offset: {} for offset in offsets}
+        for offset in offsets:
+            if offset == 'max':
+                prices.update({'power': dayAhead_prc})
+                self.portfolio.set_parameter(self.date, weather, prices)
+                self.portfolio.build_model(max_=True)
+            # elif offset == 'min':
+            #     prices.update({'power': dayAhead_prc-7})
+            #     self.portfolio.set_parameter(self.date, weather, prices)
+            #     self.portfolio.build_model(min_=True)
+            else:
+                prices.update({'power': dayAhead_prc + offset})
+                self.portfolio.set_parameter(self.date, weather, prices)
+                self.portfolio.build_model()
+            power_da, emission, fuel = self.portfolio.optimize()
+            for key, value in self.portfolio.energySystems.items():
+                results[offset].update({key: (value['model'].power, value['model'].emission, value['model'].fuel)})
+            if offset == 0:
+                df = pd.DataFrame.from_dict(self.portfolio.generation)
 
         self.performance['optModel'] = tme.time() - start_time
+
+        # return results
 
         # Step 3: save optimization results in influxDB
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         # build dataframe to save results in ifluxdb
-        df = pd.concat([df, pd.DataFrame(data=dict(powerMax=power_max, emissionMax=emission_max, fuelMax=fuel_max,
-                                                   emissionOpt=emission_opt, fuelOpt=fuel_opt, frcst=prices['power'],
-                                                   volume=volume))], axis=1)
+        df = pd.concat([df, pd.DataFrame(data=dict(frcst=dayAhead_prc))], axis=1)
         df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
-        df['powerTotal'] = power_da
-
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='optimize_dayAhead'))
 
@@ -106,92 +102,87 @@ class PwpAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        order_book = dict()
+        order_book = {}
+        for key, _ in self.portfolio.energySystems.items():
 
-        self.strategy['minPrice'] = np.zeros_like(power_da)             # set minimal price in [€/MWh]
-        on_hour = power_da > 0                                          # generation hours
-        off_hour = power_da == 0                                        # non-running hours
+            last_power = np.zeros(24)
+            block_number = 0
+            links = {i: 'x' for i in range(24)}
+            name = str(self.name + '-' + key)
+            for _, value in results.items():
+                value = value[key]
+                # build mother order
+                if np.count_nonzero(value[0]) > 0 and np.count_nonzero(last_power) == 0:
+                    var_cost = np.nan_to_num((value[1] + value[2]) / value[0])
+                    price = np.mean(var_cost[var_cost > 0])
+                    for hour in np.argwhere(value[0] > 0).reshape((-1,)):
+                        price = np.round(price, 2)
+                        power = np.round(value[0][hour])
+                        order_book.update({str(('gen0', hour, 0, name)): (price, power, 0)})
+                        links.update({hour: block_number})
+                    block_number += 1
+                    last_power = value[0]
 
-        self.strategy['minPrice'][on_hour] = (emission_opt[on_hour] + fuel_opt[on_hour])/power_da[on_hour]
-        self.strategy['minPrice'][off_hour] = 0
+                # add linked hour blocks
+                elif np.count_nonzero(value[0] - last_power) > 0:
+                    delta = value[0] - last_power
+                    stack_vertical = np.argwhere(last_power > 0).reshape((-1,))
+                    for hour in stack_vertical:
+                        if delta[hour] > 0:
+                            price = np.round((value[1][hour] + value[2][hour]) / value[0][hour], 2)
+                            power = np.round(0.2 * delta[hour])
+                            if links[hour] == 'x':
+                                link = 0
+                            else:
+                                link = links[hour]
+                            for order in range(5):
+                                order_book.update({str(('gen%s' % block_number, hour, order, name)): (price,
+                                                                                                      power,
+                                                                                                      link)})
+                            links.update({hour: block_number})
+                            block_number += 1
 
-        self.strategy['maxPrice'] = np.zeros_like(power_da)              # set maximal price in [€/MWh]
-        on_hour = power_max > 0                                          # generation hours
-        off_hour = power_max == 0                                        # non-running hours
+                    left = stack_vertical[0]
+                    right = stack_vertical[-1]
 
-        self.strategy['maxPrice'][on_hour] = (emission_max[on_hour] + fuel_max[on_hour]) / power_max[on_hour]
-        self.strategy['maxPrice'][off_hour] = 0
+                    if left > 0:
+                        stack_left = np.arange(start=left-1, stop=-1, step=-1)
+                        if links[stack_left[0]] == 'x':
+                            link = 0
+                        else:
+                            link = links[stack_left[0]]
+                        for hour in stack_left:
+                            if delta[hour] > 0:
+                                price = np.round((value[1][hour] + value[2][hour]) / value[0][hour], 2)
+                                power = np.round(0.2 * delta[hour])
+                                for order in range(5):
+                                    order_book.update({str(('gen%s' % block_number, hour, order, name)): (price,
+                                                                                                          power,
+                                                                                                          link)})
+                                link = block_number
+                                links.update({hour: block_number})
+                                block_number += 1
 
-        # initialize learning algorithm
-        self.strategy['qLearn'].collect_data(dem=demand, prc=prices['power'], weather=weather)
-        # find best action according to the actual situation
-        if self.strategy['qLearn'].fitted:              # if a model is available/trained find best actions
-            opt_actions = self.strategy['qLearn'].get_actions()
-            actions = [opt_actions[i] if self.strategy['epsilon'] < np.random.uniform(0, 1) else
-                       np.random.randint(1, 8) for i in range(24)]
-        else:                                           # else try random actions to get new hints
-            actions = np.random.randint(1, 8, 24) * 10
+                    elif right < 23:
+                        stack_right = np.arange(start=right + 1, stop=24)
+                        if links[stack_right[0]] == 'x':
+                            link = 0
+                        else:
+                            link = links[stack_right[0]]
+                        for hour in stack_right:
+                            if delta[hour] > 0:
+                                price = np.round((value[1][hour] + value[2][hour]) / value[0][hour], 2)
+                                power = np.round(0.2 * delta[hour])
+                                for order in range(5):
+                                    order_book.update({str(('gen%s' % block_number, hour, order, name)): (price,
+                                                                                                          power,
+                                                                                                          link)})
+                                link = block_number
+                                links.update({hour: block_number})
+                                block_number += 1
 
-        self.strategy['actions'] = np.asarray(actions).reshape(-1, )
-
-        for i in range(int(self.portfolio.T/2)):
-
-            # power plant strategy
-            if power_da[i] > 0:                                     # check if portfolio generate power
-                # calculate slope for linear order function
-                delta = (prices['power'][i] - self.strategy['minPrice'][i]) / 100
-                slope = np.max(delta, 0) * np.tan(radians(self.strategy['actions'][i] + 10))
-                # set price limits
-                lb = self.strategy['minPrice'][i]                   # get at least variable costs (emission + fuel)
-                ub = prices['power'][i]                             # get maximal the expected market clearing
-                # get price volume combinations
-                price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
-                volume = [(-2 / 100 * power_da[i]) for _ in range(2, 102, 2)]
-                if power_max[i] > power_da[i]:                      # check if portfolio not generate maximal power
-                    price.append(self.strategy['maxPrice'][i])      # add maximal variable costs
-                    volume.append(-1*(power_max[i] - power_da[i]))  # add delta between scheduled and maximal power
-                # add order for the corresponding hour
-                order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
-            else:
-                if power_max[i] > 0:
-                    price = (emission_max[i] + fuel_max[i])/power_max[i]
-                    order_book.update({'h_%s' % i: {'quantity': [-power_max[i]], 'price': [price], 'hour': i,
-                                                    'name': self.name}})
-                else:
-                    order_book.update({'h_%s' % i: {'quantity': [0], 'price': [0], 'hour': i, 'name': self.name}})
-
-            # storage strategy
-            if power_water[i] < 0:
-                # calculate slope for linear order function
-                delta = (prices['power'][i] - 0) / 100
-                slope = np.abs(delta) * np.tan(radians(45))
-                if delta > 0:
-                    lb = 0                                          # pay at least 0
-                    ub = prices['power'][i]                         # pay maximal the expected market clearing
-                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
-                else:
-                    lb = prices['power'][i]                         # pay at least the expected market clearing
-                    ub = 0                                          # pay maximal 0
-                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
-                volume = [(-2 / 100 * power_water[i]) for _ in range(2, 102, 2)]
-                # add order for the corresponding hour
-                order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
-            if power_water[i] > 0:                                     # check if portfolio generate power
-                # calculate slope for linear order function
-                delta = (prices['power'][i] - 0) / 100
-                slope = np.max(delta, 0) * np.tan(radians(45))
-                if delta > 0:
-                    lb = 0                                          # get at least 0
-                    ub = prices['power'][i]                         # get maximal the expected market clearing
-                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
-                else:
-                    lb = prices['power'][i]                         # get at least the expected market clearing
-                    ub = 0                                          # pay maximal 0
-                    price = [float(min(slope * p + lb, ub)) for p in range(2, 102, 2)]
-                volume = [(-2 / 100 * power_water[i]) for _ in range(2, 102, 2)]
-                # add order for the corresponding hour
-                order_book.update({'h_%s' % i: {'quantity': volume, 'price': price, 'hour': i, 'name': self.name}})
-
+                    last_power = value[0]
+        # return results, order_book
         self.performance['buildOrders'] = tme.time() - start_time
 
         # Step 5: send orders to market resp. to mongodb
@@ -208,23 +199,15 @@ class PwpAgent(basicAgent):
         """Scheduling after DayAhead Market"""
         self.logger.info('After DayAhead market scheduling started')
 
-        # Step 6: get market results and adjust generation an strategy
+        # Step 6: get market results and adjust generation
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         # query the DayAhead results
-        ask = self.connections['influxDB'].get_ask_da(self.date, self.name, days=2)            # volume to buy
-        bid = self.connections['influxDB'].get_bid_da(self.date, self.name, days=2)            # volume to sell
-        prc = self.connections['influxDB'].get_prc_da(self.date, days=2)                       # market clearing price
+        ask = self.connections['influxDB'].get_ask_da(self.date, self.name)            # volume to buy
+        bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
+        prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
-
-        # adjust market strategy
-        if self.strategy['qLearn'].fitted:
-            for i in range(24):
-                old_val = self.strategy['qLearn'].qus[self.strategy['qLearn'].sts[i],
-                                                      int((self.strategy['actions'][i]-10)/10)]
-                self.strategy['qLearn'].qus[self.strategy['qLearn'].sts[i], int((self.strategy['actions'][i]-10)/10)] \
-                    = old_val + self.strategy['lr'] * (profit[i] - old_val)
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
@@ -252,28 +235,17 @@ class PwpAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        if self.strategy['delay'] <= 0:                                                         # offset factor start
-            # collect data an retrain forecast method
-            dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-            weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
-            prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
-            prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
-            for key, method in self.forecasts.items():
-                method.collect_data(date=self.date, dem=dem, prc=prc[:24], prc_1=prc_1, prc_7=prc_7, weather=weather)
-                method.counter += 1
-                if method.counter >= method.collect:                                        # retrain forecast method
-                    method.fit_function()
-                    method.counter = 0
-
-            # collect data for learning method
-            self.strategy['qLearn'].counter += 1
-            if self.strategy['qLearn'].counter >= self.strategy['qLearn'].collect:
-                self.strategy['qLearn'].fit()
-                self.strategy['qLearn'].counter = 0
-            self.strategy['lr'] = max(self.strategy['lr']*0.99, 0.2)                # reduce learning rate during the simulation
-            self.strategy['epsilon'] = max(0.99*self.strategy['epsilon'], 0.01)     # reduce random factor to find new opportunities
-        else:
-            self.strategy['delay'] -= 1
+        # collect data an retrain forecast method
+        dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
+        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
+        prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
+        for key, method in self.forecasts.items():
+            method.collect_data(date=self.date, dem=dem, prc=prc[:24], prc_1=prc_1, prc_7=prc_7, weather=weather)
+            method.counter += 1
+            if method.counter >= method.collect:                                            # retrain forecast method
+                method.fit_function()
+                method.counter = 0
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
@@ -288,16 +260,27 @@ class PwpAgent(basicAgent):
 
 if __name__ == "__main__":
 
+    # from matplotlib import pyplot as plt
+
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
+    #results = agent.optimize_dayAhead()
+    # agent.optimize_dayAhead()
+    #
+    # legend = []
+    # for key, value in results.items():
+    #     plt.plot(value[0])
+    #     legend.append(key)
+    # plt.legend(legend)
+
     agent.connections['mongoDB'].login(agent.name, False)
-    # try:
-    #     agent.run()
-    # except Exception as e:
-    #     print(e)
-    # finally:
-    #     agent.connections['influxDB'].influx.close()
-    #     agent.connections['mongoDB'].mongo.close()
-    #     if not agent.connections['connectionMQTT'].is_closed:
-    #         agent.connections['connectionMQTT'].close()
-    #     exit()
+    try:
+        agent.run()
+    except Exception as e:
+        print(e)
+    finally:
+        agent.connections['influxDB'].influx.close()
+        agent.connections['mongoDB'].mongo.close()
+        if not agent.connections['connectionMQTT'].is_closed:
+            agent.connections['connectionMQTT'].close()
+        exit()

@@ -15,6 +15,12 @@ class storage_gurobi(es):
         # Leistung & Volumen & Zustand
         power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
         volume = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='V_' + name, lb=data['VMin'], ub=data['VMax'])
+
+        emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E_' + name, lb=0, ub=GRB.INFINITY)
+        self.m.addConstrs(emission[i] == 0 for i in self.t)
+        fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
+        self.m.addConstrs(fuel[i] == 0 for i in self.t)
+
         pP = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P+_' + name, lb=0, ub=data['P+_Max'])
         pM = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P-_' + name, lb=0, ub=data['P-_Max'])
         on = self.m.addVars(self.t, vtype=GRB.BINARY, name='On_' + name)

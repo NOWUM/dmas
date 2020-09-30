@@ -44,9 +44,7 @@
                 var dem = false
                 var pwp = false
                 var res = false
-                var grd = false
-                var brd = false
-
+                var str = false
 
                 $(function(){
                     $("#slider-range").slider({
@@ -68,11 +66,8 @@
                  if($("#res").prop("checked")==true){
                     res = true
                 }
-                if($("#grd").prop("checked")==true){
-                    grd = true
-                }
-                if($("#brd").prop("checked")==true){
-                    brd = true
+                if($("#str").prop("checked")==true){
+                    str = true
                 }
             });
 
@@ -82,8 +77,7 @@
                  dem:   dem,
                  pwp:   pwp,
                  res:   res,
-                 grd:   grd,
-                 brd:   brd},
+                 str:   str},
                  function(data){});});
 
         });
@@ -155,21 +149,14 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <div id="nav-grid" style="text-align: center;">
+                        <div id="nav-storage" style="text-align: center;">
                             <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="grd" value="1" checked>
-                                <label for="grd" style="float:left;">Übertragungsnetzbetreiber</label><br>
+                                <input type="checkbox" class="form-check-input" id="str" value="1" checked>
+                                <label for="str" style="float:left;">Speicherkraftwerke</label><br>
                             </a>
                         </div>
                     </li>
-                    <li class="nav-item">
-                        <div id="nav-CrossBorder" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="brd" value="1" checked>
-                                <label for="brd" style="float:left;">Import & Export</label><br>
-                            </a>
-                        </div>
-                    </li>
+
                     <li class="nav-item">
                         <div id="nav-build" style="text-align: center;">
                             <a class="nav-link">
@@ -195,13 +182,10 @@
                 <br>
                 <div class="row">
                 <div class="col-5">
-                    <img class="img-thumbnail" height="75" src="../static/5.png" width="75"> <b>Power Plants: {{num[0]}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/2.png" width="75"> <b>Renewable Energy: {{num[1]}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/12.png" width="75"> <b>Demand: {{num[2]}}</b> <br><br>
-                </div>
-                <div class="col-5">
-                    <img class="img-thumbnail" height="75" src="../static/11.png" width="75"> <b>Grid Operator: {{grid}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/16.png" width="75"> <b>Cross Border: {{grid}}</b> <br><br>
+                    <img class="img-thumbnail" height="75" src="../static/5.png" width="50"> <b>Anzahl: {{num[0]}}</b> <br><br>
+                    <img class="img-thumbnail" height="75" src="../static/2.png" width="50"> <b>Anzahl: {{num[1]}}</b> <br><br>
+                    <img class="img-thumbnail" height="75" src="../static/12.png" width="50"> <b>Anzahl: {{num[2]}}</b> <br><br>
+                    <img class="img-thumbnail" height="75" src="../static/16.png" width="50"> <b>Anzahl: {{num[3]}}</b> <br><br>
                 </div>
                 </div>
             </div>

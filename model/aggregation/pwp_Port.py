@@ -21,7 +21,7 @@ class PwpPort(PortfolioModel):
 
         self.energySystems.update(energysystem)
 
-    def build_model(self, response=[], max_=False):
+    def build_model(self, response=[], max_=False, min_=False):
         # ----- remove all constrains and vars -----
         self.m.remove(self.m.getVars())
         self.m.remove(self.m.getConstrs())
@@ -51,6 +51,14 @@ class PwpPort(PortfolioModel):
         if len(response) == 0:
             if max_:
                 self.m.setObjective(quicksum(power[i] for i in self.t), GRB.MAXIMIZE)
+            elif min_:
+                cashflow = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='cash', lb=-GRB.INFINITY, ub=GRB.INFINITY)
+                self.m.addConstrs((cashflow[i] == (power[i] * self.prices['power'][i]) - emission[i] - fuel[i])
+                                  for i in self.t)
+                minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
+                plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
+                self.m.addConstrs((cashflow[i] == -minus[i] + plus[i]) for i in self.t)
+                self.m.setObjective(quicksum(minus[i] + plus[i] for i in self.t), GRB.MINIMIZE)
             else:
                 # objective function (max cashflow)
                 self.m.setObjective(profit - quicksum(fuel[i] + emission[i] for i in self.t), GRB.MAXIMIZE)
@@ -60,9 +68,10 @@ class PwpPort(PortfolioModel):
             plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
             self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
             self.m.addConstrs(minus[i] + plus[i] == powerReBAP[i] for i in self.t)
-            self.m.setObjective(quicksum(self.fuel[i] + self.emission[i] +
-                                         powerReBAP[i] * (np.abs(self.prices['power'][i]) + 35) for i in self.t),
-                                GRB.MINIMIZE)
+            # self.m.setObjective(quicksum(self.fuel[i] + self.emission[i] +
+            #                              powerReBAP[i] * (np.abs(self.prices['power'][i]) + 35) for i in self.t),
+            #                     GRB.MINIMIZE)
+            self.m.setObjective(quicksum(powerReBAP[i] for i in self.t), GRB.MINIMIZE)
         # ----- update model -----
         self.m.update()
 
@@ -94,6 +103,10 @@ class PwpPort(PortfolioModel):
                 # set output power for each energy system (power plant)
                 value['model'].power = np.asarray([self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x
                                                    for i in self.t], np.float).reshape((-1,))
+                value['model'].emission = np.asarray([self.m.getVarByName('E' + '_%s[%i]' % (key, i)).x
+                                                      for i in self.t], np.float).reshape((-1,))
+                value['model'].fuel = np.asarray([self.m.getVarByName('F' + '_%s[%i]' % (key, i)).x
+                                                  for i in self.t], np.float).reshape((-1,))
                 # add generation to corresponding fuel typ
                 generation['power%s' % value['fuel'].capitalize()] += value['model'].power
                 value['model'].volume = np.zeros_like(power)
@@ -147,6 +160,10 @@ class PwpPort(PortfolioModel):
                 # set output power for each energy system (power plant)
                 value['model'].power = np.asarray([self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x
                                                    for i in self.t], np.float).reshape((-1,))
+                value['model'].emission = np.asarray([self.m.getVarByName('E' + '_%s[%i]' % (key, i)).x
+                                                      for i in self.t], np.float).reshape((-1,))
+                value['model'].fuel = np.asarray([self.m.getVarByName('F' + '_%s[%i]' % (key, i)).x
+                                                  for i in self.t], np.float).reshape((-1,))
                 # add generation to corresponding fuel typ
                 generation['power%s' % value['fuel'].capitalize()] += value['model'].power
                 value['model'].volume = np.zeros_like(power)

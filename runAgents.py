@@ -26,3 +26,7 @@ if __name__=="__main__":
         elif args.typ == 'PWP':
             subprocess.Popen('python ' + path + r'/dmas/model/agents/pwp_Agent.py ' + '--plz %i'
                              % i, cwd=path, shell=True)
+        elif args.typ == 'STR':
+            subprocess.Popen('python ' + path + r'/dmas/model/agents/str_Agent.py ' + '--plz %i'
+                             % i, cwd=path, shell=True)
+

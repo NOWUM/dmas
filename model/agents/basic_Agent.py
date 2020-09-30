@@ -89,15 +89,15 @@ class agent:
             'price': priceForecast(init=np.random.randint(8, 22))
         }
         # Parameters for the trading strategy on the day ahead market
-        self.strategy = dict(
-            maxPrice=np.zeros(24) ,                                   # maximal price of each hour
-            minPrice=np.zeros(24),                                    # minimal price of each hour
-            actions=np.zeros(24),                                     # different actions (slopes)
-            epsilon=0.7,                                              # factor to find new actions
-            lr=0.8,                                                   # learning rate
-            qLearn=daLearning(init=np.random.randint(5, 10 + 1)),     # interval for learning
-            delay=2                                                   # start offset
-        )
+        # self.strategy = dict(
+        #     maxPrice=np.zeros(24) ,                                   # maximal price of each hour
+        #     minPrice=np.zeros(24),                                    # minimal price of each hour
+        #     actions=np.zeros(24),                                     # different actions (slopes)
+        #     epsilon=0.7,                                              # factor to find new actions
+        #     lr=0.8,                                                   # learning rate
+        #     qLearn=daLearning(init=np.random.randint(5, 10 + 1)),     # interval for learning
+        #     delay=2                                                   # start offset
+        # )
 
     def weather_forecast(self, date=pd.to_datetime('2019-01-01'), days=1, mean=False):
         weather = dict(wind=[], dir=[], dif=[], temp=[])
@@ -128,25 +128,6 @@ class agent:
         for i in range(days):
             demand += list(self.forecasts['demand'].forecast(date))
         return np.asarray(demand).reshape((-1,))
-
-    def perfLog(self, function, start):
-
-        # save performance in influxDB
-        timeDelta = tme.time() - start
-        procssingPerfomance = [
-            {
-                "measurement": 'Performance',
-                "tags": dict(typ=self.typ,                      # typ
-                             agent=self.name,                   # name
-                             area=self.plz,                     # area
-                             function=function,                 # processing step
-                             date=str(self.date.date())),
-                "time": pd.to_datetime(tme.time(), unit='s').isoformat() + 'Z',
-                "fields": dict(processingTime=timeDelta)
-
-            }
-        ]
-        self.connections['influxDB'].save_data(procssingPerfomance)
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")

@@ -19,7 +19,7 @@ class powerPlant_gurobi(es):
         if data['fuel'] == 'coal':
             startCost = 100 * data['maxPower']
         if data['fuel']  == 'nuc':
-            startCost = 150 * data['maxPower']
+            startCost = 80 * data['maxPower']
 
         delta = data['maxPower'] - data['minPower']
         su = data['minPower']

@@ -1,0 +1,192 @@
+# third party modules
+import time as tme
+import os
+import argparse
+import pandas as pd
+import numpy as np
+from scipy.stats import norm
+
+# model modules
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+from aggregation.pwp_Port import PwpPort
+from agents.basic_Agent import agent as basicAgent
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--plz', type=int, required=False, default=57, help='PLZ-Agent')
+    return parser.parse_args()
+
+
+class StrAgent(basicAgent):
+
+    def __init__(self, date, plz):
+        super().__init__(date=date, plz=plz, exchange='Market', typ='STR')
+        # Development of the portfolio with the corresponding power plants and storages
+        self.logger.info('starting the agent')
+        start_time = tme.time()
+        self.portfolio = PwpPort(gurobi=True, T=24)
+
+        # Construction storages
+        for key, value in self.connections['mongoDB'].getStorages().items():
+            self.portfolio.capacities['capacityWater'] += value['P+_Max']
+            self.portfolio.add_energy_system(key, {key: value})
+        self.logger.info('Storages added')
+
+        self.base_price = self.forecasts['price'].y
+
+        # If there are no power systems, terminate the agent
+        if len(self.portfolio.energySystems) == 0:
+            print('Number: %s No energy systems in the area' % plz)
+            exit()
+
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
+
+        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
+
+    def optimize_dayAhead(self):
+        """scheduling for the DayAhead market"""
+        self.logger.info('DayAhead market scheduling started')
+
+        # Step 1: forecast input data and init the model for the coming day
+        # -------------------------------------------------------------------------------------------------------------
+
+        weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
+        demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
+        prices = self.price_forecast(self.date)                        # price forecast dayAhead
+        self.portfolio.set_parameter(self.date, weather, prices)
+        self.portfolio.build_model()
+        self.portfolio.optimize()
+
+        base_prc = np.mean(prices['power'])
+        std_prc = np.sqrt(np.var(np.mean(self.base_price, axis=1)))
+
+        order_book = {}
+
+        for key, value in self.portfolio.energySystems.items():
+            eta = value['eta+'] * value['eta-']
+            min_ask_prc = base_prc * (1.5 - eta/2)
+            max_bid_prc = base_prc * (0.5 + eta/2)
+
+            vol_ask = [0.15, 0.25, 0.25, 0.15, 0.10, 0.05, 0.05]
+            prc_ask = ['x', 0.55, 0.60, 0.66, 0.75, 0.85, 0.95]
+
+            vol_bid = [0.15, 0.25, 0.25, 0.15, 0.1, 0.05, 0.05]
+            prc_bid = ['x', 0.40, 0.36, 0.31, 0.25, 0.15, 0.5]
+
+            block_bid_number = 0
+            block_ask_number = 0
+
+            for i in self.portfolio.t:
+                for k in range(len(prc_bid)):
+                    if prc_bid[k] != 'x':
+                        prc = np.round(min(norm.pdf(prc_bid[k])*std_prc+base_prc, max_bid_prc), 2)
+                    else:
+                        prc = max_bid_prc
+
+                    vol = np.round(vol_bid[k] * value['P+_Max'], 2)
+                    order_book.update({str(('dem%s' % block_bid_number, i, k, self.name)): (prc, vol, 'x')})
+
+                block_bid_number += 1
+
+                for k in range(len(prc_ask)):
+                    if prc_bid[k] != 'x':
+                        prc = np.round(max(norm.pdf(prc_ask[k])*std_prc+base_prc, min_ask_prc), 2)
+                    else:
+                        prc = min_ask_prc
+
+                    vol = np.round(vol_ask[k] * value['P+_Max'], 2)
+                    order_book.update({str(('gen%s' % block_ask_number, i, k, self.name)): (prc, vol, 'x')})
+
+                block_ask_number += 1
+
+        # Step 5: send orders to market resp. to mongodb
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
+        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=order_book)
+
+        self.performance['sendOrders'] = tme.time() - start_time
+
+        self.logger.info('DayAhead market scheduling completed')
+
+    def post_dayAhead(self):
+        """Scheduling after DayAhead Market"""
+        self.logger.info('After DayAhead market scheduling started')
+
+        # Step 6: get market results and adjust generation
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
+        # query the DayAhead results
+        ask = self.connections['influxDB'].get_ask_da(self.date, self.name)            # volume to buy
+        bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
+        prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
+        profit = (ask - bid) * prc
+
+        # adjust power generation
+        self.portfolio.build_model(response=ask - bid)
+        power_da, _, _ = self.portfolio.fix_planing()
+        volume = self.portfolio.volume
+        self.performance['adjustResult'] = tme.time() - start_time
+
+        self.base_price = np.concatenate((self.base_price, prc.reshape((1, 24))), axis=0)
+
+        # Step 7: save adjusted results in influxdb
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
+        df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
+                        pd.DataFrame(data=dict(profit=profit, volume=volume))], axis=1)
+        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+                                                                 timestamp='post_dayAhead'))
+
+        self.performance['saveResult'] = tme.time() - start_time
+
+        self.logger.info('After DayAhead market adjustment completed')
+        self.logger.info('Next day scheduling started')
+
+        # Step 8: retrain forecast methods and learning algorithm
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
+
+        # collect data an retrain forecast method
+        dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
+        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
+        prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
+        for key, method in self.forecasts.items():
+            method.collect_data(date=self.date, dem=dem, prc=prc[:24], prc_1=prc_1, prc_7=prc_7, weather=weather)
+            method.counter += 1
+            if method.counter >= method.collect:                                            # retrain forecast method
+                method.fit_function()
+                method.counter = 0
+
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
+
+        self.performance['nextDay'] = tme.time() - start_time
+
+        #df = pd.DataFrame(data=self.performance, index=[self.date])
+        #self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
+
+        self.logger.info('Next day scheduling completed')
+
+
+if __name__ == "__main__":
+
+    args = parse_args()
+    agent = StrAgent(date='2018-01-01', plz=args.plz)
+    agent.connections['mongoDB'].login(agent.name, False)
+    try:
+        agent.run()
+    except Exception as e:
+        print(e)
+    finally:
+        agent.connections['influxDB'].influx.close()
+        agent.connections['mongoDB'].mongo.close()
+        if not agent.connections['connectionMQTT'].is_closed:
+            agent.connections['connectionMQTT'].close()
+        exit()

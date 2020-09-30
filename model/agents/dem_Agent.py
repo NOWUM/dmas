@@ -101,10 +101,9 @@ class DemAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        order_book = dict()
+        bid_orders = dict()
         for i in range(self.portfolio.T):
-            order_book.update({'h_%s' % i: {'quantity': [power_da[i]/10**3, 0], 'price': [3000, -3000],
-                                            'hour': i, 'name': self.name}})
+            bid_orders.update({str(('dem%s' % i, i, 0, str(self.name))): (3000, power_da[i]/10**3, 'x')})
 
         self.performance['buildOrders'] = tme.time() - start_time
 
@@ -112,7 +111,7 @@ class DemAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=order_book)
+        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=bid_orders)
 
         self.performance['sendOrders'] = tme.time() - start_time
 
@@ -156,20 +155,17 @@ class DemAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        if self.strategy['delay'] <= 0:                                                         # offset factor start
-            # collect data an retrain forecast method
-            dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-            weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
-            prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
-            prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
-            for key, method in self.forecasts.items():
-                method.collect_data(date=self.date, dem=dem, prc=prc, prc_1=prc_1, prc_7=prc_7, weather=weather)
-                method.counter += 1
-                if method.counter >= method.collect:                                        # retrain forecast method
-                    method.fit_function()
-                    method.counter = 0
-        else:
-            self.strategy['delay'] -= 1
+        # collect data an retrain forecast method
+        dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
+        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
+        prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
+        for key, method in self.forecasts.items():
+            method.collect_data(date=self.date, dem=dem, prc=prc, prc_1=prc_1, prc_7=prc_7, weather=weather)
+            method.counter += 1
+            if method.counter >= method.collect:                                        # retrain forecast method
+                method.fit_function()
+                method.counter = 0
 
         self.performance['nextDay'] = tme.time() - start_time
 
