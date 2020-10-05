@@ -154,7 +154,7 @@ class market:
         # -----------------------------------------------------------------------------------------------------------
         mcp = [-500 for _ in range(24)]
         for id_ in ask_id:
-            if used_ask_orders[id_].x == 1 and '_bid' not in id_:
+            if used_ask_orders[id_].x == 1:
                 if ask_prc[id_] >= mcp[id_[1]]:
                     mcp[id_[1]] = ask_prc[id_]
 

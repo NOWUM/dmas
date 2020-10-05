@@ -34,7 +34,8 @@ class StrAgent(basicAgent):
         self.logger.info('Storages added')
 
         self.base_price = self.forecasts['price'].y
-
+        self.q_ask = 0
+        self.q_bid = 0
         # If there are no power systems, terminate the agent
         if len(self.portfolio.energySystems) == 0:
             print('Number: %s No energy systems in the area' % plz)
@@ -81,7 +82,7 @@ class StrAgent(basicAgent):
             for i in self.portfolio.t:
                 for k in range(len(prc_bid)):
                     if prc_bid[k] != 'x':
-                        prc = np.round(min(norm.pdf(prc_bid[k])*std_prc+base_prc, max_bid_prc), 2)
+                        prc = np.round(min(norm.pdf(prc_bid[k]+self.q_bid)*std_prc+base_prc, max_bid_prc), 2)
                     else:
                         prc = max_bid_prc
 
@@ -92,7 +93,7 @@ class StrAgent(basicAgent):
 
                 for k in range(len(prc_ask)):
                     if prc_bid[k] != 'x':
-                        prc = np.round(max(norm.pdf(prc_ask[k])*std_prc+base_prc, min_ask_prc), 2)
+                        prc = np.round(max(norm.pdf(prc_ask[k]+self.q_ask)*std_prc+base_prc, min_ask_prc), 2)
                     else:
                         prc = min_ask_prc
 
@@ -124,6 +125,23 @@ class StrAgent(basicAgent):
         bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
+
+        v0 = self.portfolio.volume[0]
+        # case 1
+        # --> q_bid ++
+        # --> q_ask --
+        if (v0 + sum(bid) * 0.9 - sum(ask)/0.9) > 0:
+            self.q_ask -= 0.005
+            self.q_bid += 0.005
+        # case 2
+        # --> q_bid --
+        # --> q_ask ++
+        elif (v0 + sum(bid) * 0.9 - sum(ask)/0.9) < 0:
+            self.q_ask += 0.005
+            self.q_bid -= 0.005
+
+        self.q_ask = max(min(0.05, self.q_ask), -0.05)
+        self.q_bid = max(min(0.05, self.q_bid), -0.05)
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
