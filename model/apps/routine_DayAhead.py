@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     from gurobipy import *
 
-    date = pd.to_datetime('2018-01-01')
+    date = pd.to_datetime('2018-02-13')
     config = configparser.ConfigParser()  # read config file
     config.read('app.cfg')
 
@@ -120,6 +120,15 @@ if __name__ == "__main__":
         da_market.set_parameter(ask=order[0], bid=order[1])
 
     result = da_market.optimize()
+    element = result[10]
+    ask = pd.DataFrame.from_dict(element[0])
+    bid = pd.DataFrame.from_dict(element[1])
+
+    print(ask['volume'].sum())
+    print(bid['volume'].sum())
+
+    for i in range(24):
+        print('hour %s magic source %s: ' %(i, result[i][-1]))
 
     # ask_id, ask_prc, ask_vol, ask_block = multidict(da_market.ask_orders)
     # # get all ask agents

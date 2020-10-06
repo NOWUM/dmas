@@ -140,8 +140,8 @@ class StrAgent(basicAgent):
             self.q_ask += 0.005
             self.q_bid -= 0.005
 
-        self.q_ask = max(min(0.05, self.q_ask), -0.05)
-        self.q_bid = max(min(0.05, self.q_bid), -0.05)
+        self.q_ask = max(min(0.04, self.q_ask), -0.04)
+        self.q_bid = max(min(0.04, self.q_bid), -0.04)
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
