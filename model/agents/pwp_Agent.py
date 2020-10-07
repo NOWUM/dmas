@@ -270,14 +270,14 @@ if __name__ == "__main__":
     #     legend.append(key)
     # plt.legend(legend)
 
-    # agent.connections['mongoDB'].login(agent.name, False)
-    # try:
-    #     agent.run()
-    # except Exception as e:
-    #     print(e)
-    # finally:
-    #     agent.connections['influxDB'].influx.close()
-    #     agent.connections['mongoDB'].mongo.close()
-    #     if not agent.connections['connectionMQTT'].is_closed:
-    #         agent.connections['connectionMQTT'].close()
-    #     exit()
+    agent.connections['mongoDB'].login(agent.name, False)
+    try:
+        agent.run()
+    except Exception as e:
+        print(e)
+    finally:
+        agent.connections['influxDB'].influx.close()
+        agent.connections['mongoDB'].mongo.close()
+        if not agent.connections['connectionMQTT'].is_closed:
+            agent.connections['connectionMQTT'].close()
+        exit()
