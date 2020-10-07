@@ -1,4 +1,5 @@
 # third party modules
+from sys import exit #fixes NameError: name 'exit' is not defined
 import os
 import pandas as pd
 import numpy as np
@@ -25,10 +26,10 @@ class agent:
         config.read(r'./app.cfg')
 
         self.exchange = config['Market']['Exchange']
-        self.agentSuffix = config['Market']['agentSuffix']
+        self.agentSuffix = config['Market']['AgentSuffix']
 
         # declare meta data for each agent
-        self.name = typ + '_%i' % plz + self.agentSuffix                 # name
+        self.name = typ + '_%i' % plz + self.agentSuffix            # name
         self.plz = plz                                              # area
         self.date = pd.to_datetime(date)                            # current day
         self.typ = typ                                              # generation or consumer typ
@@ -48,6 +49,7 @@ class agent:
         influx_host = config['InfluxDB']['Host']                    # server where influxdb runs
         market_host = config['Market']['Host']                      # server where mqtt runs
 
+        print('BasicAgent->Database: ', database)#TODO:remove debug print?
         # connections to simulation infrastructure
         self.connections = {
             'mongoDB' : mongoInterface(host=mongo_host, database=database, area=plz),   # connection mongodb
@@ -71,9 +73,9 @@ class agent:
             self.connections.update({'connectionMQTT': con})
 
         receive = con.channel()
-        receive.exchange_declare(exchange=exchange, exchange_type='fanout')
+        receive.exchange_declare(exchange=self.exchange, exchange_type='fanout')
         result = receive.queue_declare(queue=self.name, exclusive=True)
-        receive.queue_bind(exchange=exchange, queue=result.method.queue)
+        receive.queue_bind(exchange=self.exchange, queue=result.method.queue)
         self.connections.update({'exchangeMQTT': receive})
 
         # declare logging options
@@ -161,18 +163,18 @@ class agent:
             except Exception as inst:
                 self.exception_handle(part='Day Ahead Plan', inst=inst)
         # Aufruf Ergebnisse DayAhead-Markt
-        """
-        message = body.decode("utf-8")
-        self.date = pd.to_datetime(message.split(' ')[1])
-        if 'gird_calc' in message:
-            if typ == net:
-                self.calc_power_flow()
-        """
         if 'result_dayAhead' in message:
             try:
                 self.post_dayAhead()
             except Exception as inst:
                 self.exception_handle(part='Day Ahead Result', inst=inst)
+        # Aufruf Powerflow Berechnung
+        if 'grid_calc' in message:
+            try:
+                if self.typ == 'NET':
+                    self.calc_power_flow()
+            except Exception as inst:
+                self.exception_handle(part='Grid Calculation', inst=inst)
         # Aufruf zum Beenden
         if 'kill' in message:
             self.connections['influxDB'].influx.close()
