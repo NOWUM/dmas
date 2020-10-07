@@ -208,7 +208,7 @@ class PwpAgent(basicAgent):
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
-        power_da, emission, fuel = self.portfolio.fix_planing()
+        power_da, emission, fuel, _ = self.portfolio.fix_planing()
         volume = self.portfolio.volume
         self.performance['adjustResult'] = tme.time() - start_time
 

@@ -145,7 +145,7 @@ class StrAgent(basicAgent):
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
-        power_da, _, _ = self.portfolio.fix_planing()
+        power_da, _, _, _ = self.portfolio.fix_planing()
         volume = self.portfolio.volume
         self.performance['adjustResult'] = tme.time() - start_time
 
