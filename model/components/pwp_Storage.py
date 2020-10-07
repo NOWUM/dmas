@@ -20,6 +20,8 @@ class storage_gurobi(es):
         self.m.addConstrs(emission[i] == 0 for i in self.t)
         fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstrs(fuel[i] == 0 for i in self.t)
+        start_up = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='S_' + name, lb=0, ub=GRB.INFINITY)
+        self.m.addConstrs(start_up[i] == 0 for i in self.t)
 
         pP = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P+_' + name, lb=0, ub=data['P+_Max'])
         pM = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P-_' + name, lb=0, ub=data['P-_Max'])
