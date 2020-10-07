@@ -52,7 +52,7 @@ install python modules: `pip3 install -r requirements.txt`
 
 6. `sudo nano /etc/bash.bashrc` <br>
 
-> export GUROBI_HOME="/usr/local/gurobi901/linux64" <br>
+> export GUROBI_HOME="/usr/local/VERSION/linux64" <br>
 > export PATH="${PATH}:${GUROBI_HOME}/bin" <br>
 > export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib" <br>
 > export PYTHONPATH="$HOME/dmas/model" <br>
@@ -66,14 +66,14 @@ add the export lines to the end
 
 **Register Gurobi with key (once for every user):**<br>
 
-8. `sudo grbgetkey KEY` save to your home directory <br>
+8. `grbgetkey KEY` save to your home directory <br>
 
 **Test if gurobi and links are working**
 
 9. `gurobi_cl`
 
 # Important Commands
-- kill all python tasks on windows:  `taskkill /F /IM pytho.exe /T /fi "USERNAME eq Rieke"` <br>
+- kill all python tasks on windows:  `taskkill /F /IM python.exe /T /fi "USERNAME eq Rieke"` <br>
 - kill screen session on linux: `sudo screen -X -S NAME quit`<br>
 - kill all screens on linux:   `sudo pkill screen`<br>
 - kill all python tasks on linux: `sudo pkill -2 python3`<br>
