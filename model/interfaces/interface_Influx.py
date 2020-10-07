@@ -219,26 +219,7 @@ class InfluxInterface:
 
         return np.asarray(demand).reshape((-1,))
 
-    # Get power from InfluxDB for specified PLZ and date
-    def get_dem_test(self, date):
-        self.influx.switch_database(database=self.database)  # change to simulation database
-        print("get_dem_test->database: ",self.database)#TODO: remove debug print
-        query = 'SELECT sum("power") as "power" FROM "DayAhead" ' \
-                'WHERE time >= \'%s\' and time < \'%s\'  and "typ" =\'DEM\' ' \
-                'GROUP BY time(1h) fill(0)' \
-                % (date.isoformat() + 'Z', (date + pd.DateOffset(days=1)).isoformat() + 'Z')
-        result = self.influx.query(query)
-        if result.__len__() > 0:
-            #dem = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])#todo:uncomment again, when get_points problem is solved
-            #dem = np.ones(24)#todo:remove this test line
-            dem = result['DayAhead']["power"].to_numpy()  # power demand [MW]
-        else:
-            dem = np.zeros(24)
-
-        #return dem
-        return np.asarray(dem).reshape((-1,))#orig #==>  (1,24) shape, also 24 Spalten in einer Zeile
-        #return np.asarray(dem).reshape((-1,1)) #==>  (24,1) shape, also 24 Zeilen in einer Spalte
-
+    # Get power from InfluxDB for specified date and PLZ
     def get_power_area(self, date, area):
 
         start = date.isoformat() + 'Z'
