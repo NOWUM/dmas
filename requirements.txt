@@ -25,6 +25,5 @@ wheel~=0.34.2
 openssl~=1.1.1
 cryptography~=2.8
 sklearn~=0.0
-scikit-learn~=0.23.1
 shapely~=1.7.0
 scipy~=1.4.1
