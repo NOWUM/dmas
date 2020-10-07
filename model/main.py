@@ -127,13 +127,18 @@ def simulation(start, end, valid=True):
         mongoCon.orderDB[str(date.date)]
 
         try:
+            start_time = tm.time()
             send.basic_publish(exchange='Market', routing_key='', body='opt_dayAhead ' + str(date))
             da_clearing(mongoCon, influxCon, date)
+
             """
             send.basic_publish(exchange='Market', routing_key='', body='power_flow ' + str(date))
             """
             send.basic_publish(exchange='Market', routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
+            end_time = tm.time()-start_time
+            print('Day complete in: %s seconds ' % end_time)
+
             # if valid:
             #     writeDayAheadError(database, date)
         except Exception as e:

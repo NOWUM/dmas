@@ -44,6 +44,11 @@ class PwpPort(PortfolioModel):
         emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E', lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstrs(emission[i] == quicksum(e for e in [x for x in self.m.getVars() if 'E_' in x.VarName]
                                                   if '[%i]' % i in e.VarName) for i in self.t)
+        # Summe Startkosten
+        start = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='S', lb=-GRB.INFINITY, ub=GRB.INFINITY)
+        self.m.addConstrs(start[i] == quicksum(s for s in [x for x in self.m.getVars() if 'S_' in x.VarName]
+                                               if '[%i]' % i in s.VarName) for i in self.t)
+
         # Summe Erlöse
         profit = self.m.addVar(vtype=GRB.CONTINUOUS, name='Profit', lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstr(profit == quicksum(power[i] * self.prices['power'][i] for i in self.t))
@@ -51,17 +56,9 @@ class PwpPort(PortfolioModel):
         if len(response) == 0:
             if max_:
                 self.m.setObjective(quicksum(power[i] for i in self.t), GRB.MAXIMIZE)
-            elif min_:
-                cashflow = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='cash', lb=-GRB.INFINITY, ub=GRB.INFINITY)
-                self.m.addConstrs((cashflow[i] == (power[i] * self.prices['power'][i]) - emission[i] - fuel[i])
-                                  for i in self.t)
-                minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
-                plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
-                self.m.addConstrs((cashflow[i] == -minus[i] + plus[i]) for i in self.t)
-                self.m.setObjective(quicksum(minus[i] + plus[i] for i in self.t), GRB.MINIMIZE)
             else:
                 # objective function (max cashflow)
-                self.m.setObjective(profit - quicksum(fuel[i] + emission[i] for i in self.t), GRB.MAXIMIZE)
+                self.m.setObjective(profit - quicksum(fuel[i] + emission[i] + start[i] for i in self.t), GRB.MAXIMIZE)
         else:
             powerReBAP = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='ReBA', lb=0, ub=GRB.INFINITY)
             minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
@@ -80,6 +77,7 @@ class PwpPort(PortfolioModel):
         power = np.zeros_like(self.t, np.float)               # total portfolio generation
         emission = np.zeros_like(self.t, np.float)            # total portfolio emission costs
         fuel = np.zeros_like(self.t, np.float)                # total portfolio fuel costs
+        start = np.zeros_like(self.t, np.float)               # total portfolio start costs
         self.volume = np.zeros_like(self.t, np.float)
         try:
             self.m.optimize()
@@ -92,6 +90,9 @@ class PwpPort(PortfolioModel):
             # total fuel costs [€] for each hour
             fuel = np.asarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float).reshape((-1,))
             fuel = np.round(fuel, 2)
+            # total start costs [€] for each hour
+            start = np.asarray([self.m.getVarByName('S[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+            start = np.round(fuel, 2)
             # initialize dict for fuel sum calculation
             generation = dict(powerLignite=np.zeros_like(self.t, np.float),          # total generation lignite   [MW]
                               powerCoal=np.zeros_like(self.t, np.float),             # total generation caol      [MW]
@@ -106,6 +107,8 @@ class PwpPort(PortfolioModel):
                 value['model'].emission = np.asarray([self.m.getVarByName('E' + '_%s[%i]' % (key, i)).x
                                                       for i in self.t], np.float).reshape((-1,))
                 value['model'].fuel = np.asarray([self.m.getVarByName('F' + '_%s[%i]' % (key, i)).x
+                                                  for i in self.t], np.float).reshape((-1,))
+                value['model'].start = np.asarray([self.m.getVarByName('S' + '_%s[%i]' % (key, i)).x
                                                   for i in self.t], np.float).reshape((-1,))
                 # add generation to corresponding fuel typ
                 generation['power%s' % value['fuel'].capitalize()] += value['model'].power
@@ -130,13 +133,15 @@ class PwpPort(PortfolioModel):
         self.power = power
         self.emission = emission
         self.fuel = fuel
+        self.start = start
 
-        return self.power, self.emission, self.fuel
+        return self.power, self.emission, self.fuel, self.start
 
     def fix_planing(self):
         power = np.zeros_like(self.t, np.float)               # total portfolio generation
         emission = np.zeros_like(self.t, np.float)            # total portfolio emission costs
         fuel = np.zeros_like(self.t, np.float)                # total portfolio fuel costs
+        start = np.zeros_like(self.t, np.float)               # total portfolio start costs
         self.volume = np.zeros_like(self.t, np.float)
         try:
             self.m.optimize()
@@ -149,6 +154,9 @@ class PwpPort(PortfolioModel):
             # total fuel costs [€] for each hour
             fuel = np.asarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float).reshape((-1,))
             fuel = np.round(fuel, 2)
+            # total start costs [€] for each hour
+            start = np.asarray([self.m.getVarByName('S[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+            start = np.round(fuel, 2)
             # initialize dict for fuel sum calculation
             generation = dict(powerLignite=np.zeros_like(self.t, np.float),          # total generation lignite   [MW]
                               powerCoal=np.zeros_like(self.t, np.float),             # total generation caol      [MW]
@@ -214,8 +222,9 @@ class PwpPort(PortfolioModel):
         self.power = power
         self.emission = emission
         self.fuel = fuel
+        self.start = start
 
-        return self.power, self.emission, self.fuel
+        return self.power, self.emission, self.fuel, self.start
 
 
 if __name__ == "__main__":

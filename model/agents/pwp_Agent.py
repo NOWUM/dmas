@@ -68,23 +68,20 @@ class PwpAgent(basicAgent):
                 prices.update({'power': dayAhead_prc})
                 self.portfolio.set_parameter(self.date, weather, prices)
                 self.portfolio.build_model(max_=True)
-            # elif offset == 'min':
-            #     prices.update({'power': dayAhead_prc-7})
-            #     self.portfolio.set_parameter(self.date, weather, prices)
-            #     self.portfolio.build_model(min_=True)
             else:
                 prices.update({'power': dayAhead_prc + offset})
                 self.portfolio.set_parameter(self.date, weather, prices)
                 self.portfolio.build_model()
-            power_da, emission, fuel = self.portfolio.optimize()
+            self.portfolio.optimize()
             for key, value in self.portfolio.energySystems.items():
-                results[offset].update({key: (value['model'].power, value['model'].emission, value['model'].fuel)})
+                results[offset].update({key: (value['model'].power,
+                                              value['model'].emission,
+                                              value['model'].fuel,
+                                              value['model'].start)})
             if offset == 0:
                 df = pd.DataFrame.from_dict(self.portfolio.generation)
 
         self.performance['optModel'] = tme.time() - start_time
-
-        # return results
 
         # Step 3: save optimization results in influxDB
         # -------------------------------------------------------------------------------------------------------------
@@ -113,7 +110,7 @@ class PwpAgent(basicAgent):
                 value = value[key]
                 # build mother order
                 if np.count_nonzero(value[0]) > 0 and np.count_nonzero(last_power) == 0:
-                    var_cost = np.nan_to_num((value[1] + value[2]) / value[0])
+                    var_cost = np.nan_to_num((value[1] + value[2] + value[3]) / value[0])
                     price = np.mean(var_cost[var_cost > 0])
                     for hour in np.argwhere(value[0] > 0).reshape((-1,)):
                         price = np.round(price, 2)
@@ -273,14 +270,14 @@ if __name__ == "__main__":
     #     legend.append(key)
     # plt.legend(legend)
 
-    agent.connections['mongoDB'].login(agent.name, False)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)
-    finally:
-        agent.connections['influxDB'].influx.close()
-        agent.connections['mongoDB'].mongo.close()
-        if not agent.connections['connectionMQTT'].is_closed:
-            agent.connections['connectionMQTT'].close()
-        exit()
+    # agent.connections['mongoDB'].login(agent.name, False)
+    # try:
+    #     agent.run()
+    # except Exception as e:
+    #     print(e)
+    # finally:
+    #     agent.connections['influxDB'].influx.close()
+    #     agent.connections['mongoDB'].mongo.close()
+    #     if not agent.connections['connectionMQTT'].is_closed:
+    #         agent.connections['connectionMQTT'].close()
+    #     exit()

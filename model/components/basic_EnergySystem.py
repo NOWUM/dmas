@@ -59,7 +59,7 @@ class energySystem:
         self.volume = np.zeros_like(self.t)
         self.emission = np.zeros_like(self.t)
         self.fuel = np.zeros_like(self.t)
-
+        self.start= np.zeros_like(self.t)
 
     def getPowerDemand(self, data, date):
         """ Stromverbrauch des aktuellen Tages in stündlicher Auflösung und [kW] """

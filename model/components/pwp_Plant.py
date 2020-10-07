@@ -70,16 +70,21 @@ class powerPlant_gurobi(es):
         # Brennstoffkosten
         fuel = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='F_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
         if data['fuel'] == 'lignite':
-            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['lignite'] + v[i] * start_cost for i in self.t)
+            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['lignite'] for i in self.t)
         if data['fuel'] == 'coal':
-            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['coal'] + v[i] * start_cost for i in self.t)
+            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['coal'] for i in self.t)
         if data['fuel'] == 'gas':
-            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['gas'][i] + v[i] * start_cost for i in self.t)
+            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['gas'][i] for i in self.t)
         if data['fuel'] == 'nuc':
-            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['nuc'] + v[i] * start_cost for i in self.t)
+            self.m.addConstrs(fuel[i] == p_out[i] / data['eta'] * ts['nuc'] for i in self.t)
 
         # CO2 Emissionskosten
         emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E_' + name, lb=0, ub=GRB.INFINITY)
         self.m.addConstrs(emission[i] == p_out[i] * data['chi'] / data['eta'] * ts['co'][i] for i in self.t)
 
+        # Startkosten
+        start_up = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='S_' + name, lb=0, ub=GRB.INFINITY)
+        self.m.addConstrs(start_up[i] == v[i] * start_cost for i in self.t)
+
         self.m.update()
+

@@ -193,9 +193,10 @@ class market:
                     volumes.update({agent: np.round(vol, 2)})
                 bid_total_volumes[i] = sum_
                 bid_volumes[i] = dict(volume=volumes)
-                print('adjust bid in hour %s' % i)
+                # print('adjust bid in hour %s' % i)
             else:
-                print('no adjustment in hour %s required' % i)
+                pass
+                # print('no adjustment in hour %s required' % i)
 
         result = [(ask_volumes[i], bid_volumes[i], mcp[i], bid_total_volumes[i], ask_total_volumes[i],
                    max_vol[i].x) for i in range(24)]

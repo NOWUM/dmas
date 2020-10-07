@@ -33,6 +33,7 @@ class PortfolioModel:
         self.emission = np.zeros(T, dtype=np.float)         # sum emissions     [€]
         self.fuel = np.zeros(T, dtype=np.float)             # sum fuel          [€]
         self.volume = np.zeros(T, dtype=np.float)           # total volume      [MWh]
+        self.start = np.zeros(T, dtype=np.float)            # total start costs [€]
 
         # installed capacities [MW]
         self.capacities = dict(capacityBio=0.,
