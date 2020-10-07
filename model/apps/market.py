@@ -1,6 +1,6 @@
 from gurobipy import *
 import numpy as np
-
+import pandas as pd
 
 class market:
 
@@ -51,7 +51,7 @@ class market:
 
     def optimize(self):
         # Step 0 initialize model and add magic power source with maximal price (prevent infeasible model)
-        max_prc = [np.round(50000, 2) for i in range(24)]
+        max_prc = [np.round(5000, 2) for i in range(24)]
         max_vol = self.m.addVars(range(24), vtype=GRB.CONTINUOUS, name='magicSource_', lb=0.0, ub=GRB.INFINITY)
 
         # Step 1 initialize orders
@@ -134,36 +134,71 @@ class market:
         # Step 9 get volumes for each hour per ask agent
         # -----------------------------------------------------------------------------------------------------------
         ask_volumes = []
+        ask_total_volumes = []
         for i in range(24):
             volumes = {}
+            sum_ = 0
             for agent in ask_agents:
                 vol = sum([ask_vol[id_] * used_ask_orders[id_].x for id_ in ask_id.select('*', i, '*', str(agent))
                            if ask_prc[id_] <= mcp[i]])
                 if '_b' not in agent:
                     volumes.update({agent: np.round(vol, 2)})
+                    sum_ += vol
             ask_volumes.append(dict(volume=volumes))
+            ask_total_volumes.append(sum_)
 
         # Step 10 get volumes for each hour per bid agent
         # -----------------------------------------------------------------------------------------------------------
         bid_volumes = []
-        total_volumes = []
+        bid_total_volumes = []
         bid_id, bid_prc, bid_vol, _ = multidict(self.bid_check)
         for i in range(24):
             volumes = {}
             sum_ = 0
             for agent in bid_agents:
-                # --> adjust volume  if magic source is last ask in merit order
-                if max_vol[i].x <= 0.02:
-                    vol = sum([bid_vol[id_] for id_ in bid_id.select('*', i, '*', str(agent))
-                               if bid_prc[id_] > mcp[i]])
-                else:
-                    vol = sum([bid_vol[id_] for id_ in bid_id.select('*', i, '*', str(agent))])
+                vol = sum([bid_vol[id_] for id_ in bid_id.select('*', i, '*', str(agent))
+                           if bid_prc[id_] > mcp[i]])
                 sum_ += vol
                 volumes.update({agent: np.round(vol, 2)})
             bid_volumes.append(dict(volume=volumes))
-            total_volumes.append(sum_)
+            bid_total_volumes.append(sum_)
 
-        result = [(ask_volumes[i], bid_volumes[i], mcp[i], total_volumes[i], max_vol[i].x) for i in range(24)]
+        # Step 11 check clearing
+        # -----------------------------------------------------------------------------------------------------------
+        for i in range(24):
+            if int(np.abs(bid_total_volumes[i] - ask_total_volumes[i])) > max_vol[i].x:
+                # build data frame and sort by price to generate an incremental market clearing till ask volume
+                prices = [bid_prc[id_] for id_ in bid_id.select('*', i, '*', '*')]      # prices in hour i
+                ids = [id_  for id_ in bid_id.select('*', i, '*', '*')]                 # corresponding id
+                df = pd.DataFrame(data={'price': prices, 'id': ids})                    # data frame to sort
+                df = df.sort_values(by=['price'], ascending=False)                      # sorted data frame
+
+                # add bid order untill total ask volume is used
+                tmp = ask_total_volumes[i]
+                used_bid_orders = []
+                for id_ in df['id'].to_numpy():
+                    if tmp > 0:
+                        used_bid_orders.append(id_)
+                        tmp -= bid_vol[id_]
+                    else:
+                        break
+                used_bid_orders = tuplelist(used_bid_orders)
+
+                # aggregate by agent and save as new result
+                volumes = {}
+                sum_ = 0
+                for agent in bid_agents:
+                    vol = sum([bid_vol[id_] for id_ in used_bid_orders.select('*', i, '*', str(agent))])
+                    sum_ += vol
+                    volumes.update({agent: np.round(vol, 2)})
+                bid_total_volumes[i] = sum_
+                bid_volumes[i] = dict(volume=volumes)
+                print('adjust bid in hour %s' % i)
+            else:
+                print('no adjustment in hour %s required' % i)
+
+        result = [(ask_volumes[i], bid_volumes[i], mcp[i], bid_total_volumes[i], ask_total_volumes[i],
+                   max_vol[i].x) for i in range(24)]
 
         return result
 

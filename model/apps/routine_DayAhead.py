@@ -10,6 +10,7 @@ from joblib import Parallel, delayed
 # model modules
 from apps.market import market
 from interfaces.interface_mongo import mongoInterface
+from interfaces.interface_Influx import InfluxInterface
 
 
 def get_orders(name, date):
@@ -101,26 +102,30 @@ if __name__ == "__main__":
 
     from gurobipy import *
 
-    date = pd.to_datetime('2018-02-13')
+    date = pd.to_datetime('2018-01-04')
     config = configparser.ConfigParser()  # read config file
     config.read('app.cfg')
 
-    database = config['Results']['Database']  # name of influxdatabase to store the results
-    mongo_con = mongoInterface(host=config['MongoDB']['Host'], database=database)  # connection and interface to MongoDB
-    # # influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)  # connection and interface to InfluxDB
+    database = config['Results']['Database']                                        # name of influxdatabase to store the results
+    mongo_con = mongoInterface(host=config['MongoDB']['Host'], database=database)   # connection and interface to MongoDB
+    influx_con = InfluxInterface(host=config['InfluxDB']['Host'], database=database) # connection and interface to InfluxDB
+
+    # da_clearing(mongo_con, influxCon, date)
+
     #
-    num_cores = min(multiprocessing.cpu_count(), 6)
+    #num_cores = min(multiprocessing.cpu_count(), 6)
     agent_ids = mongo_con.status.find().distinct('_id')               # all logged in Agents
-    # #random.shuffle(agent_ids)                                         # shuffle ids to prevent long wait
+    # #random.shuffle(agent_ids)                                      # shuffle ids to prevent long wait
     # # get orders for each agent
-    total_orders = Parallel(n_jobs=num_cores)(delayed(get_orders)(i, str(date.date())) for i in agent_ids)
+    #total_orders = Parallel(n_jobs=num_cores)(delayed(get_orders)(i, str(date.date())) for i in agent_ids)
     #
+    total_orders = [get_orders(i, str(date.date())) for i in agent_ids]
     da_market = market()
     for order in total_orders:
         da_market.set_parameter(ask=order[0], bid=order[1])
 
     result = da_market.optimize()
-    element = result[10]
+    element = result[14]
     ask = pd.DataFrame.from_dict(element[0])
     bid = pd.DataFrame.from_dict(element[1])
 
@@ -128,7 +133,33 @@ if __name__ == "__main__":
     print(bid['volume'].sum())
 
     for i in range(24):
-        print('hour %s magic source %s: ' %(i, result[i][-1]))
+        print('hour %s magic source %s ' %(i, result[i][-1]))
+
+    time = date
+    for element in result:
+        # save all asks
+        ask = pd.DataFrame.from_dict(element[0])
+        ask.columns = ['power']
+        ask['names'] = [name.split('-')[0] for name in ask.index]
+        ask = ask.groupby('names').sum()
+        ask['order'] = ['ask' for _ in range(len(ask))]
+        ask['typ'] = [name.split('_')[0] for name in ask.index]
+        ask['names'] = [name for name in ask.index]
+        ask.index = [time for _ in range(len(ask))]
+        influx_con.influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order', 'typ'])
+        # save all bids
+        bid = pd.DataFrame.from_dict(element[1])
+        bid.columns = ['power']
+        bid['names'] = [name for name in bid.index]
+        bid['order'] = ['bid' for _ in range(len(bid))]
+        bid['typ'] = [name.split('_')[0] for name in bid['names'].to_numpy()]
+        bid.index = [time for _ in range(len(bid))]
+        influx_con.influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order', 'typ'])
+        # save mcp
+        mcp = pd.DataFrame(data=[np.asarray(element[2], dtype=float)], index=[time], columns=['price'])
+        influx_con.influx.write_points(dataframe=mcp, measurement='DayAhead')
+        # next hour
+        time += pd.DateOffset(hours=1)
 
     # ask_id, ask_prc, ask_vol, ask_block = multidict(da_market.ask_orders)
     # # get all ask agents
