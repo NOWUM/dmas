@@ -45,6 +45,7 @@
                 var pwp = false
                 var res = false
                 var str = false
+                var net = false
 
                 $(function(){
                     $("#slider-range").slider({
@@ -69,6 +70,9 @@
                 if($("#str").prop("checked")==true){
                     str = true
                 }
+                if($("#net").prop("checked")==true){
+                    net = true
+                }
             });
 
             $("#start_area").click(function(){$.post("build/start",
@@ -77,7 +81,8 @@
                  dem:   dem,
                  pwp:   pwp,
                  res:   res,
-                 str:   str},
+                 str:   str,
+                 net:   net},
                  function(data){});});
 
         });
@@ -156,7 +161,14 @@
                             </a>
                         </div>
                     </li>
-
+                    <li class="nav-item">
+                        <div id="nav-storage" style="text-align: center;">
+                            <a class="nav-link">
+                                <input type="checkbox" class="form-check-input" id="net" value="1" checked>
+                                <label for="str" style="float:left;">Lastfluss</label><br>
+                            </a>
+                        </div>
+                    </li>
                     <li class="nav-item">
                         <div id="nav-build" style="text-align: center;">
                             <a class="nav-link">
