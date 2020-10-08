@@ -14,6 +14,7 @@ from apps.routine_DayAhead import da_clearing
 from apps.misc_validData import write_valid_data, writeDayAheadError
 from interfaces.interface_Influx import InfluxInterface as influxCon
 from interfaces.interface_mongo import mongoInterface as mongoCon
+from apps.grid_Model import gridModel
 
 
 """
@@ -44,6 +45,7 @@ send.exchange_declare(exchange='Market', exchange_type='fanout')
 
 app = Flask(__name__)
 
+gridView = gridModel()
 
 """
     methods for the web application
@@ -80,6 +82,21 @@ def run():
     simulation(start, end)
     return 'OK'
 
+@app.route('/Grid')
+@cross_origin()
+def grid():
+    try:
+        date = request.form['start']
+        hour = request.form['h']
+        fig = None
+        # fig = getPlot(date, hour)
+        return render_template('tmp.html', plot=fig)
+    except:
+        date = '2018-01-01'
+        h = 1
+        # fig = getPlot(date, hour)
+        fig = None
+        return render_template('grid.html', plot=fig)
 
 @app.route('/build/start', methods=['POST'])
 def buildAreas():
@@ -105,6 +122,12 @@ def buildAreas():
         if request.form['str'] == 'true':  # if true build STR
             subprocess.Popen('python ' + path + r'/agents/str_Agent.py ' + '--plz %i'
                              % (i), cwd=path, shell=True)
+
+    if request.form['net'] == 'true':  # if true build STR
+        pass
+        #subprocess.Popen('python ' + path + r'/agents/net_Agent.py ' + '--plz %i'
+        #                 % (i), cwd=path, shell=True)
+
 
     return 'OK'
 

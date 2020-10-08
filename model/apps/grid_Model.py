@@ -65,15 +65,15 @@ class gridModel:
 
 
     def powerFlow(self, date, hour):
-        total = [self.ConnectionInflux.getPowerArea(date=date, area=i) for i in range(1, 100)]
-
+        # total = [self.ConnectionInflux.getPowerArea(date=date, area=i) for i in range(1, 100)]
+        total = np.zeros(99)
         index = 1
         for row in np.asarray(total):
             if index not in [5, 11, 20, 43, 60, 62, 70, 80]:
-                load = [val if val >= 0 else 0 for val in row]
-                gen = [-1 * val if val < 0 else 0 for val in row]
-                self.network.loads.loc['Load_%s' % index, 'p_set'] = load[hour]
-                self.network.generators.loc['Gen_%s' % index, 'p_set'] = gen[hour]
+                #load = [val if val >= 0 else 0 for val in row]
+                #gen = [-1 * val if val < 0 else 0 for val in row]
+                self.network.loads.loc['Load_%s' % index, 'p_set'] = 0
+                self.network.generators.loc['Gen_%s' % index, 'p_set'] = 0
             index += 1
 
         self.network.pf(distribute_slack=True)
