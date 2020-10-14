@@ -8,8 +8,7 @@ import json
 import plotly
 
 from agents.basic_Agent import agent as basicAgent
-
-from interfaces.interface_Influx import InfluxInterface #temp #TODO: only used for standalone testing --> remove after standalone testing/if not used anymore
+from interfaces.interface_Influx import InfluxInterface #temp #TODO: only used for standalone testing --> remove after standalone testing/if not used anymore?
 
 class NetAgent(basicAgent):
 
@@ -77,10 +76,8 @@ class NetAgent(basicAgent):
         # Step 1: Get power data from database
         power_total = [riekeInfluxInterface.get_power_area(date=self.date, area=i) for i in range(1,100)] #using riekeInfluxInterface for testing TODO: use default interface (self.connections['influxDB'].) for get_power_area
         #power_total = [self.connections['influxDB'].get_power_area(date=self.date, area=i) for i in range(1, 100)] #TODO: use this line after testing
-        #print('power_total:', power_total[0]) # test print
 
         # Step 2: Set data for grid calculation
-        #result_df = pd.DataFrame() #"Never grow a DataFrame! It is always cheaper to append to a python list and then convert it to a DataFrame at the end, both in terms of memory and performance. – cs95 Feb 29 at 12:04"
         result_list = [] # Liste, die später mit allen den Ergebnissen des Powerflows für 24h eines Tages gefüllt wird
         time = self.date
         for hour in range (0,24):#für 24h am Tag
@@ -97,52 +94,35 @@ class NetAgent(basicAgent):
             self.network.pf(distribute_slack=True) # Lastfluss berechnen
 
             result_list.append(self.network.lines_t.p0.loc['now'])
-            #print('Powerflow calculation hour {hour:d} done'.format(hour=hour))
-
-            #df_lines = self.network.lines_t.p0 # copy results from powerflow into new dataframe
-            #df_lines_transpose = pd.DataFrame(df_lines.transpose()) # switch columns and rows
-
-            #p0 = self.network.lines_t.p0.to_numpy()  # copy results from powerflow into new dataframe
-            #p1 = self.network.lines_t.p1.to_numpy()  # copy results from powerflow into new dataframe
-            #self.network.lines_t.p1.transpose()['now']
 
             # Create lines dataframe
             p0 = self.network.lines_t.p0.to_numpy().reshape((-1,))
             p1 = self.network.lines_t.p1.to_numpy().reshape((-1,))
-            df_lines_transpose = pd.DataFrame(data={'p0': p0, 'p1': p1}, index=self.network.lines_t.p0.columns)
+            df_lines = pd.DataFrame(data={'p0': p0, 'p1': p1}, index=self.network.lines_t.p0.columns)
             # Create additional columns for lines dataframe
-            df_lines_transpose['name'] = df_lines_transpose.index # index (Name der Leitung) in Spalte name kopieren
-            df_lines_transpose['fromArea'] = [int(i.split('f')[1].split('t')[0]) for i in df_lines_transpose['name'].to_numpy(dtype=str)]
-            df_lines_transpose['toArea'] = [int(i.split('t')[1].split('V')[0]) for i in df_lines_transpose['name'].to_numpy(dtype=str)]
-            df_lines_transpose['voltage'] = [int(i.split('V')[1].split('_')[0]) for i in df_lines_transpose['name'].to_numpy(dtype=str)]
-            df_lines_transpose['id'] = [i.split('_')[1] for i in df_lines_transpose['name'].to_numpy(dtype=str)]
-            df_lines_transpose['s_nom'] = [i for i in self.network.lines['s_nom']]
+            df_lines['name'] = df_lines.index # index (Name der Leitung) in Spalte name kopieren
+            df_lines['fromArea'] = [int(i.split('f')[1].split('t')[0]) for i in df_lines['name'].to_numpy(dtype=str)]
+            df_lines['toArea'] = [int(i.split('t')[1].split('V')[0]) for i in df_lines['name'].to_numpy(dtype=str)]
+            df_lines['voltage'] = [int(i.split('V')[1].split('_')[0]) for i in df_lines['name'].to_numpy(dtype=str)]
+            df_lines['id'] = [i.split('_')[1] for i in df_lines['name'].to_numpy(dtype=str)]
+            df_lines['s_nom'] = [i for i in self.network.lines['s_nom']]
 
-            # # df_lines_transpose['fromArea'] = [int(i.split('t',1)[0].replace('f','')) for i in df_lines_transpose['name'].to_numpy(dtype=str)] # Alternative, fromArea aus name auszulesen
-
-            # # rename column "now" to "power"
-            # df_lines_transpose.rename(columns={"now": "power_p0"}, inplace=True)  # spalte "now" in "power" umbenennen; inplace=True damit altes DF überschrieben wird!?
-            # # testDFtranspose.columns = ['power','name','...'] #harte Überschreibung der Spaltennamen
-
-            # change index to timestamp
-            df_lines_transpose.index = [time for _ in range(len(df_lines_transpose.index))] # index auf Zeit setzen (Datum mit aktueller Stunde)
+            # Change index to timestamp
+            df_lines.index = [time for _ in range(len(df_lines.index))] # index auf Zeit setzen (Datum mit aktueller Stunde)
 
             # Create buses dataframe
             power_bus = self.network.buses_t.p.to_numpy().reshape((-1,))
-            df_buses_transpose = pd.DataFrame(data={'power_bus': power_bus}, index=self.network.buses_t.p.columns)
-            df_buses_transpose.index = [time for _ in range(
-                len(df_buses_transpose.index))]  # index auf Zeit setzen (Datum mit aktueller Stunde)
-            df_buses_transpose['area'] = [int(i.split('_')[0]) for i in
-                                          self.network.buses_t.p.columns.to_numpy(dtype=str)]
-            df_buses_transpose['voltage'] = [int(i.split('_')[1]) for i in
-                                             self.network.buses_t.p.columns.to_numpy(dtype=str)]
+            df_buses = pd.DataFrame(data={'power_bus': power_bus}, index=self.network.buses_t.p.columns)
+            df_buses.index = [time for _ in range(len(df_buses.index))]  # index auf Zeit setzen (Datum mit aktueller Stunde)
+            df_buses['area'] = [int(i.split('_')[0]) for i in self.network.buses_t.p.columns.to_numpy(dtype=str)]
+            df_buses['voltage'] = [int(i.split('_')[1]) for i in self.network.buses_t.p.columns.to_numpy(dtype=str)]
 
-            # Step 3: save dataframe to database #TODO: change database to database in config after testing:
-            tobiInfluxInterface.influx.write_points(dataframe=df_lines_transpose, measurement='Grid', tag_columns=['name', 'fromArea', 'toArea', 'voltage', 'id'])# TODO: remove this line after testing
-            #self.connections['influxDB'].influx.write_points(dataframe=df_lines_transpose, measurement='Grid', tag_columns=['name', 'fromArea', 'toArea', 'voltage', 's_nom', 'id'])# TODO: use this line after testing
+            # Step 3: Save lines and buses dataframes to database #TODO: change database to database in config after testing:
+            tobiInfluxInterface.influx.write_points(dataframe=df_lines, measurement='Grid', tag_columns=['name', 'fromArea', 'toArea', 'voltage', 'id'])# TODO: remove this line after testing
+            #self.connections['influxDB'].influx.write_points(dataframe=df_lines, measurement='Grid', tag_columns=['name', 'fromArea', 'toArea', 'voltage', 's_nom', 'id'])# TODO: use this line after testing
 
-
-            tobiInfluxInterface.influx.write_points(dataframe=df_buses_transpose, measurement='Grid', tag_columns=['area', 'voltage'])  # TODO: remove this line after testing
+            tobiInfluxInterface.influx.write_points(dataframe=df_buses, measurement='Grid', tag_columns=['area', 'voltage'])  # TODO: remove this line after testing
+            #self.connections['influxDB'].influx.write_points(dataframe=df_buses, measurement='Grid', tag_columns=['area', 'voltage'])# TODO: use this connection after testting
 
             # print status
             print('Powerflow for', time, 'wrote to database')
@@ -151,15 +131,9 @@ class NetAgent(basicAgent):
             time += pd.DateOffset(hours=1)
 
 
-        # (old/unused: moved into loop above) Step 3: Build Dataframe to save results in influxDB/MongoDB #moved into loop
-        result_df = pd.DataFrame(result_list)
-        #result_df.index = [i for i in range(len(result_df))] #TypeError: index is not a valid DatetimeIndex or PeriodIndex
+        # Power auf allen Leitungen zu jeder Stunde am Tag (momentan noch nicht weiter verwendet):
+        result_df = pd.DataFrame(result_list) # dataframe that contains the power on each line for each hour of the specified day TODO: Könnte eine solche Zusammenfassung irgendwie nütlich sein?
         result_df.index = [self.date + pd.DateOffset(hours=i) for i in range(len(result_df.index))]
-
-        # self.connections['influxDB'].save_data(df, 'Grid')                --> Variante 1
-        # self.connections['influxDB'].influx.write_points(dataframe=df,    --> Variante 2
-        # measurement='Grid', tag_columns=['names', 'order', 'typ'])
-        #tobiInfluxInterface.save_data(result_df, 'Grid') #klappt, Daten stehen in Datenbank und sind in Grafana abrufbar
 
         print('Stop calculating Powerflow')
         pass
@@ -167,8 +141,8 @@ class NetAgent(basicAgent):
 if __name__ == "__main__":
     # args = parse_args()
     agent = NetAgent(date='2018-01-02', plz=44) #TODO: NetAgent should not require "plz"
-    riekeInfluxInterface = InfluxInterface(database='MAS2020_10')# Influx Connection used to load data for powerflow
-    tobiInfluxInterface = InfluxInterface(database='MAS2020_TobiTest')# Influx Connection used to write data during testing, so actual database does not get overwritten
+    riekeInfluxInterface = InfluxInterface(database='MAS2020_10')       # Influx Connection used to load data for powerflow
+    tobiInfluxInterface = InfluxInterface(database='MAS2020_TobiTest')  # Influx Connection used to write data during testing, so actual database does not get overwritten
     agent.calc_power_flow() #TODO:this line is only for standalone testing, remove line if callback from main is running
     #agent.connections['mongoDB'].login(agent.name, False)#nur benötigt, wenn Agent am Markt teilnehmen soll
     try:

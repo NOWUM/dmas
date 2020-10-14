@@ -206,7 +206,7 @@ class InfluxInterface:
     def get_dem(self, date):
 
         self.influx.switch_database(database=self.database)     # change to simulation database
-        #print("get_dem->database: ", self.database)#TODO: remove debug print
+        #print("get_dem->database: ", self.database)#debug print
         query = 'SELECT sum("Power") as "power" FROM "Areas" ' \
                 'WHERE time >= \'%s\' and time < \'%s\'  and "typ" =\'DEM\' and "timestamp" = \'optimize_dayAhead\' ' \
                 'GROUP BY time(1h) fill(0)' \
