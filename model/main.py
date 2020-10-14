@@ -2,7 +2,7 @@
 import configparser
 import os
 import subprocess
-import time as tm
+import time as tme
 import pandas as pd
 import pika
 import psutil
@@ -31,6 +31,9 @@ config.read('app.cfg')
 database = config['Results']['Database']                                                                            # name of influxdatabase to store the results
 mongoCon = mongoCon(host=config['MongoDB']['Host'], database=database)                                              # connection and interface to MongoDB
 influxCon = influxCon(host=config['InfluxDB']['Host'], database=database)                                           # connection and interface to InfluxDB
+marketIp = config['Market']['Host']
+marketPort = config['Market']['Port']
+exchange = config['Market']['Exchange']
 
 
 if config.getboolean('Market', 'Local'):                                                                            # check if plattform runs local and choose the right login method
@@ -41,7 +44,7 @@ else:
                                                                    heartbeat=0, credentials=credentials))
 
 send = connection.channel()                                                                                         # declare Market Excahnge
-send.exchange_declare(exchange='Market', exchange_type='fanout')
+send.exchange_declare(exchange=exchange, exchange_type='fanout')
 
 app = Flask(__name__)
 
@@ -151,13 +154,10 @@ def simulation(start, end, valid=True):
 
         try:
             start_time = tm.time()
-            send.basic_publish(exchange='Market', routing_key='', body='opt_dayAhead ' + str(date))
+            send.basic_publish(exchange=exchange, routing_key='', body='opt_dayAhead ' + str(date))
             da_clearing(mongoCon, influxCon, date)
-
-            """
-            send.basic_publish(exchange='Market', routing_key='', body='power_flow ' + str(date))
-            """
-            send.basic_publish(exchange='Market', routing_key='', body='result_dayAhead ' + str(date))
+            send.basic_publish(exchange=exchange, routing_key='', body='grid_calc ' + str(date)) # send Grid callback
+            send.basic_publish(exchange=exchange, routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
             end_time = tm.time()-start_time
             print('Day complete in: %s seconds ' % end_time)
@@ -186,7 +186,7 @@ if __name__ == "__main__":
                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         mongoID = cmd.pid
 
-    tm.sleep(1)                                 # wait one second till databases start up
+    tme.sleep(1)                                 # wait one second till databases start up
 
     if config.getboolean('Results', 'Delete'):  # delete and clean up databases for new simulation
         # clean influxdb
@@ -200,14 +200,14 @@ if __name__ == "__main__":
             mongoCon.orderDB.drop_collection(name)
 
     try:
-        if config.getboolean('Market', 'Local'): # if web application should runs local
-            app.run(debug=False, port=config.getint('Market','Port'), host='127.0.0.1')
+        if config.getboolean('Market','Local'): # if web application should runs local
+            app.run(debug=False, port=marketPort, host='127.0.0.1')
         else:
-            app.run(debug=False, port=config.getint('Market','Port'), host='0.0.0.0')
+            app.run(debug=False, port=marketPort, host=marketIp)
     except Exception as e:
         print(e)
     finally:
-        send.basic_publish(exchange='Market', routing_key='', body='kill ' + str('1970-01-01'))
+        send.basic_publish(exchange=exchange, routing_key='', body='kill ' + str('1970-01-01'))
         send.close()
         psutil.Process(influxID).kill()
         psutil.Process(mongoID).kill()

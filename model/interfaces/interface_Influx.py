@@ -206,7 +206,7 @@ class InfluxInterface:
     def get_dem(self, date):
 
         self.influx.switch_database(database=self.database)     # change to simulation database
-
+        #print("get_dem->database: ", self.database)#debug print
         query = 'SELECT sum("Power") as "power" FROM "Areas" ' \
                 'WHERE time >= \'%s\' and time < \'%s\'  and "typ" =\'DEM\' and "timestamp" = \'optimize_dayAhead\' ' \
                 'GROUP BY time(1h) fill(0)' \
@@ -219,7 +219,69 @@ class InfluxInterface:
 
         return np.asarray(demand).reshape((-1,))
 
+    # Get power from InfluxDB for specified date and PLZ
+    def get_power_area(self, date, area):
+
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+
+        # ask:
+        query_ask = 'SELECT sum("power") as "power_ask" FROM "DayAhead" ' \
+                'WHERE time >= \'%s\' and time < \'%s\' and "order" = \'%s\' and "area" = \'%s\' ' \
+                'GROUP BY time(1h) fill(0)' \
+                % (start, end, 'ask', area)
+
+        result_ask = self.influx.query(query_ask)
+
+        if result_ask.__len__() > 0:
+            ask = result_ask['DayAhead']['power_ask'].to_numpy()  # power demand [MW]
+        else:
+            ask = np.zeros(24)
+
+        # bid:
+        query_bid = 'SELECT sum("power") as "power_bid" FROM "DayAhead" ' \
+                'WHERE time >= \'%s\' and time < \'%s\' and "order" = \'%s\' and "area" = \'%s\' ' \
+                'GROUP BY time(1h) fill(0)' \
+                % (start, end, 'bid', area)
+
+        result_bid = self.influx.query(query_bid)
+
+        if result_bid.__len__() > 0:
+            bid = result_bid['DayAhead']['power_bid'].to_numpy()  # power generation [MW]
+        else:
+            bid = np.zeros(24)
+
+        return bid - ask # bid>ask=Verbraucher   ask=Anbieter(Fragen Preis nach) bid=bieten Preis
+
+    def getPowerArea(self, date, area):
+
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+
+        ask = 'SELECT sum("power") FROM "DayAhead" WHERE ("order" = \'%s\' AND "area" = \'%s\') AND time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+              % ('ask', area, start, end)
+
+        result = self.influx.query(ask)
+
+        if result.__len__() > 0:
+            ask = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
+        else:
+            ask = np.zeros(24)
+
+        bid = 'SELECT sum("power") FROM "DayAhead" WHERE ("order" = \'%s\' AND "area" = \'%s\') AND time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+              % ('bid', area, start, end)
+
+        result = self.influx.query(bid)
+
+        if result.__len__() > 0:
+            bid = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
+        else:
+            bid = np.zeros(24)
+
+        return bid - ask
+
 
 if __name__ == "__main__":
-    myInterface = InfluxInterface(database='MAS2020_10')
+    #myInterface = InfluxInterface()
+    #myInterface = InfluxInterface(database='MAS2020_10')
     pass
