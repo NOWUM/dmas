@@ -159,13 +159,15 @@ class agent:
         # Aufruf DayAhead-Markt
         if 'opt_dayAhead' in message:
             try:
-                self.optimize_dayAhead()
+                if self.typ != 'NET':
+                    self.optimize_dayAhead()
             except Exception as inst:
                 self.exception_handle(part='Day Ahead Plan', inst=inst)
         # Aufruf Ergebnisse DayAhead-Markt
         if 'result_dayAhead' in message:
             try:
-                self.post_dayAhead()
+                if self.typ != 'NET':
+                    self.post_dayAhead()
             except Exception as inst:
                 self.exception_handle(part='Day Ahead Result', inst=inst)
         # Aufruf Powerflow Berechnung
