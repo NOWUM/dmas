@@ -219,9 +219,38 @@ class InfluxInterface:
 
         return np.asarray(demand).reshape((-1,))
 
-    # Get power from InfluxDB for specified date and PLZ
-    def get_power_area(self, date, area):
+    def get_line_data(self, date, line):
+        start = date.isoformat() + 'Z'
+        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
 
+        query_ask = 'SELECT sum("p0") as "power_flow" FROM "Grid" ' \
+                    'WHERE time >= \'%s\' and time < \'%s\' and "name" = \'%s\'' \
+                    'GROUP BY time(1h) fill(0)' \
+                    % (start, end, line)
+
+        result_ask = self.influx.query(query_ask)
+
+        if result_ask.__len__() > 0:
+            power_flow = result_ask['Grid']['power_flow'].to_numpy()
+        else:
+            power_flow = np.zeros(24)
+
+        query_ask = 'SELECT sum("s_nom") as "s_nom" FROM "Grid" ' \
+                    'WHERE time >= \'%s\' and time < \'%s\' and "name" = \'%s\'' \
+                    'GROUP BY time(1h) fill(0)' \
+                    % (start, end, line)
+
+        result_ask = self.influx.query(query_ask)
+
+        if result_ask.__len__() > 0:
+            s_nom = result_ask['Grid']['s_nom'].to_numpy()
+        else:
+            s_nom = np.zeros(24)
+
+        return power_flow, s_nom
+
+    def get_power_area(self, date, area):
+        """Get power from InfluxDB for specified date and PLZ"""
         start = date.isoformat() + 'Z'
         end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
 

@@ -132,8 +132,8 @@ class NetAgent(basicAgent):
             df_lines.index = [time for _ in range(len(df_lines.index))]                     # Change index to timestamp
 
             self.connections['influxDB'].influx.write_points(dataframe=df_lines, measurement='Grid',
-                                                             tag_columns=['name', 'fromArea', 'toArea', 'voltage',
-                                                                          's_nom', 'id'])
+                                                             tag_columns=['name', 'fromArea', 'toArea',
+                                                                          'voltage', 'id'])
 
             # Create buses dataframe
             power_bus = self.network.buses_t.p.to_numpy().reshape((-1,))
