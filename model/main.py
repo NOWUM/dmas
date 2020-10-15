@@ -93,16 +93,10 @@ def grid():
         #print(request.args)
         date = request.form['start']
         hour = int(request.form['hour'])
-        print(date, '|', hour)
         fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
-        # fig = getPlot(date, hour)
         return render_template('tmp.html', plot=fig)
-    except Exception as e:
-        date = '2018-01-01'
-        h = 1
-        #fig = getPlot(date, hour)
+    except:
         fig = None
-        print('Error:',e)
         return render_template('grid.html', plot=fig)
     #fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=1)
     #return render_template('grid.html', plot=fig)

@@ -251,34 +251,31 @@ class InfluxInterface:
 
     #SELECT sum("p0") FROM "Grid" WHERE $timeFilter GROUP BY time(1h), "name" fill(null)
     def get_lines_data(self, date):
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
+        ts = date.isoformat() + 'Z'
 
-        query_ask = 'SELECT sum("p0") FROM "Grid" ' \
-                    'WHERE time >= \'%s\' and time < \'%s\'' \
+        # query_ask = 'SELECT sum("p0") as "power_flow", sum("s_nom") as "s_nom" FROM "Grid" ' \
+        #             'WHERE time >= \'%s\' and time < \'%s\'' \
+        #             'GROUP BY time(1h), "name" fill(0)' \
+        #             % (start, end)
+
+        query_ask = 'SELECT sum("p0") as "power_flow", sum("s_nom") as "s_nom" FROM "Grid" ' \
+                    'WHERE time = \'%s\'' \
                     'GROUP BY time(1h), "name" fill(0)' \
-                    % (start, end)
+                    % (ts)
 
-        result_ask = self.influx.query(query_ask)
-        return result_ask
-        if result_ask.__len__() > 0:
-            power_flow = result_ask['Grid']['power_flow'].to_numpy()
-        else:
-            power_flow = np.zeros(24)
+        result = self.influx.query(query_ask)
 
-        query_ask = 'SELECT sum("s_nom") as "s_nom" FROM "Grid" ' \
-                    'WHERE time >= \'%s\' and time < \'%s\' and "name" = \'%s\'' \
-                    'GROUP BY time(1h) fill(0)' \
-                    % (start, end, line)
+        line_data = {}
 
-        result_ask = self.influx.query(query_ask)
+        for key, value in result.items():
+            if len(value['power_flow']) > 0:
+                line_data.update({key[1][0][1]: {'power': value['power_flow'].to_numpy(),
+                                             's_nom': value['s_nom'].to_numpy()}})
+            else:
+                line_data.update({key[1][0][1]: {'power': np.zeros(1),
+                                                 's_nom': np.inf*np.ones(1)}})
 
-        if result_ask.__len__() > 0:
-            s_nom = result_ask['Grid']['s_nom'].to_numpy()
-        else:
-            s_nom = np.zeros(24)
-
-        return power_flow, s_nom
+        return line_data
 
     def get_power_area(self, date, area):
         """Get power from InfluxDB for specified date and PLZ"""
@@ -313,9 +310,11 @@ class InfluxInterface:
 
         return bid - ask # bid>ask=Verbraucher   ask=Anbieter(Fragen Preis nach) bid=bieten Preis
 
+
 if __name__ == "__main__":
     #myInterface = InfluxInterface()
     #myInterface = InfluxInterface(database='MAS2020_10')
     myInterface = InfluxInterface(database='MAS2020_20')
     x = myInterface.get_lines_data(pd.to_datetime('2018-01-01'))
+
     pass
