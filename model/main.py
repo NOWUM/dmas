@@ -89,17 +89,18 @@ def run():
 @cross_origin()
 def grid():
     try:
-        #TODO: Unterscheidung POST GET, damit try nicht benötigt wird
-        #print(request.args)
-        date = request.form['start']
-        hour = int(request.form['hour'])
-        fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
-        return render_template('tmp.html', plot=fig)
-    except:
+        if request.method == 'POST':
+            date = request.form['start']
+            hour = int(request.form['hour'])
+            fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
+            return render_template('tmp.html', plot=fig)
+        else:
+            fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=0)
+            return render_template('grid.html', plot=fig)
+    except Exception as e:
         fig = None
+        print('Exception in Grid:', e)
         return render_template('grid.html', plot=fig)
-    #fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=1)
-    #return render_template('grid.html', plot=fig)
 
 @app.route('/build/start', methods=['POST'])
 def buildAreas():

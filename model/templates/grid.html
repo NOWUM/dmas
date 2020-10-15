@@ -18,8 +18,8 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script>
+        var h = 0
         $(document).ready(function(){
-            var h = 0
 
             $("#v").click(function(){
                 $.post("Grid",{hour:h, start: $("#start").val()},function(data){
@@ -41,24 +41,25 @@
     </script>
 
 </head>
-<body>
+<body style="background-color:white;">
     <div class="container">
         <div class="row">
             <div class="col-3"></div>
                 <div class="col">
-                    <span style="color: #f8f9fa; "> <label>Start:</label><br></span>
+                    <span style="color: black; "> <label>Start:</label><br></span>
                         <input class="btn btn-warning btn-sm" id="z" type="submit" value="<--">
                         <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" value="2018-01-01">
                         <input class="btn btn-warning btn-sm" id="v" type="submit" value="-->">
+                    <div id="hour"><script>document.getElementById("hour").innerHTML = 'Hour: ' + h;</script></div>
                 </div>
             <div class="col-9">
                 <div id="tmp">
-                <div class="chart" id="gridModel">
-                  <script>
-                      var graphs = {{plot | safe}};
-                      Plotly.plot('gridModel',graphs,{});
-                  </script>
-                </div>
+                    <div class="chart" id="gridModel">
+                      <script>
+                          var graphs = {{plot | safe}};
+                          Plotly.plot('gridModel',graphs,{});
+                      </script>
+                    </div>
                 </div>
             </div>
         </div>
