@@ -22,7 +22,7 @@
             var h = 0
 
             $("#v").click(function(){
-                $.post("http://149.201.88.150:5010/Grid",{hour:h, start: $("#start").val()},function(data){
+                $.post("Grid",{hour:h, start: $("#start").val()},function(data){
                     $("#tmp").html(data);
                 });
                 h = h + 1
@@ -30,7 +30,7 @@
             });
 
             $("#z").click(function(){
-                $.post("http://127.0.0.1:6010/Grid",{hour:h, start: $("#start").val()},function(data){
+                $.post("Grid",{hour:h, start: $("#start").val()},function(data){
                     $("#tmp").html(data);
                 });
                 h = h - 1

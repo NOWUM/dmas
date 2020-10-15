@@ -85,22 +85,27 @@ def run():
     simulation(start, end)
     return 'OK'
 
-@app.route('/Grid')
+@app.route('/Grid', methods=['GET','POST'])
 @cross_origin()
 def grid():
-    #try:
-    #    #date = request.form['start']
-    #    #hour = request.form['h']
-    #   fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=1)
-    #    # fig = getPlot(date, hour)
-    #    return render_template('tmp.html', plot=fig)
-    #except:
-    #    date = '2018-01-01'
-    #    h = 1
-    #    # fig = getPlot(date, hour)
-    #    fig = None
-    fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=1)
-    return render_template('grid.html', plot=fig)
+    try:
+        #TODO: Unterscheidung POST GET, damit try nicht benötigt wird
+        #print(request.args)
+        date = request.form['start']
+        hour = int(request.form['hour'])
+        print(date, '|', hour)
+        fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
+        # fig = getPlot(date, hour)
+        return render_template('tmp.html', plot=fig)
+    except Exception as e:
+        date = '2018-01-01'
+        h = 1
+        #fig = getPlot(date, hour)
+        fig = None
+        print('Error:',e)
+        return render_template('grid.html', plot=fig)
+    #fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=1)
+    #return render_template('grid.html', plot=fig)
 
 @app.route('/build/start', methods=['POST'])
 def buildAreas():

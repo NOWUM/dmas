@@ -11,6 +11,7 @@ from interfaces.interface_Influx import InfluxInterface
 import json
 import plotly
 import os
+import time as tme
 
 class GridView:
 
@@ -34,16 +35,24 @@ class GridView:
 
     def get_plot(self, date, hour):
 
+        time_start = tme.time()
         fig = go.Figure()
-
+        print("Figure:",time_start - tme.time())
+        power_color_value = []
+        lines_green_lat = []
+        lines_green_lon = []
+        lines_red_lat = []
+        lines_red_lon = []
         for item in range(len(self.lines)):
-
+            print("Item {}:".format(item), time_start - tme.time())
             bus0 = self.lines.iloc[item, 1]
             bus1 = self.lines.iloc[item, 2]
 
-            name = self.lines.iloc[item, 0]
-            # power_flow, s_nom = self.influx_con.get_line_data(date=date, line=name)
-            color = self.__color_map(np.random.uniform(low=0, high=1))
+            name = self.lines.iloc[item, 0].split('_')[0] + '_' + str(item)
+            power_flow, s_nom = self.influx_con.get_line_data(date=date, line=name)
+            power_color_value = power_flow[hour] / s_nom[hour]
+
+            #color = self.__color_map(np.random.uniform(low=0, high=1))
 
             bus0_x = self.buses.loc[self.buses['name'] == bus0, 'x'].to_numpy()[0]
             bus1_x = self.buses.loc[self.buses['name'] == bus1, 'x'].to_numpy()[0]
@@ -51,40 +60,38 @@ class GridView:
             bus0_y = self.buses.loc[self.buses['name'] == bus0, 'y'].to_numpy()[0]
             bus1_y = self.buses.loc[self.buses['name'] == bus1, 'y'].to_numpy()[0]
 
-            fig.add_trace(
-                go.Scattermapbox(
-                    name=name,
-                    showlegend=False,
-                    lon=[bus0_x, bus1_x, None],
-                    lat=[bus0_y, bus1_y, None],
-                    mode='lines',
-                    line=dict(width=2, color=color),
-                )
+            if power_color_value > 0.1:
+                #color = 'Red'
+                lines_red_lat = lines_red_lat + [bus0_y, bus1_y, None]
+                lines_red_lon = lines_red_lon + [bus0_x, bus1_x, None]
+            else:
+                #color = 'Green'
+                lines_green_lat = lines_green_lat + [bus0_y, bus1_y, None]
+                lines_green_lon = lines_green_lon + [bus0_x, bus1_x, None]
+
+        print("Trace Green:", time_start - tme.time())
+        fig.add_trace(
+            go.Scattermapbox(
+                name='green',
+                showlegend=False,
+                lon=lines_green_lon,
+                lat=lines_green_lat,
+                mode='lines',
+                line=dict(width=2, color='Green'),
             )
-        # lons_lines = []
-        # lats_lines = []
-        # for item in range(len(df_line)):
-        #     bus0 = df_line.iloc[item, 1]
-        #     bus1 = df_line.iloc[item, 2]
-        #
-        #     lons_lines.append(df_node.loc[df_node['name'] == bus0, 'x'].to_numpy()[0])
-        #     lons_lines.append(df_node.loc[df_node['name'] == bus1, 'x'].to_numpy()[0])
-        #     lons_lines.append(None)
-        #
-        #     lats_lines.append(df_node.loc[df_node['name'] == bus0, 'y'].to_numpy()[0])
-        #     lats_lines.append(df_node.loc[df_node['name'] == bus1, 'y'].to_numpy()[0])
-        #     lats_lines.append(None)
-
-        # fig.add_trace(
-        #     go.Scattermapbox(
-        #         name='lines',
-        #         lon=lons_lines,
-        #         lat=lats_lines,
-        #         mode='lines',
-        #         line=dict(width=2, color='#7f7f7f'),
-        #     )
-        # )
-
+        )
+        print("Trace Red:", time_start - tme.time())
+        fig.add_trace(
+            go.Scattermapbox(
+                name='red',
+                showlegend=False,
+                lon=lines_red_lon,
+                lat=lines_red_lat,
+                mode='lines',
+                line=dict(width=2, color='Red'),
+            )
+        )
+        print("Trace Nodes:", time_start - tme.time())
         fig.add_trace(go.Scattermapbox(
             name='Nodes',
             lon=self.buses['x'],
@@ -95,6 +102,7 @@ class GridView:
                     'size': 10}
         ))
 
+        print("Layout:", time_start - tme.time())
         fig.update_layout(
             mapbox=dict(
                 accesstoken=self.token,
@@ -109,7 +117,7 @@ class GridView:
         )
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
+        print("End:", time_start - tme.time())
         return graph_json
 
 
