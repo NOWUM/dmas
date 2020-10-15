@@ -253,34 +253,6 @@ class InfluxInterface:
 
         return bid - ask # bid>ask=Verbraucher   ask=Anbieter(Fragen Preis nach) bid=bieten Preis
 
-    def getPowerArea(self, date, area):
-
-        start = date.isoformat() + 'Z'
-        end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-
-        ask = 'SELECT sum("power") FROM "DayAhead" WHERE ("order" = \'%s\' AND "area" = \'%s\') AND time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
-              % ('ask', area, start, end)
-
-        result = self.influx.query(ask)
-
-        if result.__len__() > 0:
-            ask = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
-        else:
-            ask = np.zeros(24)
-
-        bid = 'SELECT sum("power") FROM "DayAhead" WHERE ("order" = \'%s\' AND "area" = \'%s\') AND time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
-              % ('bid', area, start, end)
-
-        result = self.influx.query(bid)
-
-        if result.__len__() > 0:
-            bid = np.asarray([np.round(point['sum'], 2) for point in result.get_points()])
-        else:
-            bid = np.zeros(24)
-
-        return bid - ask
-
-
 if __name__ == "__main__":
     #myInterface = InfluxInterface()
     #myInterface = InfluxInterface(database='MAS2020_10')

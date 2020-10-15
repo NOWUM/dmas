@@ -21,7 +21,7 @@ def parse_args():
 class StrAgent(basicAgent):
 
     def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, exchange='Market', typ='STR')
+        super().__init__(date=date, plz=plz, typ='STR')
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()

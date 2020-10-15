@@ -80,16 +80,21 @@ def da_clearing(mongo_con, influx_con, date):
         ask['order'] = ['ask' for _ in range(len(ask))]
         ask['typ'] = [name.split('_')[0] for name in ask.index]
         ask['names'] = [name for name in ask.index]
+        ask['area'] = [name.split('_')[1] for name in ask.index]
         ask.index = [time for _ in range(len(ask))]
-        influx_con.influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order', 'typ'])
+        influx_con.influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
         # save all bids
         bid = pd.DataFrame.from_dict(element[1])
         bid.columns = ['power']
         bid['names'] = [name for name in bid.index]
         bid['order'] = ['bid' for _ in range(len(bid))]
         bid['typ'] = [name.split('_')[0] for name in bid['names'].to_numpy()]
+        bid['area'] = [name.split('_')[1] for name in bid.index]
         bid.index = [time for _ in range(len(bid))]
-        influx_con.influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order', 'typ'])
+        influx_con.influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
+
         # save mcp
         mcp = pd.DataFrame(data=[np.asarray(element[2], dtype=float)], index=[time], columns=['price'])
         influx_con.influx.write_points(dataframe=mcp, measurement='DayAhead')
@@ -145,16 +150,20 @@ if __name__ == "__main__":
         ask['order'] = ['ask' for _ in range(len(ask))]
         ask['typ'] = [name.split('_')[0] for name in ask.index]
         ask['names'] = [name for name in ask.index]
+        ask['area'] = [name.split('_')[1] for name in ask.index]
         ask.index = [time for _ in range(len(ask))]
-        influx_con.influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order', 'typ'])
+        influx_con.influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
         # save all bids
         bid = pd.DataFrame.from_dict(element[1])
         bid.columns = ['power']
         bid['names'] = [name for name in bid.index]
         bid['order'] = ['bid' for _ in range(len(bid))]
         bid['typ'] = [name.split('_')[0] for name in bid['names'].to_numpy()]
+        bid['area'] = [name.split('_')[1] for name in bid.index]
         bid.index = [time for _ in range(len(bid))]
-        influx_con.influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order', 'typ'])
+        influx_con.influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
         # save mcp
         mcp = pd.DataFrame(data=[np.asarray(element[2], dtype=float)], index=[time], columns=['price'])
         influx_con.influx.write_points(dataframe=mcp, measurement='DayAhead')

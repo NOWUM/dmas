@@ -153,13 +153,13 @@ def simulation(start, end, valid=True):
         mongoCon.orderDB[str(date.date)]
 
         try:
-            start_time = tm.time()
+            start_time = tme.time()
             send.basic_publish(exchange=exchange, routing_key='', body='opt_dayAhead ' + str(date))
             da_clearing(mongoCon, influxCon, date)
-            send.basic_publish(exchange=exchange, routing_key='', body='grid_calc ' + str(date)) # send Grid callback
+            send.basic_publish(exchange=exchange, routing_key='', body='grid_calc ' + str(date))
             send.basic_publish(exchange=exchange, routing_key='', body='result_dayAhead ' + str(date))
             print('Day Ahead calculation finish ' + str(date.date()))
-            end_time = tm.time()-start_time
+            end_time = tme.time()-start_time
             print('Day complete in: %s seconds ' % end_time)
 
             # if valid:
@@ -171,8 +171,7 @@ def simulation(start, end, valid=True):
 
 if __name__ == "__main__":
 
-    influxID = -1
-    mongoID = -1
+    influxID, mongoID = -1, -1
 
     if config.getboolean('InfluxDB', 'Local'):  # if influxdb should runs local -> start
         influxPath = config['InfluxDB']['Path']
@@ -200,7 +199,7 @@ if __name__ == "__main__":
             mongoCon.orderDB.drop_collection(name)
 
     try:
-        if config.getboolean('Market','Local'): # if web application should runs local
+        if config.getboolean('Market', 'Local'): # if web application should runs local
             app.run(debug=False, port=marketPort, host='127.0.0.1')
         else:
             app.run(debug=False, port=marketPort, host=marketIp)
