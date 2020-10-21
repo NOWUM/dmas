@@ -28,7 +28,7 @@ config = configparser.ConfigParser()                                           #
 config.read('app.cfg')
 
 app = Flask(__name__)                                                          # initialize App
-cors = CORS(app)
+cors = CORS(app, resources={r"*": {"origins": "*"}})
 
 
 # 1. methods for the web application
@@ -53,7 +53,7 @@ def index():
             for k, v in value.items():
                 dict_.update({k: v})
             x = key.split('-')[0]
-            agent_conf.update({x.lower(): dict_})
+            agent_conf.update({x: dict_})
 
     # get agents, which are logged in
     # -------------------------------------------------------
