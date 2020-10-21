@@ -33,8 +33,7 @@ cors = CORS(app, resources={r"*": {"origins": "*"}})
 
 # 1. methods for the web application
 # ---------------------------------------------------------------------------------------------------------------------
-@app.route('/', methods=['GET', 'OPTIONS'])
-@cross_origin()
+@app.route('/')
 def index():
 
     # load config values Infrastructure
@@ -74,7 +73,6 @@ def index():
 
 
 @app.route('/change_config', methods=['POST'])
-@cross_origin()
 def change_config():
 
     # change configurations
@@ -109,7 +107,6 @@ def change_config():
 
 
 @app.route('/build', methods=['POST'])
-@cross_origin()
 def build_agents():
 
     system_conf = {}
@@ -147,7 +144,6 @@ def build_agents():
 
 
 @app.route('/Grid', methods=['GET', 'POST'])
-@cross_origin()
 def get_power_flow():
     try:
         if request.method == 'POST':
@@ -165,7 +161,6 @@ def get_power_flow():
 
 
 @app.route('/run', methods=['POST'])
-@cross_origin()
 def run():
     # start simulation for start till end
     # --------------------------------------------------------------
