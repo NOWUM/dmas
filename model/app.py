@@ -34,6 +34,7 @@ cors = CORS(app)
 # 1. methods for the web application
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/', methods=['GET', 'OPTIONS'])
+@cross_origin()
 def index():
 
     # load config values Infrastructure
