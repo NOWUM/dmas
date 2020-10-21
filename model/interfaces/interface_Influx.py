@@ -251,6 +251,7 @@ class InfluxInterface:
 
     #SELECT sum("p0") FROM "Grid" WHERE $timeFilter GROUP BY time(1h), "name" fill(null)
     def get_lines_data(self, date):
+        """Get powerflow and s_nom of all lines from InfluxDB for specified date"""
         ts = date.isoformat() + 'Z'
 
         # query_ask = 'SELECT sum("p0") as "power_flow", sum("s_nom") as "s_nom" FROM "Grid" ' \
