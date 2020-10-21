@@ -277,7 +277,7 @@ if __name__ == "__main__":
         if config.getboolean('Configuration', 'Local'):
             app.run(debug=False, port=5010, host='127.0.0.1')
         else:
-            app.run(debug=False, port=5010, host='149.201.88.150')
+            app.run(debug=False, port=5010, host='149.201.196.100')
     except Exception as e:
         print(e)
     finally:
