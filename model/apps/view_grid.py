@@ -103,7 +103,8 @@ class GridView:
         ))
 
         #print("Layout:", time_start - tme.time())
-        fig.update_layout(
+        fig.update_layout(width=700,
+            height=800,
             mapbox=dict(
                 accesstoken=self.token,
                 bearing=0,
@@ -112,7 +113,7 @@ class GridView:
                     lon=10.313721
                 ),
                 pitch=0,
-                zoom=4
+                zoom=5
             )
         )
 
