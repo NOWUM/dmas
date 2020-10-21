@@ -1,5 +1,7 @@
 # third party modules
+from sys import exit
 import os
+import argparse
 import time as tme
 import pandas as pd
 import numpy as np
@@ -8,6 +10,12 @@ import pypsa
 # model modules
 from agents.basic_Agent import agent as basicAgent
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--plz', type=int, required=False, default=24, help='PLZ-Agent')
+    return parser.parse_args()
 
 
 class NetAgent(basicAgent):

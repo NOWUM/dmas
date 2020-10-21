@@ -150,6 +150,13 @@ class mongoInterface:
         except:
             return {}
 
+    def getClearing(self, date):
+        try:
+            clearing = self.orderDB[str(date.date())].find_one({'_id': 'market'})
+            return clearing['DayAhead']
+        except:
+            False
+
     """
                     Simulations- und Marktnachrichten
     """
@@ -177,6 +184,11 @@ class mongoInterface:
         query = {"_id": name}
         orders = {"$set": {"_id": name, "Balancing": orders}}
         self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)
+
+    def setClearing(self, name, date):
+        query = {"_id": name}
+        clearing = {"$set": {"_id": name, "DayAhead": True}}
+        self.orderDB[str(date.date())].update_one(filter=query, update=clearing, upsert=True)
 
     def setDayAhead(self, name, date, orders):
         query = {"_id": name}

@@ -1,4 +1,5 @@
 # third party modules
+from sys import exit
 import time as tme
 import os
 import argparse
@@ -261,15 +262,6 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
-    #results = agent.optimize_dayAhead()
-    # agent.optimize_dayAhead()
-    #
-    # legend = []
-    # for key, value in results.items():
-    #     plt.plot(value[0])
-    #     legend.append(key)
-    # plt.legend(legend)
-
     agent.connections['mongoDB'].login(agent.name, False)
     try:
         agent.run()

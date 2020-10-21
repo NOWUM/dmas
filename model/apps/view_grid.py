@@ -18,8 +18,8 @@ class GridView:
     def __init__(self):
         config = configparser.ConfigParser()
         config.read(r'./app.cfg')
-        database = config['Results']['Database']
-        influx_host = config['InfluxDB']['Host']
+        database = config['Configuration']['Database']
+        influx_host = config['Configuration']['InfluxDB']
         self.influx_con=InfluxInterface(host=influx_host, database=database)
         self.buses = pd.read_csv(r'./data/Grid_Buses.csv', sep=';', decimal=',', index_col=0)
         self.lines = pd.read_csv(r'./data/Grid_Lines.csv', sep=';', decimal=',', index_col=0)
@@ -62,7 +62,7 @@ class GridView:
             bus0_y = self.buses.loc[self.buses['name'] == bus0, 'y'].to_numpy()[0]
             bus1_y = self.buses.loc[self.buses['name'] == bus1, 'y'].to_numpy()[0]
 
-            if power_color_value > 0.1:
+            if power_color_value > 0.9:
                 #color = 'Red'
                 lines_red_lat = lines_red_lat + [bus0_y, bus1_y, None]
                 lines_red_lon = lines_red_lon + [bus0_x, bus1_x, None]
@@ -112,8 +112,16 @@ class GridView:
                     lon=10.313721
                 ),
                 pitch=0,
-                zoom=4
-            )
+                zoom=4.6,
+            ),
+            autosize=True,
+            margin=dict(
+                l=10,
+                r=10,
+                b=10,
+                t=10,
+                pad=2
+            ),
         )
 
         graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)

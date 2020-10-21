@@ -40,51 +40,48 @@
     <!--Script Elements-->
     <script>
         $(document).ready(function(){
-           $("#run").click(function(){$.post("run",{start: $("#start").val(),end: $("#end").val()},function(data){});});
-                var dem = false
-                var pwp = false
-                var res = false
-                var str = false
-                var net = false
+            $("#run").click(function(){$.post("run",{start: $("#start").val(),end: $("#end").val()},function(data){});});
 
-                $(function(){
-                    $("#slider-range").slider({
-                        range: true,
-                        min: 0,
-                        max: 99,
-                        values: [ 40, 45 ],
-                        slide: function(event, ui){$( "#amount" ).val(ui.values[ 0 ] + " - " + ui.values[ 1 ]);}
-                });
-            $("#amount").val($("#slider-range").slider("values", 0) +" - " + $("#slider-range").slider("values", 1));});
+            var net = true
+            var mrk = true
 
-            $("#start_area").click(function(){
-                if($("#dem").prop("checked")==true){
-                    dem = true
+            $("#build").click(function(){
+                if(Number($("#net_start").val()) == 0){
+                    net = false
                 }
-                 if($("#pwp").prop("checked")==true){
-                    pwp = true
-                }
-                 if($("#res").prop("checked")==true){
-                    res = true
-                }
-                if($("#str").prop("checked")==true){
-                    str = true
-                }
-                if($("#net").prop("checked")==true){
-                    net = true
+                if(Number($("#mrk_start").val()) == 0){
+                    mrk = false
                 }
             });
 
-            $("#start_area").click(function(){$.post("build/start",
-                {start: $("#slider-range").slider("values", 0),
-                 end:   $("#slider-range").slider("values", 1),
-                 dem:   dem,
-                 pwp:   pwp,
-                 res:   res,
-                 str:   str,
-                 net:   net},
+            $("#build").click(function(){$.post("build",
+                {pwp_ip:        $("#pwp_host").val(),
+                 pwp_start:     $("#pwp_start").val(),
+                 pwp_end:       $("#pwp_end").val(),
+                 res_ip:        $("#res_host").val(),
+                 res_start:     $("#res_start").val(),
+                 res_end:       $("#res_end").val(),
+                 dem_ip:        $("#dem_host").val(),
+                 dem_start:     $("#dem_start").val(),
+                 dem_end:       $("#dem_end").val(),
+                 str_ip:        $("#str_host").val(),
+                 str_start:     $("#str_start").val(),
+                 str_end:       $("#str_end").val(),
+                 net_ip:        $("#net_host").val(),
+                 mrk_ip:        $("#mrk_host").val(),
+                 mrk_end:       mrk,
+                 net_end:       net},
                  function(data){});});
 
+            $("#conf").click(function(){$.post("change_config",
+                {database:       $("#database").val(),
+                 mongodb:       $("#mongodb").val(),
+                 influxdb:      $("#influxdb").val(),
+                 rabbitmq:      $("#rabbitmq").val(),
+                 exchange:      $("#exchange").val(),
+                 suffix:        $("#suffix").val(),
+                 reset:         $("#reset").val()},
+                 function(data){});});
         });
     </script>
 
@@ -126,84 +123,65 @@
     <div class="container-fluid bg-light text-dark">
         <!-- First Row -->
         <div class="row bg-light" id="content">
-            <div class="col bg-dark" id="left-menu1">
+            <div class="col bg-dark text-light" id="left-menu1">
                 <nav class="navbar-dark">
-                  <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <div id="nav-powerplant" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="pwp" value="" checked>
-                                <label for="pwp" style="float:left;">Konventionelle Kraftwerke</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <center id="nav-solar">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="res" value="" checked>
-                                <label for="res" style="float:left;">Erneuerbare Energien</label><br>
-                            </a>
-                        </center>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-demand" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="dem" value="1" checked>
-                                <label for="dem" style="float:left;">Stromnachfrage</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-storage" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="str" value="1" checked>
-                                <label for="str" style="float:left;">Speicherkraftwerke</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-storage" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="net" value="1" checked>
-                                <label for="str" style="float:left;">Lastfluss</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-build" style="text-align: center;">
-                            <a class="nav-link">
-                                <input class="btn btn-warning btn-sm" id="start_area" type="submit" value="Start Agents">
-                            </a>
-                        </div>
-                    </li>
-                  </ul>
+                    <ul class="navbar-nav">
+                        {% for key, value in agents.items() %}
+                        <li class="nav-item">
+                            <div style="text-align: center;">
+                                <img class="img-thumbnail" height="50" src="../static/{{key}}.png" width="50"><b> {{key}}: {{value}} </b><br><br>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        <li class="nav-item">
+                            <div id="nav-reload" style="text-align: center;">
+                                <a href=""> <input class="btn btn-danger btn-sm" id="reload" type="submit" value="Reload"></a>
+                            </div>
+                        </li>
+                    </ul>
                 </nav>
             </div>
             <div class="col-9" id="middle">
                 <br>
                 <div class="row">
-                    <div class="col-4">
-                        <label for="amount">Start Agents:</label><br><br>
-                        <input id="amount" readonly style="border:0; color:#04B4AE; font-weight:bold;" type="text">
-                        <div id="slider-range"></div>
+                    <div class="col-6">
+                        <h4>Configuration Agents</h4>
+                        <form>
+                            {% for key, value in agent_conf.items() %}
+                            <div class="form-row">
+                                <div class="form-group col-1">
+                                    <br>
+                                    <img class="img-thumbnail center" height="40" src="../static/{{key}}.png" width="40">
+                                    <br>
+                                </div>
+                                {% for name, attribute in value.items() %}
+                                <div class="form-group col-3">
+                                    <label for="{{key}}_{{name}}">{{name}}:</label>
+                                    <input type="text" class="form-control form-control-sm" id="{{key}}_{{name}}" value={{attribute}}>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                        </form>
+                        <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit">
                     </div>
-                    <div class="col">
-                        <a href=""> <input class="btn btn-danger btn-sm" id="reload" type="submit" value="Reload"></a>
+                    <div class="col-6">
+                        <h4>Configuration Server & Infrastructure</h4>
+                        <form>
+                            {% for key, value in system_conf.items() %}
+                            <div class="form-group">
+                                <label for={{key}}>{{ key }}:</label>
+                                <input type="text" class="form-control form-control-sm" id="{{key}}" value={{value}}>
+                            </div>
+                            {% endfor %}
+                        </form>
+                        <input class="btn btn-dark btn-sm" id="conf" type="submit" value="Submit">
                     </div>
                 </div>
                 <br>
-                <div class="row">
-                <div class="col-5">
-                    <img class="img-thumbnail" height="75" src="../static/5.png" width="50"> <b>Anzahl: {{num[0]}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/2.png" width="50"> <b>Anzahl: {{num[1]}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/12.png" width="50"> <b>Anzahl: {{num[2]}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/16.png" width="50"> <b>Anzahl: {{num[3]}}</b> <br><br>
-                </div>
-                </div>
             </div>
             <div class="col-1" id="right"></div>
         </div>
-
         <div class="row bg-light"><p></p></div>
     </div>
 </body>
