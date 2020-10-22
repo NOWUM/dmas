@@ -91,7 +91,7 @@ class GridView:
         #print("Trace Green:", time_start - tme.time())
         fig.add_trace(
             go.Scattermapbox(
-                name='green',
+                name='Normal Load',
                 lon=lines_green_lon,
                 lat=lines_green_lat,
                 mode='lines',
@@ -101,7 +101,7 @@ class GridView:
         #print("Trace Red:", time_start - tme.time())
         fig.add_trace(
             go.Scattermapbox(
-                name='red',
+                name='Overload',
                 lon=lines_red_lon,
                 lat=lines_red_lat,
                 mode='lines',
