@@ -68,7 +68,7 @@ def index():
     # -------------------------------------------------------
     for server, _ in server_list.items():
         try:
-            res = requests.get('http://' + server + ':5000/test')
+            res = requests.get('http://' + server + ':5000/test', timeout=0.5)
             if res.status_code == 200:
                 server_list.update({server: 'available'})
         except Exception as e:
@@ -136,13 +136,13 @@ def build_agents():
     # set agent configs
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
         key = typ + '_ip'
-        url = 'http://' + str(request.form[key]) + ':5010/config'
-        requests.post(url, json=system_conf)
+        url = 'http://' + str(request.form[key]) + ':5000/config'
+        requests.post(url, json=system_conf,  timeout=0.5)
 
     # build agents
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
         key = typ + '_ip'
-        url = 'http://' + str(request.form[key]) + ':5010/build'
+        url = 'http://' + str(request.form[key]) + ':5000/build'
 
         key_s = typ + '_start'
         key_e = typ + '_end'
@@ -157,7 +157,7 @@ def build_agents():
                     'start':       0,
                     'end':         int(request.form[key_e] == 'true')}
 
-        requests.post(url, json=data)
+        requests.post(url, json=data, timeout=0.5)
 
     return 'OK'
 

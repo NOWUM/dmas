@@ -57,6 +57,6 @@ def build():
 
 if __name__ == "__main__":
 
-    app.run(debug=False, port=5010, host=ip_address)
+    app.run(debug=False, port=5000, host=ip_address)
 
 
