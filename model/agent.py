@@ -14,7 +14,7 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 config = configparser.ConfigParser()
 config.read('agent.cfg')
-path = os.path.dirname(os.path.dirname(__file__)) # + r'/model'
+path = os.path.dirname(os.path.dirname(__file__)) + r'/model'
 
 
 @app.route('/', methods=['GET'])
