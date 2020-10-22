@@ -122,7 +122,6 @@ class GridView:
             hoverinfo='name+text'
         ))
 
-        #new_customdata = np.stack((lines, 100*np.random.rand(7)), axis=-1)
         # invisible nodes on top of lines (hovertext hack)
         fig.add_trace(go.Scattermapbox(
             name='Line',
@@ -132,7 +131,8 @@ class GridView:
             marker={'allowoverlap': False,
                     'color': 'red',
                     'size': 10,
-                    'opacity': 0},
+                    'opacity': 0
+                    },
             text=lines_name,
             customdata=lines_custom_data, # lines_custom_data = np.stack((lines_name, lines_powerflow, lines_s_nom, lines_load_factor), axis=-1)
             hovertemplate = "<b>%{text}</b><br>" + \
@@ -142,7 +142,7 @@ class GridView:
                             #"Name: %{customdata[0]}<br>" + \
                             "Powerflow: %{customdata[1]: .2f}<br>" + \
                             "S_nom: %{customdata[2]: .2f}<br>" + \
-                            "Load Factor: %{customdata[3]: .5f}",
+                            "Load Factor: %{customdata[3]: .4f}",
         ))
 
         #print("Layout:", time_start - tme.time())
