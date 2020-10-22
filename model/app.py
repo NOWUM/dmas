@@ -136,7 +136,7 @@ def build_agents():
     # set agent configs
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
         key = typ + '_ip'
-        url = 'http://' + str(request.form[key]) + ':5000/config'
+        url = 'http://' + str(request.form[key]) + ':5010/config'
         requests.post(url, json=system_conf)
 
     # build agents
