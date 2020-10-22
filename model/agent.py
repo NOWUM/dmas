@@ -49,7 +49,7 @@ def build():
             subprocess.Popen(command, cwd=path, shell=True)
     else:
         for i in range(int(content['start']), int(content['end'])):
-            command = 'python3 ' + path + r'/agents/' + content['typ'] + '_Agent.py ' + '--plz ' + str(i)
+            command = 'python3 dmas/' + path + r'/agents/' + content['typ'] + '_Agent.py ' + '--plz ' + str(i)
             print(command)
             subprocess.Popen(command, cwd=path, shell=True)
 
