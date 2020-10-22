@@ -31,7 +31,7 @@ def test():
 def set_config():
     content = request.json
     for key, value in content.items():
-        config['Server'][key] = value
+        config['Configuration'][key] = value
 
     with open('agent.cfg', 'w') as configfile:
         config.write(configfile)
