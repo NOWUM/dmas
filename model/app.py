@@ -6,8 +6,9 @@ import time as tme
 import pandas as pd
 import pika
 from flask import Flask, render_template, request
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 import requests
+import socket
 
 
 # model modules
@@ -26,6 +27,9 @@ pd.set_option('mode.chained_assignment', None)                                 #
 gridView = GridView()                                                          # initialize grid view
 config = configparser.ConfigParser()                                           # read config file
 config.read('app.cfg')
+
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
 
 app = Flask(__name__)                                                          # initialize App
 cors = CORS(app, resources={r"*": {"origins": "*"}})
@@ -273,7 +277,7 @@ if __name__ == "__main__":
         if config.getboolean('Configuration', 'Local'):
             app.run(debug=False, port=5010, host='127.0.0.1')
         else:
-            app.run(debug=False, port=5010, host='149.201.196.100')
+            app.run(debug=False, port=5010, host=ip_address)
     except Exception as e:
         print(e)
     finally:

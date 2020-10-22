@@ -1,21 +1,24 @@
 import requests
 import os
 import configparser
+import socket
 
 
 if __name__ == "__main__":
     path = os.path.dirname(os.path.dirname(__file__)) + r'/model'    # change directory
     config = configparser.ConfigParser()                             # read config file
     config.read('app.cfg')
-
-    agent_conf = {}
-    for key, value in config.items():
-        if 'Agent' in key:
-            dict_ = {}
-            for k, v in value.items():
-                dict_.update({k: v})
-            x = key.split('-')[0]
-            agent_conf.update({x.lower(): dict_})
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
+    print(f"IP Address: {ip_address}")
+    # agent_conf = {}
+    # for key, value in config.items():
+    #     if 'Agent' in key:
+    #         dict_ = {}
+    #         for k, v in value.items():
+    #             dict_.update({k: v})
+    #         x = key.split('-')[0]
+    #         agent_conf.update({x.lower(): dict_})
 
     #database = config['Results']['database']
     #influx_ip = config['InfluxDB']['host']

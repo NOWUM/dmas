@@ -4,7 +4,11 @@ import subprocess
 import os
 from flask import Flask, render_template, request
 from flask_cors import CORS, cross_origin
+import socket
 
+
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -53,6 +57,6 @@ def build():
 
 if __name__ == "__main__":
 
-    app.run(debug=False, port=5000, host='127.0.0.1')
+    app.run(debug=False, port=5000, host=ip_address)
 
 
