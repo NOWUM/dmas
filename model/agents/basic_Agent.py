@@ -1,5 +1,5 @@
 # third party modules
-from sys import exit #fixes NameError: name 'exit' is not defined
+from sys import exit
 import os
 import pandas as pd
 import numpy as np
@@ -25,8 +25,8 @@ class agent:
         config = configparser.ConfigParser()                        # read config to initialize connection
         config.read(r'./app.cfg')
 
-        self.exchange = config['RabbitMQ']['Exchange']
-        self.agentSuffix = config['RabbitMQ']['AgentSuffix']
+        self.exchange = config['Configuration']['exchange']
+        self.agentSuffix = config['Configuration']['suffix']
 
         # declare meta data for each agent
         self.name = typ + '_%i' % plz + self.agentSuffix            # name
@@ -44,12 +44,11 @@ class agent:
                                 saveResult=0,                       # save adjustments in influx db
                                 nextDay=0)                          # preparation for coming day
 
-        database = config['Results']['Database']                    # name of simulation database
-        mongo_host = config['MongoDB']['Host']                      # server where mongodb runs
-        influx_host = config['InfluxDB']['Host']                    # server where influxdb runs
-        mqtt_host = config['RabbitMQ']['Host']                      # server where mqtt runs
+        database = config['Configuration']['database']              # name of simulation database
+        mongo_host = config['Configuration']['mongodb']             # server where mongodb runs
+        influx_host = config['Configuration']['influxdb']           # server where influxdb runs
+        mqtt_host = config['Configuration']['rabbitmq']             # server where mqtt runs
 
-        print('BasicAgent->Database: ', database)#TODO:remove debug print?
         # connections to simulation infrastructure
         self.connections = {
             'mongoDB' : mongoInterface(host=mongo_host, database=database, area=plz),   # connection mongodb
@@ -64,7 +63,7 @@ class agent:
         else:
             self.geo = self.connections['mongoDB'].getPosition()['geohash']
 
-        if config.getboolean('RabbitMQ', 'Local'):
+        if config.getboolean('Configuration', 'local'):
             con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, heartbeat=0))
             self.connections.update({'connectionMQTT': con})
         else:
@@ -80,7 +79,7 @@ class agent:
 
         # declare logging options
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.WARNING)
         fh = logging.FileHandler(r'./logs/%s.log' % self.name)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         fh.setFormatter(formatter)
@@ -167,7 +166,7 @@ class agent:
         # -----------------------------------------------------------------------------------------------------------
         if 'kill' in message:
             self.connections['influxDB'].influx.close()
-            self.connections['mongoDB'].close()
+            self.connections['mongoDB'].mongo.close()
             if not self.connections['connectionMQTT'].is_closed:
                 self.connections['connectionMQTT'].close()
             print('terminate area')

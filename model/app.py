@@ -46,18 +46,33 @@ def index():
     for key, value in config['Configuration'].items():
         if key != 'local':
             system_conf.update({key: value})
+        # if (key == 'mongodb' or key == 'influxdb' or key == 'rabbitmq') and value not in server_list:
+        #    server_list.append(value)
 
     # load config values Agents
     # -------------------------------------------------------
+    server_list = {}
     agent_conf = {}
     for key, value in config.items():
         if 'Agent' in key:
             dict_ = {}
             for k, v in value.items():
                 dict_.update({k: v})
+                if k == 'host' and v not in server_list:
+                    server_list.update({v: 'not available'})
             x = key.split('-')[0]
             agent_conf.update({x: dict_})
 
+
+    # check if simulation servers are running:
+    # -------------------------------------------------------
+    for server, _ in server_list.items():
+        try:
+            res = requests.get('http://' + server + ':5000/test')
+            if res.status_code == 200:
+                server_list.update({server: 'available'})
+        except Exception as e:
+            print(e)
     # get agents, which are logged in
     # -------------------------------------------------------
     mongo_connection = mongoCon(host=config['Configuration']['MongoDB'],

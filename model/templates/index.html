@@ -163,7 +163,13 @@
                             </div>
                             {% endfor %}
                         </form>
-                        <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit">
+                        <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit"><br><br>
+                        <h4> Agent Simulation Service</h4>
+                        <ul>
+                        {% for key, value in server_list.items() %}
+                            <li> {{key}}: {{value}} </li>
+                        {% endfor %}
+                        </ul>
                     </div>
                     <div class="col-6">
                         <h4>Configuration Server & Infrastructure</h4>
