@@ -142,7 +142,7 @@ def build_agents():
     # build agents
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
         key = typ + '_ip'
-        url = 'http://' + str(request.form[key]) + ':5000/build'
+        url = 'http://' + str(request.form[key]) + ':5010/build'
 
         key_s = typ + '_start'
         key_e = typ + '_end'
