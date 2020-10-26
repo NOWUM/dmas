@@ -23,7 +23,7 @@ class agent:
     def __init__(self, date, plz, typ='PWP'):
 
         config = configparser.ConfigParser()                        # read config to initialize connection
-        config.read(r'./app.cfg')
+        config.read(r'./web_app.cfg')
 
         self.exchange = config['Configuration']['exchange']
         self.agentSuffix = config['Configuration']['suffix']
@@ -56,12 +56,12 @@ class agent:
         }
 
         # check if area is valid
-        if self.connections['mongoDB'].getPosition() is None:
+        if self.connections['mongoDB'].get_position() is None:
             print('Number: %s is no valid area' % plz)
             print(' --> stopping %s_%s' % (typ, plz))
             exit()
         else:
-            self.geo = self.connections['mongoDB'].getPosition()['geohash']
+            self.geo = self.connections['mongoDB'].get_position()['geohash']
 
         if config.getboolean('Configuration', 'local'):
             con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, heartbeat=0))
@@ -165,6 +165,7 @@ class agent:
         # Terminate Agents
         # -----------------------------------------------------------------------------------------------------------
         if 'kill' in message:
+            self.connections['mongoDB'].logout(self.name)
             self.connections['influxDB'].influx.close()
             self.connections['mongoDB'].mongo.close()
             if not self.connections['connectionMQTT'].is_closed:

@@ -1,5 +1,5 @@
 import numpy as np
-from components.basic_EnergySystem import energySystem as es
+from components.energy_system import EnergySystem as es
 from pvlib.pvsystem import PVSystem
 from pvlib.location import Location
 from pvlib.modelchain import ModelChain

@@ -100,7 +100,7 @@ class MarketAgent(basicAgent):
             # next hour
             time += pd.DateOffset(hours=1)
 
-        self.connections['mongoDB'].setClearing(name='market', date=self.date)
+        self.connections['mongoDB'].set_market_status(name='market', date=self.date)
 
 
 if __name__ == "__main__":
@@ -111,6 +111,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
+        agent.connections['mongoDB'].logout(agent.name)
         agent.connections['influxDB'].influx.close()
         agent.connections['mongoDB'].mongo.close()
         if not agent.connections['connectionMQTT'].is_closed:

@@ -1,6 +1,6 @@
 from gurobipy import *
 import numpy as np
-from components.basic_EnergySystem import energySystem as es
+from components.energy_system import EnergySystem as es
 
 class storage_gurobi(es):
 

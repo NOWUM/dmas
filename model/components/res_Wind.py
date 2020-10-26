@@ -1,13 +1,13 @@
 import os
 from scipy import stats
 import numpy as np
-from components.basic_EnergySystem import energySystem
+from components.energy_system import EnergySystem
 from windpowerlib import WindTurbine, power_output, wind_speed, wind_turbine, temperature, ModelChain, power_curves
 import pandas as pd
 import numpy as np
 
 
-class wind_model(energySystem):
+class wind_model(EnergySystem):
 
     def __init__(self, turbine_type, hub_height=112, rotor_diameter=102,
                  t=np.arange(24), T=24, dt=1, power_curve=None):

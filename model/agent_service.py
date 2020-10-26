@@ -13,7 +13,7 @@ ip_address = socket.gethostbyname(hostname)
 app = Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 config = configparser.ConfigParser()
-config.read('agent.cfg')
+config.read('agent_service.cfg')
 path = os.path.dirname(os.path.dirname(__file__)) + r'/model'
 
 
@@ -33,7 +33,7 @@ def set_config():
     for key, value in content.items():
         config['Configuration'][key] = value
 
-    with open('agent.cfg', 'w') as configfile:
+    with open('agent_service.cfg', 'w') as configfile:
         config.write(configfile)
 
     return 'OK'

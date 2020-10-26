@@ -1,7 +1,7 @@
 import numpy as np
-from components.basic_EnergySystem import energySystem
+from components.energy_system import EnergySystem
 
-class bioMass_model(energySystem):
+class bioMass_model(EnergySystem):
 
     def __init__(self, t=np.arange(24), T=24, dt=1):  # Metainfo Zeit t, T, dt
         super().__init__(t, T, dt)

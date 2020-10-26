@@ -128,8 +128,8 @@
                     <ul class="navbar-nav">
                         {% for key, value in agents.items() %}
                         <li class="nav-item">
-                            <div style="text-align: center;">
-                                <img class="img-thumbnail" height="50" src="../static/{{key}}.png" width="50"><b> {{key}}: {{value}} </b><br><br>
+                            <div style="text-align: left;">
+                                <img class="img-thumbnail" height="50" src="../static/{{key}}.svg" width="50"><b> {{key}} connected: {{value}} </b> <br><br>
                             </div>
                         </li>
                         {% endfor %}
@@ -151,8 +151,8 @@
                             <div class="form-row">
                                 <div class="form-group col-1">
                                     <br>
-                                    <img class="img-thumbnail center" height="40" src="../static/{{key}}.png" width="40">
-                                    <br>
+                                    <img class="img-thumbnail center" height="40" src="../static/{{key}}.svg" width="40">
+                                     <br>
                                 </div>
                                 {% for name, attribute in value.items() %}
                                 <div class="form-group col-3">
@@ -164,12 +164,6 @@
                             {% endfor %}
                         </form>
                         <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit"><br><br>
-                        <h4> Agent Simulation Service</h4>
-                        <ul>
-                        {% for key, value in server_list.items() %}
-                            <li> {{key}}: {{value}} </li>
-                        {% endfor %}
-                        </ul>
                     </div>
                     <div class="col-6">
                         <h4>Configuration Server & Infrastructure</h4>

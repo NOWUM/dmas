@@ -10,7 +10,6 @@ from flask_cors import CORS
 import requests
 import socket
 
-
 # model modules
 from apps.misc_validData import write_valid_data, writeDayAheadError
 from interfaces.interface_Influx import InfluxInterface as influxCon
@@ -20,73 +19,34 @@ from apps.view_grid import GridView
 # 0. initialize variables
 # ---------------------------------------------------------------------------------------------------------------------
 
-path = os.path.dirname(os.path.dirname(__file__)) + r'/model'                  # change directory
-
-pd.set_option('mode.chained_assignment', None)                                 # ignore pd warnings
+path = os.path.dirname(os.path.dirname(__file__)) + r'/model'                  # change directory to cwd
 
 gridView = GridView()                                                          # initialize grid view
 config = configparser.ConfigParser()                                           # read config file
-config.read('app.cfg')
+config.read('web_app.cfg')
 
-hostname = socket.gethostname()
-ip_address = socket.gethostbyname(hostname)
+hostname = socket.gethostname()                                                # get computer name
+ip_address = socket.gethostbyname(hostname)                                    # get ip address
 
 app = Flask(__name__)                                                          # initialize App
-cors = CORS(app, resources={r"*": {"origins": "*"}})
-
+CORS(app, resources={r"*": {"origins": "*"}})
 
 # 1. methods for the web application
 # ---------------------------------------------------------------------------------------------------------------------
 @app.route('/')
 def index():
 
-    # load config values Infrastructure
-    # -------------------------------------------------------
-    system_conf = {}
-    for key, value in config['Configuration'].items():
-        if key != 'local':
-            system_conf.update({key: value})
-        # if (key == 'mongodb' or key == 'influxdb' or key == 'rabbitmq') and value not in server_list:
-        #    server_list.append(value)
+    # Step 1: Load config values to find and initialize the infrastructure (databases and MQTT)
+    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local'}
 
-    # load config values Agents
-    # -------------------------------------------------------
-    server_list = {}
-    agent_conf = {}
-    for key, value in config.items():
-        if 'Agent' in key:
-            dict_ = {}
-            for k, v in value.items():
-                dict_.update({k: v})
-                if k == 'host' and v not in server_list:
-                    server_list.update({v: 'not available'})
-            x = key.split('-')[0]
-            agent_conf.update({x: dict_})
+    # Step 2:Load config values to build the agents
+    agent_conf = {key.split('-')[0]: value for key, value in config.items() if 'Agent' in key}
 
-
-    # check if simulation servers are running:
-    # -------------------------------------------------------
-    for server, _ in server_list.items():
-        try:
-            res = requests.get('http://' + server + ':5000/test', timeout=0.5)
-            if res.status_code == 200:
-                server_list.update({server: 'available'})
-        except Exception as e:
-            print(e)
-    # get agents, which are logged in
-    # -------------------------------------------------------
+    # Step 3: get agents, which are logged in
     mongo_connection = mongoCon(host=config['Configuration']['MongoDB'],
                                 database=config['Configuration']['Database'])
-    agent_ids = mongo_connection.status.find().distinct('_id')
+    agents = mongo_connection.get_agents()
     mongo_connection.mongo.close()
-
-    agents = {}
-    for typ in ['PWP', 'RES', 'DEM', 'STR', 'NET', 'MRK']:
-        counter = 0
-        for id in agent_ids:
-            if typ == id.split('_')[0]:
-                counter += 1
-        agents.update({typ: counter})
 
     return render_template('index.html', **locals())
 
@@ -94,15 +54,13 @@ def index():
 @app.route('/change_config', methods=['POST'])
 def change_config():
 
-    # change configurations
-    # ----------------------------------------------------------------
+    # Step 1: change configurations
     for key, value in request.form.to_dict().items():
         config['Configuration'][key] = value
-    with open('app.cfg', 'w') as configfile:
+    with open('web_app.cfg', 'w') as configfile:
         config.write(configfile)
 
-    # delete and clean up databases for new simulation
-    # ----------------------------------------------------------------
+    # Step 2: delete and clean up databases for new simulation
     if config.getboolean('Configuration', 'Reset'):
         # clean influxdb
         influx_connection = influxCon(host=config['Configuration']['influxDB'],
@@ -128,36 +86,23 @@ def change_config():
 @app.route('/build', methods=['POST'])
 def build_agents():
 
-    system_conf = {}
-    for key, value in config['Configuration'].items():
-        if key != 'suffix' and key != 'local':
-            system_conf.update({key: value})
+    # Step 1: get system configuration
+    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local'}
 
-    # set agent configs
+    # Step 2: publish system configuration to server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
-        key = typ + '_ip'
-        url = 'http://' + str(request.form[key]) + ':5000/config'
-        requests.post(url, json=system_conf,  timeout=0.5)
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/config', json=system_conf,  timeout=0.5)
 
-    # build agents
+    # Step 3: build agents on server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
-        key = typ + '_ip'
-        url = 'http://' + str(request.form[key]) + ':5000/build'
+        data = {'typ': typ,
+                'start': int(request.form[typ + '_start']),
+                'end': int(request.form[typ + '_end'])}
 
-        key_s = typ + '_start'
-        key_e = typ + '_end'
+        if typ == 'net' or typ == 'mrk':
+            data.update({'start': 0})
 
-        if typ != 'net' and typ != 'mrk':
-            data = {'typ':         typ,
-                    'start':       int(request.form[key_s]),
-                    'end':         int(request.form[key_e])}
-        else:
-
-            data = {'typ':         typ,
-                    'start':       0,
-                    'end':         int(request.form[key_e] == 'true')}
-
-        requests.post(url, json=data, timeout=0.5)
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/build', json=data, timeout=0.5)
 
     return 'OK'
 
@@ -166,9 +111,7 @@ def build_agents():
 def get_power_flow():
     try:
         if request.method == 'POST':
-            date = request.form['start']
-            hour = int(request.form['hour'])
-            fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
+            fig = gridView.get_plot(date=pd.to_datetime(request.form['start']), hour=int(request.form['hour']))
             return render_template('tmp.html', plot=fig)
         else:
             fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=0)
@@ -181,8 +124,8 @@ def get_power_flow():
 
 @app.route('/run', methods=['POST'])
 def run():
-    # start simulation for start till end
-    # --------------------------------------------------------------
+
+    # Step 0: start simulation for start till end
     start = pd.to_datetime(request.form['start'])
     end = pd.to_datetime(request.form['end'])
     print('starts simulation from %s to %s: ' % (start.date(), end.date()))
@@ -192,23 +135,16 @@ def run():
 
 def simulation(start, end, valid=True):
 
-    database = config['Results']['Database']
+    # Step 1: connect to databases and mqtt
+    database = config['Configuration']['database']
+    mongo_connection = mongoCon(host=config['Configuration']['mongodb'], database=database)
+    influx_connection = influxCon(host=config['Configuration']['influxdb'], database=database)
 
-    # connection to databases
-    # --------------------------------------------------------------
-    mongo_connection = mongoCon(host=config['MongoDB']['Host'],
-                                database=config['Results']['Database'])
-    influx_connection = influxCon(host=config['InfluxDB']['Host'],
-                                  database=config['Results']['Database'])
+    rabbitmq_ip = config['Configuration']['rabbitmq']
+    rabbitmq_exchange = config['Configuration']['exchange']
 
-    # connection to MQTT
-    # --------------------------------------------------------------
-    rabbitmq_ip = config['RabbitMQ']['Host']                            # host IP
-    rabbitmq_exchange = config['RabbitMQ']['Exchange']                  # exchange name
-
-    # check if rabbitmq runs local and choose the right login method
-    # --------------------------------------------------------------
-    if config.getboolean('RabbitMQ', 'Local'):
+    # Step 2: check if rabbitmq runs local and choose the right login method
+    if config.getboolean('Configuration', 'Local'):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0))
     else:
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
@@ -217,58 +153,53 @@ def simulation(start, end, valid=True):
     send = connection.channel()  # declare Market Exchange
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
 
-    # delete and clean up databases for new simulation
-    # ----------------------------------------------------------------
-    if config.getboolean('Results', 'Delete'):
+    # Step 3: delete and clean up databases for new simulation
+    if config.getboolean('Configuration', 'Reset'):
         # clean influxdb
+        influx_connection = influxCon(host=config['Configuration']['influxDB'],
+                                      database=config['Configuration']['Database'])
         try:
-            influx_connection.influx.drop_database(request.form['result_db'])
+            influx_connection.influx.drop_database(config['Configuration']['Database'])
         except Exception as e:
             print(e)
-        influx_connection.influx.create_database(request.form['result_db'])
-        influx_connection.influx.create_retention_policy(name=request.form['result_db'] + '_pol', duration='INF',
-                                                         shard_duration='1d', replication=1)
+        influx_connection.influx.create_database(config['Configuration']['Database'])
+        influx_connection.influx.create_retention_policy(name=config['Configuration']['Database'] + '_pol',
+                                                         duration='INF', shard_duration='1d', replication=1)
         # clean mongodb
+        mongo_connection = mongoCon(host=config['Configuration']['mongoDB'],
+                                    database=config['Configuration']['Database'])
         for name in mongo_connection.orderDB.list_collection_names():
             mongo_connection.orderDB.drop_collection(name)
 
-    # generate weather data for simulation time period
-    # ----------------------------------------------------------------
+    # Step 4: generate weather data for simulation time period
     influx_connection.generate_weather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
 
-    # write valid data to measure the simulation quality
-    # ----------------------------------------------------------------
+    # Step 5: write valid data to measure the simulation quality
     if valid:
         print('write validation data')
         write_valid_data(database, 0, start, end)
         write_valid_data(database, 1, start, end)
         write_valid_data(database, 2, start, end)
 
-    # run simulation for each day
-    # ----------------------------------------------------------------
+    # Step 6: run simulation for each day
     for date in pd.date_range(start=start, end=end, freq='D'):
 
-        mongo_connection.orderDB[str(date.date)]
 
         try:
             start_time = tme.time()                                 # timestamp to measure simulation time
             # 1.Step: Run optimization for dayAhead Market
-            # -------------------------------------------------------
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='opt_dayAhead ' + str(date))
 
             # 2. Step: Run Market Clearing
-            # -------------------------------------------------------
             tme.sleep(5)                                            # wait 5 seconds before starting dayAhead clearing
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='dayAhead_clearing ' + str(date))
-            while not mongoCon.getClearing(date):                   # check if clearing done
+            while not mongoCon.get_market_status(date):                   # check if clearing done
                 tme.sleep(1)
 
             # 3. Step: Run Power Flow calculation
-            # -------------------------------------------------------
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='grid_calc ' + str(date))
 
             # 4. Step: Publish Market Results
-            # -------------------------------------------------------
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='result_dayAhead ' + str(date))
             # if valid:
             #     writeDayAheadError(database, date)

@@ -28,16 +28,16 @@ class DemAgent(basicAgent):
         self.portfolio = DemPort()
 
         # Construction of the prosumer with PV and battery
-        for key, value in self.connections['mongoDB'].getPVBatteries().items():
+        for key, value in self.connections['mongoDB'].get_pv_batteries().items():
             self.portfolio.add_energy_system('PvBat' + str(key), {'PvBat' + str(key): value})
         self.logger.info('Prosumer PV-Bat added')
 
         # Construction Consumer with PV
-        for key, value in self.connections['mongoDB'].getPVs().items():
+        for key, value in self.connections['mongoDB'].get_pvs().items():
             self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
         self.logger.info('Consumer PV added')
 
-        demand = self.connections['mongoDB'].getDemand()
+        demand = self.connections['mongoDB'].get_demand()
 
         # Construction Standard Consumer H0
         name = 'plz_' + str(plz) + '_h0'
@@ -112,7 +112,7 @@ class DemAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=bid_orders)
+        self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=bid_orders)
 
         self.performance['sendOrders'] = tme.time() - start_time
 
@@ -186,6 +186,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
+        agent.connections['mongoDB'].logout(agent.name)
         agent.connections['influxDB'].influx.close()
         agent.connections['mongoDB'].mongo.close()
         if not agent.connections['connectionMQTT'].is_closed:
