@@ -4,7 +4,6 @@ from apps.misc_Dummies import createSaisonDummy
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
-from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from warnings import simplefilter
 simplefilter(action='ignore', category=FutureWarning)
@@ -20,7 +19,8 @@ class annFrcst:
 
         # initialize neural network and corresponding scaler
         self.model = MLPRegressor(hidden_layer_sizes=(15, 15,), activation='identity',
-                                  solver='adam', learning_rate_init=0.02, shuffle=False, max_iter=200)
+                                  solver='adam', learning_rate_init=0.02, shuffle=False, max_iter=600,
+                                  early_stopping=True)
         self.scaler = MinMaxScaler()
 
         # intput data for neural network
@@ -58,7 +58,6 @@ class annFrcst:
         # collect output data
         self.mcpMatrix = np.concatenate((self.mcpMatrix, prc.reshape((-1, 24))))
 
-    @ignore_warnings(category=ConvergenceWarning)
     def fit_function(self):
         x = np.concatenate((self.demMatrix, self.radMatrix, self.wndMatrix, self.tmpMatrix,     # Step 0: load (build) data
                             self.prc_1Matrix, self.prc_7Matrix, self.dummieMatrix), axis=1)

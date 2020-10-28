@@ -1,5 +1,7 @@
 # third party modules
+from sys import exit
 import os
+import argparse
 import time as tme
 import pandas as pd
 import numpy as np
@@ -8,6 +10,12 @@ import pypsa
 # model modules
 from agents.basic_Agent import agent as basicAgent
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--plz', type=int, required=False, default=24, help='PLZ-Agent')
+    return parser.parse_args()
 
 
 class NetAgent(basicAgent):
@@ -25,7 +33,7 @@ class NetAgent(basicAgent):
         transformers = pd.read_csv(r'./data/Grid_Trafos.csv', sep=';', decimal=',', index_col=0)
 
         self.bus_names = buses['name'].to_numpy()
-        self.area_num = pd.read_excel(r'./data/InfoGeo.xlsx', index_col=0)
+        self.area_num = pd.read_csv(r'./data/Ref_GeoInfo.csv', index_col=0)
         self.area_num = self.area_num['PLZ'].to_numpy(dtype=int)
 
         # add nodes to network
@@ -162,6 +170,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
+        agent.connections['mongoDB'].logout(agent.name)
         agent.connections['influxDB'].influx.close()
         agent.connections['mongoDB'].mongo.close()
         if not agent.connections['connectionMQTT'].is_closed:

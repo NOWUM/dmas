@@ -1,4 +1,5 @@
 # third party modules
+from sys import exit
 import time as tme
 import os
 import argparse
@@ -27,7 +28,7 @@ class PwpAgent(basicAgent):
         self.portfolio = PwpPort(gurobi=True, T=24)
 
         # Construction power plants
-        for key, value in self.connections['mongoDB'].getPowerPlants().items():
+        for key, value in self.connections['mongoDB'].get_power_plants().items():
             if value['maxPower'] > 1:
                 self.portfolio.add_energy_system(key, {key: value})
                 self.portfolio.capacities['capacity%s' % value['fuel'].capitalize()] += value['maxPower']
@@ -186,7 +187,7 @@ class PwpAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=order_book)
+        self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=order_book)
 
         self.performance['sendOrders'] = tme.time() - start_time
 
@@ -261,21 +262,13 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
-    #results = agent.optimize_dayAhead()
-    # agent.optimize_dayAhead()
-    #
-    # legend = []
-    # for key, value in results.items():
-    #     plt.plot(value[0])
-    #     legend.append(key)
-    # plt.legend(legend)
-
     agent.connections['mongoDB'].login(agent.name, False)
     try:
         agent.run()
     except Exception as e:
         print(e)
     finally:
+        agent.connections['mongoDB'].logout(agent.name)
         agent.connections['influxDB'].influx.close()
         agent.connections['mongoDB'].mongo.close()
         if not agent.connections['connectionMQTT'].is_closed:

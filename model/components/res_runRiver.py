@@ -1,9 +1,9 @@
 import numpy as np
-from components.basic_EnergySystem import energySystem
+from components.energy_system import EnergySystem
 import statsmodels.api as sm
 
 
-class runRiver_model(energySystem):
+class runRiver_model(EnergySystem):
 
     def __init__(self, t=np.arange(24), T=24, dt=1):  # Metainfo Zeit t, T, dt
         super().__init__(t, T, dt)

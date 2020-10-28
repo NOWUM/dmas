@@ -1,4 +1,5 @@
 # third party modules
+from sys import exit
 import time as tme
 import os
 import argparse
@@ -27,14 +28,14 @@ class ResAgent(basicAgent):
         self.portfolio = ResPort()
 
         # Construction Windenergy
-        for key, value in self.connections['mongoDB'].getWind().items():
+        for key, value in self.connections['mongoDB'].get_wind_turbines().items():
             self.portfolio.capacities['capacityWind'] += value['maxPower']
             self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('Windenergy added')
         self.portfolio.mergeWind()
 
         # Construction of the pv systems (free area)
-        for key, value in self.connections['mongoDB'].getPvParks().items():
+        for key, value in self.connections['mongoDB'].get_pv_parks().items():
             if value['typ'] != 'PV70':
                 self.portfolio.capacities['capacitySolar'] += value['maxPower']/10**3
             else:
@@ -43,19 +44,19 @@ class ResAgent(basicAgent):
         self.logger.info('PV(free area) Generation added')
 
         # Construction of the pv systems (h0)
-        for key, value in self.connections['mongoDB'].getPVs().items():
+        for key, value in self.connections['mongoDB'].get_pvs().items():
             self.portfolio.capacities['capacitySolar'] += value['PV']['maxPower']/10**3 * value['EEG']
             self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
         self.logger.info('PV(H0) Generation added')
 
         # Construction Run River
-        for key, value in self.connections['mongoDB'].getRunRiver().items():
+        for key, value in self.connections['mongoDB'].get_runriver_systems().items():
             self.portfolio.add_energy_system('runRiver', {'runRiver': value})
             self.portfolio.capacities['capacityWater'] += value['maxPower']/10**3
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
-        for key, value in self.connections['mongoDB'].getBioMass().items():
+        for key, value in self.connections['mongoDB'].get_biomass_systems().items():
             self.portfolio.add_energy_system('bioMass', {'bioMass': value})
             self.portfolio.capacities['capacityBio'] += value['maxPower']/10**3
         self.logger.info('Biomass Power Plants added')
@@ -127,7 +128,7 @@ class ResAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=ask_orders)
+        self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=ask_orders)
 
         self.performance['sendOrders'] = tme.time() - start_time
 
@@ -205,6 +206,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
+        agent.connections['mongoDB'].logout(agent.name)
         agent.connections['influxDB'].influx.close()
         agent.connections['mongoDB'].mongo.close()
         if not agent.connections['connectionMQTT'].is_closed:

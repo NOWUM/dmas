@@ -28,7 +28,7 @@ class StrAgent(basicAgent):
         self.portfolio = PwpPort(gurobi=True, T=24)
 
         # Construction storages
-        for key, value in self.connections['mongoDB'].getStorages().items():
+        for key, value in self.connections['mongoDB'].get_storages().items():
             self.portfolio.capacities['capacityWater'] += value['P+_Max']
             self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('Storages added')
@@ -106,7 +106,7 @@ class StrAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        self.connections['mongoDB'].setDayAhead(name=self.name, date=self.date, orders=order_book)
+        self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=order_book)
 
         self.performance['sendOrders'] = tme.time() - start_time
 
@@ -203,6 +203,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     finally:
+        agent.connections['mongoDB'].logout(agent.name)
         agent.connections['influxDB'].influx.close()
         agent.connections['mongoDB'].mongo.close()
         if not agent.connections['connectionMQTT'].is_closed:

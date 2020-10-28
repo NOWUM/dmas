@@ -1,7 +1,7 @@
 import numpy as np
-from components.dem_PvBat import pvbat_model as pvBattery
+from components.dem_PvBat import PvBatModel as pvBattery
 from components.dem_PvSolo import pv_model as pvSolo
-from components.dem_Consumer import h0_model, g0_model, rlm_model
+from components.consumers import H0Model, G0Model, RlmModel
 from aggregation.basic_Port import PortfolioModel
 
 
@@ -46,22 +46,22 @@ class DemPort(PortfolioModel):
                                           refSLP=self.Ref_H0)))                         # Ref. Profil für SLP-Strom
         # Standard Haushalt
         elif data['typ'] == 'H0':
-            data.update(dict(model=h0_model(t=self.t,                                   # Array mit Zeitschritten
-                                            T=self.T,                                   # Anzahl an Zeitschritten
-                                            dt=self.dt,                                 # Zeitschrittlänge
-                                            refSLP=self.Ref_H0)))                       # Ref. Profil für SLP-Strom H0
+            data.update(dict(model=H0Model(t=self.t,  # Array mit Zeitschritten
+                                           T=self.T,  # Anzahl an Zeitschritten
+                                           dt=self.dt,  # Zeitschrittlänge
+                                           refSLP=self.Ref_H0)))                       # Ref. Profil für SLP-Strom H0
         # Standard Gewerbe
         elif data['typ'] == 'G0':
-            data.update(dict(model=g0_model(t=self.t,                                   # Array mit Zeitschritten
-                                            T=self.T,                                   # Anzahl an Zeitschritten
-                                            dt=self.dt,                                 # Zeitschrittlänge
-                                            refSLP=self.Ref_G0)))                       # Ref. Profil für SLP-Strom G0
+            data.update(dict(model=G0Model(t=self.t,  # Array mit Zeitschritten
+                                           T=self.T,  # Anzahl an Zeitschritten
+                                           dt=self.dt,  # Zeitschrittlänge
+                                           refSLP=self.Ref_G0)))                       # Ref. Profil für SLP-Strom G0
         # Standard Industrie
         elif data['typ'] == 'RLM':
-            data.update(dict(model=rlm_model(t=self.t,                                  # Array mit Zeitschritten
-                                             T=self.T,                                  # Anzahl an Zeitschritten
-                                             dt=self.dt,                                # Zeitschrittlänge
-                                             refSLP=self.Ref_Rlm)))                     # Ref. Profil für SLP-Strom RLM
+            data.update(dict(model=RlmModel(t=self.t,  # Array mit Zeitschritten
+                                            T=self.T,  # Anzahl an Zeitschritten
+                                            dt=self.dt,  # Zeitschrittlänge
+                                            refSLP=self.Ref_Rlm)))                     # Ref. Profil für SLP-Strom RLM
 
         self.energySystems.update(energysystem)
 
