@@ -24,7 +24,7 @@ path = os.path.dirname(os.path.dirname(__file__)) + r'/model'                  #
 gridView = GridView()                                                          # initialize grid view
 config = configparser.ConfigParser()                                           # read config file
 config.read('web_app.cfg')
-
+market_port = config['Configuration']['marketport']
 hostname = socket.gethostname()                                                # get computer name
 ip_address = socket.gethostbyname(hostname)                                    # get ip address
 
@@ -37,7 +37,7 @@ CORS(app, resources={r"*": {"origins": "*"}})
 def index():
 
     # Step 1: Load config values to find and initialize the infrastructure (databases and MQTT)
-    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local'}
+    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local'}#TODO: exclude 'marketport' to not show in Web App?  ( and key != 'marketport' )
 
     # Step 2:Load config values to build the agents
     agent_conf = {key.split('-')[0]: value for key, value in config.items() if 'Agent' in key}
@@ -91,7 +91,7 @@ def build_agents():
 
     # Step 2: publish system configuration to server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
-        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/config', json=system_conf,  timeout=0.5)
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':7777/config', json=system_conf,  timeout=0.5)#TODO: set port (default:5000)?
 
     # Step 3: build agents on server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
@@ -102,7 +102,7 @@ def build_agents():
         if typ == 'net' or typ == 'mrk':
             data.update({'start': 0})
 
-        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/build', json=data, timeout=0.5)
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':7777/build', json=data, timeout=0.5)#TODO: set port (default:5000)?
 
     return 'OK'
 
@@ -130,6 +130,25 @@ def run():
     end = pd.to_datetime(request.form['end'])
     print('starts simulation from %s to %s: ' % (start.date(), end.date()))
     simulation(start, end)
+    return 'OK'
+
+@app.route('/kill_agents', methods=['POST'])
+def kill_agents():
+    # Kill Agents
+    print('killing Agents...')
+    rabbitmq_ip = config['Configuration']['rabbitmq']
+    rabbitmq_exchange = config['Configuration']['exchange']
+    # Step 2: check if rabbitmq runs local and choose the right login method
+    if config.getboolean('Configuration', 'local'):
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0))
+    else:
+        credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0,
+                                                                       credentials=credentials))
+    send = connection.channel()  # declare Market Exchange
+    send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
+    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ')
+    send.close()
     return 'OK'
 
 
@@ -184,7 +203,6 @@ def simulation(start, end, valid=True):
     # Step 6: run simulation for each day
     for date in pd.date_range(start=start, end=end, freq='D'):
 
-
         try:
             start_time = tme.time()                                 # timestamp to measure simulation time
             # 1.Step: Run optimization for dayAhead Market
@@ -221,9 +239,9 @@ if __name__ == "__main__":
 
     try:
         if config.getboolean('Configuration', 'local'):
-            app.run(debug=False, port=5010, host='127.0.0.1')
+            app.run(debug=False, port=market_port, host='127.0.0.1')
         else:
-            app.run(debug=False, port=5010, host=ip_address)
+            app.run(debug=False, port=market_port, host=ip_address)
     except Exception as e:
         print(e)
     finally:
