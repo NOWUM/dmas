@@ -91,7 +91,7 @@ def build_agents():
 
     # Step 2: publish system configuration to server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
-        requests.post('http://' + str(request.form[typ + '_ip']) + ':7777/config', json=system_conf,  timeout=0.5)#TODO: set port (default:5000)?
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/config', json=system_conf,  timeout=0.5)#TODO: set port (default:5000)?
 
     # Step 3: build agents on server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
@@ -102,7 +102,7 @@ def build_agents():
         if typ == 'net' or typ == 'mrk':
             data.update({'start': 0})
 
-        requests.post('http://' + str(request.form[typ + '_ip']) + ':7777/build', json=data, timeout=0.5)#TODO: set port (default:5000)?
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/build', json=data, timeout=0.5)#TODO: set port (default:5000)?
 
     return 'OK'
 
