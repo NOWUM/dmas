@@ -43,8 +43,8 @@ def index():
     agent_conf = {key.split('-')[0]: value for key, value in config.items() if 'Agent' in key}
 
     # Step 3: get agents, which are logged in
-    mongo_connection = mongoCon(host=config['Configuration']['MongoDB'],
-                                database=config['Configuration']['Database'])
+    mongo_connection = mongoCon(host=config['Configuration']['mongodb'],
+                                database=config['Configuration']['database'])
     agents = mongo_connection.get_agents()
     mongo_connection.mongo.close()
 
@@ -61,21 +61,21 @@ def change_config():
         config.write(configfile)
 
     # Step 2: delete and clean up databases for new simulation
-    if config.getboolean('Configuration', 'Reset'):
+    if config.getboolean('Configuration', 'reset'):
         # clean influxdb
-        influx_connection = influxCon(host=config['Configuration']['influxDB'],
-                                      database=config['Configuration']['Database'])
+        influx_connection = influxCon(host=config['Configuration']['influxdb'],
+                                      database=config['Configuration']['database'])
         try:
-            influx_connection.influx.drop_database(config['Configuration']['Database'])
+            influx_connection.influx.drop_database(config['Configuration']['database'])
         except Exception as e:
             print(e)
-        influx_connection.influx.create_database(config['Configuration']['Database'])
-        influx_connection.influx.create_retention_policy(name=config['Configuration']['Database'] + '_pol',
+        influx_connection.influx.create_database(config['Configuration']['database'])
+        influx_connection.influx.create_retention_policy(name=config['Configuration']['database'] + '_pol',
                                                          duration='INF', shard_duration='1d', replication=1)
         influx_connection.influx.close()
         # clean mongodb
-        mongo_connection = mongoCon(host=config['Configuration']['mongoDB'],
-                                    database=config['Configuration']['Database'])
+        mongo_connection = mongoCon(host=config['Configuration']['mongodb'],
+                                    database=config['Configuration']['database'])
         for name in mongo_connection.orderDB.list_collection_names():
             mongo_connection.orderDB.drop_collection(name)
         mongo_connection.mongo.close()
@@ -144,7 +144,7 @@ def simulation(start, end, valid=True):
     rabbitmq_exchange = config['Configuration']['exchange']
 
     # Step 2: check if rabbitmq runs local and choose the right login method
-    if config.getboolean('Configuration', 'Local'):
+    if config.getboolean('Configuration', 'local'):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0))
     else:
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
@@ -154,20 +154,20 @@ def simulation(start, end, valid=True):
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
 
     # Step 3: delete and clean up databases for new simulation
-    if config.getboolean('Configuration', 'Reset'):
+    if config.getboolean('Configuration', 'reset'):
         # clean influxdb
-        influx_connection = influxCon(host=config['Configuration']['influxDB'],
-                                      database=config['Configuration']['Database'])
+        influx_connection = influxCon(host=config['Configuration']['influxdb'],
+                                      database=config['Configuration']['database'])
         try:
-            influx_connection.influx.drop_database(config['Configuration']['Database'])
+            influx_connection.influx.drop_database(config['Configuration']['database'])
         except Exception as e:
             print(e)
-        influx_connection.influx.create_database(config['Configuration']['Database'])
-        influx_connection.influx.create_retention_policy(name=config['Configuration']['Database'] + '_pol',
+        influx_connection.influx.create_database(config['Configuration']['database'])
+        influx_connection.influx.create_retention_policy(name=config['Configuration']['database'] + '_pol',
                                                          duration='INF', shard_duration='1d', replication=1)
         # clean mongodb
-        mongo_connection = mongoCon(host=config['Configuration']['mongoDB'],
-                                    database=config['Configuration']['Database'])
+        mongo_connection = mongoCon(host=config['Configuration']['mongodb'],
+                                    database=config['Configuration']['database'])
         for name in mongo_connection.orderDB.list_collection_names():
             mongo_connection.orderDB.drop_collection(name)
 
@@ -220,7 +220,7 @@ def simulation(start, end, valid=True):
 if __name__ == "__main__":
 
     try:
-        if config.getboolean('Configuration', 'Local'):
+        if config.getboolean('Configuration', 'local'):
             app.run(debug=False, port=5010, host='127.0.0.1')
         else:
             app.run(debug=False, port=5010, host=ip_address)

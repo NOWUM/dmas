@@ -18,8 +18,8 @@ class GridView:
     def __init__(self):
         config = configparser.ConfigParser()
         config.read(r'./web_app.cfg')
-        database = config['Configuration']['Database']
-        influx_host = config['Configuration']['InfluxDB']
+        database = config['Configuration']['database']
+        influx_host = config['Configuration']['influxdb']
         self.influx_con=InfluxInterface(host=influx_host, database=database)
         self.buses = pd.read_csv(r'./data/Grid_Buses.csv', sep=';', decimal=',', index_col=0)
         self.lines = pd.read_csv(r'./data/Grid_Lines.csv', sep=';', decimal=',', index_col=0)
