@@ -37,7 +37,7 @@ CORS(app, resources={r"*": {"origins": "*"}})
 def index():
 
     # Step 1: Load config values to find and initialize the infrastructure (databases and MQTT)
-    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local'}#TODO: exclude 'marketport' to not show in Web App?  ( and key != 'marketport' )
+    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local' and key != 'marketport'}
 
     # Step 2:Load config values to build the agents
     agent_conf = {key.split('-')[0]: value for key, value in config.items() if 'Agent' in key}
@@ -95,12 +95,15 @@ def build_agents():
 
     # Step 3: build agents on server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
-        data = {'typ': typ,
-                'start': int(request.form[typ + '_start']),
-                'end': int(request.form[typ + '_end'])}
 
         if typ == 'net' or typ == 'mrk':
-            data.update({'start': 0})
+            data = {'typ': typ,
+                    'start': 0,
+                    'end': int(request.form[typ + '_end'] == 'true')}
+        else:
+            data = {'typ': typ,
+                    'start': int(request.form[typ + '_start']),
+                    'end': int(request.form[typ + '_end'])}
 
         requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/build', json=data, timeout=0.5)#TODO: set port (default:5000)?
 

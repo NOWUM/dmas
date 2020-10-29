@@ -46,10 +46,10 @@
             var mrk = true
 
             $("#build").click(function(){
-                if(Number($("#net_start").val()) == 0){
+                if(Number($("#NET_start").val()) == 0){
                     net = false
                 }
-                if(Number($("#mrk_start").val()) == 0){
+                if(Number($("#MRK_start").val()) == 0){
                     mrk = false
                 }
             });
@@ -80,7 +80,6 @@
                  rabbitmq:      $("#rabbitmq").val(),
                  exchange:      $("#exchange").val(),
                  suffix:        $("#suffix").val(),
-                 marketport:    $("#marketport").val(),
                  reset:         $("#reset").val()},
                  function(data){});});
 

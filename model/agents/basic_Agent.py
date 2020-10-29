@@ -64,7 +64,7 @@ class agent:
             self.geo = self.connections['mongoDB'].get_position()['geohash']
 
         if config.getboolean('Configuration', 'local'):
-            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, heartbeat=0))
+            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, heartbeat=0))#TODO: Heartbeat einfügen, der ausreichend hoch ist, sodass Agenten fertig rechnen können
             self.connections.update({'connectionMQTT': con})
         else:
             crd = pika.PlainCredentials('dMAS', 'dMAS2020')
