@@ -37,7 +37,7 @@ CORS(app, resources={r"*": {"origins": "*"}})
 def index():
 
     # Step 1: Load config values to find and initialize the infrastructure (databases and MQTT)
-    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local' and key != 'marketport'}
+    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local' and key != 'webport'}
 
     # Step 2:Load config values to build the agents
     agent_conf = {key.split('-')[0]: value for key, value in config.items() if 'Agent' in key}
@@ -48,6 +48,18 @@ def index():
     agents = mongo_connection.get_agents()
     mongo_connection.mongo.close()
 
+    # #TODO: Serverstatus abfragen -> gelöst in index.html
+    # #requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/config', json=system_conf, timeout=0.5)
+    # r = requests.get('http://149.201.88.150:5000/test')
+    # print('Status:',r.status_code)
+    #
+    # print(agent_conf)
+    # for key, value in agent_conf.items():
+    #     print(key)
+    #     for name, attribute in value.items():
+    #         print(name, attribute)
+    #         if name == 'host':
+    #             print('Host:', attribute)
 
     return render_template('index.html', **locals())
 
@@ -92,7 +104,7 @@ def build_agents():
 
     # Step 2: publish system configuration to server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
-        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/config', json=system_conf,  timeout=0.5)#TODO: set port (default:5000)?
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/config', json=system_conf,  timeout=0.5)
 
     # Step 3: build agents on server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
@@ -106,7 +118,7 @@ def build_agents():
                     'start': int(request.form[typ + '_start']),
                     'end': int(request.form[typ + '_end'])}
 
-        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/build', json=data, timeout=0.5)#TODO: set port (default:5000)?
+        requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/build', json=data, timeout=0.5)
 
     return 'OK'
 

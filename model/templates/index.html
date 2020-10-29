@@ -153,15 +153,34 @@
                         <form>
                             {% for key, value in agent_conf.items() %}
                             <div class="form-row">
-                                <div class="form-group col-1">
-                                    <br>
-                                    <img class="img-thumbnail center" height="40" src="../static/{{key}}.svg" width="40">
-                                     <br>
-                                </div>
+                                <div class="form-group col-1"><br><img class="img-thumbnail center" height="40" src="../static/{{key}}.svg" width="40"><br></div>
                                 {% for name, attribute in value.items() %}
-                                <div class="form-group col-3">
-                                    <label for="{{key}}_{{name}}">{{name}}:</label>
-                                    <input type="text" class="form-control form-control-sm" id="{{key}}_{{name}}" value={{attribute}}>
+                                <div class="form-group {% if name == 'host' %} col-5 {% else %} col-2 {% endif %}">
+                                    <div class="form-row"><label for="{{key}}_{{name}}">{{name}}:</label></div>
+                                    <div class="form-row">
+                                        <div class="col-9"><input type="text" class="form-control form-control-sm" id="{{key}}_{{name}}" value={{attribute}}></div>
+                                        <div class="col-2" id="host_{{key}}_{{name}}" align="center" {% if name == 'host' %} style="background:grey; margin-left: auto; margin-right: auto;"{% endif %}>
+                                            {% if name == 'host' %}
+                                            <script>
+                                                fetch("http://{{attribute}}:5000/test")
+                                                      .then(function (response) {
+                                                        return response;
+                                                      })
+                                                      .then(function (myResponse) {
+                                                        console.log('{{key}}_{{name}}','{{attribute}}',myResponse.status,myResponse.statusText);
+                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<div style="background:green;">'+myResponse.statusText+'</div>';
+                                                        document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'green' ;
+                                                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = myResponse.statusText;
+                                                      })
+                                                      .catch(function (error) {
+                                                        console.log("Error: " + error);
+                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<div style="width:100%; background:red;"> </div>';
+                                                        document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'red' ;
+                                                      });
+                                            </script>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                                 {% endfor %}
                             </div>
