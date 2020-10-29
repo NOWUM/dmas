@@ -1,27 +1,21 @@
 # third party modules
 import os
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 import numpy as np
 import pandas as pd
 
 # model modules
 from components.energy_system import EnergySystem as es
 from apps.slpP import slpGen as slpP
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 
 class H0Model(es):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1):
+    def __init__(self, t=np.arange(24), T=24, dt=1, e_el=3000):
         super().__init__(t, T, dt)
         # initialize standard h0 consumer attributes
-        self.date = pd.to_datetime('2018-01-01')
-        self.e_el = 3000
-        self.slpP = slpP(typ=0, refSLP=np.asarray(np.load(open(r'./data/Ref_H0.array','rb')), np.float32))
-
-
-    def set_parameter(self, date, e_el):
-        self.date = pd.to_datetime(date)
         self.e_el = e_el
+        self.slpP = slpP(typ=0, refSLP=np.asarray(np.load(open(r'./data/Ref_H0.array','rb')), np.float32))
 
     def optimize(self):
         # adjustment Due to the overestimated simultaneity in the SLP
@@ -33,22 +27,19 @@ class H0Model(es):
             demand = np.asarray([np.mean(demand[i:i+3]) for i in range(0,96,4)], np.float).reshape((-1,)) + base / 8760
 
         self.demand['power'] = demand
+        self.power = np.asarray(demand, np.float).reshape((-1,))
 
-        return demand
+        return self.power
 
 
 class G0Model(es):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1):
+    def __init__(self, t=np.arange(24), T=24, dt=1, e_el=3000):
         super().__init__(t, T, dt)
         # initialize standard h0 consumer attributes
         self.date = pd.to_datetime('2018-01-01')
-        self.e_el = 3000
-        self.slpP = slpP(typ=1, refSLP=np.asarray(np.load(open(r'./data/Ref_G0.array', 'rb')), np.float32))
-
-    def set_parameter(self, date, e_el):
-        self.date = pd.to_datetime(date)
         self.e_el = e_el
+        self.slpP = slpP(typ=1, refSLP=np.asarray(np.load(open(r'./data/Ref_G0.array', 'rb')), np.float32))
 
     def optimize(self):
         # adjustment Due to the overestimated simultaneity in the SLP
@@ -61,27 +52,24 @@ class G0Model(es):
                 (-1,)) + base / 8760
 
         self.demand['power'] = demand
+        self.power = np.asarray(demand, np.float).reshape((-1,))
 
-        return demand
+        return self.power
 
 
 class RlmModel(es):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1):
+    def __init__(self, t=np.arange(24), T=24, dt=1, e_el=3000):
         super().__init__(t, T, dt)
         # initialize standard h0 consumer attributes
         self.date = pd.to_datetime('2018-01-01')
-        self.e_el = 3000
-        self.slpP = slpP(typ=1, refSLP=np.asarray(np.load(open(r'./data/Ref_RLM.array', 'rb')), np.float32))
-
-    def set_parameter(self, date, e_el):
-        self.date = pd.to_datetime(date)
         self.e_el = e_el
+        self.slpP = slpP(typ=1, refSLP=np.asarray(np.load(open(r'./data/Ref_RLM.array', 'rb')), np.float32))
 
     def optimize(self):
         # adjustment Due to the overestimated simultaneity in the SLP
-        power = self.p_el * 0.2
-        base = self.p_el * 0.8
+        power = self.e_el * 0.2
+        base = self.e_el * 0.8
 
         demand = self.slpP.get_profile(self.date.dayofyear, self.date.dayofweek, power).reshape((96, 1))
         if self.T == 24:
@@ -89,8 +77,9 @@ class RlmModel(es):
                 (-1,)) + base / 8760
 
         self.demand['power'] = demand
+        self.power = np.asarray(demand, np.float).reshape((-1,))
 
-        return demand
+        return self.power
 
 
 if __name__ == "__main__":

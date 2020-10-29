@@ -23,9 +23,9 @@ class agent:
     def __init__(self, date, plz, typ='PWP'):
 
         config = configparser.ConfigParser()                        # read config to initialize connection
-        config.read(r'./web_app.cfg')
+        config.read(r'./agent_service.cfg')
 
-        self.exchange = config['Configuration']['exchange']
+        exchange = config['Configuration']['exchange']
         self.agentSuffix = config['Configuration']['suffix']
 
         # declare meta data for each agent
@@ -72,9 +72,9 @@ class agent:
             self.connections.update({'connectionMQTT': con})
 
         receive = con.channel()
-        receive.exchange_declare(exchange=self.exchange, exchange_type='fanout')
+        receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         result = receive.queue_declare(queue=self.name, exclusive=True)
-        receive.queue_bind(exchange=self.exchange, queue=result.method.queue)
+        receive.queue_bind(exchange=exchange, queue=result.method.queue)
         self.connections.update({'exchangeMQTT': receive})
 
         # declare logging options

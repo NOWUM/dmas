@@ -8,7 +8,7 @@ import numpy as np
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.pwp_Port import PwpPort
+from aggregation.portfolio_powerPlant import PwpPort
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -35,7 +35,7 @@ class PwpAgent(basicAgent):
         self.logger.info('Power Plants added')
 
         # If there are no power systems, terminate the agent
-        if len(self.portfolio.energySystems) == 0:
+        if len(self.portfolio.energy_systems) == 0:
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
@@ -53,10 +53,10 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
-        demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
+        # demand = self.demand_forecast(self.date)                     # demand forecast dayAhead
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
         dayAhead_prc = prices['power']
-        self.performance['initModel'] = tme.time() - start_time
+        self.performance['initModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 2: optimization --> returns power series in [MW]
         # -------------------------------------------------------------------------------------------------------------
@@ -68,13 +68,13 @@ class PwpAgent(basicAgent):
             if offset == 'max':
                 prices.update({'power': dayAhead_prc})
                 self.portfolio.set_parameter(self.date, weather, prices)
-                self.portfolio.build_model(max_=True)
+                self.portfolio.build_model(max_power=True)
             else:
                 prices.update({'power': dayAhead_prc + offset})
                 self.portfolio.set_parameter(self.date, weather, prices)
                 self.portfolio.build_model()
             self.portfolio.optimize()
-            for key, value in self.portfolio.energySystems.items():
+            for key, value in self.portfolio.energy_systems.items():
                 results[offset].update({key: (value['model'].power,
                                               value['model'].emission,
                                               value['model'].fuel,
@@ -82,7 +82,7 @@ class PwpAgent(basicAgent):
             if offset == 0:
                 df = pd.DataFrame.from_dict(self.portfolio.generation)
 
-        self.performance['optModel'] = tme.time() - start_time
+        self.performance['optModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 3: save optimization results in influxDB
         # -------------------------------------------------------------------------------------------------------------
@@ -94,14 +94,14 @@ class PwpAgent(basicAgent):
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='optimize_dayAhead'))
 
-        self.performance['saveSchedule'] = tme.time() - start_time
+        self.performance['saveSchedule'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 4: build orders from optimization results
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         order_book = {}
-        for key, _ in self.portfolio.energySystems.items():
+        for key, _ in self.portfolio.energy_systems.items():
 
             last_power = np.zeros(24)
             block_number = 0
@@ -181,7 +181,7 @@ class PwpAgent(basicAgent):
 
                     last_power = value[0]
         # return results, order_book
-        self.performance['buildOrders'] = tme.time() - start_time
+        self.performance['buildOrders'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 5: send orders to market resp. to mongodb
         # -------------------------------------------------------------------------------------------------------------
@@ -209,25 +209,25 @@ class PwpAgent(basicAgent):
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
-        power_da, emission, fuel, _ = self.portfolio.fix_planing()
-        volume = self.portfolio.volume
-        self.performance['adjustResult'] = tme.time() - start_time
+        power_da, emission, fuel, _ = self.portfolio.optimize()
+        self.performance['adjustResult'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 7: save adjusted results in influxdb
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
-                        pd.DataFrame(data=dict(profit=profit, emissionAdjust=emission, fuelAdjust=fuel,
-                                               volume=volume))], axis=1)
+                        pd.DataFrame(data=dict(profit=profit, emissionAdjust=emission, fuelAdjust=fuel))], axis=1)
         df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='post_dayAhead'))
 
-        self.performance['saveResult'] = tme.time() - start_time
+        self.performance['saveResult'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('After DayAhead market adjustment completed')
         self.logger.info('Next day scheduling started')
+
+
 
         # Step 8: retrain forecast methods and learning algorithm
         # -------------------------------------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ class PwpAgent(basicAgent):
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
-        self.performance['nextDay'] = tme.time() - start_time
+        self.performance['nextDay'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         df = pd.DataFrame(data=self.performance, index=[self.date])
         self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))

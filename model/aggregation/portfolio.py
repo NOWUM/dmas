@@ -8,17 +8,8 @@ class PortfolioModel:
 
     def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
 
-        self.date = pd.to_datetime(date)                    # current day
-        self.energySystems = {}                             # energy systems in portfolio
-
-        # load reference profiles
-        # heat
-        self.Ref_Temperature = np.asarray(np.load(open(r'./data/Ref_Temp.array', 'rb')), np.float32)
-        self.Ref_factors = np.asarray(np.load(open(r'./data/Ref_Factors.array', 'rb')), np.float32)
-        # power
-        self.Ref_H0 = np.asarray(np.load(open(r'./data/Ref_H0.array', 'rb')), np.float32)
-        self.Ref_G0 = np.asarray(np.load(open(r'./data/Ref_G0.array', 'rb')), np.float32)
-        self.Ref_Rlm = np.asarray(np.load(open(r'./data/Ref_RLM.array', 'rb')), np.float32)
+        self.date = pd.to_datetime(date)                        # current day
+        self.energy_systems = {}                                # energy systems in portfolio
 
         # calculation and optimization parameters
         self.T = T                                          # number of steps
@@ -30,10 +21,10 @@ class PortfolioModel:
 
         # sum parameters
         self.power = np.zeros(T, dtype=np.float)            # sum power         [MW]
-        self.emission = np.zeros(T, dtype=np.float)         # sum emissions     [€]
-        self.fuel = np.zeros(T, dtype=np.float)             # sum fuel          [€]
-        self.volume = np.zeros(T, dtype=np.float)           # total volume      [MWh]
-        self.start = np.zeros(T, dtype=np.float)            # total start costs [€]
+        #self.emission = np.zeros(T, dtype=np.float)         # sum emissions     [€]
+        #self.fuel = np.zeros(T, dtype=np.float)             # sum fuel          [€]
+        #self.volume = np.zeros(T, dtype=np.float)           # total volume      [MWh]
+        #self.start = np.zeros(T, dtype=np.float)            # total start costs [€]
 
         # installed capacities [MW]
         self.capacities = dict(capacityBio=0.,
@@ -79,7 +70,7 @@ class PortfolioModel:
         pass
 
     # build model with constrains for optimization
-    def build_model(self, response=[]):
+    def build_model(self, response=None):
         pass
 
     def optimize(self):
