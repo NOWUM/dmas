@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = StrAgent(date='2018-01-01', plz=args.plz)
-    agent.connections['mongoDB'].login(agent.name, False)
+    agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
     except Exception as e:
