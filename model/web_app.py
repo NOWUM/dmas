@@ -24,7 +24,7 @@ path = os.path.dirname(os.path.dirname(__file__)) + r'/model'                  #
 gridView = GridView()                                                          # initialize grid view
 config = configparser.ConfigParser()                                           # read config file
 config.read('web_app.cfg')
-market_port = config['Configuration']['marketport']
+web_port = config['Configuration']['webport']
 hostname = socket.gethostname()                                                # get computer name
 ip_address = socket.gethostbyname(hostname)                                    # get ip address
 
@@ -47,6 +47,7 @@ def index():
                                 database=config['Configuration']['database'])
     agents = mongo_connection.get_agents()
     mongo_connection.mongo.close()
+
 
     return render_template('index.html', **locals())
 
@@ -242,9 +243,9 @@ if __name__ == "__main__":
 
     try:
         if config.getboolean('Configuration', 'local'):
-            app.run(debug=False, port=market_port, host='127.0.0.1')
+            app.run(debug=False, port=web_port, host='127.0.0.1')
         else:
-            app.run(debug=False, port=market_port, host=ip_address)
+            app.run(debug=False, port=web_port, host=ip_address)
     except Exception as e:
         print(e)
     finally:
