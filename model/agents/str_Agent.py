@@ -8,7 +8,7 @@ from scipy.stats import norm
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.portfolio_powerPlant import PwpPort
+from aggregation.portfolio_storage import StrPort
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -25,7 +25,7 @@ class StrAgent(basicAgent):
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = PwpPort(gurobi=True, T=24)
+        self.portfolio = StrPort(gurobi=True, T=24)
 
         # Construction storages
         for key, value in self.connections['mongoDB'].get_storages().items():
@@ -54,7 +54,7 @@ class StrAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
 
         weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
-        demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
+        # demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
         self.portfolio.set_parameter(self.date, weather, prices)
         self.portfolio.build_model()
@@ -145,7 +145,7 @@ class StrAgent(basicAgent):
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
-        power_da, _, _, _ = self.portfolio.fix_planing()
+        self.portfolio.optimize()
         volume = self.portfolio.volume
         self.performance['adjustResult'] = tme.time() - start_time
 

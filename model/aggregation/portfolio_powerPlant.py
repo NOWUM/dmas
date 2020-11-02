@@ -1,7 +1,10 @@
+# third party modules
 import numpy as np
+from gurobipy import *
+
+# model modules
 from components.generation_powerPlant import PowerPlant
 from aggregation.portfolio import PortfolioModel
-from gurobipy import *
 
 
 class PwpPort(PortfolioModel):
@@ -99,13 +102,13 @@ class PwpPort(PortfolioModel):
 
             for key, value in self.energy_systems.items():
                 # set output power for each energy system (power plant)
-                value['model'].power = np.asarray([self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x
+                value['model'].power = np.asarray([self.m.getVarByName('P_%s[%i]' % (key, i)).x
                                                    for i in self.t], np.float).reshape((-1,))
-                value['model'].emission = np.asarray([self.m.getVarByName('E' + '_%s[%i]' % (key, i)).x
+                value['model'].emission = np.asarray([self.m.getVarByName('E_%s[%i]' % (key, i)).x
                                                       for i in self.t], np.float).reshape((-1,))
-                value['model'].fuel = np.asarray([self.m.getVarByName('F' + '_%s[%i]' % (key, i)).x
+                value['model'].fuel = np.asarray([self.m.getVarByName('F_%s[%i]' % (key, i)).x
                                                   for i in self.t], np.float).reshape((-1,))
-                value['model'].start = np.asarray([self.m.getVarByName('S' + '_%s[%i]' % (key, i)).x
+                value['model'].start = np.asarray([self.m.getVarByName('S_%s[%i]' % (key, i)).x
                                                   for i in self.t], np.float).reshape((-1,))
 
                 self.generation['power%s' % value['fuel'].capitalize()] += value['model'].power
