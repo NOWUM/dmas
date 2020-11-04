@@ -85,7 +85,46 @@
 
             $("#kill").click(function(){$.post("kill_agents");});
 
+            $("#refreshServer").click(function(){
+                //TODO: How to use dict from agent_conf.items() in javascript?
+                //var agents_dict = '{{agent_conf.items}}';
+                //alert(agents_dict);
+                //alert(agents_dict[1]);
+                //for (var key in agents_dict) {
+                //    var value = agents_dict[key];
+                 //   //alert(value);
+                //};
+
+                {% for key, value in agent_conf.items() %}
+                    {% for name, attribute in value.items() %}
+                        {% if name == 'host' %}
+                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: grey;"><i class="fas fa-lightbulb"></i></span>'; // reset Icons to grey
+                        host_ip = document.getElementById('{{key}}_{{name}}').value; //Ip aus Textbox lesen
+
+                        fetch("http://"+host_ip+":5000/test")
+                              .then(function (response) {
+                                return response;
+                              })
+                              .then(function (myResponse) {
+                                console.log('{{key}}_{{name}}','{{attribute}}',myResponse.status,myResponse.statusText);
+                                document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: green;"><i class="fas fa-lightbulb"></i></span>'; // Grünes Icon einfügen
+                              })
+                              .catch(function (error) {
+                                console.log("Error: " + error);
+                                document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: red;"><i class="fas fa-lightbulb"></i></span>'; // Rotes Icon einfügen
+                              });
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+                //alert('Refresh complete!!');//TODO: warum wird diese Zeile vor Beendigung der for (Django) loop ausgeführt? Läuft loop asynchron?
+            });
+
         });
+    </script>
+    <script>
+        function serverStatus(){
+
+        };
     </script>
 
 </head>
@@ -159,8 +198,9 @@
                                     <div class="form-row"><label for="{{key}}_{{name}}">{{name}}:</label></div>
                                     <div class="form-row">
                                         <div class="col-9"><input type="text" class="form-control form-control-sm" id="{{key}}_{{name}}" value={{attribute}}></div>
-                                        <div class="col-2" id="host_{{key}}_{{name}}" align="center" {% if name == 'host' %} style="background:grey; margin-left: auto; margin-right: auto;"{% endif %}>
+                                        <div class="col-2" id="host_{{key}}_{{name}}" align="center" {% if name == 'host' %} style="margin-left: auto; margin-right: auto;"{% endif %}>
                                             {% if name == 'host' %}
+                                            <span style="color: grey;"><i class="fas fa-lightbulb"></i></span>
                                             <script>
                                                 fetch("http://{{attribute}}:5000/test")
                                                       .then(function (response) {
@@ -168,14 +208,16 @@
                                                       })
                                                       .then(function (myResponse) {
                                                         console.log('{{key}}_{{name}}','{{attribute}}',myResponse.status,myResponse.statusText);
-                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<div style="background:green;">'+myResponse.statusText+'</div>';
-                                                        document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'green' ;
-                                                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = myResponse.statusText;
+                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<div style="background:green;">'+myResponse.statusText+'</div>'; //kleineres Kästchen in etxtra div
+                                                        //document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'green' ; // Hintergrundfarbe des vorhandenen Div auf grün ändern
+                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = myResponse.statusText; //print response
+                                                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: green;"><i class="fas fa-lightbulb"></i></span>'; // Grünes Icon einfügen
                                                       })
                                                       .catch(function (error) {
                                                         console.log("Error: " + error);
                                                         //document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<div style="width:100%; background:red;"> </div>';
-                                                        document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'red' ;
+                                                        //document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'red' ; // Hintergrundfarbe des vorhandenen Div auf rot ändern
+                                                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: red;"><i class="fas fa-lightbulb"></i></span>'; // Rotes Icon einfügen
                                                       });
                                             </script>
                                             {% endif %}
@@ -186,7 +228,8 @@
                             </div>
                             {% endfor %}
                         </form>
-                        <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit Agent Config"><br><br>
+                        <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit Agent Config">
+                        <input class="btn btn-dark btn-sm" id="refreshServer" type="submit" value="Refresh"><br><br>
                     </div>
                     <div class="col-6">
                         <h4>Configuration Server & Infrastructure</h4>
