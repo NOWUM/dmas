@@ -40,13 +40,12 @@ install python modules: `pip3 install -r requirements.txt`
 | Port | Service |
 | ------ | ------ |
 | 3000 | Grafana |
+| 5000 | Agent-Service |
+| 5010 | Web-App |
 | 8086 | InfluxDB (Running)|
 | 8088 | InfluxDB (Backup) |
-| 27017 | MongoDB |
 | 15672 | RabbitMQ |
-| 5000 | Grafana |
-| 3000 | Agent-Service |
-| 5010 | Web-App |
+| 27017 | MongoDB |
 
 
 
