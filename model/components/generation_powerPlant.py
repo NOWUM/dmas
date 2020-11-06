@@ -134,7 +134,7 @@ class PowerPlant(EnergySystem):
 
 if __name__ == "__main__":
 
-    pw = PowerPlant()
+    pw = PowerPlant(t=np.arange(24), T=24, dt=1)
 
     power_price = 300 * np.ones(24)
     co = np.ones(24) * 23.8 * np.random.uniform(0.95, 1.05, 24)     # -- Emission Price     [€/t]

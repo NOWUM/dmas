@@ -127,7 +127,7 @@ class RenewablePortfolio(PortfolioModel):
             self.windModel.optimize()
 
         try:
-            power = solar = wind = water = bio = []
+            power, solar,  wind,  water, bio = [], [], [], [], []
             for _, value in self.energy_systems.items():
                 # cases for photovoltaic
                 if value['typ'] == 'Pv':

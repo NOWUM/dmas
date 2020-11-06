@@ -66,7 +66,8 @@ class StrPort(PortfolioModel):
 
     def optimize(self):
 
-        self.power = self.volume = np.zeros_like(self.t, np.float)
+        self.power = np.zeros_like(self.t, np.float)
+        self.volume = np.zeros_like(self.t, np.float)
 
         # initialize dict for fuel sum calculation
         self.generation = dict(powerWater=np.zeros_like(self.t, np.float))          # dispatch storage(s)   [MW]
