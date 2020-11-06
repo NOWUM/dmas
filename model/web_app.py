@@ -145,11 +145,12 @@ def simulation(start, end, valid=True):
 
     # Step 2: check if rabbitmq runs local and choose the right login method
     if config.getboolean('Configuration', 'Local'):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, virtual_host='SimAgent',
+                                                                       heartbeat=0))
     else:
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0,
-                                                                       credentials=credentials))
+                                                                       virtual_host='SimAgent', credentials=credentials))
     send = connection.channel()  # declare Market Exchange
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
 
