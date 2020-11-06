@@ -35,18 +35,17 @@ install python modules: `pip3 install -r requirements.txt`
 - Misc ~ unkown
 
 
-**Services/Ports:**
+**Ports and Services:**
 
-| Port | Service |
-| ------ | ------ |
-| 3000 | Grafana |
-| 5000 | Agent-Service |
-| 5010 | Web-App |
-| 8086 | InfluxDB (Running)|
-| 8088 | InfluxDB (Backup) |
-| 15672 | RabbitMQ |
-| 27017 | MongoDB |
-
+| Port | Service | purpose | Necessary where? | must reach |
+| ------ | ------ | ------ | ------ | ------ |
+| 3000 | Grafana | Dashboard / View only | once somewhere | InfluxDB |
+| 5000 | Agent-Service | Waits for HTTP Post with instructions on agents to build | on any Server that should run Agents | InfluxDB, MongoDB, RabbitMQ |
+| 5010 | Web-App | Control Simulation | once somewhere | RabbitMQ, Agent-Service |
+| 8086 | InfluxDB (Running)| Time Series Database for Weather and Agents | once somewhere | nothing, only be reachable |
+| 8088 | InfluxDB (Backup) | only needed to backup Database | once somewhre | 
+| 15672 | RabbitMQ | Communication between Agents and Market | once somewhere | nothing, must be reachable for web-app and agents |
+| 27017 | MongoDB | master data(Stammdaten) and bids from agents | once somewhere | nothing, must be reachable for agents |
 
 
 # Install Gurobi on Linux System
