@@ -35,6 +35,15 @@ install python modules: `pip3 install -r requirements.txt`
 - Misc ~ unkown
 
 
+**Services/Ports:**
+:3000   Grafana
+:8086   InfluxDB (Running)
+:8088   InfluxDB (Backup)
+:27017  MongoDB
+:15672  RabbitMQ
+:5010   Web-App
+:5000   Agent-Service
+
 
 # Install Gurobi on Linux System
 
