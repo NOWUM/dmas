@@ -8,7 +8,7 @@ from scipy.stats import norm
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.pwp_Port import PwpPort
+from aggregation.portfolio_storage import StrPort
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -25,7 +25,7 @@ class StrAgent(basicAgent):
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = PwpPort(gurobi=True, T=24)
+        self.portfolio = StrPort(gurobi=True, T=24)
 
         # Construction storages
         for key, value in self.connections['mongoDB'].get_storages().items():
@@ -37,7 +37,7 @@ class StrAgent(basicAgent):
         self.q_ask = 0
         self.q_bid = 0
         # If there are no power systems, terminate the agent
-        if len(self.portfolio.energySystems) == 0:
+        if len(self.portfolio.energy_systems) == 0:
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
@@ -54,7 +54,7 @@ class StrAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
 
         weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
-        demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
+        # demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
         self.portfolio.set_parameter(self.date, weather, prices)
         self.portfolio.build_model()
@@ -65,7 +65,7 @@ class StrAgent(basicAgent):
 
         order_book = {}
 
-        for key, value in self.portfolio.energySystems.items():
+        for key, value in self.portfolio.energy_systems.items():
             eta = value['eta+'] * value['eta-']
             min_ask_prc = base_prc * (1.5 - eta/2)
             max_bid_prc = base_prc * (0.5 + eta/2)
@@ -145,7 +145,7 @@ class StrAgent(basicAgent):
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
-        power_da, _, _, _ = self.portfolio.fix_planing()
+        self.portfolio.optimize()
         volume = self.portfolio.volume
         self.performance['adjustResult'] = tme.time() - start_time
 

@@ -8,7 +8,7 @@ import numpy as np
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.dem_Port import DemPort
+from aggregation.portfolio_demand import DemandPortfolio
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -22,17 +22,17 @@ class DemAgent(basicAgent):
 
     def __init__(self, date, plz):
         super().__init__(date=date, plz=plz, typ='DEM')
-        # Development of the portfolio with the corresponding households, trade and industry
+        # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = DemPort()
+        self.portfolio = DemandPortfolio()
 
-        # Construction of the prosumer with PV and battery
+        # Construction of the prosumer with photovoltaic and battery
         for key, value in self.connections['mongoDB'].get_pv_batteries().items():
             self.portfolio.add_energy_system('PvBat' + str(key), {'PvBat' + str(key): value})
         self.logger.info('Prosumer PV-Bat added')
 
-        # Construction Consumer with PV
+        # Construction consumer with photovoltaic
         for key, value in self.connections['mongoDB'].get_pvs().items():
             self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
         self.logger.info('Consumer PV added')
@@ -55,7 +55,7 @@ class DemAgent(basicAgent):
         self.logger.info('RLM added')
 
         # If there are no power systems, terminate the agent
-        if len(self.portfolio.energySystems) == 0:
+        if len(self.portfolio.energy_systems) == 0:
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
@@ -71,11 +71,11 @@ class DemAgent(basicAgent):
 
         weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
         prices = self.price_forecast(self.date)                          # price forecast dayAhead
-        demand = self.demand_forecast(self.date)                         # demand forecast dayAhead
+        # demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
         self.portfolio.set_parameter(self.date, weather, prices)
         self.portfolio.build_model()
 
-        self.performance['initModel'] = tme.time() - start_time
+        self.performance['initModel'] = np.round(tme.time() - start_time,3)
 
         # Step 2: standard optimization --> returns power series in [kW]
         # -------------------------------------------------------------------------------------------------------------
@@ -83,20 +83,20 @@ class DemAgent(basicAgent):
 
         power_da = self.portfolio.optimize()                            # total portfolio power
 
-        self.performance['optModel'] = tme.time() - start_time
+        self.performance['optModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 3: save optimization results in influxDB
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
-                                    powerSolar=self.portfolio.generation['solar']/10**3),
+                                    powerSolar=self.portfolio.generation['powerSolar']/10**3),
                           index=pd.date_range(start=self.date, freq='60min', periods=self.portfolio.T))
 
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='optimize_dayAhead'))
 
-        self.performance['saveSchedule'] = tme.time() - start_time
+        self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
 
         # Step 4: build orders from optimization results
         # -------------------------------------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ class DemAgent(basicAgent):
         for i in range(self.portfolio.T):
             bid_orders.update({str(('dem%s' % i, i, 0, str(self.name))): (3000, power_da[i]/10**3, 'x')})
 
-        self.performance['buildOrders'] = tme.time() - start_time
+        self.performance['buildOrders'] = np.round(tme.time() - start_time, 3)
 
         # Step 5: send orders to market resp. to mongodb
         # -------------------------------------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ class DemAgent(basicAgent):
 
         self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=bid_orders)
 
-        self.performance['sendOrders'] = tme.time() - start_time
+        self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('DayAhead market scheduling completed')
 
@@ -141,13 +141,13 @@ class DemAgent(basicAgent):
         start_time = tme.time()
 
         df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
-                                    powerSolar=self.portfolio.generation['solar']/10**3,
+                                    powerSolar=self.portfolio.generation['powerSolar']/10**3,
                                     profit=profit))
         df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='post_dayAhead'))
 
-        self.performance['saveResult'] = tme.time() - start_time
+        self.performance['saveResult'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('After DayAhead market adjustment completed')
         self.logger.info('Next day scheduling started')
@@ -164,11 +164,11 @@ class DemAgent(basicAgent):
         for key, method in self.forecasts.items():
             method.collect_data(date=self.date, dem=dem, prc=prc, prc_1=prc_1, prc_7=prc_7, weather=weather)
             method.counter += 1
-            if method.counter >= method.collect:                                        # retrain forecast method
+            if method.counter >= method.collect:                                            # retrain forecast method
                 method.fit_function()
                 method.counter = 0
 
-        self.performance['nextDay'] = tme.time() - start_time
+        self.performance['nextDay'] = np.round(tme.time() - start_time, 3)
 
         df = pd.DataFrame(data=self.performance, index=[self.date])
         self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
@@ -180,15 +180,15 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = DemAgent(date='2018-02-05', plz=args.plz)
-    agent.connections['mongoDB'].login(agent.name, False)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)
-    finally:
-        agent.connections['mongoDB'].logout(agent.name)
-        agent.connections['influxDB'].influx.close()
-        agent.connections['mongoDB'].mongo.close()
-        if not agent.connections['connectionMQTT'].is_closed:
-            agent.connections['connectionMQTT'].close()
-        exit()
+    # agent.connections['mongoDB'].login(agent.name, False)
+    # try:
+    #     agent.run()
+    # except Exception as e:
+    #     print(e)
+    # finally:
+    #     agent.connections['mongoDB'].logout(agent.name)
+    #     agent.connections['influxDB'].influx.close()
+    #     agent.connections['mongoDB'].mongo.close()
+    #     if not agent.connections['connectionMQTT'].is_closed:
+    #         agent.connections['connectionMQTT'].close()
+    #     exit()

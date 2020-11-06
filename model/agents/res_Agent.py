@@ -8,7 +8,7 @@ import numpy as np
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.res_Port import ResPort
+from aggregation.portfolio_renewable import RenewablePortfolio
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -25,14 +25,14 @@ class ResAgent(basicAgent):
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = ResPort()
+        self.portfolio = RenewablePortfolio()
 
         # Construction Windenergy
         for key, value in self.connections['mongoDB'].get_wind_turbines().items():
             self.portfolio.capacities['capacityWind'] += value['maxPower']
             self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('Windenergy added')
-        self.portfolio.mergeWind()
+        self.portfolio.aggregate_wind()
 
         # Construction of the pv systems (free area)
         for key, value in self.connections['mongoDB'].get_pv_parks().items():
@@ -62,7 +62,7 @@ class ResAgent(basicAgent):
         self.logger.info('Biomass Power Plants added')
 
         # If there are no power systems, terminate the agent
-        if len(self.portfolio.energySystems) == 0:
+        if len(self.portfolio.energy_systems) == 0:
             print('Number: %s No energy systems in the area' % plz)
             exit()
 
@@ -85,7 +85,7 @@ class ResAgent(basicAgent):
         self.portfolio.set_parameter(self.date, weather, prices)
         self.portfolio.build_model()
 
-        self.performance['initModel'] = tme.time() - start_time
+        self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 2: standard optimization --> returns power series in [MW]
         # -------------------------------------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ class ResAgent(basicAgent):
         power_direct = agent.portfolio.generation['powerSolar'] + agent.portfolio.generation['powerWind']
         power_eeg = power_da - power_direct
 
-        self.performance['optModel'] = tme.time() - start_time
+        self.performance['optModel'] = np.round(tme.time() - start_time, 3)
 
         # Step 3: save optimization results in influxDB
         # -------------------------------------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ class ResAgent(basicAgent):
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='optimize_dayAhead'))
 
-        self.performance['saveSchedule'] = tme.time() - start_time
+        self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
 
         # Step 4: build orders from optimization results
         # -------------------------------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ class ResAgent(basicAgent):
 
         self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=ask_orders)
 
-        self.performance['sendOrders'] = tme.time() - start_time
+        self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('DayAhead market scheduling completed')
 
@@ -152,7 +152,7 @@ class ResAgent(basicAgent):
         self.portfolio.build_model(response=ask - bid)
         _ = self.portfolio.optimize()
 
-        self.performance['adjustResult'] = tme.time() - start_time
+        self.performance['adjustResult'] = np.round(tme.time() - start_time, 3)
 
         # Step 7: save adjusted results in influxdb
         # -------------------------------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ class ResAgent(basicAgent):
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='post_dayAhead'))
 
-        self.performance['saveResult'] = tme.time() - start_time
+        self.performance['saveResult'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('After DayAhead market adjustment completed')
         self.logger.info('Next day scheduling started')
@@ -188,7 +188,7 @@ class ResAgent(basicAgent):
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
-        self.performance['nextDay'] = tme.time() - start_time
+        self.performance['nextDay'] = np.round(tme.time() - start_time, 3)
 
         df = pd.DataFrame(data=self.performance, index=[self.date])
         self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
@@ -200,15 +200,15 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = ResAgent(date='2018-01-01', plz=args.plz)
-    agent.connections['mongoDB'].login(agent.name, False)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)
-    finally:
-        agent.connections['mongoDB'].logout(agent.name)
-        agent.connections['influxDB'].influx.close()
-        agent.connections['mongoDB'].mongo.close()
-        if not agent.connections['connectionMQTT'].is_closed:
-            agent.connections['connectionMQTT'].close()
-        exit()
+    # agent.connections['mongoDB'].login(agent.name, False)
+    # try:
+    #     agent.run()
+    # except Exception as e:
+    #     print(e)
+    # finally:
+    #     agent.connections['mongoDB'].logout(agent.name)
+    #     agent.connections['influxDB'].influx.close()
+    #     agent.connections['mongoDB'].mongo.close()
+    #     if not agent.connections['connectionMQTT'].is_closed:
+    #         agent.connections['connectionMQTT'].close()
+    #     exit()

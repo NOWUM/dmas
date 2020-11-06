@@ -17,7 +17,7 @@ matplotlib==3.1.3
 influxdb==5.2.3
 pypsa==0.17.0
 pyswarm==0.6
-xlrd==1.1.0
+xlrd==1.2.0
 scikit_learn==0.23.1
 pip~=20.0.2
 wheel~=0.34.2
