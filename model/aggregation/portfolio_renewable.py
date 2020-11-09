@@ -77,22 +77,23 @@ class RenewablePortfolio(PortfolioModel):
         self.energy_systems.update(energy_system)
 
     def aggregate_wind(self):
-        self.wind_speed = np.sort(np.unique(self.wind_speed))
-        value = np.asarray(np.zeros_like(self.wind_speed), dtype=np.float64)
-        for powerCurve in self.power_curves:
-            f = interpolate.interp1d(powerCurve[0], powerCurve[1], fill_value=0, bounds_error=False)
-            value += np.asarray(f(self.wind_speed), dtype=np.float64)
+        if len(self.power_curves) > 0:
+            self.wind_speed = np.sort(np.unique(self.wind_speed))
+            value = np.asarray(np.zeros_like(self.wind_speed), dtype=np.float64)
+            for powerCurve in self.power_curves:
+                f = interpolate.interp1d(powerCurve[0], powerCurve[1], fill_value=0, bounds_error=False)
+                value += np.asarray(f(self.wind_speed), dtype=np.float64)
 
-        self.powerCurve = power_curves.smooth_power_curve(power_curve_wind_speeds=pd.Series(self.wind_speed),
-                                                          power_curve_values=pd.Series(value),
-                                                          standard_deviation_method='turbulence_intensity',
-                                                          turbulence_intensity=0.15,
-                                                          mean_gauss=0, wind_speed_range=10)
+            self.powerCurve = power_curves.smooth_power_curve(power_curve_wind_speeds=pd.Series(self.wind_speed),
+                                                              power_curve_values=pd.Series(value),
+                                                              standard_deviation_method='turbulence_intensity',
+                                                              turbulence_intensity=0.15,
+                                                              mean_gauss=0, wind_speed_range=10)
 
-        self.hubHeight = self.hubHeight / self.totalPower
+            self.hubHeight = self.hubHeight / self.totalPower
 
-        self.windModel = WindModel(t=np.arange(24), T=24, dt=1, power_curve=self.powerCurve,
-                                   wind_turbine=dict(height=self.hubHeight, diameter=100))
+            self.windModel = WindModel(t=np.arange(24), T=24, dt=1, power_curve=self.powerCurve,
+                                       wind_turbine=dict(height=self.hubHeight, diameter=100))
 
         # delete tmp. variables
         del self.power_curves, self.powerCurve, self.hubHeight, self.totalPower, self.wind_speed
