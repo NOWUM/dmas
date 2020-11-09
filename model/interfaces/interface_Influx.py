@@ -199,8 +199,9 @@ class InfluxInterface:
         if result.__len__() > 0:
             mcp = result['DayAhead']["price"].to_numpy()        # price [€/MWh]
         else:
-            print('test')
-            mcp = 30 * np.ones(days*24)
+            mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
+                   42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+            mcp = np.asarray(mcp)
 
         return np.nan_to_num(mcp).reshape((-1,))
 
