@@ -11,7 +11,7 @@ simplefilter(action='ignore', category=FutureWarning)
 
 class annFrcst:
 
-    def __init__(self, init=5, pre_train=True):
+    def __init__(self, init=10, pre_train=False):
 
         self.fitted = False         # flag for fitted or not fitted model
         self.collect = init         # days before a retrain is started
@@ -87,7 +87,9 @@ class annFrcst:
             # Schritt 2: Berechnung des Forecasts
             power_price = self.model.predict(x_std).reshape((24,))
         else:
-            power_price = 25*np.ones(24)
+            mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
+                   42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+            power_price = np.asarray(mcp).reshape((-1,))
 
         co = np.ones_like(power_price) * 23.8 * np.random.uniform(0.95, 1.05, 24)   # -- Emission Price     [€/t]
         gas = np.ones_like(power_price) * 24.8 * np.random.uniform(0.95, 1.05, 24)  # -- Gas Price          [€/MWh]
