@@ -404,9 +404,6 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
-    prices_1 = agent.optimize_dayAhead()
-    agent.date = pd.to_datetime('2018-01-02')
-    prices_2 = agent.optimize_dayAhead()
     agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
