@@ -60,7 +60,7 @@ class MarketAgent(basicAgent):
 
     def clearing(self):
 
-        agent_ids = self.connections['mongoDB'].status.find().distinct('_id')
+        agent_ids = self.connections['mongoDB'].get_agents(sorted=False)
         total_orders = [self.get_orders(agent, str(self.date.date())) for agent in agent_ids
                         if 'MRK' not in agent and 'NET' not in agent]
 

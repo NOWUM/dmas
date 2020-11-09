@@ -33,7 +33,13 @@ class StrAgent(basicAgent):
             self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('Storages added')
 
-        self.base_price = self.forecasts['price'].y
+        mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
+               42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+        self.base_price = np.asarray(mcp).reshape((1,-1))
+
+        if len(self.forecasts['price'].y) > 0:
+            self.base_price = self.forecasts['price'].y
+
         self.q_ask = 0
         self.q_bid = 0
         # If there are no power systems, terminate the agent

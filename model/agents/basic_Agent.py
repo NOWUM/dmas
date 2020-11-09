@@ -92,7 +92,7 @@ class agent:
         self.forecasts = {
             'demand': demandForecast(),
             'weather': weatherForecast(self.connections['influxDB']),
-            'price': priceForecast(init=np.random.randint(10, 14))
+            'price': priceForecast(init=np.random.randint(21, 30))
         }
 
     def weather_forecast(self, date=pd.to_datetime('2019-01-01'), days=1, mean=False):

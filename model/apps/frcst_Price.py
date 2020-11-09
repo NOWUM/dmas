@@ -11,7 +11,7 @@ simplefilter(action='ignore', category=FutureWarning)
 
 class annFrcst:
 
-    def __init__(self, init=10, pre_train=False):
+    def __init__(self, init=30, pre_train=False):
 
         self.fitted = False         # flag for fitted or not fitted model
         self.collect = init         # days before a retrain is started
@@ -33,6 +33,9 @@ class annFrcst:
         self.dummieMatrix = np.array([]).reshape((-1, 24))             # dummies
         # output data for neural network
         self.mcpMatrix = np.array([]).reshape((-1, 24))                # DA price             [€/MWh]
+
+        self.x = np.asarray([]).reshape((-1,168))
+        self.y = np.asarray([]).reshape((-1,24))
 
         if pre_train:               # use historical data to fit a model at the beginning
 

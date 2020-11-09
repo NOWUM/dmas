@@ -162,16 +162,22 @@ class mongoInterface:
         orders = {"$set": {"_id": name, "DayAhead": orders}}
         self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)
 
-    def get_agents(self):
-
-        agents = {typ: 0 for typ in ['PWP', 'RES', 'DEM', 'STR', 'NET', 'MRK']}
-        for id_ in self.status.find().distinct('_id'):
-            dict_ = self.status.find_one({"_id": id_})
-            typ = id_.split('_')[0]
-            try:
+    def get_agents(self, sorted=True):
+        if not sorted:
+            agents = []
+            for id_ in self.status.find().distinct('_id'):
+                dict_ = self.status.find_one({"_id": id_})
                 if dict_['connected'] == True:
-                    agents[typ] += 1
-            except Exception as e:
-                print(e)
+                    agents.append(id_)
+        else:
+            agents = {typ: 0 for typ in ['PWP', 'RES', 'DEM', 'STR', 'NET', 'MRK']}
+            for id_ in self.status.find().distinct('_id'):
+                dict_ = self.status.find_one({"_id": id_})
+                typ = id_.split('_')[0]
+                try:
+                    if dict_['connected'] == True:
+                        agents[typ] += 1
+                except Exception as e:
+                    print(e)
 
         return agents
