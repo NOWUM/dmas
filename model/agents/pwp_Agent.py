@@ -89,11 +89,9 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         weather = self.weather_forecast(self.date, mean=False, days=2)         # local weather forecast dayAhead
-        demand = self.demand_forecast(self.date)                             # demand forecast dayAhead
+        # demand = self.demand_forecast(self.date)                             # demand forecast dayAhead
         prices = self.price_forecast(self.date, days=2)                        # price forecast dayAhead
         self.performance['initModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
-
-        return prices
 
         init_state = {key: value['model'].power_plant for key, value in self.portfolio.energy_systems.items()}
         #return init_state
