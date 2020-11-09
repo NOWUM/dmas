@@ -32,7 +32,6 @@ class MarketAgent(basicAgent):
         bid_orders = {}                                                     # all orders (bid)
         wait = True                                                         # check if orders from agent are delivered
         start = tme.time()                                                  # start waiting and collect orders
-        print(name)
         while wait:
             x = self.connections['mongoDB'].orderDB[date].find_one({"_id": name})
             if x is not None:
@@ -75,7 +74,6 @@ class MarketAgent(basicAgent):
         for element in result:
             # save all asks
             ask = pd.DataFrame.from_dict(element[0])
-            print(ask)
             ask.columns = ['power']
             ask['names'] = [name.split('-')[0] for name in ask.index]
             ask = ask.groupby('names').sum()

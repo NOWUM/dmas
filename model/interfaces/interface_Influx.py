@@ -191,7 +191,7 @@ class InfluxInterface:
         self.influx.switch_database(database=self.database)     # change to simulation database
         # select market clearing price in time period
         query = 'select sum("price") as "price" from "DayAhead" ' \
-                'where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+                'where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' \
                 % (date.isoformat() + 'Z', (date + pd.DateOffset(days=days)).isoformat() + 'Z')
 
         result = self.influx.query(query)
@@ -199,7 +199,8 @@ class InfluxInterface:
         if result.__len__() > 0:
             mcp = result['DayAhead']["price"].to_numpy()        # price [€/MWh]
         else:
-            mcp = np.zeros(days*24)
+            print('test')
+            mcp = 30 * np.ones(days*24)
 
         return np.nan_to_num(mcp).reshape((-1,))
 
@@ -316,5 +317,5 @@ if __name__ == "__main__":
     #myInterface = InfluxInterface(database='MAS2020_10')
     myInterface = InfluxInterface(database='MAS2020_20')
     x = myInterface.get_lines_data(pd.to_datetime('2018-01-01'))
-
+    prices = myInterface.get_prc_da(date=pd.to_datetime('2018-01-01') - pd.DateOffset(days=7))
     pass
