@@ -89,9 +89,11 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         weather = self.weather_forecast(self.date, mean=False, days=2)         # local weather forecast dayAhead
-        # demand = self.demand_forecast(self.date)                             # demand forecast dayAhead
+        demand = self.demand_forecast(self.date)                             # demand forecast dayAhead
         prices = self.price_forecast(self.date, days=2)                        # price forecast dayAhead
         self.performance['initModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
+
+        return prices
 
         init_state = {key: value['model'].power_plant for key, value in self.portfolio.energy_systems.items()}
         #return init_state
@@ -402,6 +404,9 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
+    prices_1 = agent.optimize_dayAhead()
+    agent.date = pd.to_datetime('2018-01-02')
+    prices_2 = agent.optimize_dayAhead()
     agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()

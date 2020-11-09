@@ -116,7 +116,9 @@ class agent:
             p = self.forecasts['price'].forecast(date, demand, weather, price_d1, price_d7)
             for key, value in p.items():
                 if key in ['power', 'gas', 'co']:
-                    price[key] = np.concatenate((price[key], value))
+                    price[key] = np.round(np.concatenate((price[key], value)), 2)
+                else:
+                    price[key] = np.round(value, 2)
         return price
 
     def demand_forecast(self, date=pd.to_datetime('2019-01-01'), days=1):
