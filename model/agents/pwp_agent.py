@@ -16,7 +16,7 @@ from agents.basic_Agent import agent as basicAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=52, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=60, help='PLZ-Agent')
     return parser.parse_args()
 
 
@@ -167,7 +167,7 @@ class PwpAgent(basicAgent):
             last_power = np.zeros(24)                                               # last known power
             block_number = 0                                                        # block number counter
             links = {i: 'x' for i in range(24)}                                     # current links between blocks
-            name = key
+            name = str(self.name + '-' + key)
             prevent_starts = {}
             prevent_start_orders = {}
 
@@ -402,7 +402,7 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
-    agent.connections['mongoDB'].login(agent.name, False)
+    agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
     except Exception as e:

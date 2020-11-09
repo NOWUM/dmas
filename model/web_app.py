@@ -95,12 +95,15 @@ def build_agents():
 
     # Step 3: build agents on server
     for typ in ['pwp', 'res', 'dem', 'str', 'net', 'mrk']:
-        data = {'typ': typ,
-                'start': int(request.form[typ + '_start']),
-                'end': int(request.form[typ + '_end'])}
 
         if typ == 'net' or typ == 'mrk':
-            data.update({'start': 0})
+            data = {'typ': typ,
+                    'start': 0,
+                    'end': int(request.form[typ + '_end'] == 'true')}
+        else:
+            data = {'typ': typ,
+                    'start': int(request.form[typ + '_start']),
+                    'end': int(request.form[typ + '_end'])}
 
         requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/build', json=data, timeout=0.5)
 
@@ -166,11 +169,10 @@ def simulation(start, end, valid=True):
         influx_connection.influx.create_database(config['Configuration']['Database'])
         influx_connection.influx.create_retention_policy(name=config['Configuration']['Database'] + '_pol',
                                                          duration='INF', shard_duration='1d', replication=1)
-        # clean mongodb
-        mongo_connection = mongoCon(host=config['Configuration']['mongoDB'],
-                                    database=config['Configuration']['Database'])
+
         for name in mongo_connection.orderDB.list_collection_names():
-            mongo_connection.orderDB.drop_collection(name)
+            if name != 'status':
+                mongo_connection.orderDB.drop_collection(name)
 
     # Step 4: generate weather data for simulation time period
     influx_connection.generate_weather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
@@ -194,7 +196,7 @@ def simulation(start, end, valid=True):
             # 2. Step: Run Market Clearing
             tme.sleep(5)                                            # wait 5 seconds before starting dayAhead clearing
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='dayAhead_clearing ' + str(date))
-            while not mongoCon.get_market_status(date):                   # check if clearing done
+            while not mongo_connection.get_market_status(date):     # check if clearing done
                 tme.sleep(1)
 
             # 3. Step: Run Power Flow calculation
@@ -212,7 +214,7 @@ def simulation(start, end, valid=True):
             print('Error ' + str(date.date()))
             print(e)
 
-    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ' + str('1970-01-01'))
+    # send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ' + str('1970-01-01'))
     send.close()
     influx_connection.influx.close()
     mongo_connection.mongo.close()

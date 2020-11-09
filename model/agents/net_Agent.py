@@ -33,7 +33,7 @@ class NetAgent(basicAgent):
         transformers = pd.read_csv(r'./data/Grid_Trafos.csv', sep=';', decimal=',', index_col=0)
 
         self.bus_names = buses['name'].to_numpy()
-        self.area_num = pd.read_csv(r'./data/Ref_GeoInfo.csv', index_col=0)
+        self.area_num = pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
         self.area_num = self.area_num['PLZ'].to_numpy(dtype=int)
 
         # add nodes to network
@@ -165,6 +165,7 @@ class NetAgent(basicAgent):
 if __name__ == "__main__":
 
     agent = NetAgent(date='2018-01-01', plz=44)
+    agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
     except Exception as e:

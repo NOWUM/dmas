@@ -32,6 +32,7 @@ class MarketAgent(basicAgent):
         bid_orders = {}                                                     # all orders (bid)
         wait = True                                                         # check if orders from agent are delivered
         start = tme.time()                                                  # start waiting and collect orders
+        print(name)
         while wait:
             x = self.connections['mongoDB'].orderDB[date].find_one({"_id": name})
             if x is not None:
@@ -48,6 +49,7 @@ class MarketAgent(basicAgent):
                 else:
                     pass
             else:
+                print('waiting for %s' % name)
                 tme.sleep(1)                                                # wait a second and ask mongodb again
             end = tme.time()                                                # current timestamp
             if end - start >= 120:                                          # wait maximal 120 seconds
@@ -55,14 +57,13 @@ class MarketAgent(basicAgent):
                 wait = False
 
         orders = (ask_orders, bid_orders)
-
         return orders
 
     def clearing(self):
 
         agent_ids = self.connections['mongoDB'].status.find().distinct('_id')
         total_orders = [self.get_orders(agent, str(self.date.date())) for agent in agent_ids
-                        if 'MRK' not in agent or 'NET' not in agent]
+                        if 'MRK' not in agent and 'NET' not in agent]
 
         for order in total_orders:
             self.market.set_parameter(ask=order[0], bid=order[1])
@@ -74,6 +75,7 @@ class MarketAgent(basicAgent):
         for element in result:
             # save all asks
             ask = pd.DataFrame.from_dict(element[0])
+            print(ask)
             ask.columns = ['power']
             ask['names'] = [name.split('-')[0] for name in ask.index]
             ask = ask.groupby('names').sum()
@@ -106,6 +108,7 @@ class MarketAgent(basicAgent):
 if __name__ == "__main__":
 
     agent = MarketAgent(date='2018-01-01', plz=44)
+    agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
     except Exception as e:
