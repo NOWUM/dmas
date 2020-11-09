@@ -89,7 +89,7 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         weather = self.weather_forecast(self.date, mean=False, days=2)         # local weather forecast dayAhead
-        # demand = self.demand_forecast(self.date)                             # demand forecast dayAhead
+        demand = self.demand_forecast(self.date, days=2)                       # demand forecast dayAhead
         prices = self.price_forecast(self.date, days=2)                        # price forecast dayAhead
         self.performance['initModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
@@ -150,7 +150,7 @@ class PwpAgent(basicAgent):
         start_time = tme.time()
 
         # build dataframe to save results in ifluxdb
-        df = pd.concat([df, pd.DataFrame(data=dict(frcst=pr1['power']))], axis=1)
+        df = pd.concat([df, pd.DataFrame(data=dict(frcst=prices['power'][:24]))], axis=1)
         df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='optimize_dayAhead'))
