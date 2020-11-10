@@ -11,7 +11,7 @@ simplefilter(action='ignore', category=FutureWarning)
 
 class annFrcst:
 
-    def __init__(self, init=30, pre_train=False):
+    def __init__(self, init=14, pre_train=False):
 
         self.fitted = False         # flag for fitted or not fitted model
         self.collect = init         # days before a retrain is started

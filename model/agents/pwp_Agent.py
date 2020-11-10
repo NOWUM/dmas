@@ -88,8 +88,8 @@ class PwpAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        weather = self.weather_forecast(self.date, mean=False, days=2)         # local weather forecast dayAhead
-        demand = self.demand_forecast(self.date, days=2)                       # demand forecast dayAhead
+        # weather = self.weather_forecast(self.date, mean=False, days=2)         # local weather forecast dayAhead
+        # demand = self.demand_forecast(self.date, days=2)                       # demand forecast dayAhead
         prices = self.price_forecast(self.date, days=2)                        # price forecast dayAhead
         self.performance['initModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
@@ -106,17 +106,14 @@ class PwpAgent(basicAgent):
             # prices and weather first day
             pr1 = dict(power=prices['power'][:24] + offset, gas=prices['gas'][:24], co=prices['co'][:24],
                        lignite=prices['lignite'], coal=prices['coal'], nuc=prices['nuc'])
-            weather1 = dict()
             # prices and weather second day
             pr2 = dict(power=prices['power'][24:] + offset, gas=prices['gas'][24:], co=prices['co'][24:],
                        lignite=prices['lignite'], coal=prices['coal'], nuc=prices['nuc'])
-            weather2 = dict()
             # prices and weather both days
             pr12 = dict(power=prices['power'] + offset, gas=prices['gas'], co=prices['co'],
                         lignite=prices['lignite'], coal=prices['coal'], nuc=prices['nuc'])
-            weather12 = dict()
 
-            self.portfolio.set_parameter(date=self.date, weather=weather1, prices=pr1)
+            self.portfolio.set_parameter(date=self.date, weather=dict(), prices=pr1)
             self.portfolio.build_model()
             power, _, _, _ = self.portfolio.optimize()
 
@@ -129,14 +126,14 @@ class PwpAgent(basicAgent):
             self.portfolio.build_model(response=power)
             self.portfolio.optimize()
 
-            self.portfolio.set_parameter(date=self.date + pd.DateOffset(days=1), weather=weather2, prices=pr2)
+            self.portfolio.set_parameter(date=self.date + pd.DateOffset(days=1), weather=dict(), prices=pr2)
             self.portfolio.build_model()
             self.portfolio.optimize()
 
             self.__set_results(portfolio=self.portfolio, offset=offset, result=self.portfolio_results,
                                price=pr2)
 
-            self.shadow_portfolio.set_parameter(date=self.date, weather=weather12, prices=pr12)
+            self.shadow_portfolio.set_parameter(date=self.date, weather=dict(), prices=pr12)
             self.shadow_portfolio.build_model()
             self.shadow_portfolio.optimize()
 
@@ -250,7 +247,7 @@ class PwpAgent(basicAgent):
                         # check if delta > 0
                         if delta[hour] > 0:
                             # calculate variable cost for the hour and set it as requested price
-                            price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour] / result['power'][hour], 2)
+                            price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
                             power = np.round(0.2 * delta[hour], 2)
                             # check if the last linked block for this hour is unknown
                             if links[hour] == 'x':
@@ -283,7 +280,7 @@ class PwpAgent(basicAgent):
                             # check if delta > 0
                             if delta[hour] > 0:
                                 # calculate variable cost for the hour and set it as requested price
-                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour] / result['power'][hour], 2)
+                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
                                 power = np.round(0.2 * delta[hour], 2)
                                 # split volume in five orders and add them to order_book
                                 for order in range(5):
@@ -308,7 +305,7 @@ class PwpAgent(basicAgent):
                             # check if delta > 0
                             if delta[hour] > 0:
                                 # calculate variable cost for the hour and set it as requested price
-                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour] / result['power'][hour], 2)
+                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
                                 power = np.round(0.2 * delta[hour], 2)
                                 # split volume in five orders and add them to order_boo
                                 for order in range(5):
