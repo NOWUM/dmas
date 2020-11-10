@@ -39,7 +39,7 @@ install python modules: `pip3 install -r requirements.txt`
 
 | Port | Service | purpose | Necessary where? | must reach |
 | ------ | ------ | ------ | ------ | ------ |
-| 3000 | Grafana | Dashboard / View only | once somewhere | InfluxDB |
+| 3000 | Grafana | Dashboard / View only | once somewhere | InfluxDB, Web-App|
 | 5000 | Agent-Service | Waits for HTTP Post with instructions on agents to build | on any Server that should run Agents | InfluxDB, MongoDB, RabbitMQ |
 | 5010 | Web-App | Control Simulation | once somewhere | RabbitMQ, Agent-Service |
 | 8086 | InfluxDB (Running)| Time Series Database for Weather and Agents | once somewhere | nothing, only be reachable |
