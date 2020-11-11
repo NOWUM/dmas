@@ -191,7 +191,7 @@ class InfluxInterface:
         self.influx.switch_database(database=self.database)     # change to simulation database
         # select market clearing price in time period
         query = 'select sum("price") as "price" from "DayAhead" ' \
-                'where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
+                'where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(null)' \
                 % (date.isoformat() + 'Z', (date + pd.DateOffset(days=days)).isoformat() + 'Z')
 
         result = self.influx.query(query)
@@ -199,7 +199,9 @@ class InfluxInterface:
         if result.__len__() > 0:
             mcp = result['DayAhead']["price"].to_numpy()        # price [€/MWh]
         else:
-            mcp = np.zeros(days*24)
+            mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
+                   42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+            mcp = np.asarray(mcp)
 
         return np.nan_to_num(mcp).reshape((-1,))
 
@@ -310,7 +312,76 @@ class InfluxInterface:
 if __name__ == "__main__":
     #myInterface = InfluxInterface()
     #myInterface = InfluxInterface(database='MAS2020_10')
-    myInterface = InfluxInterface(database='MAS2020_20')
-    x = myInterface.get_lines_data(pd.to_datetime('2018-01-01'))
+    myInterface = InfluxInterface(database='MAS2020_30', host='149.201.196.100')
+    #x = myInterface.get_lines_data(pd.to_datetime('2018-01-01'))
+    #prices = myInterface.get_prc_da(date=pd.to_datetime('2018-01-01') - pd.DateOffset(days=7))
+    from collections import deque
+    from apps.misc_Dummies import createSaisonDummy
+    # from apps.frcst_Price import annFrcst
+    #
+    # test = annFrcst()
+    # for date in pd.date_range(start='2018-01-01', end='2018-02-01'):
+    #     dem = myInterface.get_dem(date)  # demand germany [MW]
+    #     weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
+    #     prc = myInterface.get_prc_da(date)
+    #     prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
+    #     prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
+    #     test.collect_data(date, dem, weather, prc, prc_1, prc_7)
+    # test.fit_function()
+    # date = pd.to_datetime('2018-02-02')
+    # dem = myInterface.get_dem(date)  # demand germany [MW]
+    # weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
+    # # prc = myInterface.get_prc_da(date)
+    # prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
+    # prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
+    # prices = test.forecast(date, dem, weather, prc_1, prc_7)
 
-    pass
+
+
+        #dummies = createSaisonDummy(date, date).reshape((-1,))
+        #x = np.hstack((dem, weather['wind'], weather['dir'] + weather['dif'], weather['temp'], prc_1, prc_7, dummies))
+        #y = myInterface.get_prc_da(date)
+
+
+
+    # dx = deque(maxlen=10)
+    # dy = deque(maxlen=10)
+
+
+
+
+    # collect input data
+    #self.demMatrix = np.concatenate((self.demMatrix, dem.reshape((-1, 24))))
+    #self.wndMatrix = np.concatenate((self.wndMatrix, weather['wind'].reshape((-1, 24))))
+    #self.radMatrix = np.concatenate((self.radMatrix, (weather['dir'] + weather['dif']).reshape((-1, 24))))
+    #self.tmpMatrix = np.concatenate((self.tmpMatrix, weather['temp'].reshape((-1, 24))))
+    #self.prc_1Matrix = np.concatenate((self.prc_1Matrix, prc_1.reshape((-1, 24))))
+    #self.prc_7Matrix = np.concatenate((self.prc_7Matrix, prc_7.reshape((-1, 24))))
+    #self.dummieMatrix = np.concatenate((self.dummieMatrix, createSaisonDummy(date, date).reshape((-1, 24))))
+    # collect output data
+    # self.mcpMatrix = np.concatenate((self.mcpMatrix, prc.reshape((-1, 24))))
+    # x = np.concatenate((self.demMatrix, self.radMatrix, self.wndMatrix, self.tmpMatrix,  # Step 0: load (build) data
+    #                     self.prc_1Matrix, self.prc_7Matrix, self.dummieMatrix), axis=1)
+    # x = np.concatenate((self.x, x), axis=0)  # input data
+    # y = np.concatenate((self.y, self.mcpMatrix), axis=0)  # output data
+    # self.scaler.partial_fit(x)  # Step 1: scale data
+    # x_std = self.scaler.transform(x)  # Step 2: split data
+    # X_train, X_test, y_train, y_test = train_test_split(x_std, y, test_size=0.2)
+    # self.model.fit(X_train, y_train)  # Step 3: fit model
+    # self.fitted = True  # Step 4: set fitted-flag to true
+
+
+    # for date in pd.date_range(start='2018-01-01', end='2018-02-01'):
+    #     dem = myInterface.get_dem(date)  # demand germany [MW]
+    #     weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
+    #     prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
+    #     prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
+    #     dummies = createSaisonDummy(date, date).reshape((-1,))
+    #     x = np.hstack((dem, weather['wind'], weather['dir'] + weather['dif'], weather['temp'], prc_1, prc_7, dummies))
+    #     y = myInterface.get_prc_da(date)
+    #
+    #     dx.append(x)
+    #     dy.append(y)
+
+
+        #d.append(np.hstack((prc_1,prc_7)))

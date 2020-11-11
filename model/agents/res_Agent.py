@@ -14,7 +14,7 @@ from agents.basic_Agent import agent as basicAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=50, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=12, help='PLZ-Agent')
     return parser.parse_args()
 
 

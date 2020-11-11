@@ -1,7 +1,11 @@
+# third party modules
 import numpy as np
+from gurobipy import *
+import copy
+
+# model modules
 from components.generation_powerPlant import PowerPlant
 from aggregation.portfolio import PortfolioModel
-from gurobipy import *
 
 
 class PwpPort(PortfolioModel):
@@ -17,14 +21,13 @@ class PwpPort(PortfolioModel):
         self.fix = True
 
     def add_energy_system(self, name, energy_system):
-
-        data = energy_system[name]
-
+        # print(energy_system)
+        data = copy.deepcopy(energy_system[name])
         # build power plants
-        if data['typ'] == 'powerPlant':
-            data.update(dict(model=PowerPlant(name=name, power_plant=data)))
+        data.update(dict(model=PowerPlant(name=name, power_plant=copy.deepcopy(data),
+                                          T=self.T, t=np.arange(self.T), dt=self.dt)))
 
-        self.energy_systems.update(energy_system)
+        self.energy_systems.update({name: data})
 
     def build_model(self, response=None, max_power=False):
         self.m.remove(self.m.getVars())
@@ -76,15 +79,20 @@ class PwpPort(PortfolioModel):
 
     def optimize(self):
 
-        self.power = self.emission = self.fuel = self.start = np.zeros_like(self.t, np.float)
+        self.power = np.zeros_like(self.t, np.float)
+        self.emission = np.zeros_like(self.t, np.float)
+        self.fuel = np.zeros_like(self.t, np.float)
+        self.start = np.zeros_like(self.t, np.float)
 
         # initialize dict for fuel sum calculation
         self.generation = dict(powerLignite=np.zeros_like(self.t, np.float),     # total generation lignite   [MW]
                                powerCoal=np.zeros_like(self.t, np.float),        # total generation caol      [MW]
                                powerGas=np.zeros_like(self.t, np.float),         # total generation gas       [MW]
                                powerNuc=np.zeros_like(self.t, np.float))         # total generation nuc       [MW])
+
+        self.m.optimize()
+
         try:
-            self.m.optimize()
             power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
             self.power = np.round(power, 2)
             # total emissions costs [€] for each hour
@@ -99,13 +107,13 @@ class PwpPort(PortfolioModel):
 
             for key, value in self.energy_systems.items():
                 # set output power for each energy system (power plant)
-                value['model'].power = np.asarray([self.m.getVarByName('P' + '_%s[%i]' % (key, i)).x
+                value['model'].power = np.asarray([self.m.getVarByName('P_%s[%i]' % (key, i)).x
                                                    for i in self.t], np.float).reshape((-1,))
-                value['model'].emission = np.asarray([self.m.getVarByName('E' + '_%s[%i]' % (key, i)).x
+                value['model'].emission = np.asarray([self.m.getVarByName('E_%s[%i]' % (key, i)).x
                                                       for i in self.t], np.float).reshape((-1,))
-                value['model'].fuel = np.asarray([self.m.getVarByName('F' + '_%s[%i]' % (key, i)).x
+                value['model'].fuel = np.asarray([self.m.getVarByName('F_%s[%i]' % (key, i)).x
                                                   for i in self.t], np.float).reshape((-1,))
-                value['model'].start = np.asarray([self.m.getVarByName('S' + '_%s[%i]' % (key, i)).x
+                value['model'].start = np.asarray([self.m.getVarByName('S_%s[%i]' % (key, i)).x
                                                   for i in self.t], np.float).reshape((-1,))
 
                 self.generation['power%s' % value['fuel'].capitalize()] += value['model'].power

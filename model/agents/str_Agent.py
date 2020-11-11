@@ -8,7 +8,7 @@ from scipy.stats import norm
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.portfolio_powerPlant import PwpPort
+from aggregation.portfolio_storage import StrPort
 from agents.basic_Agent import agent as basicAgent
 
 
@@ -25,7 +25,7 @@ class StrAgent(basicAgent):
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = PwpPort(gurobi=True, T=24)
+        self.portfolio = StrPort(gurobi=True, T=24)
 
         # Construction storages
         for key, value in self.connections['mongoDB'].get_storages().items():
@@ -33,7 +33,13 @@ class StrAgent(basicAgent):
             self.portfolio.add_energy_system(key, {key: value})
         self.logger.info('Storages added')
 
-        self.base_price = self.forecasts['price'].y
+        mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
+               42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+        self.base_price = np.asarray(mcp).reshape((1,-1))
+
+        if len(self.forecasts['price'].y) > 0:
+            self.base_price = self.forecasts['price'].y
+
         self.q_ask = 0
         self.q_bid = 0
         # If there are no power systems, terminate the agent
@@ -54,7 +60,7 @@ class StrAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
 
         weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
-        demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
+        # demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
         self.portfolio.set_parameter(self.date, weather, prices)
         self.portfolio.build_model()
@@ -145,7 +151,7 @@ class StrAgent(basicAgent):
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
-        power_da, _, _, _ = self.portfolio.fix_planing()
+        self.portfolio.optimize()
         volume = self.portfolio.volume
         self.performance['adjustResult'] = tme.time() - start_time
 

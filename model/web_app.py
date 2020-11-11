@@ -24,7 +24,7 @@ path = os.path.dirname(os.path.dirname(__file__)) + r'/model'                  #
 gridView = GridView()                                                          # initialize grid view
 config = configparser.ConfigParser()                                           # read config file
 config.read('web_app.cfg')
-web_port = config['Configuration']['webport']
+
 hostname = socket.gethostname()                                                # get computer name
 ip_address = socket.gethostbyname(hostname)                                    # get ip address
 
@@ -37,7 +37,7 @@ CORS(app, resources={r"*": {"origins": "*"}})
 def index():
 
     # Step 1: Load config values to find and initialize the infrastructure (databases and MQTT)
-    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local' and key != 'webport'}
+    system_conf = {key: value for key, value in config['Configuration'].items() if key != 'local'}
 
     # Step 2:Load config values to build the agents
     agent_conf = {key.split('-')[0]: value for key, value in config.items() if 'Agent' in key}
@@ -47,19 +47,6 @@ def index():
                                 database=config['Configuration']['database'])
     agents = mongo_connection.get_agents()
     mongo_connection.mongo.close()
-
-    # #TODO: Serverstatus abfragen -> gelöst in index.html
-    # #requests.post('http://' + str(request.form[typ + '_ip']) + ':5000/config', json=system_conf, timeout=0.5)
-    # r = requests.get('http://149.201.88.150:5000/test')
-    # print('Status:',r.status_code)
-    #
-    # print(agent_conf)
-    # for key, value in agent_conf.items():
-    #     print(key)
-    #     for name, attribute in value.items():
-    #         print(name, attribute)
-    #         if name == 'host':
-    #             print('Host:', attribute)
 
     return render_template('index.html', **locals())
 
@@ -243,8 +230,10 @@ def simulation(start, end, valid=True):
         # clean mongodb
         mongo_connection = mongoCon(host=config['Configuration']['mongodb'],
                                     database=config['Configuration']['database'])
+
         for name in mongo_connection.orderDB.list_collection_names():
-            mongo_connection.orderDB.drop_collection(name)
+            if name != 'status':
+                mongo_connection.orderDB.drop_collection(name)
 
     # Step 4: generate weather data for simulation time period
     influx_connection.generate_weather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
@@ -259,16 +248,16 @@ def simulation(start, end, valid=True):
     # Step 6: run simulation for each day
     for date in pd.date_range(start=start, end=end, freq='D'):
 
+
         try:
             start_time = tme.time()                                 # timestamp to measure simulation time
             # 1.Step: Run optimization for dayAhead Market
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='opt_dayAhead ' + str(date))
 
             # 2. Step: Run Market Clearing
-            tme.sleep(5)                                            # wait 5 seconds before starting dayAhead clearing
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='dayAhead_clearing ' + str(date))
-            while not mongoCon.get_market_status(date):                   # check if clearing done
-                tme.sleep(1)
+            while not mongo_connection.get_market_status(date):     # check if clearing done
+                tme.sleep(0.5)
 
             # 3. Step: Run Power Flow calculation
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='grid_calc ' + str(date))
@@ -285,7 +274,7 @@ def simulation(start, end, valid=True):
             print('Error ' + str(date.date()))
             print(e)
 
-    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ' + str('1970-01-01'))
+    # send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ' + str('1970-01-01'))
     send.close()
     influx_connection.influx.close()
     mongo_connection.mongo.close()
@@ -294,10 +283,10 @@ def simulation(start, end, valid=True):
 if __name__ == "__main__":
 
     try:
-        if config.getboolean('Configuration', 'local'):
-            app.run(debug=False, port=web_port, host='127.0.0.1')
+        if config.getboolean('Configuration', 'Local'):
+            app.run(debug=False, port=5010, host='127.0.0.1')
         else:
-            app.run(debug=False, port=web_port, host=ip_address)
+            app.run(debug=False, port=5010, host=ip_address)
     except Exception as e:
         print(e)
     finally:

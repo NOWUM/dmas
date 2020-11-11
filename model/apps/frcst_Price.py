@@ -4,14 +4,14 @@ from apps.misc_Dummies import createSaisonDummy
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
-from sklearn.exceptions import ConvergenceWarning
 from warnings import simplefilter
 simplefilter(action='ignore', category=FutureWarning)
+from collections import deque
 
 
 class annFrcst:
 
-    def __init__(self, init=5, pre_train=True):
+    def __init__(self, init=14, pre_train=False):
 
         self.fitted = False         # flag for fitted or not fitted model
         self.collect = init         # days before a retrain is started
@@ -23,16 +23,11 @@ class annFrcst:
                                   early_stopping=True)
         self.scaler = MinMaxScaler()
 
-        # intput data for neural network
-        self.demMatrix = np.array([]).reshape((-1, 24))                # total demand         [MW]
-        self.wndMatrix = np.array([]).reshape((-1, 24))                # mean wind peed       [m/s]
-        self.radMatrix = np.array([]).reshape((-1, 24))                # mean total radiation [W/m²]
-        self.tmpMatrix = np.array([]).reshape((-1, 24))                # mean temperature     [°C]
-        self.prc_1Matrix = np.array([]).reshape((-1, 24))              # DA price yesterday   [€/MWh]
-        self.prc_7Matrix = np.array([]).reshape((-1, 24))              # DA price week before [€/MWh]
-        self.dummieMatrix = np.array([]).reshape((-1, 24))             # dummies
-        # output data for neural network
-        self.mcpMatrix = np.array([]).reshape((-1, 24))                # DA price             [€/MWh]
+        self.deque_x = deque(maxlen=250)
+        self.deque_y = deque(maxlen=250)
+
+        self.x = np.asarray([]).reshape((-1,168))
+        self.y = np.asarray([]).reshape((-1,24))
 
         if pre_train:               # use historical data to fit a model at the beginning
 
@@ -48,25 +43,20 @@ class annFrcst:
 
     def collect_data(self, date, dem, weather, prc, prc_1, prc_7):
         # collect input data
-        self.demMatrix = np.concatenate((self.demMatrix, dem.reshape((-1, 24))))
-        self.wndMatrix = np.concatenate((self.wndMatrix, weather['wind'].reshape((-1, 24))))
-        self.radMatrix = np.concatenate((self.radMatrix, (weather['dir'] + weather['dif']).reshape((-1, 24))))
-        self.tmpMatrix = np.concatenate((self.tmpMatrix, weather['temp'].reshape((-1, 24))))
-        self.prc_1Matrix = np.concatenate((self.prc_1Matrix, prc_1.reshape((-1, 24))))
-        self.prc_7Matrix = np.concatenate((self.prc_7Matrix, prc_7.reshape((-1, 24))))
-        self.dummieMatrix = np.concatenate((self.dummieMatrix, createSaisonDummy(date, date).reshape((-1, 24))))
-        # collect output data
-        self.mcpMatrix = np.concatenate((self.mcpMatrix, prc.reshape((-1, 24))))
+        dummies = createSaisonDummy(date, date).reshape((-1,))
+        x = np.hstack((dem, weather['wind'], weather['dir'] + weather['dif'], weather['temp'], prc_1, prc_7, dummies))
+        y = prc
+        self.deque_x.append(x)
+        self.deque_y.append(y)
 
     def fit_function(self):
-        x = np.concatenate((self.demMatrix, self.radMatrix, self.wndMatrix, self.tmpMatrix,     # Step 0: load (build) data
-                            self.prc_1Matrix, self.prc_7Matrix, self.dummieMatrix), axis=1)
-        x = np.concatenate((self.x, x), axis=0)                         # input data
-        y = np.concatenate((self.y, self.mcpMatrix), axis=0)            # output data
-        self.scaler.partial_fit(x)                                      # Step 1: scale data
-        x_std = self.scaler.transform(x)                                # Step 2: split data
-        X_train, X_test, y_train, y_test = train_test_split(x_std, y, test_size=0.2)
-        self.model.fit(X_train, y_train)                                # Step 3: fit model
+
+        self.x = np.asarray(self.deque_x)
+        self.y = np.asarray(self.deque_y)
+        self.scaler.fit(self.x)                                         # Step 1: scale data
+        x_std = self.scaler.transform(self.x)                           # Step 2: split data
+        # X_train, X_test, y_train, y_test = train_test_split(x_std, self.y, test_size=0.2)
+        self.model.fit(x_std, self.y)                                   # Step 3: fit model
         self.fitted = True                                              # Step 4: set fitted-flag to true
 
     def forecast(self, date, dem, weather, prc_1, prc_7):
@@ -87,7 +77,9 @@ class annFrcst:
             # Schritt 2: Berechnung des Forecasts
             power_price = self.model.predict(x_std).reshape((24,))
         else:
-            power_price = 25*np.ones(24)
+            mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
+                   42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+            power_price = np.asarray(mcp).reshape((-1,))
 
         co = np.ones_like(power_price) * 23.8 * np.random.uniform(0.95, 1.05, 24)   # -- Emission Price     [€/t]
         gas = np.ones_like(power_price) * 24.8 * np.random.uniform(0.95, 1.05, 24)  # -- Gas Price          [€/MWh]

@@ -48,6 +48,7 @@ class MarketAgent(basicAgent):
                 else:
                     pass
             else:
+                print('waiting for %s' % name)
                 tme.sleep(1)                                                # wait a second and ask mongodb again
             end = tme.time()                                                # current timestamp
             if end - start >= 120:                                          # wait maximal 120 seconds
@@ -55,14 +56,13 @@ class MarketAgent(basicAgent):
                 wait = False
 
         orders = (ask_orders, bid_orders)
-
         return orders
 
     def clearing(self):
 
-        agent_ids = self.connections['mongoDB'].status.find().distinct('_id')
+        agent_ids = self.connections['mongoDB'].get_agents(sorted=False)
         total_orders = [self.get_orders(agent, str(self.date.date())) for agent in agent_ids
-                        if 'MRK' not in agent or 'NET' not in agent]
+                        if 'MRK' not in agent and 'NET' not in agent]
 
         for order in total_orders:
             self.market.set_parameter(ask=order[0], bid=order[1])

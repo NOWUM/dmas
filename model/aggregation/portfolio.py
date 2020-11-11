@@ -77,10 +77,6 @@ class PortfolioModel:
         power = np.zeros_like(self.t)
         return power
 
-    def fix_planing(self):
-        power = np.zeros_like(self.t)
-        return power
-
 
 if __name__ == "__main__":
     test = PortfolioModel()
