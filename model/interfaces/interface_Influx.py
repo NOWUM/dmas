@@ -316,29 +316,29 @@ class InfluxInterface:
 if __name__ == "__main__":
     #myInterface = InfluxInterface()
     #myInterface = InfluxInterface(database='MAS2020_10')
-    myInterface = InfluxInterface(database='MAS2020_30')
+    myInterface = InfluxInterface(database='MAS2020_30', host='149.201.196.100')
     #x = myInterface.get_lines_data(pd.to_datetime('2018-01-01'))
     #prices = myInterface.get_prc_da(date=pd.to_datetime('2018-01-01') - pd.DateOffset(days=7))
     from collections import deque
     from apps.misc_Dummies import createSaisonDummy
-    from apps.frcst_Price import annFrcst
-
-    test = annFrcst()
-    for date in pd.date_range(start='2018-01-01', end='2018-02-01'):
-        dem = myInterface.get_dem(date)  # demand germany [MW]
-        weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
-        prc = myInterface.get_prc_da(date)
-        prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
-        prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
-        test.collect_data(date, dem, weather, prc, prc_1, prc_7)
-    test.fit_function()
-    date = pd.to_datetime('2018-02-02')
-    dem = myInterface.get_dem(date)  # demand germany [MW]
-    weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
-    # prc = myInterface.get_prc_da(date)
-    prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
-    prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
-    prices = test.forecast(date, dem, weather, prc_1, prc_7)
+    # from apps.frcst_Price import annFrcst
+    #
+    # test = annFrcst()
+    # for date in pd.date_range(start='2018-01-01', end='2018-02-01'):
+    #     dem = myInterface.get_dem(date)  # demand germany [MW]
+    #     weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
+    #     prc = myInterface.get_prc_da(date)
+    #     prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
+    #     prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
+    #     test.collect_data(date, dem, weather, prc, prc_1, prc_7)
+    # test.fit_function()
+    # date = pd.to_datetime('2018-02-02')
+    # dem = myInterface.get_dem(date)  # demand germany [MW]
+    # weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
+    # # prc = myInterface.get_prc_da(date)
+    # prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
+    # prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
+    # prices = test.forecast(date, dem, weather, prc_1, prc_7)
 
 
 
