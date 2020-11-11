@@ -194,10 +194,9 @@ def simulation(start, end, valid=True):
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='opt_dayAhead ' + str(date))
 
             # 2. Step: Run Market Clearing
-            tme.sleep(5)                                            # wait 5 seconds before starting dayAhead clearing
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='dayAhead_clearing ' + str(date))
             while not mongo_connection.get_market_status(date):     # check if clearing done
-                tme.sleep(1)
+                tme.sleep(0.5)
 
             # 3. Step: Run Power Flow calculation
             send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='grid_calc ' + str(date))

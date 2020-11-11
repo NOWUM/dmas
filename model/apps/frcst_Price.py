@@ -4,9 +4,9 @@ from apps.misc_Dummies import createSaisonDummy
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
-from sklearn.exceptions import ConvergenceWarning
 from warnings import simplefilter
 simplefilter(action='ignore', category=FutureWarning)
+from collections import deque
 
 
 class annFrcst:
@@ -23,16 +23,8 @@ class annFrcst:
                                   early_stopping=True)
         self.scaler = MinMaxScaler()
 
-        # intput data for neural network
-        self.demMatrix = np.array([]).reshape((-1, 24))                # total demand         [MW]
-        self.wndMatrix = np.array([]).reshape((-1, 24))                # mean wind peed       [m/s]
-        self.radMatrix = np.array([]).reshape((-1, 24))                # mean total radiation [W/m²]
-        self.tmpMatrix = np.array([]).reshape((-1, 24))                # mean temperature     [°C]
-        self.prc_1Matrix = np.array([]).reshape((-1, 24))              # DA price yesterday   [€/MWh]
-        self.prc_7Matrix = np.array([]).reshape((-1, 24))              # DA price week before [€/MWh]
-        self.dummieMatrix = np.array([]).reshape((-1, 24))             # dummies
-        # output data for neural network
-        self.mcpMatrix = np.array([]).reshape((-1, 24))                # DA price             [€/MWh]
+        self.deque_x = deque(maxlen=250)
+        self.deque_y = deque(maxlen=250)
 
         self.x = np.asarray([]).reshape((-1,168))
         self.y = np.asarray([]).reshape((-1,24))
@@ -51,25 +43,20 @@ class annFrcst:
 
     def collect_data(self, date, dem, weather, prc, prc_1, prc_7):
         # collect input data
-        self.demMatrix = np.concatenate((self.demMatrix, dem.reshape((-1, 24))))
-        self.wndMatrix = np.concatenate((self.wndMatrix, weather['wind'].reshape((-1, 24))))
-        self.radMatrix = np.concatenate((self.radMatrix, (weather['dir'] + weather['dif']).reshape((-1, 24))))
-        self.tmpMatrix = np.concatenate((self.tmpMatrix, weather['temp'].reshape((-1, 24))))
-        self.prc_1Matrix = np.concatenate((self.prc_1Matrix, prc_1.reshape((-1, 24))))
-        self.prc_7Matrix = np.concatenate((self.prc_7Matrix, prc_7.reshape((-1, 24))))
-        self.dummieMatrix = np.concatenate((self.dummieMatrix, createSaisonDummy(date, date).reshape((-1, 24))))
-        # collect output data
-        self.mcpMatrix = np.concatenate((self.mcpMatrix, prc.reshape((-1, 24))))
+        dummies = createSaisonDummy(date, date).reshape((-1,))
+        x = np.hstack((dem, weather['wind'], weather['dir'] + weather['dif'], weather['temp'], prc_1, prc_7, dummies))
+        y = prc
+        self.deque_x.append(x)
+        self.deque_y.append(y)
 
     def fit_function(self):
-        x = np.concatenate((self.demMatrix, self.radMatrix, self.wndMatrix, self.tmpMatrix,     # Step 0: load (build) data
-                            self.prc_1Matrix, self.prc_7Matrix, self.dummieMatrix), axis=1)
-        x = np.concatenate((self.x, x), axis=0)                         # input data
-        y = np.concatenate((self.y, self.mcpMatrix), axis=0)            # output data
-        self.scaler.partial_fit(x)                                      # Step 1: scale data
-        x_std = self.scaler.transform(x)                                # Step 2: split data
-        X_train, X_test, y_train, y_test = train_test_split(x_std, y, test_size=0.2)
-        self.model.fit(X_train, y_train)                                # Step 3: fit model
+
+        self.x = np.asarray(self.deque_x)
+        self.y = np.asarray(self.deque_y)
+        self.scaler.fit(self.x)                                         # Step 1: scale data
+        x_std = self.scaler.transform(self.x)                           # Step 2: split data
+        # X_train, X_test, y_train, y_test = train_test_split(x_std, self.y, test_size=0.2)
+        self.model.fit(x_std, self.y)                                   # Step 3: fit model
         self.fitted = True                                              # Step 4: set fitted-flag to true
 
     def forecast(self, date, dem, weather, prc_1, prc_7):
