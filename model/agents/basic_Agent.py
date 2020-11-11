@@ -164,7 +164,7 @@ class agent:
 
         # Terminate Agents
         # -----------------------------------------------------------------------------------------------------------
-        if 'kill' in message:
+        if 'kill' in message or self.name in message:
             self.connections['mongoDB'].logout(self.name)
             self.connections['influxDB'].influx.close()
             self.connections['mongoDB'].mongo.close()

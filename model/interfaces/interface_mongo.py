@@ -1,5 +1,6 @@
 # third party modules
 import pymongo
+import socket
 
 
 class mongoInterface:
@@ -141,20 +142,23 @@ class mongoInterface:
         self.orderDB[str(date.date())].update_one(filter=query, update=clearing, upsert=True)
 
     def login(self, name):
+        hostname = socket.gethostname()  # get computer name
+        ip_address = socket.gethostbyname(hostname)
         status = {
                     "_id": name,
-                    "connected": True
+                    "connected": True,
+                    "ip": ip_address
                   }
         if self.status.find_one({"_id": name}) is None:
             self.status.insert_one(status)
         else:
             query = {"_id": name}
-            status = {"$set": {"connected": True}}
+            status = {"$set": {"connected": True, "ip": ip_address}}
             self.status.update_one(query, status)
 
     def logout(self, name):
         query = {"_id": name}
-        status = {"$set": {"connected": False}}
+        status = {"$set": {"connected": False, "ip": ""}}
         self.status.update_one(query, status)
 
     def set_dayAhead_orders(self, name, date, orders):
@@ -169,9 +173,20 @@ class mongoInterface:
             dict_ = self.status.find_one({"_id": id_})
             typ = id_.split('_')[0]
             try:
-                if dict_['connected'] == True:
+                if dict_['connected']:
                     agents[typ] += 1
             except Exception as e:
                 print(e)
+
+        return agents
+
+    def get_agents_ip(self, in_typ):
+
+        agents = {}
+        for id_ in self.status.find().distinct('_id'):
+            dict_ = self.status.find_one({"_id": id_})
+            typ = id_.split('_')[0]
+            if typ == in_typ and dict_['connected']:
+                agents.update({id_: dict_['ip']})
 
         return agents

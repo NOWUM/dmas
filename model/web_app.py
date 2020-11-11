@@ -141,24 +141,13 @@ def get_power_flow():
 def agent_info():
 
     agent_type = request.form['agent']
-    print("Getting requested Info for Agent", agent_type, "...")
-    url = "http://localhost:15672/api/exchanges/" + 'SimAgent' + "/AGent_DE_Tobi/bindings/source"
-    resp = requests.get(url, auth=('guest', 'guest'), headers={'application':'json'})
 
-    resp = resp.json()
-    agents = {}
+    # Step 1: connect to mongo database
+    database = config['Configuration']['database']
+    mongo_connection = mongoCon(host=config['Configuration']['mongodb'], database=database)
+    agents = mongo_connection.get_agents_ip(agent_type)
 
-    agent_type = request.form['agent']
-
-    for element in resp:
-        name = element['routing_key']
-        if name.split("_")[0] == agent_type:
-            url = "http://localhost:15672/api/queues/" + 'SimAgent' + "/" + name
-            data = requests.get(url, auth=('guest', 'guest'), headers={'application':'json'})
-            data = data.json()
-            ip = data['owner_pid_details']['peer_host']
-            agents.update({name: ip})
-
+    # Step 2: update html
     try:
         if request.method == 'POST':
             return render_template('info.html', **locals())
@@ -194,7 +183,27 @@ def kill_agents():
                                                                        credentials=credentials))
     send = connection.channel()  # declare Market Exchange
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
-    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ')
+    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ' + '1970-01-01')
+    send.close()
+    return 'OK'
+
+@app.route('/kill_agent_x', methods=['POST'])
+def kill_agent_x():
+    agent = request.form['agent']
+    # Kill Agents
+    print('killing Agent...')
+    rabbitmq_ip = config['Configuration']['rabbitmq']
+    rabbitmq_exchange = config['Configuration']['exchange']
+    # Step 2: check if rabbitmq runs local and choose the right login method
+    if config.getboolean('Configuration', 'local'):
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, virtual_host='SimAgent', heartbeat=0))
+    else:
+        credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, virtual_host='SimAgent', heartbeat=0,
+                                                                       credentials=credentials))
+    send = connection.channel()  # declare Market Exchange
+    send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
+    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body=agent + ' 1970-01-01')
     send.close()
     return 'OK'
 

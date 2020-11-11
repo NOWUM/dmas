@@ -127,9 +127,9 @@
 
         function get_agent_info(elem) {
             $.post("agent_info", //Verbindung zu @app.route('/agent_info')
-                                  {agent:       elem.value}, //Daten, die geschickt werden (hier: Agent, für dem Daten abgerufen werden sollen
+                                  {agent:       elem.value}, //Daten, die geschickt werden (hier: Agent, für dem Daten abgerufen werden sollen)
                                   function(data){$("#middle").html(data);}); //Element mit id "middle" über jQuery html() Method mit data aus GET updaten
-        }
+        };
     </script>
 
 </head>
