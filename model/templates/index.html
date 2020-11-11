@@ -127,8 +127,8 @@
 
         function get_agent_info(elem) {
             $.post("agent_info", //Verbindung zu @app.route('/agent_info')
-                                  {agent:       elem.value}, //Daten, die geschickt werden: TODO: Agent für den Infos aufgerufen werden sollen, übermitteln
-                                  function(data){$("#middle").html(data);}); //Element mit id "output" über jQuery html() Method mit data aus GET updaten
+                                  {agent:       elem.value}, //Daten, die geschickt werden (hier: Agent, für dem Daten abgerufen werden sollen
+                                  function(data){$("#middle").html(data);}); //Element mit id "middle" über jQuery html() Method mit data aus GET updaten
         }
     </script>
 
@@ -239,7 +239,7 @@
                         </form>
                         <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit Agent Config">
                         <input class="btn btn-dark btn-sm" id="refreshServer" type="submit" value="Refresh"><br><br>
-                    <div id="output">Test output box with id="output"</div>
+<!--                    <div id="output">Test output box with id="output"</div>-->
                     </div>
                     <div class="col-6">
                         <h4>Configuration Server & Infrastructure</h4>

@@ -140,25 +140,24 @@ def get_power_flow():
 @app.route('/agent_info', methods=['GET', 'POST'])
 def agent_info():
 
+    agent_type = request.form['agent']
+    print("Getting requested Info for Agent", agent_type, "...")
     url = "http://localhost:15672/api/exchanges/" + 'SimAgent' + "/AGent_DE_Tobi/bindings/source"
     resp = requests.get(url, auth=('guest', 'guest'), headers={'application':'json'})
 
     resp = resp.json()
-    agents_all = {}
+    agents = {}
+
+    agent_type = request.form['agent']
 
     for element in resp:
         name = element['routing_key']
-        url = "http://localhost:15672/api/queues/" + 'SimAgent' + "/" + name
-        data = requests.get(url, auth=('guest', 'guest'), headers={'application':'json'})
-        data = data.json()
-        ip = data['owner_pid_details']['peer_host']
-        agents_all.update({name: ip})
-
-    agent_type = request.form['agent']
-    agents = {}
-    for key, value in agents_all.items():
-        if agent_type in key:
-            agents.update({key: value})
+        if name.split("_")[0] == agent_type:
+            url = "http://localhost:15672/api/queues/" + 'SimAgent' + "/" + name
+            data = requests.get(url, auth=('guest', 'guest'), headers={'application':'json'})
+            data = data.json()
+            ip = data['owner_pid_details']['peer_host']
+            agents.update({name: ip})
 
     try:
         if request.method == 'POST':
