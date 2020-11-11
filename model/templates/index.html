@@ -86,10 +86,9 @@
             $("#kill").click(function(){$.post("kill_agents");});
 
             $("#refreshServer").click(function(){
-                //TODO: How to use dict from agent_conf.items() in javascript?
-                //var agents_dict = '{{agent_conf.items}}';
-                //alert(agents_dict);
-                //alert(agents_dict[1]);
+                ////TODO: How to use dict from agent_conf.items() in javascript?
+                //var agents_dict = '{{agent_conf.items()}}';
+                //alert(agents_dict); //output: dict_items([(&#39;PWP&#39;, &lt;Section: PWP-Agent&gt;), (&#39;RES&#39;, &lt;Section: RES-Agent&gt;), (&#39;DEM&#39;, &lt;Section: DEM-Agent&gt;), (&#39;STR&#39;, &lt;Section: STR-Agent&gt;), (&#39;NET&#39;, &lt;Section: NET-Agent&gt;), (&#39;MRK&#39;, &lt;Section: MRK-Agent&gt;)])
                 //for (var key in agents_dict) {
                 //    var value = agents_dict[key];
                  //   //alert(value);
@@ -125,6 +124,12 @@
         function serverStatus(){
 
         };
+
+        function get_agent_info(elem) {
+            $.post("agent_info", //Verbindung zu @app.route('/agent_info')
+                                  {agent:       elem.value}, //Daten, die geschickt werden: TODO: Agent für den Infos aufgerufen werden sollen, übermitteln
+                                  function(data){$("#middle").html(data);}); //Element mit id "output" über jQuery html() Method mit data aus GET updaten
+        }
     </script>
 
 </head>
@@ -141,7 +146,9 @@
                     <div class="col"> <p>Fachhochschule Aachen</p> </div>
                 </div>
                 <div class="row">
-                    <div class="col-3"></div>
+                    <div class="col-3">
+                        <a class="btn btn-primary" href="" role="button">Home</a>
+                    </div>
                     <div class="col">
                         <span style="color: #f8f9fa; "> <label>Start:</label><br></span>
                         <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" value="2018-01-01">
@@ -171,7 +178,9 @@
                         {% for key, value in agents.items() %}
                         <li class="nav-item">
                             <div style="text-align: left;">
-                                <img class="img-thumbnail" height="50" src="../static/{{key}}.svg" width="50"><b> {{key}} connected: {{value}} </b> <br><br>
+                                <button type="button" onclick="get_agent_info(this)" id="btn_{{key}}" value="{{key}}"><img class="img-thumbnail" height="50" src="../static/{{key}}.svg" width="50" alt="{{key}}"></button>
+<!--                                <a href="info"><img class="img-thumbnail" height="50" src="../static/{{key}}.svg" width="50"></a>-->
+                                <b> {{key}} connected: {{value}} </b> <br><br>
                             </div>
                         </li>
                         {% endfor %}
@@ -230,6 +239,7 @@
                         </form>
                         <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit Agent Config">
                         <input class="btn btn-dark btn-sm" id="refreshServer" type="submit" value="Refresh"><br><br>
+                    <div id="output">Test output box with id="output"</div>
                     </div>
                     <div class="col-6">
                         <h4>Configuration Server & Infrastructure</h4>

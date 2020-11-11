@@ -137,6 +137,38 @@ def get_power_flow():
         print('Exception in Grid:', e)
         return render_template('grid.html', plot=fig)
 
+@app.route('/agent_info', methods=['GET', 'POST'])
+def agent_info():
+
+    url = "http://localhost:15672/api/exchanges/" + 'SimAgent' + "/AGent_DE_Tobi/bindings/source"
+    resp = requests.get(url, auth=('guest', 'guest'), headers={'application':'json'})
+
+    resp = resp.json()
+    agents_all = {}
+
+    for element in resp:
+        name = element['routing_key']
+        url = "http://localhost:15672/api/queues/" + 'SimAgent' + "/" + name
+        data = requests.get(url, auth=('guest', 'guest'), headers={'application':'json'})
+        data = data.json()
+        ip = data['owner_pid_details']['peer_host']
+        agents_all.update({name: ip})
+
+    agent_type = request.form['agent']
+    agents = {}
+    for key, value in agents_all.items():
+        if agent_type in key:
+            agents.update({key: value})
+
+    try:
+        if request.method == 'POST':
+            return render_template('info.html', **locals())
+        else:
+            print("No Post")
+    except Exception as e:
+        print('Exception in Info:', e)
+        return render_template('info.html')
+
 
 @app.route('/run', methods=['POST'])
 def run():
@@ -156,10 +188,10 @@ def kill_agents():
     rabbitmq_exchange = config['Configuration']['exchange']
     # Step 2: check if rabbitmq runs local and choose the right login method
     if config.getboolean('Configuration', 'local'):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, virtual_host='SimAgent', heartbeat=0))#TODO:add SimAgent
     else:
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0,
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, virtual_host='SimAgent', heartbeat=0,#TODO:add SimAgent
                                                                        credentials=credentials))
     send = connection.channel()  # declare Market Exchange
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
@@ -180,10 +212,10 @@ def simulation(start, end, valid=True):
 
     # Step 2: check if rabbitmq runs local and choose the right login method
     if config.getboolean('Configuration', 'local'):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, virtual_host='SimAgent',heartbeat=0))
     else:
         credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, heartbeat=0,
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_ip, virtual_host='SimAgent', heartbeat=0,
                                                                        credentials=credentials))
     send = connection.channel()  # declare Market Exchange
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')

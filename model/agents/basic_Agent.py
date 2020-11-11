@@ -64,11 +64,11 @@ class agent:
             self.geo = self.connections['mongoDB'].get_position()['geohash']
 
         if config.getboolean('Configuration', 'local'):
-            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, heartbeat=0))#TODO: Heartbeat einfügen, der ausreichend hoch ist, sodass Agenten fertig rechnen können
+            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host,virtual_host='SimAgent', heartbeat=0))#TODO: Heartbeat einfügen, der ausreichend hoch ist, sodass Agenten fertig rechnen können
             self.connections.update({'connectionMQTT': con})
         else:
             crd = pika.PlainCredentials('dMAS', 'dMAS2020')
-            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, heartbeat=0, credentials=crd))
+            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, virtual_host='SimAgent', heartbeat=0, credentials=crd))
             self.connections.update({'connectionMQTT': con})
 
         receive = con.channel()
