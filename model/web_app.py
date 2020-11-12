@@ -282,7 +282,7 @@ def simulation(start, end, valid=True):
 
 if __name__ == "__main__":
 
-    print('starting Service')
+    print('starting service')
 
     try:
         if config.getboolean('Configuration', 'Local'):
@@ -293,3 +293,5 @@ if __name__ == "__main__":
         print(e)
     finally:
         exit()
+
+    print('terminate service')
