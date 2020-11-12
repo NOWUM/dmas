@@ -71,7 +71,7 @@ def change_config():
             print(e)
         influx_connection.influx.create_database(config['Configuration']['database'])
         influx_connection.influx.create_retention_policy(name=config['Configuration']['database'] + '_pol',
-                                                         duration='INF', shard_duration='1d', replication=1)
+                                                         duration='INF', shard_duration='3000d', replication=1)
         influx_connection.influx.close()
         # clean mongodb
         mongo_connection = mongoCon(host=config['Configuration']['mongodb'],

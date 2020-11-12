@@ -312,21 +312,54 @@ class InfluxInterface:
 if __name__ == "__main__":
     #myInterface = InfluxInterface()
     #myInterface = InfluxInterface(database='MAS2020_10')
-    myInterface = InfluxInterface(database='MAS2020_30', host='149.201.196.100')
+    import time as tme
+    myInterface = InfluxInterface(database='MAS2020_30', host='149.201.88.150')
+    date = pd.to_datetime('2018-01-01')
+    from apps.frcst_Price import annFrcst
+
+    # price = dict(power=[], gas=[], co=[], lignite=3.5, coal=8.5, nuc=1)
+    # for i in range(days):
+    #     # collect input parameter for day ahead price forecast at day (i)
+    #     demand = self.forecasts['demand'].forecast(date + pd.DateOffset(days=i))
+    #     weather = self.forecasts['weather'].forecast(str(self.geo), date + pd.DateOffset(days=i), mean=True)
+    #     price_d1 = self.connections['influxDB'].get_prc_da(date - pd.DateOffset(days=1)).reshape((-1, 24))
+    #     price_d7 = self.connections['influxDB'].get_prc_da(date - pd.DateOffset(days=7 - i)).reshape((-1, 24))
+    #     # get price forecast for day (i)
+    #     p = self.forecasts['price'].forecast(date, demand, weather, price_d1, price_d7)
+    #     for key, value in p.items():
+    #         if key in ['power', 'gas', 'co']:
+    #             price[key] = np.round(np.concatenate((price[key], value)), 2)
+    #         else:
+    #             price[key] = np.round(value, 2)
+    # return price
+
+    #for i in range(10):
+    #    start = tme.time()
+    #    dem = myInterface.get_dem(date)  # demand germany [MW]
+    #    weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
+    #    prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
+    #    prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
+    #    print(tme.time()-start)
+    test = annFrcst()
+    for i in range(10):
+        start = tme.time()
+        # dem = myInterface.get_dem(date)  # demand germany [MW]
+        weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
+        prc = myInterface.get_prc_da(date)
+        prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
+        prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
+        # test.collect_data(date, dem, weather, prc, prc_1, prc_7)
+        print(tme.time() - start)
+
     #x = myInterface.get_lines_data(pd.to_datetime('2018-01-01'))
     #prices = myInterface.get_prc_da(date=pd.to_datetime('2018-01-01') - pd.DateOffset(days=7))
     from collections import deque
     from apps.misc_Dummies import createSaisonDummy
-    # from apps.frcst_Price import annFrcst
+
     #
     # test = annFrcst()
     # for date in pd.date_range(start='2018-01-01', end='2018-02-01'):
-    #     dem = myInterface.get_dem(date)  # demand germany [MW]
-    #     weather = myInterface.get_weather('u302eujrq6vg', date, mean=True)  # mean weather germany
-    #     prc = myInterface.get_prc_da(date)
-    #     prc_1 = myInterface.get_prc_da(date - pd.DateOffset(days=1))  # mcp yesterday [€/MWh]
-    #     prc_7 = myInterface.get_prc_da(date - pd.DateOffset(days=7))  # mcp week before [€/MWh]
-    #     test.collect_data(date, dem, weather, prc, prc_1, prc_7)
+
     # test.fit_function()
     # date = pd.to_datetime('2018-02-02')
     # dem = myInterface.get_dem(date)  # demand germany [MW]
