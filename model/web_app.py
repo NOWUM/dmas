@@ -137,12 +137,12 @@ def agent_info():
     # Step 2: update html
     try:
         if request.method == 'POST':
-            return render_template('info.html', **locals())
+            return render_template('agent_info.html', **locals())
         else:
             print("No Post")
     except Exception as e:
         print('Exception in Info:', e)
-        return render_template('info.html')
+        return render_template('agent_info.html')
 
 
 @app.route('/run', methods=['POST'])

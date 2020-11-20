@@ -1,0 +1,41 @@
+<div class="row">
+  <div *ngFor="let item of config | keyvalue">
+    <div class="col-2">
+      {{ item.key }}:
+    </div>
+    <div class="col">
+      <input type="text" [(ngModel)]="item.value" (blur)="update_config(item.key, item.value)">
+    </div>
+  </div>
+</div>
+
+<div class="row" style="padding-bottom: 10px">
+  <div class="col">
+    <br>
+    <!-- +++++ For Services +++++ -->
+    <div *ngIf="type == 'services'">
+      <div class="btn-group" *ngIf="type == 'services'">
+        <button (click)="set_config()" class="btn btn-dark btn-sm"> Submit</button>
+      </div>
+    </div>
+    <!-- ++++++++++ -->
+
+    <!-- +++++ For Agents +++++ -->
+    <div *ngIf="type != 'services'">
+      <!-- +++++ buttons left hand side +++++ -->
+      <div class="btn-group" *ngIf="type != 'services'">
+        <button (click)="set_config()" class="btn btn-dark btn-sm"> Submit</button>
+        <button (click)="start_agents()" class="btn btn-dark btn-sm"> Start</button>
+        <button (click)="terminate_agents()" class="btn btn-dark btn-sm"> Stop</button>
+      </div>
+      <!-- +++++ buttons right hand side +++++ -->
+      <b style="padding-left: 10%; padding-right: 2%"> total running: {{ number }} </b>
+      <div class="btn-group" *ngIf="type != 'services'">
+        <button (click)="get_running_agents()" class="btn btn-dark btn-sm"> Refresh</button>
+        <button (click)="get_info()" *ngIf="type != 'services'" class="btn btn-dark btn-sm"> Info</button>
+      </div>
+    </div>
+    <!-- ++++++++++ -->
+
+  </div>
+</div>
