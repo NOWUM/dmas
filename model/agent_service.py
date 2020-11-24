@@ -45,10 +45,12 @@ def build():
     content = request.json
     if os.name == 'nt':
         for i in range(int(content['start']), int(content['end'])):
+            print('Starting Agent', content['typ'], i)
             command = 'python ' + path + r'/agents/' + content['typ'] + '_Agent.py ' + '--plz ' + str(i)
             subprocess.Popen(command, cwd=path, shell=True)
     else:
         for i in range(int(content['start']), int(content['end'])):
+            print('Starting Agent', content['typ'], i)
             command = 'python3 /home/dmas/dmas/' + path + r'/agents/' + content['typ'] + '_Agent.py ' + '--plz ' + str(i)
             print(command)
             subprocess.Popen(command, shell=True)

@@ -12,6 +12,7 @@ import socket
 import json
 
 # model modules
+from apps.misc_GenWeather import WeatherGenerator
 from apps.misc_validData import write_valid_data, writeDayAheadError
 from interfaces.interface_Influx import InfluxInterface as influxCon
 from interfaces.interface_mongo import mongoInterface as mongoCon
@@ -23,7 +24,7 @@ path = os.path.dirname(os.path.dirname(__file__)) + r'/model'                  #
 
 gridView = GridView()                                                          # initialize grid view
 config = configparser.ConfigParser()                                           # read config file
-config.read('web_app.cfg')
+config.read('control_service.cfg')
 
 hostname = socket.gethostname()                                                # get computer name
 ip_address = socket.gethostbyname(hostname)                                    # get ip address
@@ -53,7 +54,7 @@ def set_config(typ='services'):
     else:
         config['%s-Agent' %typ].update(json.loads(request.data))
 
-    with open('web_app.cfg', 'w') as configfile:
+    with open('control_service.cfg', 'w') as configfile:
         config.write(configfile)
 
     return json.dumps('OK')
@@ -89,7 +90,7 @@ def terminate_agent(key=None):
                                   credentials=pika.PlainCredentials('dMAS', 'dMAS2020')))
     send = connection.channel()
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
-    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body=key + '1970-01-01')
+    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body=str(key) + ' 1970-01-01')
     send.close()
 
     return json.dumps('OK')
@@ -104,7 +105,7 @@ def terminate_agents(typ=None):
                                                                    credentials=pika.PlainCredentials('dMAS', 'dMAS2020')))
     send = connection.channel()
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
-    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='kill ' + '1970-01-01')
+    send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body=str(typ) + '_all ' + '1970-01-01')
     send.close()
 
     return json.dumps('OK')
@@ -114,7 +115,7 @@ def start_agents(typ=None):
     agent_conf = ({key.split('-')[0]: dict(value) for key, value in config.items() if 'Agent' in key})
     host = agent_conf[typ]['host']              # Server where agent should run
     start = int(agent_conf[typ]['start'])       # starting area
-    if 'stop' in agent_conf.keys():
+    if 'stop' in agent_conf[typ].keys():
         stop = int(agent_conf[typ]['stop'])     # ending area
         print('Start Agents of typ:', typ, 'on host', host, 'from', start, 'to', stop)
     else:
@@ -125,11 +126,11 @@ def start_agents(typ=None):
 
     # Step 1: set system configuration on server
     system_conf = {key: value for key, value in config['Configuration'].items()}
-    print(system_conf)
-    # requests.post('http://' + str(host) + ':5000/config', json=system_conf, timeout=0.5)
+    #print(system_conf)
+    requests.post('http://' + str(host) + ':5000/config', json=system_conf, timeout=0.5)
     # Step 2: start agents
-    # requests.post('http://' + str(host) + ':5000/build', json=data, timeout=0.5)
-    print(data)
+    requests.post('http://' + str(host) + ':5000/build', json=data, timeout=0.5)
+    #print(data)
 
     return json.dumps('OK')
 
@@ -145,10 +146,12 @@ def start_simulation():
 
     # Step 1: prepare databases and MQTT
     database = config['Configuration']['database']  # database name
+    weather_generator = WeatherGenerator(database=database, host=config['Configuration']['influxdb'])
+
     # -- init influx database
     i_con = influxCon(host=config['Configuration']['influxdb'], database=database)
-    if database in i_con.influx.get_list_database():
-        i_con.influx.drop_database(database=database)
+    if database in [x['name'] for x in i_con.influx.get_list_database()]:
+        i_con.influx.drop_database(database)
     i_con.influx.create_database(database)
     i_con.influx.create_retention_policy(name=database + '_pol',
                                          duration='INF', shard_duration='3000d', replication=1)
@@ -164,7 +167,7 @@ def start_simulation():
     send.exchange_declare(exchange=rabbitmq_exchange, exchange_type='fanout')
 
     # Step 2: generate weather data for simulation time period
-    i_con.generate_weather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
+    # i_con.generate_weather(start - pd.DateOffset(days=1), end + pd.DateOffset(days=1), valid)
 
     # Step 3: write validation data
     if valid:
@@ -174,34 +177,43 @@ def start_simulation():
         write_valid_data(database, 2, start, end)
 
     # Step 4: run simulation for each day
-        for date in pd.date_range(start=start, end=end, freq='D'):
+    weather_generator.generate_weather(valid=valid, date=pd.to_datetime(start))
+    gen_weather = True
+    for date in pd.date_range(start=start, end=end, freq='D'):
 
-            try:
-                start_time = tme.time()  # timestamp to measure simulation time
-                # 1.Step: Run optimization for dayAhead Market
-                send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='opt_dayAhead ' + str(date))
-                # 2. Step: Run Market Clearing
-                send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='dayAhead_clearing ' + str(date))
-                while not m_con.get_market_status(date):  # check if clearing done
-                    tme.sleep(0.5)
-                # 3. Step: Run Power Flow calculation
-                send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='grid_calc ' + str(date))
-                # 4. Step: Publish Market Results
-                send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='result_dayAhead ' + str(date))
-                end_time = tme.time() - start_time
-                print('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
+        try:
+            start_time = tme.time()  # timestamp to measure simulation time
+            # 1.Step: Run optimization for dayAhead Market
+            send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='opt_dayAhead ' + str(date))
+            # 2. Step: Run Market Clearing
+            send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='dayAhead_clearing ' + str(date))
+            while not m_con.get_market_status(date):  # check if clearing done
+                if gen_weather:
+                    weather_generator.generate_weather(valid, date + pd.DateOffset(days=1))
+                    gen_weather = False
+                else:
+                    tme.sleep(1)
+            # 3. Step: Run Power Flow calculation
+            send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='grid_calc ' + str(date))
+            # 4. Step: Publish Market Results
+            send.basic_publish(exchange=rabbitmq_exchange, routing_key='', body='result_dayAhead ' + str(date))
 
-            except Exception as e:
-                print('Error ' + str(date.date()))
-                print(e)
+            gen_weather = True
 
-        send.close()
-        i_con.influx.close()
-        m_con.mongo.close()
+            end_time = tme.time() - start_time
+            print('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
+
+        except Exception as e:
+            print('Error ' + str(date.date()))
+            print(e)
+
+    send.close()
+    i_con.influx.close()
+    m_con.mongo.close()
 
     return json.dumps('OK')
 
 if __name__ == "__main__":
 
     print('starting service')
-    app.run(debug=False, port=6888, host='127.0.0.1')
+    app.run(debug=False, port=5010, host=ip_address)

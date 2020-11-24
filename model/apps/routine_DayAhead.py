@@ -17,7 +17,7 @@ def get_orders(name, date):
 
     # initialize connection to mongodb to get the orders
     config = configparser.ConfigParser()
-    config.read('web_app.cfg')
+    config.read('control_service.cfg')
     database = config['Results']['Database']
     mon_db = mongoInterface(host=config['MongoDB']['Host'], database=database)
     ask_orders = {}                     # all orders from agent
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     date = pd.to_datetime('2018-01-04')
     config = configparser.ConfigParser()  # read config file
-    config.read('web_app.cfg')
+    config.read('control_service.cfg')
 
     database = config['Results']['Database']                                        # name of influxdatabase to store the results
     mongo_con = mongoInterface(host=config['MongoDB']['Host'], database=database)   # connection and interface to MongoDB

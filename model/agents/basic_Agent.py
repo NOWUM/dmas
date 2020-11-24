@@ -127,6 +127,7 @@ class agent:
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")
+        # print(message)
         self.date = pd.to_datetime(message.split(' ')[1])
         # Call DayAhead Optimization Methods for each Agent
         # -----------------------------------------------------------------------------------------------------------
@@ -166,13 +167,13 @@ class agent:
 
         # Terminate Agents
         # -----------------------------------------------------------------------------------------------------------
-        if 'kill' in message or self.name in message:
+        if 'kill' in message or self.name in message or self.typ + '_all' in message:
             self.connections['mongoDB'].logout(self.name)
             self.connections['influxDB'].influx.close()
             self.connections['mongoDB'].mongo.close()
             if not self.connections['connectionMQTT'].is_closed:
                 self.connections['connectionMQTT'].close()
-            print('terminate area')
+            print('terminate', self.name)
             exit()
 
     def run(self):

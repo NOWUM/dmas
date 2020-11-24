@@ -17,7 +17,7 @@ class GridView:
 
     def __init__(self):
         config = configparser.ConfigParser()
-        config.read(r'./web_app.cfg')
+        config.read(r'./control_service.cfg')
         database = config['Configuration']['database']
         influx_host = config['Configuration']['influxdb']
         self.influx_con=InfluxInterface(host=influx_host, database=database)
