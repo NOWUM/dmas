@@ -1,5 +1,6 @@
 # third party modules
 import numpy as np
+import pandas as pd
 from apps.misc_Dummies import createSaisonDummy
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -11,7 +12,7 @@ from collections import deque
 
 class annFrcst:
 
-    def __init__(self, init=14, pre_train=False):
+    def __init__(self, init=30, pre_train=False):
 
         self.fitted = False         # flag for fitted or not fitted model
         self.collect = init         # days before a retrain is started
@@ -28,6 +29,9 @@ class annFrcst:
 
         self.x = np.asarray([]).reshape((-1,168))
         self.y = np.asarray([]).reshape((-1,24))
+
+        self.default_prices = pd.read_csv(r'./data/Ref_DA_Prices.csv', sep=';', decimal=',', index_col=0)
+        self.default_prices.index = pd.to_datetime(self.default_prices.index)
 
         if pre_train:               # use historical data to fit a model at the beginning
 
@@ -59,6 +63,10 @@ class annFrcst:
         self.model.fit(x_std, self.y)                                   # Step 3: fit model
         self.fitted = True                                              # Step 4: set fitted-flag to true
 
+        if self.collect == 30:
+            self.collect = np.random.random_integers(low=5, high=10)
+
+
     def forecast(self, date, dem, weather, prc_1, prc_7):
 
         if self.fitted:
@@ -77,8 +85,7 @@ class annFrcst:
             # Schritt 2: Berechnung des Forecasts
             power_price = self.model.predict(x_std).reshape((24,))
         else:
-            mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
-                   42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+            mcp = self.default_prices.loc[self.default_prices.index.date == pd.to_datetime(date),'price'].to_numpy()
             power_price = np.asarray(mcp).reshape((-1,))
 
         co = np.ones_like(power_price) * 23.8 * np.random.uniform(0.95, 1.05, 24)   # -- Emission Price     [€/t]

@@ -178,7 +178,8 @@ class PwpAgent(basicAgent):
                 if power_portfolio[23] == 0:
                     hours = np.argwhere(power_portfolio[:24] == 0).reshape((-1,))
                     prevent_start = all(power_shadow[hours] > 0)
-                    if prevent_start:
+                    percentage = (obj_shadow - obj_portfolio) / obj_portfolio
+                    if prevent_start and percentage > 0.10:
                         prevent_starts.update({offset: (prevent_start, obj_portfolio, obj_shadow, delta - d_delta,
                                                         hours)})
                         d_delta = delta

@@ -9,11 +9,11 @@ import {HttpClient} from '@angular/common/http';
 export class AppComponent {
   title = 'controlCenter';
   serviceTypes: string[] = ['services'];
-  agentTypes: string[] = ['PWP', 'RES', 'DEM', 'MRK', 'NET'];
+  agentTypes: string[] = ['PWP', 'RES', 'DEM', 'STR', 'MRK', 'NET'];
   view: string = 'config';
   start: string = '2018-01-01';
   end: string = '2018-12-31';
-  readonly ROOT_URL = 'http://149.201.88.150:5010';
+  readonly ROOT_URL = 'http://149.201.88.70:5010';
 
   constructor(private http: HttpClient) {
   }
