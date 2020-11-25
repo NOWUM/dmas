@@ -46,12 +46,12 @@ def build():
     if os.name == 'nt':
         for i in range(int(content['start']), int(content['end'])):
             print('Starting Agent', content['typ'], i)
-            command = 'python ' + path + r'/agents/' + content['typ'] + '_Agent.py ' + '--plz ' + str(i)
+            command = 'python ' + path + r'/agents/' + str(content['typ']).lower() + '_Agent.py ' + '--plz ' + str(i)
             subprocess.Popen(command, cwd=path, shell=True)
     else:
         for i in range(int(content['start']), int(content['end'])):
             print('Starting Agent', content['typ'], i)
-            command = 'python3 /home/dmas/dmas/' + path + r'/agents/' + content['typ'] + '_Agent.py ' + '--plz ' + str(i)
+            command = 'python3 $HOME/dmas/' + path + r'/agents/' + str(content['typ']).lower() + '_Agent.py ' + '--plz ' + str(i)
             print(command)
             subprocess.Popen(command, shell=True)
 
