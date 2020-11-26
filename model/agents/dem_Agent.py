@@ -14,7 +14,7 @@ from agents.basic_Agent import agent as basicAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=24, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=50, help='PLZ-Agent')
     return parser.parse_args()
 
 
@@ -158,8 +158,8 @@ class DemAgent(basicAgent):
 
         # collect data an retrain forecast method
         dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-        # weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)
-        weather = self.forecasts['weather'].mean_weather                                    # mean weather germany
+        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)
+        # weather = self.forecasts['weather'].mean_weather                                    # mean weather germany
         prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
         prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
         for key, method in self.forecasts.items():
@@ -181,15 +181,15 @@ if __name__ == "__main__":
 
     args = parse_args()
     agent = DemAgent(date='2018-02-05', plz=args.plz)
-    agent.connections['mongoDB'].login(agent.name)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)
-    finally:
-        agent.connections['mongoDB'].logout(agent.name)
-        agent.connections['influxDB'].influx.close()
-        agent.connections['mongoDB'].mongo.close()
-        if not agent.connections['connectionMQTT'].is_closed:
-            agent.connections['connectionMQTT'].close()
-        exit()
+    # agent.connections['mongoDB'].login(agent.name)
+    # try:
+    #     agent.run()
+    # except Exception as e:
+    #     print(e)
+    # finally:
+    #     agent.connections['mongoDB'].logout(agent.name)
+    #     agent.connections['influxDB'].influx.close()
+    #     agent.connections['mongoDB'].mongo.close()
+    #     if not agent.connections['connectionMQTT'].is_closed:
+    #         agent.connections['connectionMQTT'].close()
+    #     exit()
