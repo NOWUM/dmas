@@ -88,8 +88,8 @@ class PwpAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # weather = self.weather_forecast(self.date, mean=False, days=2)         # local weather forecast dayAhead
-        # demand = self.demand_forecast(self.date, days=2)                       # demand forecast dayAhead
+        # weather = self.weather_forecast(self.date, mean=False, days=2)       # local weather forecast dayAhead
+        # demand = self.demand_forecast(self.date, days=2)                     # demand forecast dayAhead
         prices = self.price_forecast(self.date, days=2)                        # price forecast dayAhead
         self.performance['initModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
@@ -373,7 +373,8 @@ class PwpAgent(basicAgent):
 
         # collect data an retrain forecast method
         dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        # weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        weather = self.forecasts['weather'].mean_weather
         prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
         prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
         for key, method in self.forecasts.items():

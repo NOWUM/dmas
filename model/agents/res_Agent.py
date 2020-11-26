@@ -175,7 +175,8 @@ class ResAgent(basicAgent):
 
         # collect data an retrain forecast method
         dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        # weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        weather = self.forecasts['weather'].mean_weather
         prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
         prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
         for key, method in self.forecasts.items():

@@ -7,8 +7,13 @@ class weatherForecast:
         self.collect = init         # days before a retrain is started
         self.counter = 0            # day counter
 
+        self.mean_weather = {}
+
     def forecast(self, geo, date, mean):
-        return self.influx.get_weather(geo, date, mean)
+        weather = self.influx.get_weather(geo, date, mean)
+        if mean:
+            self.mean_weather = weather
+        return weather
 
     def collect_data(self, date, dem, weather, prc, prc_1, prc_7):
         pass

@@ -59,10 +59,10 @@ class StrAgent(basicAgent):
         # Step 1: forecast input data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
 
-        weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
+        # weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
         # demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
-        self.portfolio.set_parameter(self.date, weather, prices)
+        self.portfolio.set_parameter(self.date, dict(), prices)
         self.portfolio.build_model()
         self.portfolio.optimize()
 
@@ -178,7 +178,8 @@ class StrAgent(basicAgent):
 
         # collect data an retrain forecast method
         dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        # weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
+        weather = self.forecasts['weather'].mean_weather
         prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
         prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
         for key, method in self.forecasts.items():
