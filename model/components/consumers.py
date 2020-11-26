@@ -68,8 +68,12 @@ class RlmModel(es):
 
     def optimize(self):
         # adjustment Due to the overestimated simultaneity in the SLP
-        power = self.e_el * 0.2
-        base = self.e_el * 0.8
+        factor = 0.775                              # Korrektzur um Bahnnetz und Eigenerzeugung der Industrie
+        # power = data['demandP'] * 1 * factor        # Variabler Anteil
+        # base = data['demandP'] * 0 * factor         # Konstanter Anteil
+
+        power = self.e_el * 1 * factor
+        base = self.e_el * 0 * factor
 
         demand = self.slpP.get_profile(self.date.dayofyear, self.date.dayofweek, power).reshape((96, 1))
         if self.T == 24:

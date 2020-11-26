@@ -34,14 +34,14 @@ class PowerPlant(EnergySystem):
             self.start_cost = 24 * power_plant['maxPower']
         if power_plant['fuel'] == 'lignite':
             if power_plant['maxPower'] > 500:
-                self.start_cost = 50 * power_plant['maxPower']
-            else:
                 self.start_cost = 105 * power_plant['maxPower']
+            else:
+                self.start_cost = 50 * power_plant['maxPower']
         if power_plant['fuel'] == 'coal':
             if power_plant['maxPower'] > 500:
-                self.start_cost = 50 * power_plant['maxPower']
-            else:
                 self.start_cost = 105 * power_plant['maxPower']
+            else:
+                self.start_cost = 50 * power_plant['maxPower']
         if power_plant['fuel'] == 'nuc':
             self.start_cost = 50 * power_plant['maxPower']
 

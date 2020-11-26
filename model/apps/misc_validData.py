@@ -7,7 +7,7 @@ import numpy as np
 
 def write_valid_data(database, table, start, end):
 
-    client = DataFrameClient('149.201.88.150', 8086, 'root', 'root', database)
+    client = DataFrameClient('149.201.88.83', 8086, 'root', 'root', database)
     protocol = 'line'
     start = pd.to_datetime(start, utc=True)
     end = pd.to_datetime(end, utc=True)
@@ -32,7 +32,7 @@ def write_valid_data(database, table, start, end):
 
 def writeDayAheadError(database, date):
 
-    client = DataFrameClient('149.201.88.150', 8086, 'root', 'root', database)
+    client = DataFrameClient('149.201.88.83', 8086, 'root', 'root', database)
     protocol = 'line'
 
     # collect simulation data
