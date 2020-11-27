@@ -51,7 +51,7 @@ class market:
 
     def optimize(self):
         # Step 0 initialize model and add magic power source with maximal price (prevent infeasible model)
-        max_prc = [np.round(5000, 2) for i in range(24)]
+        max_prc = [np.round(20000, 2) for i in range(24)]
         max_vol = self.m.addVars(range(24), vtype=GRB.CONTINUOUS, name='magicSource_', lb=0.0, ub=GRB.INFINITY)
 
         # Step 1 initialize orders

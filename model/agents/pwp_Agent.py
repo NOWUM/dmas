@@ -361,6 +361,8 @@ class PwpAgent(basicAgent):
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
 
+        print(ask)
+
         self.week_price_list.remember_price(prcToday=prc)
 
         # adjust power generation
