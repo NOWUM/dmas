@@ -180,7 +180,7 @@ class StrAgent(basicAgent):
         dem = self.connections['influxDB'].get_dem(self.date)  # demand germany [MW]
         weather = self.forecasts['weather'].mean_weather  # weather data
         prc_1 = self.week_price_list.get_price_yesterday()  # mcp yesterday [€/MWh]
-        prc_7 = self.week_price_list.get_pirce_week_before()  # mcp week before [€/MWh]
+        prc_7 = self.week_price_list.get_price_week_before()  # mcp week before [€/MWh]
         for key, method in self.forecasts.items():
             method.collect_data(date=self.date, dem=dem, prc=prc[:24], prc_1=prc_1, prc_7=prc_7, weather=weather)
             method.counter += 1

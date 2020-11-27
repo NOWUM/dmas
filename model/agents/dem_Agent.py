@@ -130,6 +130,8 @@ class DemAgent(basicAgent):
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
 
+        self.week_price_list.remember_price(prcToday=prc)
+
         power_da = np.asarray(self.portfolio.optimize(), np.float)                     # [kW]
 
         self.performance['adjustResult'] = tme.time() - start_time
