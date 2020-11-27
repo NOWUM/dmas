@@ -16,7 +16,7 @@ from agents.basic_Agent import agent as basicAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=60, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=25, help='PLZ-Agent')
     return parser.parse_args()
 
 
@@ -80,6 +80,24 @@ class PwpAgent(basicAgent):
                   - np.sum(value['model'].emission) - np.sum(value['model'].fuel) - np.sum(value['model'].start)
             result[key][offset]['obj'] += obj
 
+    def __reset_results(self):
+        self.portfolio_results = {key: {offset: dict(power=np.array([]),
+                                                     emission=np.array([]),
+                                                     fuel=np.array([]),
+                                                     start=np.array([]),
+                                                     obj=0)
+                                        for offset in [-10, -5, 0, 5, 10, 500]}
+                                  for key, _ in self.portfolio.energy_systems.items()}
+
+        self.shadow_results = {key: {offset: dict(power=np.array([]),
+                                                  emission=np.array([]),
+                                                  fuel=np.array([]),
+                                                  start=np.array([]),
+                                                  obj=0)
+                                     for offset in [-10, -5, 0, 5, 10, 500]}
+                               for key, _ in self.portfolio.energy_systems.items()}
+
+
     def optimize_dayAhead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
@@ -88,15 +106,13 @@ class PwpAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # weather = self.weather_forecast(self.date, mean=False, days=2)       # local weather forecast dayAhead
-        # demand = self.demand_forecast(self.date, days=2)                     # demand forecast dayAhead
         prices = self.price_forecast(self.date, days=2)                        # price forecast dayAhead
         self.performance['initModel'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         init_state = {key: value['model'].power_plant for key, value in self.portfolio.energy_systems.items()}
         #return init_state
         self.init_state = copy.deepcopy(init_state)
-
+        # print(self.date, prices['power'])
         # Step 2: optimization --> returns power series in [MW]
         # -------------------------------------------------------------------------------------------------------------
         for offset in [-10, -5, 0, 5, 10, 500]:
@@ -208,7 +224,7 @@ class PwpAgent(basicAgent):
                         links.update({hour: block_number})
                     block_number += 1                       # increment block number
                     last_power = result['power'][:24]       # set last_power to current power
-
+                # return prevent_starts
                 if prevent_starts[offset][0]:
                     result = self.shadow_results[key][offset]
                     hours = prevent_starts[offset][4]
@@ -345,6 +361,8 @@ class PwpAgent(basicAgent):
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
 
+        self.week_price_list.remember_price(prcToday=prc)
+
         # adjust power generation
         for key, value in self.portfolio.energy_systems.items():
             value['model'].power_plant = copy.deepcopy(self.init_state[key])
@@ -367,22 +385,25 @@ class PwpAgent(basicAgent):
         self.logger.info('After DayAhead market adjustment completed')
         self.logger.info('Next day scheduling started')
 
+        self.__reset_results()
+
         # Step 8: retrain forecast methods and learning algorithm
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
         # collect data an retrain forecast method
         dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-        # weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
-        weather = self.forecasts['weather'].mean_weather
-        prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
-        prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
+        weather = self.forecasts['weather'].mean_weather                                    # weather data
+        prc_1 = self.week_price_list.get_price_yesterday()                                  # mcp yesterday [€/MWh]
+        prc_7 = self.week_price_list.get_pirce_week_before()                                # mcp week before [€/MWh]
         for key, method in self.forecasts.items():
             method.collect_data(date=self.date, dem=dem, prc=prc[:24], prc_1=prc_1, prc_7=prc_7, weather=weather)
             method.counter += 1
-            if method.counter >= method.collect:                                            # retrain forecast method
+            if method.counter >= method.collect:  # retrain forecast method
                 method.fit_function()
                 method.counter = 0
+
+        self.week_price_list.put_price()
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))

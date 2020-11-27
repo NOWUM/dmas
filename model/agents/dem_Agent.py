@@ -70,8 +70,6 @@ class DemAgent(basicAgent):
         start_time = tme.time()                                          # performance timestamp
 
         weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
-        # prices = self.price_forecast(self.date)                        # price forecast dayAhead
-        # demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
         self.portfolio.set_parameter(self.date, weather, dict())
         self.portfolio.build_model()
 
@@ -156,18 +154,8 @@ class DemAgent(basicAgent):
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 
-        # collect data an retrain forecast method
-        dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-        weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)
-        # weather = self.forecasts['weather'].mean_weather                                    # mean weather germany
-        prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
-        prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
-        for key, method in self.forecasts.items():
-            method.collect_data(date=self.date, dem=dem, prc=prc, prc_1=prc_1, prc_7=prc_7, weather=weather)
-            method.counter += 1
-            if method.counter >= method.collect:                                            # retrain forecast method
-                method.fit_function()
-                method.counter = 0
+        # No Price Forecast  used actually
+        self.week_price_list.put_price()
 
         self.performance['nextDay'] = np.round(tme.time() - start_time, 3)
 

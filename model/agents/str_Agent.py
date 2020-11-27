@@ -59,8 +59,6 @@ class StrAgent(basicAgent):
         # Step 1: forecast input data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
 
-        # weather = self.weather_forecast(self.date, mean=False)         # local weather forecast dayAhead
-        # demand = self.demand_forecast(self.date)                       # demand forecast dayAhead
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
         self.portfolio.set_parameter(self.date, dict(), prices)
         self.portfolio.build_model()
@@ -132,6 +130,8 @@ class StrAgent(basicAgent):
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
 
+        self.week_price_list.remember_price(prcToday=prc)
+
         v0 = self.portfolio.volume[0]
         # case 1
         # --> q_bid ++
@@ -177,17 +177,18 @@ class StrAgent(basicAgent):
         start_time = tme.time()
 
         # collect data an retrain forecast method
-        dem = self.connections['influxDB'].get_dem(self.date)                               # demand germany [MW]
-        # weather = self.connections['influxDB'].get_weather(self.geo, self.date, mean=True)  # mean weather germany
-        weather = self.forecasts['weather'].mean_weather
-        prc_1 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=1))    # mcp yesterday [€/MWh]
-        prc_7 = self.connections['influxDB'].get_prc_da(self.date-pd.DateOffset(days=7))    # mcp week before [€/MWh]
+        dem = self.connections['influxDB'].get_dem(self.date)  # demand germany [MW]
+        weather = self.forecasts['weather'].mean_weather  # weather data
+        prc_1 = self.week_price_list.get_price_yesterday()  # mcp yesterday [€/MWh]
+        prc_7 = self.week_price_list.get_pirce_week_before()  # mcp week before [€/MWh]
         for key, method in self.forecasts.items():
             method.collect_data(date=self.date, dem=dem, prc=prc[:24], prc_1=prc_1, prc_7=prc_7, weather=weather)
             method.counter += 1
-            if method.counter >= method.collect:                                            # retrain forecast method
+            if method.counter >= method.collect:  # retrain forecast method
                 method.fit_function()
                 method.counter = 0
+
+        self.week_price_list.put_price()
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
