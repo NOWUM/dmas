@@ -59,6 +59,9 @@ class market:
         max_prc = [np.round(20000, 2) for i in range(24)]
         max_vol = self.m.addVars(range(24), vtype=GRB.CONTINUOUS, name='magicSource_', lb=0.0, ub=GRB.INFINITY)
 
+        self.m.remove(self.m.getVars())
+        self.m.remove(self.m.getConstrs())
+
         # Step 1 initialize orders
         # -----------------------------------------------------------------------------------------------------------
         # split in dictionary ids, id:prc, id:vol, id:linked
