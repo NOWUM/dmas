@@ -49,6 +49,11 @@ class market:
                     self.ask_orders.update({(key[0], key[1], key[2], key[3] + '_b'): value for key, value in bid.items()
                                             if value[0] != 3000 and key[3] == i})
 
+    def reset_parameter(self):
+        self.ask_orders = {}
+        self.bid_orders = {}
+        self.bid_check = {}
+
     def optimize(self):
         # Step 0 initialize model and add magic power source with maximal price (prevent infeasible model)
         max_prc = [np.round(20000, 2) for i in range(24)]

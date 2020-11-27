@@ -102,10 +102,11 @@ class MarketAgent(basicAgent):
 
         self.connections['mongoDB'].set_market_status(name='market', date=self.date)
 
+        self.market.reset_parameter()
 
 if __name__ == "__main__":
 
-    agent = MarketAgent(date='2018-01-01', plz=44)
+    agent = MarketAgent(date='2018-01-01', plz=50)
     agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
