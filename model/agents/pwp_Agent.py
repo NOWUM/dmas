@@ -32,6 +32,8 @@ class PwpAgent(basicAgent):
 
         self.init_state = {}
 
+        self.step_width = [-10, 0, 10, 500]
+
         self.shadow_portfolio = PwpPort(gurobi=True, T=48)
 
         # Construction power plants
@@ -56,7 +58,7 @@ class PwpAgent(basicAgent):
                                                      fuel=np.array([]),
                                                      start=np.array([]),
                                                      obj=0)
-                                        for offset in [-10, -5, 0, 5, 10, 500]}
+                                        for offset in self.step_width }
                                   for key, _ in self.portfolio.energy_systems.items()}
 
         self.shadow_results = {key: {offset: dict(power=np.array([]),
@@ -64,7 +66,7 @@ class PwpAgent(basicAgent):
                                                   fuel=np.array([]),
                                                   start=np.array([]),
                                                   obj=0)
-                                     for offset in [-10, -5, 0, 5, 10, 500]}
+                                     for offset in self.step_width }
                                for key, _ in self.portfolio.energy_systems.items()}
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
@@ -86,7 +88,7 @@ class PwpAgent(basicAgent):
                                                      fuel=np.array([]),
                                                      start=np.array([]),
                                                      obj=0)
-                                        for offset in [-10, -5, 0, 5, 10, 500]}
+                                        for offset in self.step_width }
                                   for key, _ in self.portfolio.energy_systems.items()}
 
         self.shadow_results = {key: {offset: dict(power=np.array([]),
@@ -94,7 +96,7 @@ class PwpAgent(basicAgent):
                                                   fuel=np.array([]),
                                                   start=np.array([]),
                                                   obj=0)
-                                     for offset in [-10, -5, 0, 5, 10, 500]}
+                                     for offset in self.step_width }
                                for key, _ in self.portfolio.energy_systems.items()}
 
 
@@ -115,7 +117,7 @@ class PwpAgent(basicAgent):
         # print(self.date, prices['power'])
         # Step 2: optimization --> returns power series in [MW]
         # -------------------------------------------------------------------------------------------------------------
-        for offset in [-10, -5, 0, 5, 10, 500]:
+        for offset in self.step_width :
             for key, value in self.portfolio.energy_systems.items():
                 value['model'].power_plant = copy.deepcopy(self.init_state[key])
 
@@ -185,7 +187,7 @@ class PwpAgent(basicAgent):
             prevent_start_orders = {}
 
             d_delta = 0
-            for offset in [-10, -5, 0, 5, 10, 500]:
+            for offset in self.step_width:
                 power_portfolio = self.portfolio_results[key][offset]['power']
                 power_shadow = self.shadow_results[key][offset]['power']
                 obj_portfolio = self.portfolio_results[key][offset]['obj']
@@ -206,7 +208,7 @@ class PwpAgent(basicAgent):
                     prevent_starts.update({offset: (False, obj_portfolio, obj_shadow, 0,
                                                     np.argwhere(power_portfolio[:24] == 0).reshape((-1,)))})
 
-            for offset in [-10, -5, 0, 5, 10, 500]:
+            for offset in self.step_width:
                 result = self.portfolio_results[key][offset]
 
                 # build mother order if any power > 0 for the current day and the last known power is total zero
