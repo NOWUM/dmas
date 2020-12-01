@@ -113,12 +113,16 @@ class PwpAgent(basicAgent):
 
         init_state = {key: value['model'].power_plant for key, value in self.portfolio.energy_systems.items()}
         #return init_state
+
+
         self.init_state = copy.deepcopy(init_state)
-        # print(self.date, prices['power'])
+
         # Step 2: optimization --> returns power series in [MW]
         # -------------------------------------------------------------------------------------------------------------
         for offset in self.step_width :
             for key, value in self.portfolio.energy_systems.items():
+                value['model'].power_plant = copy.deepcopy(self.init_state[key])
+            for key, value in self.shadow_portfolio.items():
                 value['model'].power_plant = copy.deepcopy(self.init_state[key])
 
             # prices and weather first day
@@ -179,87 +183,89 @@ class PwpAgent(basicAgent):
 
         for key, _ in self.portfolio.energy_systems.items():
 
+            # check if a start is prevented
+            starts = {}
+            d_delta = 0
+            for offset in self.step_width:
+                # a start can only prevented if the last power of the current day is zero
+                starts.update({offset: dict(prevented=False, hours=[] , delta=0)})
+                if self.portfolio_results[key][offset]['power'][23] > 0:
+                    # if the last power is zero, than one or more hours can be zero
+                    hours = np.argwhere(self.portfolio_results[key][offset]['power'][:24] == 0).reshape((-1,))
+                    # for these hours the power of the shadow portfolio must be greater than zero
+                    # then a start is prevented
+                    prevent_start = all(self.shadow_results[key][offset]['power'][hours] > 0)
+                    obj_portfolio = self.portfolio_results[key][offset]['obj']
+                    obj_shadow = self.shadow_results[key][offset]['obj']
+                    delta = obj_shadow - obj_portfolio
+                    # to implement an offset an additional profit of 5% must be reached
+                    percentage = delta / obj_portfolio if obj_portfolio else 0
+                    if prevent_start and percentage > 0.05:
+                        starts.update({offset: dict(prevented=True, hours = hours, delta = delta - d_delta)})
+
             last_power = np.zeros(24)                                               # last known power
             block_number = 0                                                        # block number counter
             links = {i: 'x' for i in range(24)}                                     # current links between blocks
             name = str(self.name + '-' + key)
-            prevent_starts = {}
-            prevent_start_orders = {}
+            prevent_orders = {}
 
-            d_delta = 0
+            # build orders for each offset
             for offset in self.step_width:
-                power_portfolio = self.portfolio_results[key][offset]['power']
-                power_shadow = self.shadow_results[key][offset]['power']
-                obj_portfolio = self.portfolio_results[key][offset]['obj']
-                obj_shadow = self.shadow_results[key][offset]['obj']
-                delta = obj_shadow - obj_portfolio
-                if power_portfolio[23] == 0:
-                    hours = np.argwhere(power_portfolio[:24] == 0).reshape((-1,))
-                    prevent_start = all(power_shadow[hours] > 0)
-                    percentage = (obj_shadow - obj_portfolio) / obj_portfolio if obj_portfolio else 0
-                    if prevent_start and percentage > 0.05:
-                        prevent_starts.update({offset: (prevent_start, obj_portfolio, obj_shadow, delta - d_delta,
-                                                        hours)})
-                        d_delta = delta
-                    else:
-                        prevent_starts.update({offset: (prevent_start, obj_portfolio, obj_shadow, delta - d_delta,
-                                                        hours)})
-                else:
-                    prevent_starts.update({offset: (False, obj_portfolio, obj_shadow, 0,
-                                                    np.argwhere(power_portfolio[:24] == 0).reshape((-1,)))})
-
-            for offset in self.step_width:
+                # get optimization result for key (block) and offset
                 result = self.portfolio_results[key][offset]
 
-                # build mother order if any power > 0 for the current day and the last known power is total zero
-                if np.count_nonzero(result['power'][:24]) > 0 and np.count_nonzero(last_power) == 0:
+                # build mother order if any power > 0 for the current day and the block_number is zero
+                if any(result['power'][:24] > 0) and block_number == 0:
+                    # for hours with power > 0 calculate mean variable costs
                     hours = np.argwhere(result['power'][:24] > 0).reshape((-1,))
-                    # calculate variable cost for each hour
-                    var_cost = np.nan_to_num((result['fuel'][hours] + result['emission'][hours] + result['start'][hours]) /
-                                              result['power'][hours])
-                    # and get mean value for requested price
-                    price = np.mean(var_cost[var_cost > 0])
+                    costs = result['fuel'][hours] + result['emission'][hours] + result['start'][hours]
+                    var_costs = np.round(np.mean(costs / result['power'][hours]), 2)
                     # for each hour with power > 0 add order to order_book
-                    for hour in np.argwhere(result['power'][:24] > 0).reshape((-1,)):
-                        price = np.round(price, 2)
-                        power = np.round(result['power'][hour])
+                    for hour in hours:
+                        price = var_costs
+                        power = np.round(result['power'][hour], 2)
                         order_book.update({str(('gen0', hour, 0, name)): (price, power, 0)})
                         links.update({hour: block_number})
-                    block_number += 1                       # increment block number
-                    last_power = result['power'][:24]       # set last_power to current power
-                # return prevent_starts
-                if prevent_starts[offset][0]:
-                    result = self.shadow_results[key][offset]
-                    hours = prevent_starts[offset][4]
-                    factor = prevent_starts[offset][3] / np.sum(result['power'][hours])
-                    # for each hour with power > 0 add order to order_book
-                    link = 0
-                    if len(prevent_start_orders) == 0:
+
+                    block_number += 1                                       # increment block number
+                    last_power = result['power'][:24]                       # set last_power to current power
+                    continue                                                # do next offset
+
+                # check if a start is prevented
+                if starts[offset]['prevented']:
+                    result = self.shadow_results[key][offset]               # get shadow portfolio results
+                    hours = starts[offset]['hours']                         # get hours in which the start is prevented
+                    # calculate the reduction coefficient for each hour
+                    factor = starts[offset]['delta'] / np.sum(result['power'][hours])
+                    # if no orders already set, that prevent a start add new orders
+                    if len(prevent_orders) == 0:
+                        # for each hour with power > 0 add order to order_book
                         for hour in hours:
-                            price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
-                            price = np.round(price - factor, 2)
-                            power = np.round(result['power'][hour])
-                            prevent_start_orders.update(
-                                {str(('gen%s' % block_number, hour, 0, name)): (price, power, link)})
-                            order_book.update({str(('gen%s' % block_number, hour, 0, name)): (price, power, link)})
-                            link = block_number
+                            costs = result['fuel'][hour] + result['emission'][hour]
+                            price = var_costs = np.round(np.mean(costs / result['power'][hour]), 2)
+                            power = np.round(result['power'][hour], 2)
+                            order_book.update({str(('gen%s' % block_number, hour, 0, name)): (price, power, links[hour])})
+                            prevent_orders.update({('gen%s' % block_number, hour, 0, name): (price, power, links[hour])})
                             links.update({hour: block_number})
-                            block_number += 1  # increment block number
+                            block_number += 1                               # increment block number
                     else:
+                        # for each hour with power > 0 add order to order_book
+                        # todo: if prices are too negative update this part
                         for hour in hours:
-                            for id_, order in prevent_start_orders.items():
+                            for id_, order in prevent_orders.items():
                                 if id_[1] == hour:
                                     order = {id_: (np.round(order[0] - factor, 2),
                                                    np.round(result['power'][hour], 2),
                                                    order[2])}
-                                    prevent_start_orders.update(order)
+                                    prevent_orders.update(order)
                                     order_book.update(order)
 
-                    last_power = result['power'][:24]
+                    last_power[hours] = result['power'][hours]
+                    result = self.portfolio_results[key][offset]
 
                 # add linked hour blocks
                 # check if current power is higher then the last known power
-                if np.count_nonzero(result['power'][:24] - last_power) > 0:
+                if any(result['power'][:24] - last_power > 0):
                     delta = result['power'][:24] - last_power  # get deltas
                     stack_vertical = np.argwhere(last_power > 0).reshape((-1,))  # and check if last_power > 0
                     # for each power with last_power > 0
@@ -282,12 +288,12 @@ class PwpAgent(basicAgent):
                             links.update({hour: block_number})  # update last known block for hour
                             block_number += 1  # increment block number
 
-                    left = stack_vertical[0]  # get first left hour from last_power   ->  __|-----|__
+                    left = stack_vertical[0]    # get first left hour from last_power   ->  __|-----|__
                     right = stack_vertical[-1]  # get first right hour from last_power  __|-----|__ <--
 
                     # if the left hour differs from first hour of the current day
                     if left > 0:
-                        # build array for e.g. [0,1,2,3,4,5, ..., left]
+                        # build array for e.g. [0,1,2,3,4,5, ..., left-1]
                         stack_left = np.arange(start=left - 1, stop=-1, step=-1)
                         # check if the last linked block for the fist left hour is unknown
                         # (only first hour is connected to mother)
@@ -313,7 +319,7 @@ class PwpAgent(basicAgent):
 
                     # if the right hour differs from last hour of the current day
                     if right < 23:
-                        # build array for e.g. [right, ... ,19,20,21,22,23]
+                        # build array for e.g. [right + 1, ... ,19,20,21,22,23]
                         stack_right = np.arange(start=right + 1, stop=24)
                         # check if the last linked block for the fist right hour is unknown
                         # (only first hour is connected to mother)
