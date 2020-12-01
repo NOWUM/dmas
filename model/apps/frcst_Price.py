@@ -12,7 +12,7 @@ from collections import deque
 
 class annFrcst:
 
-    def __init__(self, init=np.random.random_integers(5, 10 + 1), pre_train=False):
+    def __init__(self, init=np.random.random_integers(5, 10 + 1), pre_train=True):
 
         self.fitted = False         # flag for fitted or not fitted model
         self.collect = init         # days before a retrain is started
