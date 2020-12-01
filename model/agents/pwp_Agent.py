@@ -258,8 +258,13 @@ class PwpAgent(basicAgent):
                                     order = {id_: (np.round(order[0] - factor, 2),
                                                    np.round(result['power'][hour], 2),
                                                    order[2])}
+
+                                    order_to_book = {str(id_): (np.round(order[0] - factor, 2),
+                                                                np.round(result['power'][hour], 2),
+                                                                order[2])}
+
                                     prevent_orders.update(order)
-                                    order_book.update(order)
+                                    order_book.update(order_to_book)
 
                     last_power[hours] = result['power'][hours]
                     result = self.portfolio_results[key][offset]
