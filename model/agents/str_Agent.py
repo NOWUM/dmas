@@ -115,6 +115,7 @@ class StrAgent(basicAgent):
         self.performance['sendOrders'] = tme.time() - start_time
 
         self.logger.info('DayAhead market scheduling completed')
+        print('DayAhead market scheduling completed:', self.name)
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
@@ -170,6 +171,7 @@ class StrAgent(basicAgent):
         self.performance['saveResult'] = tme.time() - start_time
 
         self.logger.info('After DayAhead market adjustment completed')
+        print('After DayAhead market adjustment completed:', self.name)
         self.logger.info('Next day scheduling started')
 
         # Step 8: retrain forecast methods and learning algorithm

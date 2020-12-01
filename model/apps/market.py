@@ -139,6 +139,11 @@ class market:
                     if used_ask_orders[id_].x == 1])
                for i in range(24)]
 
+        # for i in range(24):
+        #     for id_ in ask_id.select('*', i, '*', '*'):
+        #         if used_ask_orders[id_].x == 1 and ask_prc[id_] == mcp[i]:
+        #             print(id_)
+
         # Step 9 get volumes for each hour per ask agent
         # -----------------------------------------------------------------------------------------------------------
         ask_volumes = []

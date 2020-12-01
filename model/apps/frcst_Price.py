@@ -12,20 +12,19 @@ from collections import deque
 
 class annFrcst:
 
-    def __init__(self, init=30, pre_train=False):
+    def __init__(self, init=np.random.random_integers(5, 10 + 1), pre_train=False):
 
         self.fitted = False         # flag for fitted or not fitted model
         self.collect = init         # days before a retrain is started
         self.counter = 0
 
         # initialize neural network and corresponding scaler
-        self.model = MLPRegressor(hidden_layer_sizes=(15, 15,), activation='identity',
-                                  solver='adam', learning_rate_init=0.02, shuffle=False, max_iter=600,
-                                  early_stopping=True)
+        self.model = MLPRegressor(hidden_layer_sizes=(15, 15,), activation='identity', early_stopping=True,
+                                  solver='adam', learning_rate_init=0.02, shuffle=True, max_iter=500)
         self.scaler = MinMaxScaler()
 
-        self.deque_x = deque(maxlen=250)
-        self.deque_y = deque(maxlen=250)
+        self.deque_x = deque(maxlen=1000)
+        self.deque_y = deque(maxlen=1000)
 
         self.x = np.asarray([]).reshape((-1,168))
         self.y = np.asarray([]).reshape((-1,24))
@@ -33,17 +32,25 @@ class annFrcst:
         self.default_prices = pd.read_csv(r'./data/Ref_DA_Prices.csv', sep=';', decimal=',', index_col=0)
         self.default_prices.index = pd.to_datetime(self.default_prices.index)
 
-        if pre_train:               # use historical data to fit a model at the beginning
+        self.score = 0.
 
-            with open(r'./data/preTrain_Input.array', 'rb') as file:   # Step 0: load data
-                self.x = np.load(file)                                 # input (2017-2018)
+        if pre_train:               # use historical data to fit a model at the beginning
+            with open(r'./data/preTrain_Input.array', 'rb') as file:    # Step 0: load data
+                x = np.load(file)                                       # input (2017-2018)
+                for line in range(len(x)):
+                    self.deque_x.append(x[line,:])
             with open(r'./data/preTrain_Output.array', 'rb') as file:
-                self.y = np.load(file)                                 # output (2017-2018)
+                y = np.load(file)                                       # output (2017-2018)
+                for line in range(len(y)):
+                    self.deque_y.append(y[line,:])
+
+            self.x = np.asarray(self.deque_x)
+            self.y = np.asarray(self.deque_y)
             self.scaler.fit(self.x)                                    # Step 1: scale data
             x_std = self.scaler.transform(self.x)                      # Step 2: split data
-            X_train, X_test, y_train, y_test = train_test_split(x_std, self.y, test_size=0.2)
-            self.model.fit(X_train, y_train)                           # Step 3: fit model
+            self.model.fit(x_std, self.y)                              # Step 3: fit model
             self.fitted = True                                         # Step 4: set fitted-flag to true
+            self.score = self.model.score(x_std, self.y)
 
     def collect_data(self, date, dem, weather, prc, prc_1, prc_7):
         # collect input data
@@ -58,13 +65,10 @@ class annFrcst:
         self.x = np.asarray(self.deque_x)
         self.y = np.asarray(self.deque_y)
         self.scaler.fit(self.x)                                         # Step 1: scale data
-        x_std = self.scaler.transform(self.x)                           # Step 2: split data
-        # X_train, X_test, y_train, y_test = train_test_split(x_std, self.y, test_size=0.2)
+        x_std = self.scaler.transform(self.x)
         self.model.fit(x_std, self.y)                                   # Step 3: fit model
         self.fitted = True                                              # Step 4: set fitted-flag to true
-
-        if self.collect == 30:
-            self.collect = np.random.random_integers(low=5, high=10)
+        self.score = self.model.score(x_std, self.y)
 
 
     def forecast(self, date, dem, weather, prc_1, prc_7):
@@ -95,3 +99,68 @@ class annFrcst:
         nuc = 1.0 * np.random.uniform(0.95, 1.05)                                   # -- nuclear Price      [€/MWh]
 
         return dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
+
+
+if __name__ == "__main__":
+
+    from interfaces.interface_Influx import InfluxInterface
+    from apps.frcst_Dem import typFrcst
+    from apps.frcst_Weather import weatherForecast
+    from matplotlib import pyplot as plt
+    import pickle
+
+    valid_data = pd.read_pickle(r'./data/validGeneration.pkl')
+    valid_data.index = pd.date_range(start='2018-01-01', end='2019-12-31 23:45:00', freq='15min', tz='UTC')
+    demandX = valid_data.loc[:, 'powerDemand']
+    demandX = demandX.resample('h').mean()
+
+    my_influx = InfluxInterface(database='MAS2020_40', host='149.201.88.70')
+    my_demand = typFrcst()
+    my_weather = weatherForecast(influx=my_influx)
+    my_frcst = annFrcst(pre_train=True)
+
+    x = []
+    z = []
+    original_price = pd.read_csv(r'./data/Ref_DA_Prices.csv', index_col=0, decimal=',', sep=';')
+    original_price.index = pd.to_datetime(original_price.index)
+
+    for d in pd.date_range(start='2018-01-01', end='2018-12-31', freq='d'):
+        # demand = my_demand.forecast(d)
+        demand = demandX.loc[demandX.index.date == d].to_numpy()
+        weather = my_weather.forecast(geo='u302eujrq6vg', date=d, mean=True)
+        # price = original_price.loc[original_price.index.date == d, 'price'].to_numpy()
+        price_d1 = original_price.loc[original_price.index.date == d - pd.DateOffset(days=1), 'price'].to_numpy()
+        price_d7 = original_price.loc[original_price.index.date == d - pd.DateOffset(days=7), 'price'].to_numpy()
+        price = my_frcst.forecast(d, demand, weather, price_d1, price_d7)
+        x.append(price['power'])
+        z.append(original_price.loc[original_price.index.date == d, 'price'].to_numpy())
+
+
+        # my_frcst.collect_data(d, demand, weather, price, price_d1, price_d7)
+    #
+    # my_frcst.fit_function()
+    # print(my_frcst.model.score(my_frcst.scaler.transform(np.asarray(my_frcst.deque_x)), np.asarray(my_frcst.deque_y)))
+
+        # price_d1 = my_influx.get_prc_da(d - pd.DateOffset(days=1)).reshape((-1, 24))
+        # price_d7 = my_influx.get_prc_da(d - pd.DateOffset(days=7 )).reshape((-1, 24))
+        # dummies = createSaisonDummy(d, d).reshape((-1, 24))
+
+
+        # price = my_frcst.forecast(d, demand, weather, price_d1, price_d7)
+        # x.append(price['power'])
+        # z.append(original_price.loc[original_price.index.date == d, 'price'].to_numpy())
+
+    plt.plot(np.asarray(z).reshape((-1,)))
+    plt.plot(np.asarray(x).reshape((-1,)))
+
+
+
+    # dem = demand.reshape((-1, 24))
+    # wnd = (weather['wind'] * np.random.uniform(0.95, 1.05, 24)).reshape((-1, 24))
+    # rad = ((weather['dir'] + weather['dif']) * np.random.uniform(0.95, 1.05, 24)).reshape((-1, 24))
+    # tmp = (weather['temp'] * np.random.uniform(0.95, 1.05, 24)).reshape((-1, 24))
+    # prc_1 = price_d1.reshape((-1, 24))
+    # prc_7 = price_d7.reshape((-1, 24))
+    # dummies = createSaisonDummy(d, d).reshape((-1, 24))
+    # # Schritt 1: Skalieren der Daten
+    # input = np.concatenate((dem, rad, wnd, tmp, prc_1, prc_7, dummies), axis=1)

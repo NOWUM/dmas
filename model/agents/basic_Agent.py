@@ -95,7 +95,7 @@ class agent:
         self.forecasts = {
             'demand': demandForecast(),
             'weather': weatherForecast(self.connections['influxDB']),
-            'price': priceForecast(init=30)
+            'price': priceForecast()
         }
 
     def weather_forecast(self, date=pd.to_datetime('2019-01-01'), days=1, mean=False):
@@ -126,8 +126,6 @@ class agent:
                 price_d1 = last_forecast
                 price_d7 = self.week_price_list.get_price_x_days_before(max(7 - counter,1))
 
-            #price_d1 = self.connections['influxDB'].get_prc_da(d - pd.DateOffset(days=1)).reshape((-1, 24))
-            #price_d7 = self.connections['influxDB'].get_prc_da(d - pd.DateOffset(days=7 )).reshape((-1, 24))
             p = self.forecasts['price'].forecast(d, demand, weather, price_d1, price_d7)
 
             last_forecast = p['power']

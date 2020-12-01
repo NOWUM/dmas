@@ -32,7 +32,7 @@ class PwpAgent(basicAgent):
 
         self.init_state = {}
 
-        self.step_width = [-10, 0, 10, 500]
+        self.step_width = [-10, -5, 0, 5, 10, 500]
 
         self.shadow_portfolio = PwpPort(gurobi=True, T=48)
 
@@ -196,8 +196,8 @@ class PwpAgent(basicAgent):
                 if power_portfolio[23] == 0:
                     hours = np.argwhere(power_portfolio[:24] == 0).reshape((-1,))
                     prevent_start = all(power_shadow[hours] > 0)
-                    percentage = (obj_shadow - obj_portfolio) / obj_portfolio
-                    if prevent_start and percentage > 0.10:
+                    percentage = (obj_shadow - obj_portfolio) / obj_portfolio if obj_portfolio else 0
+                    if prevent_start and percentage > 0.05:
                         prevent_starts.update({offset: (prevent_start, obj_portfolio, obj_shadow, delta - d_delta,
                                                         hours)})
                         d_delta = delta
@@ -213,9 +213,10 @@ class PwpAgent(basicAgent):
 
                 # build mother order if any power > 0 for the current day and the last known power is total zero
                 if np.count_nonzero(result['power'][:24]) > 0 and np.count_nonzero(last_power) == 0:
+                    hours = np.argwhere(result['power'][:24] > 0).reshape((-1,))
                     # calculate variable cost for each hour
-                    var_cost = np.nan_to_num((result['fuel'][:24] + result['emission'][:24] + result['start'][:24]) /
-                                              result['power'][:24])
+                    var_cost = np.nan_to_num((result['fuel'][hours] + result['emission'][hours] + result['start'][hours]) /
+                                              result['power'][hours])
                     # and get mean value for requested price
                     price = np.mean(var_cost[var_cost > 0])
                     # for each hour with power > 0 add order to order_book
@@ -348,6 +349,7 @@ class PwpAgent(basicAgent):
         self.performance['sendOrders'] = tme.time() - start_time
 
         self.logger.info('DayAhead market scheduling completed')
+        print('DayAhead market scheduling completed:', self.name)
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
@@ -362,8 +364,6 @@ class PwpAgent(basicAgent):
         bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
-
-        print(ask)
 
         self.week_price_list.remember_price(prcToday=prc)
 
@@ -387,6 +387,7 @@ class PwpAgent(basicAgent):
         self.performance['saveResult'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('After DayAhead market adjustment completed')
+        print('After DayAhead market adjustment completed:', self.name)
         self.logger.info('Next day scheduling started')
 
         self.__reset_results()
@@ -406,6 +407,8 @@ class PwpAgent(basicAgent):
             if method.counter >= method.collect:  # retrain forecast method
                 method.fit_function()
                 method.counter = 0
+                if key == 'price':
+                    print(self.name, method.score)
 
         self.week_price_list.put_price()
 

@@ -131,6 +131,7 @@ class ResAgent(basicAgent):
         self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('DayAhead market scheduling completed')
+        print('DayAhead market scheduling completed:', self.name)
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
@@ -167,6 +168,7 @@ class ResAgent(basicAgent):
         self.performance['saveResult'] = np.round(tme.time() - start_time, 3)
 
         self.logger.info('After DayAhead market adjustment completed')
+        print('After DayAhead market adjustment completed:', self.name)
         self.logger.info('Next day scheduling started')
 
         # Step 8: retrain forecast methods and learning algorithm
