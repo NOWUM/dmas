@@ -122,7 +122,7 @@ class PwpAgent(basicAgent):
         for offset in self.step_width :
             for key, value in self.portfolio.energy_systems.items():
                 value['model'].power_plant = copy.deepcopy(self.init_state[key])
-            for key, value in self.shadow_portfolio.items():
+            for key, value in self.shadow_portfolio.energy_systems.items():
                 value['model'].power_plant = copy.deepcopy(self.init_state[key])
 
             # prices and weather first day
