@@ -189,7 +189,7 @@ class PwpAgent(basicAgent):
             for offset in self.step_width:
                 # a start can only prevented if the last power of the current day is zero
                 starts.update({offset: dict(prevented=False, hours=[] , delta=0)})
-                if self.portfolio_results[key][offset]['power'][23] > 0:
+                if self.portfolio_results[key][offset]['power'][23] == 0:
                     # if the last power is zero, than one or more hours can be zero
                     hours = np.argwhere(self.portfolio_results[key][offset]['power'][:24] == 0).reshape((-1,))
                     # for these hours the power of the shadow portfolio must be greater than zero
@@ -233,6 +233,7 @@ class PwpAgent(basicAgent):
 
                 # check if a start is prevented
                 if starts[offset]['prevented']:
+                    print(starts)
                     result = self.shadow_results[key][offset]               # get shadow portfolio results
                     hours = starts[offset]['hours']                         # get hours in which the start is prevented
                     # calculate the reduction coefficient for each hour
@@ -430,8 +431,6 @@ class PwpAgent(basicAgent):
 
 
 if __name__ == "__main__":
-
-    # from matplotlib import pyplot as plt
 
     args = parse_args()
     agent = PwpAgent(date='2018-01-01', plz=args.plz)
