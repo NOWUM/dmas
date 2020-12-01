@@ -233,7 +233,6 @@ class PwpAgent(basicAgent):
 
                 # check if a start is prevented
                 if starts[offset]['prevented']:
-                    print(starts)
                     result = self.shadow_results[key][offset]               # get shadow portfolio results
                     hours = starts[offset]['hours']                         # get hours in which the start is prevented
                     # calculate the reduction coefficient for each hour
@@ -255,15 +254,15 @@ class PwpAgent(basicAgent):
                         for hour in hours:
                             for id_, order in prevent_orders.items():
                                 if id_[1] == hour:
-                                    order = {id_: (np.round(order[0] - factor, 2),
-                                                   np.round(result['power'][hour], 2),
-                                                   order[2])}
+                                    order_to_prevent = {id_: (np.round(order[0] - factor, 2),
+                                                              np.round(result['power'][hour], 2),
+                                                              order[2])}
 
                                     order_to_book = {str(id_): (np.round(order[0] - factor, 2),
                                                                 np.round(result['power'][hour], 2),
                                                                 order[2])}
 
-                                    prevent_orders.update(order)
+                                    prevent_orders.update(order_to_prevent)
                                     order_book.update(order_to_book)
 
                     last_power[hours] = result['power'][hours]
@@ -438,7 +437,7 @@ class PwpAgent(basicAgent):
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = PwpAgent(date='2018-01-01', plz=args.plz)
+    agent = PwpAgent(date='2018-01-10', plz=args.plz)
     agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
