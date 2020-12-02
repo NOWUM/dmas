@@ -29,9 +29,8 @@ install python modules: `pip3 install -r requirements.txt`
 | OS | VMware ESXi 7.0 | VMware ESXi 7.0 | PROXMOX |
 
 
-| Physisch | DB Server | Simu-1 | Simu-2 |
-| -- | -- | -- | -- |
 | IP | MAC | Name | Funktion | Host |
+| -- | -- | -- | -- | -- |
 | 149.201.88.83 | 00:0c:29:aa:63:b0 | Influx_1 | Datenbank | GO10S-NOWUM2 |
 | 149.201.196.107 | 5a:c2:1d:c7:70:b4 | ProxVM_1 | Simulation | GO10S-NOWUM4 |
 
