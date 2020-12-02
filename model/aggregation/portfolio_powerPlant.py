@@ -68,17 +68,16 @@ class PwpPort(PortfolioModel):
             self.fix = False
         else:
             self.fix = True
-            delta_power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='ReBA', lb=0, ub=GRB.INFINITY)
+            delta_power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='delta_power', lb=0, ub=GRB.INFINITY)
             minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
             plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
-            self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
             self.m.addConstrs(minus[i] + plus[i] == delta_power[i] for i in self.t)
-            self.m.setObjective(quicksum((power[i] * self.prices['power'][i]) -
-                                         (self.fuel[i] + self.emission[i] + self.start[i] +
-                                         delta_power[i] * (np.abs(self.prices['power'][i]) + 35)) for i in self.t),
-                                GRB.MAXIMIZE)
-            # self.m.setObjective(quicksum(delta_power[i] for i in self.t), GRB.MINIMIZE)
+            self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
 
+            delta_costs = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='delta_costs', lb=0, ub=GRB.INFINITY)
+            self.m.addConstrs(delta_costs[i] == np.abs(self.prices['power'][i]) for i in self.t)
+            self.m.setObjective(profit - quicksum(fuel[i] + emission[i] + start[i] + delta_costs[i] for i in self.t),
+                                GRB.MAXIMIZE)
         self.m.update()
 
     def optimize(self):
