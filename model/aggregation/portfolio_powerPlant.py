@@ -50,7 +50,7 @@ class PwpPort(PortfolioModel):
         emission = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='E', lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstrs(emission[i] == quicksum(e for e in [x for x in self.m.getVars() if 'E_' in x.VarName]
                                                   if '[%i]' % i in e.VarName) for i in self.t)
-        # total fuel cost in portfolio
+        # total start cost in portfolio
         start = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='S', lb=-GRB.INFINITY, ub=GRB.INFINITY)
         self.m.addConstrs(start[i] == quicksum(s for s in [x for x in self.m.getVars() if 'S_' in x.VarName]
                                                if '[%i]' % i in s.VarName) for i in self.t)
@@ -63,7 +63,7 @@ class PwpPort(PortfolioModel):
             if max_power:
                 self.m.setObjective(quicksum(power[i] for i in self.t), GRB.MAXIMIZE)
             else:
-                # objective function (max cashflow)
+                # objective function (max cash_flow)
                 self.m.setObjective(profit - quicksum(fuel[i] + emission[i] + start[i] for i in self.t), GRB.MAXIMIZE)
             self.fix = False
         else:
@@ -73,9 +73,10 @@ class PwpPort(PortfolioModel):
             plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
             self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
             self.m.addConstrs(minus[i] + plus[i] == delta_power[i] for i in self.t)
-            self.m.setObjective(quicksum(self.fuel[i] + self.emission[i] + self.start[i] +
-                                         delta_power[i] * (np.abs(self.prices['power'][i]) + 35) for i in self.t),
-                                GRB.MINIMIZE)
+            self.m.setObjective(quicksum((power[i] * self.prices['power'][i]) -
+                                         (self.fuel[i] + self.emission[i] + self.start[i] +
+                                         delta_power[i] * (np.abs(self.prices['power'][i]) + 35)) for i in self.t),
+                                GRB.MAXIMIZE)
             # self.m.setObjective(quicksum(delta_power[i] for i in self.t), GRB.MINIMIZE)
 
         self.m.update()
