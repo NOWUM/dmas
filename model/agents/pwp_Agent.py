@@ -381,6 +381,7 @@ class PwpAgent(basicAgent):
         # adjust power generation
         for key, value in self.portfolio.energy_systems.items():
             value['model'].power_plant = copy.deepcopy(self.init_state[key])
+        self.portfolio.prices['power'][:len(prc)] = prc
         self.portfolio.build_model(response=ask - bid)
         power_da, emission, fuel, _ = self.portfolio.optimize()
         self.performance['adjustResult'] = self.performance['initModel'] = np.round(tme.time() - start_time, 3)

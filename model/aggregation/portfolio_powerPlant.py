@@ -73,7 +73,10 @@ class PwpPort(PortfolioModel):
             plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
             self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
             self.m.addConstrs(minus[i] + plus[i] == delta_power[i] for i in self.t)
-            self.m.setObjective(quicksum(delta_power[i] for i in self.t), GRB.MINIMIZE)
+            self.m.setObjective(quicksum(self.fuel[i] + self.emission[i] + self.start[i] +
+                                         delta_power[i] * (np.abs(self.prices['power'][i]) + 35) for i in self.t),
+                                GRB.MINIMIZE)
+            # self.m.setObjective(quicksum(delta_power[i] for i in self.t), GRB.MINIMIZE)
 
         self.m.update()
 
