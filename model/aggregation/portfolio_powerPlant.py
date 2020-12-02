@@ -75,7 +75,7 @@ class PwpPort(PortfolioModel):
             self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
 
             delta_costs = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='delta_costs', lb=0, ub=GRB.INFINITY)
-            self.m.addConstrs(delta_costs[i] == np.abs(self.prices['power'][i]) for i in self.t)
+            self.m.addConstrs(delta_costs[i] == delta_power[i] * np.abs(self.prices['power'][i]) for i in self.t)
             self.m.setObjective(profit - quicksum(fuel[i] + emission[i] + start[i] + delta_costs[i] for i in self.t),
                                 GRB.MAXIMIZE)
         self.m.update()
