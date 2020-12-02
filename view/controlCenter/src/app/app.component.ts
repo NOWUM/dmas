@@ -13,7 +13,7 @@ export class AppComponent {
   view: string = 'config';
   start: string = '2018-01-01';
   end: string = '2018-12-31';
-  readonly ROOT_URL = 'http://149.201.88.70:5010';
+  readonly ROOT_URL = 'http://149.201.88.75:5010';
 
   constructor(private http: HttpClient) {
   }

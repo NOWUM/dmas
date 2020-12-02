@@ -6,12 +6,14 @@ import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
 import { ConfigComponent } from './config/config.component';
 import { InfoComponent } from './info/info.component';
+import { GridComponent } from './grid/grid.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     ConfigComponent,
-    InfoComponent
+    InfoComponent,
+    GridComponent
   ],
   imports: [
     BrowserModule,

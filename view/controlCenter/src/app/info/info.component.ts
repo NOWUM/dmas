@@ -11,7 +11,7 @@ export class InfoComponent implements OnInit {
   @Input() type: string;
   @Output() home: EventEmitter<string>;
 
-  readonly ROOT_URL = 'http://149.201.88.70:5010';
+  readonly ROOT_URL = 'http://149.201.88.75:5010';
   agents: Map<string, string>;
 
   constructor(private http: HttpClient) {

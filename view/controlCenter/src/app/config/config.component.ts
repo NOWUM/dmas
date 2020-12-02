@@ -11,7 +11,7 @@ export class ConfigComponent implements OnInit {
   @Input() type: string;
   @Output() info: EventEmitter<string>;
 
-  readonly ROOT_URL = 'http://149.201.88.70:5010';
+  readonly ROOT_URL = 'http://149.201.88.75:5010';
   config: Map<string, string>;
   number: number;
 
