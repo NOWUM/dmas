@@ -252,5 +252,9 @@ class InfluxInterface:
 
 if __name__ == "__main__":
 
-    myInterface = InfluxInterface(database='MAS2020_30', host='149.201.88.150')
+    myInterface = InfluxInterface(database='MAS2020_40', host='149.201.88.83')
+    bid = myInterface.get_bid_da(date=pd.to_datetime('2018-01-05'), name='PWP_49')  # volume to sell
+    ask = myInterface.get_ask_da(date=pd.to_datetime('2018-01-05'), name='PWP_49')  # volume to sell
 
+
+    # prc = InfluxInterface.get_prc_da(self.date)  # market clearing price
