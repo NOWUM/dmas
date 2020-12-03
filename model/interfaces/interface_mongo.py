@@ -20,13 +20,14 @@ class mongoInterface:
             return position
         except:
             return {}
-
+    #  todo change if availability is implemented
     def get_power_plants(self):
         try:
             power_plants = self.tableStructur.find_one({"_id": 'PowerPlantSystems'})
             systems = {}
             for key, value in power_plants.items():
                 if key != '_id':
+                    value.update({'maxPower': 0.93 * value['maxPower']})
                     systems.update({key:value})
             return systems
         except:
