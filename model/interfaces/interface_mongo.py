@@ -20,7 +20,7 @@ class mongoInterface:
             return position
         except:
             return {}
-    #  todo change if availability is implemented
+    # todo change if availability is implemented
     def get_power_plants(self):
         try:
             power_plants = self.tableStructur.find_one({"_id": 'PowerPlantSystems'})
