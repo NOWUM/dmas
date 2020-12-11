@@ -28,10 +28,13 @@ class StrAgent(basicAgent):
         start_time = tme.time()
         self.portfolio = StrPort(gurobi=True, T=24)
 
+        self.max_volume = 0
         # Construction storages
         for key, value in self.connections['mongoDB'].get_storages().items():
             self.portfolio.capacities['capacityWater'] += value['P+_Max']
             self.portfolio.add_energy_system(key, {key: value})
+            self.max_volume += value['VMax']
+
         self.logger.info('Storages added')
 
         mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
@@ -40,14 +43,12 @@ class StrAgent(basicAgent):
         self.price_history = deque(maxlen=1000)
         self.price_history.append(np.asarray(mcp).reshape((1, -1)))
 
-        self.m_ask = 0
-        self.m_bid = 0
-        self.start_gab = 0
+        self.offset_ask = 0
+        self.offset_bid = 0
+        self.start_gap = 0
 
-        row = np.asarray([3,-1,-1,-1,-1,-1,-1])
-        x = [np.roll(row, shift=i) for i in range(6)]
-        x.append(np.asarray([1, 1, 1, 1, 1, 1, 1]))
-        self.X = np.asarray(x)
+        self.q_ask = [0.55, 0.60, 0.65, 0.75, 0.85, 0.95]
+        self.q_bid = [0.45, 0.40, 0.35, 0.25, 0.15, 0.05]
 
         # If there are no power systems, terminate the agent
         if len(self.portfolio.energy_systems) == 0:
@@ -79,41 +80,39 @@ class StrAgent(basicAgent):
         order_book = {}
 
         for key, value in self.portfolio.energy_systems.items():
-            eta = value['eta+'] * value['eta-']
-            min_ask_prc = base_prc * (1.5 - eta/2)
-            max_bid_prc = base_prc * (0.5 + eta/2)
+            efficiency = value['eta+'] * value['eta-']
 
-            vol_ask = [0.15, 0.25, 0.25, 0.15, 0.10, 0.05, 0.05]
-            prc_ask = ['x', 0.55, 0.60, 0.66, 0.75, 0.85, 0.95]
+            min_ask_prc = base_prc * (1.5 - efficiency/2)
+            max_bid_prc = base_prc * (0.5 + efficiency/2)
 
-            vol_bid = [0.15, 0.25, 0.25, 0.15, 0.1, 0.05, 0.05]
-            prc_bid = ['x', 0.40, 0.36, 0.31, 0.25, 0.15, 0.5]
+            prc_ask = [max(norm.ppf(element, base_prc, std_prc), min_ask_prc) for element in self.q_ask]
+            prc_ask.insert(0, min_ask_prc)
 
-            block_bid_number = 0
-            block_ask_number = 0
+            prc_bid = [min(norm.ppf(element, base_prc, std_prc), max_bid_prc) for element in self.q_bid]
+            prc_bid.insert(0, max_bid_prc)
+
+            block_number = 0
 
             for i in self.portfolio.t:
-                for k in range(len(prc_bid)):
-                    if prc_bid[k] != 'x':
-                        prc = np.round(min(norm.pdf(prc_bid[k]+self.q_bid)*std_prc+base_prc, max_bid_prc), 2)
-                    else:
-                        prc = max_bid_prc
+                m_ask = (2 * self.offset_ask) / 6
+                vol_ask = 1/7 - self.offset_ask
 
-                    vol = np.round(vol_bid[k] * value['P+_Max'], 2)
-                    order_book.update({str(('dem%s' % block_bid_number, i, k, self.name)): (prc, vol, 'x')})
+                m_bid= (2 * self.offset_bid) / 6
+                vol_bid = 1/7 - self.offset_bid
 
-                block_bid_number += 1
+                for k in range(7):
 
-                for k in range(len(prc_ask)):
-                    if prc_bid[k] != 'x':
-                        prc = np.round(max(norm.pdf(prc_ask[k]+self.q_ask)*std_prc+base_prc, min_ask_prc), 2)
-                    else:
-                        prc = min_ask_prc
+                    price = np.round(prc_ask[k],2) + self.start_gap
+                    volume = np.round(vol_ask * value['P+_Max'], 2)
+                    order_book.update({str(('gen%s' % block_number, i, k, self.name)): (price, volume, 'x')})
+                    vol_ask += m_ask
 
-                    vol = np.round(vol_ask[k] * value['P+_Max'], 2)
-                    order_book.update({str(('gen%s' % block_ask_number, i, k, self.name)): (prc, vol, 'x')})
+                    price = np.round(prc_bid[k],2) + self.start_gap
+                    volume = np.round(vol_bid * value['P+_Max'], 2)
+                    order_book.update({str(('dem%s' % block_number, i, k, self.name)): (price, volume, 'x')})
+                    vol_bid += m_bid
 
-                block_ask_number += 1
+                block_number += 1
 
         # Step 5: send orders to market resp. to mongodb
         # -------------------------------------------------------------------------------------------------------------
@@ -140,24 +139,20 @@ class StrAgent(basicAgent):
         prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
         profit = (ask - bid) * prc
 
+        gap  = np.mean(prc) - np.mean(self.price_forecast(self.date)['power'])
+
         self.week_price_list.remember_price(prcToday=prc)
 
-        v0 = self.portfolio.volume[0]
-        # case 1
-        # --> q_bid ++
-        # --> q_ask --
-        if (v0 + sum(bid) * 0.9 - sum(ask)/0.9) > 0:
-            self.q_ask -= 0.005
-            self.q_bid += 0.005
-        # case 2
-        # --> q_bid --
-        # --> q_ask ++
-        elif (v0 + sum(bid) * 0.9 - sum(ask)/0.9) < 0:
-            self.q_ask += 0.005
-            self.q_bid -= 0.005
-
-        self.q_ask = max(min(0.04, self.q_ask), -0.04)
-        self.q_bid = max(min(0.04, self.q_bid), -0.04)
+        if np.abs(gap) > 2:
+            self.start_gap = gap
+        else:
+            v0 = self.portfolio.volume[0]
+            if v0 + np.sum(bid) * 0.9 - np.sum(ask) / 0.9 < 0:
+                self.offset_ask += 0.01
+                self.offset_ask = min(self.offset_ask, 1/7)
+            if v0 + np.sum(bid) * 0.9 - np.sum(ask) / 0.9 > self.max_volume:
+                self.offset_bid += 0.01
+                self.offset_bid = min(self.offset_bid, 1/7)
 
         # adjust power generation
         self.portfolio.build_model(response=ask - bid)
