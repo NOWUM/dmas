@@ -10,9 +10,7 @@ from flask_cors import CORS
 import requests
 import socket
 import json
-import plotly.graph_objects as go
 import plotly.express as px
-import plotly.io as pio
 import numpy as np
 
 # model modules
@@ -21,6 +19,7 @@ from apps.misc_validData import write_valid_data, writeDayAheadError
 from interfaces.interface_Influx import InfluxInterface as influxCon
 from interfaces.interface_mongo import mongoInterface as mongoCon
 from apps.view_grid import GridView
+from apps.misc_Plotly_Figures import plot_energy_balance, plot_energy_range
 
 # 0. initialize variables
 # ---------------------------------------------------------------------------------------------------------------------
@@ -40,49 +39,30 @@ CORS(app, resources={r"*": {"origins": "*"}})
 def index():
     return 'Service running'
 
-@app.route('/test_plotly')
-def test_plotly():
-    # fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 30, 9, 40])
-    fig = go.Figure()
+@app.route('/test_plotly/<data>')
+def energy_balance(data='x-y-z'):
 
-    # Add traces, one for each slider step
-    for step in np.arange(0, 5, 0.1):
-        fig.add_trace(
-            go.Scatter(
-                visible=False,
-                line=dict(color="#00CED1", width=6),
-                name="𝜈 = " + str(step),
-                x=np.arange(0, 10, 0.01),
-                y=np.sin(step * np.arange(0, 10, 0.01))))
+    start = pd.to_datetime(data.split('-')[0], unit='ms')
+    end = pd.to_datetime(data.split('-')[1], unit='ms')
+    typ = data.split('-')[-1]
 
-    # Make 10th trace visible
-    fig.data[10].visible = True
-
-    # Create and add slider
-    steps = []
-    for i in range(len(fig.data)):
-        step = dict(
-            method="update",
-            args=[{"visible": [False] * len(fig.data)},
-                  {"title": "Slider switched to step: " + str(i)}],  # layout attribute
-        )
-        step["args"][0]["visible"][i] = True  # Toggle i'th trace to "visible"
-        steps.append(step)
-
-    sliders = [dict(
-        active=10,
-        currentvalue={"prefix": "Frequency: "},
-        pad={"t": 50},
-        steps=steps
-    )]
-
-    fig.update_layout(
-        sliders=sliders
-    )
+    i_con = influxCon(host=config['Configuration']['influxdb'], database=config['Configuration']['database'])
+    fig = plot_energy_balance(start=start, end=end, typ=typ, i_con=i_con)
+    i_con.influx.close()
 
     return fig.to_json()# json.dumps('OK')
 
+@app.route('/energy_range/<data>')
+def energy_time(data='x-y-z'):
+    start = pd.to_datetime(data.split('-')[0], unit='ms')
+    end = pd.to_datetime(data.split('-')[1], unit='ms')
+    typ = data.split('-')[-1]
 
+    i_con = influxCon(host=config['Configuration']['influxdb'], database=config['Configuration']['database'])
+    fig = plot_energy_range(start=start, end=end, typ=typ, i_con=i_con)
+    i_con.influx.close()
+
+    return fig.to_json()# json.dumps('OK')
 
 @app.route('/get_config/<typ>', methods=['GET'])
 def get_config(typ='services'):

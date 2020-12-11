@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
+from collections import deque
 
 # model modules
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
@@ -35,13 +36,19 @@ class StrAgent(basicAgent):
 
         mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
                42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
-        self.base_price = np.asarray(mcp).reshape((1,-1))
 
-        if len(self.forecasts['price'].y) > 0:
-            self.base_price = self.forecasts['price'].y
+        self.price_history = deque(maxlen=1000)
+        self.price_history.append(np.asarray(mcp).reshape((1, -1)))
 
-        self.q_ask = 0
-        self.q_bid = 0
+        self.m_ask = 0
+        self.m_bid = 0
+        self.start_gab = 0
+
+        row = np.asarray([3,-1,-1,-1,-1,-1,-1])
+        x = [np.roll(row, shift=i) for i in range(6)]
+        x.append(np.asarray([1, 1, 1, 1, 1, 1, 1]))
+        self.X = np.asarray(x)
+
         # If there are no power systems, terminate the agent
         if len(self.portfolio.energy_systems) == 0:
             print('Number: %s No energy systems in the area' % plz)
@@ -62,10 +69,12 @@ class StrAgent(basicAgent):
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
         self.portfolio.set_parameter(self.date, dict(), prices)
         self.portfolio.build_model()
-        self.portfolio.optimize()
+        self.portfolio.optimize()                                      # optimize portfolio
 
+        # calculate base price --> mean for 24h
         base_prc = np.mean(prices['power'])
-        std_prc = np.sqrt(np.var(np.mean(self.base_price, axis=1)))
+        # calculate standard deviation for the price history
+        std_prc = np.sqrt(np.var(np.asarray(self.price_history)))
 
         order_book = {}
 
