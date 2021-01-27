@@ -10,6 +10,10 @@ from flask_cors import CORS
 import requests
 import socket
 import json
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly.io as pio
+import numpy as np
 
 # model modules
 from apps.misc_GenWeather import WeatherGenerator
@@ -35,6 +39,50 @@ CORS(app, resources={r"*": {"origins": "*"}})
 @app.route('/')
 def index():
     return 'Service running'
+
+@app.route('/test_plotly')
+def test_plotly():
+    # fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 30, 9, 40])
+    fig = go.Figure()
+
+    # Add traces, one for each slider step
+    for step in np.arange(0, 5, 0.1):
+        fig.add_trace(
+            go.Scatter(
+                visible=False,
+                line=dict(color="#00CED1", width=6),
+                name="𝜈 = " + str(step),
+                x=np.arange(0, 10, 0.01),
+                y=np.sin(step * np.arange(0, 10, 0.01))))
+
+    # Make 10th trace visible
+    fig.data[10].visible = True
+
+    # Create and add slider
+    steps = []
+    for i in range(len(fig.data)):
+        step = dict(
+            method="update",
+            args=[{"visible": [False] * len(fig.data)},
+                  {"title": "Slider switched to step: " + str(i)}],  # layout attribute
+        )
+        step["args"][0]["visible"][i] = True  # Toggle i'th trace to "visible"
+        steps.append(step)
+
+    sliders = [dict(
+        active=10,
+        currentvalue={"prefix": "Frequency: "},
+        pad={"t": 50},
+        steps=steps
+    )]
+
+    fig.update_layout(
+        sliders=sliders
+    )
+
+    return fig.to_json()# json.dumps('OK')
+
+
 
 @app.route('/get_config/<typ>', methods=['GET'])
 def get_config(typ='services'):

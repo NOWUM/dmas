@@ -29,21 +29,23 @@ class PowerPlant(EnergySystem):
         self.m.__len__ = 1
 
         # determine start up cost
+        # (Konventionelle Kraftwerke Technologiesteckbrief zur Analyse
+        # „Flexibilitätskonzepte für die Stromversorgung 2050“)
         self.start_cost = 0
         if power_plant['fuel'] == 'gas':
-            self.start_cost = 24 * power_plant['maxPower']
+            self.start_cost = 60 * power_plant['maxPower']
         if power_plant['fuel'] == 'lignite':
             if power_plant['maxPower'] > 500:
-                self.start_cost = 80 * power_plant['maxPower']
+                self.start_cost = 60 * power_plant['maxPower']
             else:
                 self.start_cost = 50 * power_plant['maxPower']
         if power_plant['fuel'] == 'coal':
             if power_plant['maxPower'] > 500:
-                self.start_cost = 80 * power_plant['maxPower']
+                self.start_cost = 60 * power_plant['maxPower']
             else:
                 self.start_cost = 50 * power_plant['maxPower']
         if power_plant['fuel'] == 'nuc':
-            self.start_cost = 50 * power_plant['maxPower']
+            self.start_cost = 250 * power_plant['maxPower']
 
         self.power, self. emission, self.fuel, self.start = np.zeros_like(self.t, np.float), \
                                                             np.zeros_like(self.t, np.float), \

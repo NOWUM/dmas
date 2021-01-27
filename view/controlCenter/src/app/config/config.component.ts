@@ -1,5 +1,6 @@
 import {Component, OnInit, EventEmitter, Input, Output} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+//import {HttpClient} from '@angular/common/http';
+import {ConfigService} from "../config.service";
 
 @Component({
   selector: 'app-config',
@@ -7,82 +8,88 @@ import {HttpClient} from '@angular/common/http';
   styleUrls: ['./config.component.css']
 })
 export class ConfigComponent implements OnInit {
+  //@Input() type: string;
 
-  @Input() type: string;
-  @Output() info: EventEmitter<string>;
+  title = 'controlCenter';
+  serviceTypes: string[] = ['services'];
+  agentTypes: string[] = ['PWP', 'RES', 'DEM', 'STR', 'MRK', 'NET'];
+  //view: string = 'config';
 
-  readonly ROOT_URL = 'http://149.201.88.75:5010';
+  // test: string = 'test';
+  // @Input() type: string;
+  // @Output() info: EventEmitter<string>;
   config: Map<string, string>;
   number: number;
+  start: string = '2018-01-01';
+  end: string = '2018-12-31';
+  type: string;
 
-  constructor(private http: HttpClient) {
+  constructor(public service: ConfigService) {
+    //TODO: seperate Component for Services similar to ConfigAgentsComponent?
     this.type = 'services';
     this.config = new Map<string, string>();
-    this.info = new EventEmitter<string>();
-    this.number = 0
+    this.number = 0;
+
+    // service.type = 'services';
+    // service.config = new Map<string, string>();
+    // //this.info = new EventEmitter<string>();
+    // service.number = 0
+
+
+    //this.service.get_config();
+
+    // //Orig
+    // this.service.ngOnInit();
+    // this.config = service.config;
+
+    //service.get_info()
   }
 
-  // get data for the first time
   ngOnInit(): void {
-    // get config values from config file on Server
-    this.http.get(this.ROOT_URL + '/get_config/' + this.type).subscribe((data: any) => {
-      // console.log(data);
-      for (var value in data) {
-        this.config.set(value, data[value]);
-      }
-    });
-    // get running agents from server (mongodb)
-    this.http.get(this.ROOT_URL + '/get_running_agents/' + this.type).subscribe((data: any) => {
-      //console.log(data);
-      this.number = data;
-    });
-  }
-  // send config data to server
-  set_config(): void {
-    // create json object from map
-    let jsonObject: any = {};
-    this.config.forEach((value, key) => {
-      jsonObject[key] = value;
-    });
-    // build body and header
-    const body = JSON.stringify(jsonObject);
-    const headers = {'content-type': 'application/json'};
-    // console.log(body);
-    // post data to server
-    this.http.post(this.ROOT_URL + '/set_config/' + this.type, body, {'headers': headers}).subscribe(data => {
-      console.log(JSON.stringify(data));
-    })
+    console.log('OnInit: ' + this.type);
+    // this.type = 'services';
+    this.config = new Map<string, string>();
 
+    // this.service.get_config('services');
+    // this.config = this.service.config;
+
+    //this.config = this.service.get_config(this.config,'services');//klappte
+    this.get_config();
   }
+
+  //this.service.get_info();
+
+  // change_view(type: string): void {
+  //   this.view = type;
+  // }
+
   // update internal config map
   update_config(key: string, value: string): void {
     this.config.set(key, value);
-  }
-  // get number of running agents per typ
-  get_running_agents(): void {
-    // get running agents from server (mongodb)
-    this.http.get(this.ROOT_URL + '/get_running_agents/' + this.type).subscribe((data: any) => {
-      console.log(data);
-      this.number = data;
-    });
-  }
-  // terminate agents per typ
-  terminate_agents(): void {
-    this.http.get(this.ROOT_URL + '/terminate_agents/' + this.type).subscribe((data: any) => {
-      console.log(data);
-    });
-  }
-  // start agents per typ
-  start_agents(): void {
-    this.http.get(this.ROOT_URL + '/start_agents/' + this.type).subscribe((data: any) => {
-      console.log(data);
-    });
-  }
-  // emit event to switch to info page
-  get_info(): void {
-    this.info.emit(this.type);
+    console.log(this.config);
   }
 
+  get_config(){
+    this.service.get_config(this.type)
+      // // clone the data object, using its known Config shape
+      // // ERROR TypeError: this.config.set is not a function
+      // // at ConfigComponent.update_config (config.component.ts:67)
+      // .subscribe((data:Map<string, string>) => this.config = { ...data });//klappt fürs Auslesen, Error s. oben
 
+      // alte Variante von Rieke (klappt auch):
+      .subscribe((data: any) => {
+        console.log('get_config(): Subscription received for ' + this.type + ':');
+        console.log(data);
+        for (var value in data) {
+          this.config.set(value, data[value]);
+        }
+      });
+  }
+
+  // get_config(){
+  // this.service.get_config(this.type)
+  //   // clone the data object, using its known Config shape
+  //   .subscribe((data:Map<string, string>) => this.config = { ...data });
+  // }
 
 }

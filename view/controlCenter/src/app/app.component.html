@@ -1,53 +1,65 @@
-<div class="container-fluid bg-dark text-light">
-
+<body>
+<!--<div class="container-fluid bg-dark text-light fixed-top">-->
+<div class="header bg-dark text-light fixed-top">
   <!-- Header with Title -->
-  <div class="row">
-    <div class="col-md">
-      <h3>dMAS zur Anlayse des Energieversorgungssystems</h3>
-      <p>Fachhochschule Aachen</p>
-    </div>
-  </div>
-
-  <div class="row bg-light text-dark" *ngIf="view == 'config'">
-    <div class="col-6">
-      <h4 style="padding-bottom: 10px; padding-top: 10px">Service Overview</h4>
-      <div *ngFor="let service of serviceTypes">
-        <h6 style="padding-bottom: 2px; padding-top: 5px">{{ service }} Options</h6>
-        <app-config [type]=service > </app-config>
-      </div>
-
-      <h6 style="padding-top: 10%"> Setting for Simulation Period</h6>
-      <div class="row">
-        <div class="col">
-          <span style="color: #f8f9fa; "> <label>Start:</label><br></span>
-          <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" [(ngModel)]=start>
-        </div>
-        <div class="col">
-          <span style="color: #f8f9fa; "><label>End:</label><br></span>
-          <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" [(ngModel)]=end>
-        </div>
-        <div class="col">
-          <span style="color: #f8f9fa; "><br></span>
-          <button (click)="start_simulation()" class="btn btn-dark btn-sm"> Start Simulation</button>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="col-6">
-      <h4 style="padding-bottom: 10px; padding-top: 10px">Agent Overview</h4>
-      <div *ngFor="let type of agentTypes">
-        <h6 style="padding-bottom: 2px; padding-top: 5px">{{ type }}-Agent Options</h6>
-        <app-config [type]=type (info)="change_view($event)"> </app-config>
-      </div>
-    </div>
-  </div>
-
-
-  <div class="row bg-light text-dark" *ngIf="view != 'config'">
-    <div class="col">
-      <app-info [type]="view" (home)="change_view($event)"> </app-info>
-    </div>
-  </div>
-
+  <h1>dMAS zur Anlayse des Energieversorgungssystems</h1>
+  <p>Fachhochschule Aachen</p>
+  <nav>
+  <!-- Navbar content -->
+    <a routerLink="/" routerLinkActive="active">Home</a>
+    <a routerLink="/config" routerLinkActive="active">Config</a>
+    <a routerLink="/agents-info" routerLinkActive="active">Agents Info</a>
+    <a routerLink="/grid" routerLinkActive="active">Grid</a>
+  </nav>
 </div>
+
+<div>
+  Routes:
+  <router-outlet></router-outlet>
+</div>
+
+<!--  <div class="row bg-light text-dark" *ngIf="view == 'config'">-->
+<!--    <div class="col-6">-->
+<!--      <h4 style="padding-bottom: 10px; padding-top: 10px">Service Overview</h4>-->
+<!--      <div *ngFor="let service of serviceTypes">-->
+<!--        <h6 style="padding-bottom: 2px; padding-top: 5px">{{ service }} Options</h6>-->
+<!--        <app-config [type]=service > </app-config>-->
+<!--      </div>-->
+
+<!--      <h6 style="padding-top: 10%"> Setting for Simulation Period</h6>-->
+<!--      <div class="row">-->
+<!--        <div class="col">-->
+<!--          <span style="color: #f8f9fa; "> <label>Start:</label><br></span>-->
+<!--          <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" [(ngModel)]=start>-->
+<!--        </div>-->
+<!--        <div class="col">-->
+<!--          <span style="color: #f8f9fa; "><label>End:</label><br></span>-->
+<!--          <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" [(ngModel)]=end>-->
+<!--        </div>-->
+<!--        <div class="col">-->
+<!--          <span style="color: #f8f9fa; "><br></span>-->
+<!--          <button (click)="start_simulation()" class="btn btn-dark btn-sm"> Start Simulation</button>-->
+<!--        </div>-->
+<!--      </div>-->
+
+<!--    </div>-->
+
+<!--    <div class="col-6">-->
+<!--      <h4 style="padding-bottom: 10px; padding-top: 10px">Agent Overview</h4>-->
+<!--      <div *ngFor="let type of agentTypes">-->
+<!--        <h6 style="padding-bottom: 2px; padding-top: 5px">{{ type }}-Agent Options</h6>-->
+<!--        <app-config [type]=type (info)="change_view($event)"> </app-config>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+
+
+<!--  <div class="row bg-light text-dark" *ngIf="view != 'config'">-->
+<!--    <div class="col">-->
+<!--      <app-info [type]="view" (home)="change_view($event)"> </app-info>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->
+</body>
+
+

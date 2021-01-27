@@ -1,41 +1,108 @@
-<div class="row">
-  <div *ngFor="let item of config | keyvalue">
-    <div class="col-2">
-      {{ item.key }}:
+<!--<div class="container-fluid bg-dark text-light">-->
+
+<!-- // main config page-->
+<!--  <div class="row bg-light text-dark" *ngIf="view == 'config'">-->
+<div class="row bg-light text-dark">
+    <div class="col-3">
+      <h4 style="padding-bottom: 10px; padding-top: 10px">Service Overview</h4>
+      <div *ngFor="let iService of serviceTypes">
+        <!--iService Überschrift-->
+        <h6 style="padding-bottom: 2px; padding-top: 5px">{{ iService }} Options:</h6>
+<!--        <app-config [type]=service > </app-config>-->
+
+        <div *ngFor="let item of this.config | keyvalue">
+          <!--Item Label-->
+          <div class="col-2">
+            {{ item.key }}:
+          </div>
+          <!--Item Input Box-->
+          <div class="col">
+            <input type="text" [(ngModel)]="item.value" (blur)="this.update_config(item.key, item.value)">
+          </div>
+        </div>
+<!--  //TODO: set this.type to iservice-->
+      <button (click)="service.set_config(this.config, this.type)" class="btn btn-dark btn-sm"> Submit</button>
+      </div>
+
+      <h6 style="padding-top: 10%"> Setting for Simulation Period</h6>
+<!--      <div class="row">-->
+        <div class="col">
+          <span style="color: #f8f9fa; "> <label>Start:</label></span>
+          <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" [(ngModel)]=service.start>
+        </div>
+        <div class="col">
+          <span style="color: #f8f9fa; "><label>End:</label><br></span>
+          <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" [(ngModel)]=service.end>
+        </div>
+        <div class="col">
+          <span style="color: #f8f9fa; "><br></span>
+          <button (click)="service.start_simulation()" class="btn btn-dark btn-sm"> Start Simulation</button>
+        </div>
+<!--      </div>-->
     </div>
-    <div class="col">
-      <input type="text" [(ngModel)]="item.value" (blur)="update_config(item.key, item.value)">
+
+    <div class="col-9">
+      <h4 style="padding-bottom: 10px; padding-top: 10px">Agent Overview</h4>
+      <!-- +++++ For Agents +++++ -->
+      <div *ngFor="let type of agentTypes">
+        <app-config-agents [type]=type> </app-config-agents>
+      </div><!-- ++++++++++ -->
     </div>
-  </div>
+
 </div>
 
-<div class="row" style="padding-bottom: 10px">
-  <div class="col">
-    <br>
-    <!-- +++++ For Services +++++ -->
-    <div *ngIf="type == 'services'">
-      <div class="btn-group" *ngIf="type == 'services'">
-        <button (click)="set_config()" class="btn btn-dark btn-sm"> Submit</button>
-      </div>
-    </div>
-    <!-- ++++++++++ -->
+<!--//Info Page-->
+<!--  <div class="row bg-light text-dark" *ngIf="view != 'config'">-->
+<!--    <div class="col">-->
+<!--      <app-info [type]="view" (home)="change_view($event)"> </app-info>-->
+<!--    </div>-->
+<!--  </div>-->
 
-    <!-- +++++ For Agents +++++ -->
-    <div *ngIf="type != 'services'">
-      <!-- +++++ buttons left hand side +++++ -->
-      <div class="btn-group" *ngIf="type != 'services'">
-        <button (click)="set_config()" class="btn btn-dark btn-sm"> Submit</button>
-        <button (click)="start_agents()" class="btn btn-dark btn-sm"> Start</button>
-        <button (click)="terminate_agents()" class="btn btn-dark btn-sm"> Stop</button>
-      </div>
-      <!-- +++++ buttons right hand side +++++ -->
-      <b style="padding-left: 10%; padding-right: 2%"> total running: {{ number }} </b>
-      <div class="btn-group" *ngIf="type != 'services'">
-        <button (click)="get_running_agents()" class="btn btn-dark btn-sm"> Refresh</button>
-        <button (click)="get_info()" *ngIf="type != 'services'" class="btn btn-dark btn-sm"> Info</button>
-      </div>
-    </div>
-    <!-- ++++++++++ -->
+<!--</div>-->
 
-  </div>
-</div>
+
+<!--//#alte config component-->
+<!--//input boxen-->
+<!--<div class="row">-->
+<!--  <div *ngFor="let item of service.config | keyvalue">-->
+<!--    <div class="col-2">-->
+<!--      {{ item.key }}:-->
+<!--    </div>-->
+<!--    <div class="col">-->
+<!--      <input type="text" [(ngModel)]="item.value" (blur)="service.update_config(item.key, item.value)">-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->
+
+<!--<div class="row" style="padding-bottom: 10px">-->
+<!--  <div class="col">-->
+<!--    <br>-->
+<!--    &lt;!&ndash; +++++ For Services +++++ &ndash;&gt;-->
+<!--    <div *ngIf="this.type == 'services'">-->
+<!--      <div class="btn-group" *ngIf="this.type == 'services'">-->
+<!--        <button (click)="service.set_config()" class="btn btn-dark btn-sm"> Submit</button>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    &lt;!&ndash; ++++++++++ &ndash;&gt;-->
+
+<!--&lt;!&ndash;    &lt;!&ndash; +++++ For Agents +++++ &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;    <div *ngIf="this.type != 'services'">&ndash;&gt;-->
+<!--&lt;!&ndash;      &lt;!&ndash; +++++ buttons left hand side +++++ &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;      <div class="btn-group" *ngIf="this.type != 'services'">&ndash;&gt;-->
+<!--&lt;!&ndash;        <button (click)="service.set_config()" class="btn btn-dark btn-sm"> Submit</button>&ndash;&gt;-->
+<!--&lt;!&ndash;        <button (click)="service.start_agents()" class="btn btn-dark btn-sm"> Start</button>&ndash;&gt;-->
+<!--&lt;!&ndash;        <button (click)="service.terminate_agents()" class="btn btn-dark btn-sm"> Stop</button>&ndash;&gt;-->
+<!--&lt;!&ndash;      </div>&ndash;&gt;-->
+<!--&lt;!&ndash;      &lt;!&ndash; +++++ buttons right hand side +++++ &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;      <b style="padding-left: 10%; padding-right: 2%"> total running: {{ service.number }} </b>&ndash;&gt;-->
+<!--&lt;!&ndash;      <div class="btn-group" *ngIf="service.type != 'services'">&ndash;&gt;-->
+<!--&lt;!&ndash;        <button (click)="service.get_running_agents()" class="btn btn-dark btn-sm"> Refresh</button>&ndash;&gt;-->
+<!--&lt;!&ndash;        <button (click)="service.get_info()" *ngIf="service.type != 'services'" class="btn btn-dark btn-sm"> Info</button>&ndash;&gt;-->
+<!--&lt;!&ndash;      </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    &lt;!&ndash; ++++++++++ &ndash;&gt;&ndash;&gt;-->
+
+<!--  </div>-->
+<!--</div>-->
+
+<p>config works!</p>

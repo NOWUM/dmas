@@ -29,8 +29,16 @@ class annFrcst:
         self.x = np.asarray([]).reshape((-1,168))
         self.y = np.asarray([]).reshape((-1,24))
 
-        self.default_prices = pd.read_csv(r'./data/Ref_DA_Prices.csv', sep=';', decimal=',', index_col=0)
-        self.default_prices.index = pd.to_datetime(self.default_prices.index)
+        self.default_power = pd.read_csv(r'./data/Ref_DA_Prices.csv', sep=';', decimal=',', index_col=0)
+        self.default_power.index = pd.to_datetime(self.default_power.index)
+        # month mean values year 2018
+        self.default_gas = [18.6, 20.0, 24.2, 19.5, 21.7, 22.0, 22.4, 23.8, 27.8, 26.0, 24.9, 24.1]
+        # month mean values year 2018
+        self.default_emission = [8.3, 9.5, 11.5, 13.3, 14.8, 15.2, 16.4, 18.9, 21.4, 19.6, 19.2, 22.4]
+        # enervis hpfc Best Guess
+        self.default_coal = 65.18 / 8.141           # €/ske --> €/MWh
+        # agora Deutsche "Braunkohlewirtschaft"
+        self.default_lignite = 1.5
 
         self.score = 0.
 
@@ -89,14 +97,19 @@ class annFrcst:
             # Schritt 2: Berechnung des Forecasts
             power_price = self.model.predict(x_std).reshape((24,))
         else:
-            mcp = self.default_prices.loc[self.default_prices.index.date == pd.to_datetime(date),'price'].to_numpy()
+            mcp = self.default_power.loc[self.default_power.index.date == pd.to_datetime(date),'price'].to_numpy()
             power_price = np.asarray(mcp).reshape((-1,))
 
-        co = np.ones_like(power_price) * 23.8 * np.random.uniform(0.95, 1.05, 24)   # -- Emission Price     [€/t]
-        gas = np.ones_like(power_price) * 24.8 * np.random.uniform(0.95, 1.05, 24)  # -- Gas Price          [€/MWh]
-        lignite = 1.5 * np.random.uniform(0.95, 1.05)                               # -- Lignite Price      [€/MWh]
-        coal = 9.9 * np.random.uniform(0.95, 1.05)                                  # -- Hard Coal Price    [€/MWh]
-        nuc = 1.0 * np.random.uniform(0.95, 1.05)                                   # -- nuclear Price      [€/MWh]
+        # Emission Price        [€/t]
+        co = np.ones_like(power_price) * self.default_emission[date.month - 1]  * np.random.uniform(0.95, 1.05, 24)
+        # Gas Price             [€/MWh]
+        gas = np.ones_like(power_price) * self.default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24)
+        # Hard Coal Price       [€/MWh]
+        coal = self.default_coal * np.random.uniform(0.95, 1.05)
+        # Lignite Price         [€/MWh]
+        lignite = self.default_lignite * np.random.uniform(0.95, 1.05)
+        # -- Nuclear Price      [€/MWh]
+        nuc = 1.0 * np.random.uniform(0.95, 1.05)
 
         return dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
 
