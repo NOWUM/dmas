@@ -28,11 +28,19 @@ install python modules: `pip3 install -r requirements.txt`
 | DNS-Name | GO10S-NOWUM2 | GO10S-NOWUM3 | GO10S-NOWUM4 |
 | OS | VMware ESXi 7.0 | VMware ESXi 7.0 | PROXMOX |
 
+<<<<<<< HEAD
+=======
+Virtuelle Server
+>>>>>>> 69f546ef9cd821af6f4bc27ec62a30f40d2266ee
 
 | IP | MAC | Name | Funktion | Host |
 | -- | -- | -- | -- | -- |
 | 149.201.88.83 | 00:0c:29:aa:63:b0 | Influx_1 | Datenbank | GO10S-NOWUM2 |
+<<<<<<< HEAD
 | 149.201.196.107 | 5a:c2:1d:c7:70:b4 | ProxVM_1 | Simulation | GO10S-NOWUM4 |
+=======
+| ~~149.201.196.107 | 5a:c2:1d:c7:70:b4 | ProxVM_1 | Simulation | GO10S-NOWUM4 ~~|
+>>>>>>> 69f546ef9cd821af6f4bc27ec62a30f40d2266ee
 
 
 **Agents:**
@@ -63,8 +71,13 @@ install python modules: `pip3 install -r requirements.txt`
 | 4200 | Angular | Frontend | once somewhere | Web-App |
 | 5000 | Agent-Service | Waits for HTTP Post with instructions on agents to build | on any Server that should run Agents | InfluxDB, MongoDB, RabbitMQ |
 | 5010 | Web-App | Control Simulation | once somewhere | RabbitMQ, Agent-Service |
+<<<<<<< HEAD
 | 5672 | ??? | ??? | ??? | ??? |
 | 5673 | ??? | ??? | ??? | ??? |
+=======
+| 5672 | RabbitMQ | MQT Msgs | ??? | ??? |
+| 5673 | RabbitMQ | MQT Msgs | ??? | ??? |
+>>>>>>> 69f546ef9cd821af6f4bc27ec62a30f40d2266ee
 | 8006 | Proxmox Webinterface | Server Configuration | only for admin | nothing |
 | 8086 | InfluxDB (Running)| Time Series Database for Weather and Agents | once somewhere | nothing, only be reachable |
 | 8088 | InfluxDB (Backup) | only needed to backup Database | once somewhre | 

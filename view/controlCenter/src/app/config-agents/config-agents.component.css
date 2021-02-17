@@ -1,0 +1,7 @@
+#config-agents-container {
+    height: 125px;
+    /*max-height: 400px;*/
+    /*display: table;*/
+    /*overflow-y: scroll;*/
+    background: ivory;
+}

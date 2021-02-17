@@ -11,7 +11,7 @@ export class ConfigComponent implements OnInit {
   //@Input() type: string;
 
   title = 'controlCenter';
-  serviceTypes: string[] = ['services'];
+  serviceTypes: string[] = ['Control Service'];
   agentTypes: string[] = ['PWP', 'RES', 'DEM', 'STR', 'MRK', 'NET'];
   //view: string = 'config';
 

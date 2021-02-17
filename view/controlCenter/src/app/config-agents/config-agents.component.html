@@ -1,0 +1,45 @@
+
+
+<!-- Get Input Boxes-->
+<div class="row" id="config-agents-container">
+  <div class="col-6 mh-100">
+    <h6 style="padding-top: 5px; padding-bottom: 0px;"><b>{{ type }}-Agent Options:</b></h6>
+    <div class="row">
+    <div class="col-4" *ngFor="let item of config | keyvalue">
+<!--      <div class="col-2">-->
+        {{ item.key }}:
+<!--      </div>-->
+<!--      <div class="col">-->
+        <input type="text" [(ngModel)]="item.value" (blur)="this.update_config(item.key, item.value)">
+<!--      </div>-->
+    </div>
+    </div>
+    <div class="row">
+<!--    <div class="col">-->
+      <!-- +++++ buttons left hand side +++++ -->
+      <div class="col-4 btn-group" style="padding-right: 3%">
+    <!--    <button (click)="service.set_config()" class="btn btn-dark btn-sm"> Submit</button>-->
+        <button (click)="service.set_config(this.config, this.type)" class="btn btn-dark btn-sm"> Submit</button>
+        <button (click)="service.start_agents(this.type)" class="btn btn-dark btn-sm"> Start</button>
+        <button (click)="service.terminate_agents(this.type)" class="btn btn-dark btn-sm"> Stop</button>
+      </div>
+      <!-- +++++ buttons right hand side +++++ -->
+      <div class="col-4 btn-group" style="padding-right: 3%">
+        <button (click)="this.get_running_agents()" class="btn btn-dark btn-sm"> Refresh</button>
+        <button (click)="service.get_info()" class="btn btn-dark btn-sm"> Info</button> <!-- TODO: make button show running agents in extra div/page -->
+      </div>
+      <b class="ml-auto" style="padding-top: 2%; padding-right: 5%"> total running: {{ this.number }} </b>
+    </div>
+  </div>
+
+  <div class="col-6 mh-100">
+  <!--  TODO: move to AgentInfoComponent-->
+    <app-info [type]=this.type> </app-info>
+  <!--  <app-info> </app-info>-->
+  </div>
+
+</div>
+
+<!--<p>config-agents works!</p>-->
+
+

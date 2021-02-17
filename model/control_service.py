@@ -82,7 +82,79 @@ def test_plotly():
 
     return fig.to_json()# json.dumps('OK')
 
+@app.route('/GridGra', methods=['GET','POST'])
+def grid_grafana():
+    # try:
+    #     if request.method == 'POST':
+    #         date = request.form['start']
+    #         hour = int(request.form['hour'])
+    #         fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
+    #         #return render_template('tmp.html', plot=fig)
+    #         return fig
+    #     else:
+    #         fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=0)
+    #         return fig
+    # except Exception as e:
+    #     fig = None
+    #     print('Exception in Grid:', e)
+    #     #return render_template('grid.html', plot=fig)
+    #     return fig
+    # fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 30, 9, 40])
+    fig = go.Figure()
 
+    # Add traces, one for each slider step
+    for step in np.arange(0, 5, 0.1):
+        fig.add_trace(
+            go.Scatter(
+                visible=False,
+                line=dict(color="#00CED1", width=6),
+                name="𝜈 = " + str(step),
+                x=np.arange(0, 10, 0.01),
+                y=np.sin(step * np.arange(0, 10, 0.01))))
+
+    # Make 10th trace visible
+    fig.data[10].visible = True
+
+    # Create and add slider
+    steps = []
+    for i in range(len(fig.data)):
+        step = dict(
+            method="update",
+            args=[{"visible": [False] * len(fig.data)},
+                  {"title": "Slider switched to step: " + str(i)}],  # layout attribute
+        )
+        step["args"][0]["visible"][i] = True  # Toggle i'th trace to "visible"
+        steps.append(step)
+
+    sliders = [dict(
+        active=10,
+        currentvalue={"prefix": "Frequency: "},
+        pad={"t": 50},
+        steps=steps
+    )]
+
+    fig.update_layout(
+        sliders=sliders
+    )
+
+    return fig.to_json()# json.dumps('OK')
+
+@app.route('/Grid', methods=['GET','POST'])
+#@cross_origin()
+def grid():
+    try:
+        if request.method == 'POST':
+            date = request.form['start']
+            hour = int(request.form['hour'])
+            fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
+            return render_template('tmp.html', plot=fig)
+        else:
+            fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=0)
+            return render_template('grid.html', plot=fig)
+    except Exception as e:
+        fig = None
+        print('Exception in Grid:', e)
+        return render_template('grid.html', plot=fig)
 
 @app.route('/get_config/<typ>', methods=['GET'])
 def get_config(typ='services'):

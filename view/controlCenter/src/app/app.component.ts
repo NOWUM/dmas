@@ -1,3 +1,9 @@
+/* app.component.ts
+|   Info: Hauptkomponente
+|   Typ: TS Logic
+|   Inhalt:
+*/
+
 import { Component } from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 

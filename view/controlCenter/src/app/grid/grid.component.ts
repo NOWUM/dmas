@@ -11,6 +11,7 @@ import { Component, OnInit } from '@angular/core';
 <!--        <h6 style="padding-bottom: 2px; padding-top: 5px">{{ type }}-Agent Options</h6>-->
 <!--&lt;!&ndash;        <app-config [type]=type (info)="change_view($event)"> </app-config>&ndash;&gt;-->
 <!--      </div>-->
+    <iframe src="http://149.201.88.75:5010/Grid" title="Grid from Backend" width="800" height="1000"></iframe>
     <p>
       grid works!
     </p>

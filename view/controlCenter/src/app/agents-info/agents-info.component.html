@@ -1,0 +1,38 @@
+TODO: Implement checkbox logic
+<div class="row">
+  <div class="col">
+    <h4 style="padding-bottom: 20px; padding-top: 10px">Agent Info:</h4>
+  </div>
+</div>
+
+<div>
+  <input type="checkbox" id="pwp" [checked]="showPwp" (click)="togglePwp()">
+  <label for="pwp">PWP</label>
+
+  <input type="checkbox" id="res" [checked]="showRes" (click)="toggleRes()">
+  <label for="res">RES</label>
+
+  <input type="checkbox" id="dem" [checked]="DEM" (click)="toggleDem()">
+  <label for="dem">DEM</label>
+
+  <input type="checkbox" id="str" [checked]="showStr" (click)="toggleStr()">
+  <label for="str">STR</label>
+
+  <input type="checkbox" id="mrk" [checked]="showMrk" (click)="toggleMrk()">
+  <label for="mrk">MRK</label>
+
+  <input type="checkbox" id="net" [checked]="showNet" (click)="toggleNet()">
+  <label for="net">NET</label>
+</div>
+
+<div class="row">
+  <div class="col-2" *ngFor="let type of agentTypes">
+<!--    TODO: check for each show by Type-->
+<!--    <div *ngIf="showNet">&lt;!&nd ash;    TODO: check for each show by Type&ndash;&gt;-->
+    <div *ngIf="type"><!--    TODO: check for each show by Type-->
+<!--      Info {{type}}:-->
+      <app-info [type]=type> </app-info>
+    </div>
+  </div>
+</div>
+<p>agents-info works!</p>
