@@ -162,6 +162,23 @@ def start_agents(typ=None):
 
     return json.dumps('OK')
 
+@app.route('/Grid', methods=['GET','POST'])
+#@cross_origin()
+def grid():
+    try:
+        if request.method == 'POST':
+            date = request.form['start']
+            hour = int(request.form['hour'])
+            fig = gridView.get_plot(date=pd.to_datetime(date), hour=hour)
+            return render_template('tmp.html', plot=fig)
+        else:
+            fig = gridView.get_plot(date=pd.to_datetime('2018-01-01'), hour=0)
+            return render_template('grid.html', plot=fig)
+    except Exception as e:
+        fig = None
+        print('Exception in Grid:', e)
+        return render_template('grid.html', plot=fig)
+
 @app.route('/start_simulation', methods=['POST'])
 def start_simulation():
     valid = True
