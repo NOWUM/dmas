@@ -2,8 +2,6 @@
 import numpy as np
 import pandas as pd
 from influxdb import DataFrameClient
-import multiprocessing
-from joblib import Parallel, delayed
 
 
 class InfluxInterface:
@@ -19,6 +17,14 @@ class InfluxInterface:
 
         self.maphash = pd.read_csv(r'./data/Ref_GeoInfo.csv', index_col=0, sep=';', decimal=',')
         self.maphash = self.maphash.set_index('hash')
+
+        plz_codes = self.maphash['PLZ'].to_numpy(dtype=str)
+        self.plz_codes = []
+        for code in plz_codes:
+            if len(code) == 1:
+                self.plz_codes.append('0' + code)
+            else:
+                self.plz_codes.append(code)
 
         self.database = database
 
@@ -250,11 +256,97 @@ class InfluxInterface:
         return bid - ask # bid>ask=Verbraucher   ask=Anbieter(Fragen Preis nach) bid=bieten Preis
 
 
+    def get_typ_generation(self,start, end, typ):
+        start = start.isoformat() + 'Z'
+        end = end.isoformat() + 'Z'
+
+        query = 'SELECT sum("powerTotal") FROM "Areas" WHERE ("timestamp" = \'post_dayAhead\' AND "typ" = \'%s\')' \
+                'AND time >= \'%s\' AND time < \'%s\' GROUP BY "area" fill(null)' % (typ, start, end)
+
+        results = self.influx.query(query)
+        powers = {code: 0 for code in self.plz_codes}
+        for key, element in results.items():
+            code = key[1][0][1]
+            if len(code) == 1:
+                code = '0' + code
+            power = int(element['sum'].values[0] / 10 ** 3)
+            powers.update({code: power})
+        df = pd.DataFrame.from_dict(powers, orient='index', columns=['power'])
+        df['plz'] = df.index
+
+        return df
+
+
+    def get_range_generation(self,start, end, typ):
+
+        days = (end - start).days
+
+        aggregate = '1h'
+        if days > 3:
+           aggregate = '1d'
+        if days > 14:
+            aggregate= '7d'
+        if days > 60:
+            aggregate = '30d'
+
+        start = start.isoformat() + 'Z'
+        end = end.isoformat() + 'Z'
+
+        map = {'wind':      'powerWind',
+               'solar':     'powerSolar',
+               'coal':      'powerCoal',
+               'lignite':   'powerLignite',
+               'nuc':       'powerNuc',
+               'gas':       'powerGas'}
+
+        query = 'SELECT sum("%s") FROM "Areas" WHERE ("timestamp" = \'post_dayAhead\')' \
+                'AND time >= \'%s\' AND time < \'%s\' GROUP BY time(%s), "area" fill(0)' % (map[typ], start, end,
+                                                                                            aggregate)
+
+        results = self.influx.query(query)
+        codes, powers, dates = [], [], []
+        for key, value in results.items():
+            code = key[1][0][1]
+            if len(code) == 1:
+                code = '0' + code
+            for i in range(len(value)):
+                powers.append(value.iloc[i, 0])
+                dates.append(str(value.index[i]).split('+')[0])
+                codes.append(code)
+
+        df = pd.DataFrame(data=dict(power=powers, date=dates, plz=codes))
+
+        return df
+
 if __name__ == "__main__":
+    import json
+    import plotly.express as px
+    import plotly.io as pio
+    pio.renderers.default = "browser"
+
+    with open(r'./data/germany.geojson') as file:
+        areas = json.load(file)
+
+    for feature in areas['features']:
+        feature.update({'id': feature['properties']['plz']})
+
 
     myInterface = InfluxInterface(database='MAS2020_40', host='149.201.88.83')
-    bid = myInterface.get_bid_da(date=pd.to_datetime('2018-01-05'), name='PWP_49')  # volume to sell
-    ask = myInterface.get_ask_da(date=pd.to_datetime('2018-01-05'), name='PWP_49')  # volume to sell
+    #bid = myInterface.get_bid_da(date=pd.to_datetime('2018-01-05'), name='PWP_49')  # volume to sell
+    #ask = myInterface.get_ask_da(date=pd.to_datetime('2018-01-05'), name='PWP_49')  # volume to sell
 
+    df = myInterface.get_range_generation(start=pd.to_datetime('2018-01-01'),
+                                          end=pd.to_datetime('2018-01-14'), typ='solar')
+
+
+    fig = px.choropleth_mapbox(df, geojson=areas, color='power', locations='plz', animation_frame="date",
+                               # color_continuous_scale='greys',
+                               range_color=(df['power'].min(), df['power'].max()),
+                               mapbox_style="carto-positron",
+                               zoom=4.5, center = {"lat": 51.3, "lon": 10.2},
+                               opacity=0.5,
+                               labels={'power': 'E [GWh]'})
+
+    fig.show()
 
     # prc = InfluxInterface.get_prc_da(self.date)  # market clearing price
