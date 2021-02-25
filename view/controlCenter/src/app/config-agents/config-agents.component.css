@@ -1,3 +1,9 @@
+/* config-agents.component.css
+|   Info: Running Agent Info Komponente
+|   Typ: CSS Style Sheet
+|   Inhalt: lokale Style Elemente
+*/
+
 #config-agents-container {
     height: 125px;
     /*max-height: 400px;*/

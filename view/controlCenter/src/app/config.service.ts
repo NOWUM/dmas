@@ -17,7 +17,9 @@ export class ConfigService implements OnInit{
   //@Input() type: string;
   @Output() info: EventEmitter<string>;
 
+  // Backend URL
   readonly ROOT_URL = 'http://149.201.88.75:5010';
+
   config: Map<string, string>;
   start: string = '2018-01-01';
   end: string = '2018-12-31';
@@ -65,7 +67,7 @@ export class ConfigService implements OnInit{
     })
   }
 
-  // terminate agents per typ
+  // terminate ALL agents per typ
   terminate_agents(inType:string = 'test'): void {
     console.log('service.terminate_agents():' + inType);
     this.http.get(this.ROOT_URL + '/terminate_agents/' + inType).subscribe((data: any) => {
@@ -73,7 +75,7 @@ export class ConfigService implements OnInit{
     });
   }
 
-  // terminate agents per typ
+  // terminate single agent per Key (e.g. RES_40)
   terminate_agent(inKey:string = 'test') {
     console.log('service.terminate_agent():' + inKey);
     return this.http.get(this.ROOT_URL + '/terminate_agent/' + inKey);

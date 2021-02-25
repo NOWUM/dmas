@@ -1,60 +1,63 @@
-<!--<div class="container-fluid bg-dark text-light">-->
+<!-- config.component.html
+|   Info: Config Komponente
+|   Typ: HTML Code
+|   Inhalt: - Input Felder zur Konfiguration des Services (database, exchange, IPs der influx mongo und rabbit, Suffix)
+|           - Einbindung Config-Agents Komponenten der Agenten nach Typ
+|           - Parameter und Button zum Starten der Simulation
+-->
 
-<!-- // main config page-->
-<!--  <div class="row bg-light text-dark" *ngIf="view == 'config'">-->
 <div class="row bg-light text-dark">
-    <div class="col-3">
-      <h4 style="padding-bottom: 10px; padding-top: 10px">Service Overview</h4>
-      <div class="col" *ngFor="let iService of serviceTypes">
-        <!--iService Überschrift-->
-        <h6 style="padding-bottom: 2px; padding-top: 5px"><b>{{ iService }} Options:</b></h6>
-<!--        <app-config [type]=service > </app-config>-->
-
-        <div *ngFor="let item of this.config | keyvalue">
-          <!--Item Label-->
-          <div class="col-2">
-            {{ item.key }}:
-          </div>
-          <!--Item Input Box-->
-          <div class="col">
-            <input type="text" [(ngModel)]="item.value" (blur)="this.update_config(item.key, item.value)">
-          </div>
+  <!-- Service Overview -->
+  <div class="col-3">
+    <h4 style="padding-bottom: 10px; padding-top: 10px">Service Overview</h4>
+    <div class="col" *ngFor="let iService of serviceTypes">
+      <!--iService Überschrift-->
+      <h6 style="padding-bottom: 2px; padding-top: 5px"><b>{{ iService }} Options:</b></h6>
+      <div *ngFor="let item of this.config | keyvalue">
+        <!--Item Label-->
+        <div class="col-2">
+          {{ item.key }}:
         </div>
-<!--  //TODO: set this.type to iservice-->
-        <div class="col"><button  (click)="service.set_config(this.config, this.type)" class="btn btn-dark btn-sm"> Submit</button></div>
+        <!--Item Input Box-->
+        <div class="col">
+          <input type="text" [(ngModel)]="item.value" (blur)="this.update_config(item.key, item.value)">
+        </div>
       </div>
+      <!--  //TODO: set this.type to iservice, to make it work for multiple services?-->
+      <div class="col"><button  (click)="service.set_config(this.config, this.type)" class="btn btn-dark btn-sm"> Submit</button></div>
+    </div>
 
+    <!-- Settings for Simulation Period: -->
+    <div class="col">
+      <h6 style="padding-top: 10%"><b>Settings for Simulation Period:</b></h6>
+      <div class="col-2">
+        <span> <label>Start:</label></span>
+      </div>
       <div class="col">
-        <h6 style="padding-top: 10%"><b>Settings for Simulation Period:</b></h6>
-<!--      <div class="row">-->
-        <div class="col-2">
-          <span> <label>Start:</label></span>
-        </div>
-        <div class="col">
-          <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" [(ngModel)]=service.start>
-        </div>
-        <br>
-        <div class="col-2">
-          <span><label>End:</label></span>
-        </div>
-        <div class="col">
-          <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" [(ngModel)]=service.end>
-        </div>
-        <div class="col">
-          <span style="color: #f8f9fa; "><br></span>
-          <button (click)="service.start_simulation()" class="btn btn-dark btn-sm"> Start Simulation</button>
-        </div>
-        </div>
-<!--      </div>-->
-    </div>
+        <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" [(ngModel)]=service.start>
+      </div>
+      <br>
+      <div class="col-2">
+        <span><label>End:</label></span>
+      </div>
+      <div class="col">
+        <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" [(ngModel)]=service.end>
+      </div>
+      <div class="col">
+        <span style="color: #f8f9fa; "><br></span>
+        <button (click)="service.start_simulation()" class="btn btn-dark btn-sm"> Start Simulation</button>
+      </div>
+      </div>
+  </div>
 
-    <div class="col-9">
-      <h4 style="padding-bottom: 10px; padding-top: 10px">Agent Overview</h4>
-      <!-- +++++ For Agents +++++ -->
-      <div *ngFor="let type of agentTypes">
-        <app-config-agents [type]=type> </app-config-agents>
-      </div><!-- ++++++++++ -->
-    </div>
+  <!-- Agent Overview -->
+  <div class="col-9">
+    <h4 style="padding-bottom: 10px; padding-top: 10px">Agent Overview</h4>
+    <!-- +++++ For Agents +++++ -->
+    <div *ngFor="let type of agentTypes">
+      <app-config-agents [type]=type> </app-config-agents>
+    </div><!-- ++++++++++ -->
+  </div>
 
 </div>
 

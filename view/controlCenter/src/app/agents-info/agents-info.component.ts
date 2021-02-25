@@ -2,7 +2,6 @@
 |   Info: Übersicht und Verwaltung aller laufenden Agenten
 |   Typ: TS Logic
 |   Inhalt: Alle Ageneten sortiert nach Typ auf einer Seite anzeigen mit der Option, diese einzeln stoppen zu können
-|   Funktionen: Service Config anzeigen, konfigurieren und updaten
 |   TODO: Filterlogik implementieren (angezeigte Agenten nach Typ filtern)
 */
 
@@ -18,27 +17,34 @@ export class AgentsInfoComponent implements OnInit {
   agentTypes: string[] = ['PWP', 'RES', 'DEM', 'STR', 'MRK', 'NET'];
   agents: Map<string, string>;
 
-  showPwp = true;
-  showRes = true;
-  DEM = true;
-  showStr = true;
-  showMrk = true;
-  showNet = true;
+  showAgents: Map<string,any>;
 
   constructor(public service: ConfigService) {
     this.agents = new Map<string, string>();
+    this.showAgents = new Map<string, boolean>();
   }
 
   ngOnInit(): void {
+    for (var value in this.agentTypes) {
+        this.showAgents.set(this.agentTypes[value], true);
+      }
+    console.log('showAgents:');
+    console.log(this.showAgents);
   }
 
   // An-/Ausschaltlogik der Checkboxes für jeden Agent Typ
-  togglePwp() { this.showPwp = !this.showPwp; }
-  toggleRes() { this.showRes = !this.showRes; }
-  toggleDem() { this.DEM = !this.DEM; }
-  toggleStr() { this.showStr = !this.showStr; }
-  toggleMrk() { this.showMrk = !this.showMrk; }
-  toggleNet() { this.showNet = !this.showNet; }
+  togglePwp() { this.showAgents.set('PWP', !this.showAgents.get('PWP')); }
+  toggleRes() { this.showAgents.set('RES', !this.showAgents.get('RES')); }
+  toggleDem() { this.showAgents.set('DEM', !this.showAgents.get('DEM')); }
+  toggleStr() { this.showAgents.set('STR', !this.showAgents.get('STR')); }
+  toggleMrk() { this.showAgents.set('MRK', !this.showAgents.get('MRK')); }
+  toggleNet() { this.showAgents.set('NET', !this.showAgents.get('NET')); }
+
+  // Logik, ob Typ angezeigt werden soll
+  showType(inType:string = 'default'){
+    if(this.showAgents.get(inType)) return true;
+    return false;
+  }
 
   // Laufende Agenten abrufen
   get_agents(inType:string = 'NET'){

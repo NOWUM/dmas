@@ -55,7 +55,6 @@ export class ConfigAgentsComponent implements OnInit {
       // alte Variante von Rieke (klappt):
       .subscribe((data: any) => {
       //.subscribe((data: Map<string, string>) => {//Angabe des Datentyps klappt hier nicht, WARUM?
-
         console.log('get_config(): Subscription received for ' + this.type + ':');
         console.log(data);
         for (var value in data) {

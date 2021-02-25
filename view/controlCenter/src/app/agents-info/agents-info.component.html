@@ -1,10 +1,16 @@
-TODO: Implement checkbox logic
+<!-- agents-info.component.html
+|   Info: Übersicht und Verwaltung aller laufenden Agenten
+|   Typ: HTML Code
+|   Inhalt: Checkboxes zur Filterung nach Agent Typ, Auflistung der Agents (Platzhalter für Running Agent Info Komponente)
+-->
+
 <div class="row">
   <div class="col">
     <h4 style="padding-bottom: 20px; padding-top: 10px">Agent Info:</h4>
   </div>
 </div>
 
+<!-- Checkboxes -->
 <div>
   <input type="checkbox" id="pwp" [checked]="showPwp" (click)="togglePwp()">
   <label for="pwp">PWP</label>
@@ -25,14 +31,13 @@ TODO: Implement checkbox logic
   <label for="net">NET</label>
 </div>
 
+<!-- Einbindung der Info Komponente für Running Agents -->
 <div class="row">
-  <div class="col-2" *ngFor="let type of agentTypes">
-<!--    TODO: check for each show by Type-->
-<!--    <div *ngIf="showNet">&lt;!&nd ash;    TODO: check for each show by Type&ndash;&gt;-->
-    <div *ngIf="type"><!--    TODO: check for each show by Type-->
-<!--      Info {{type}}:-->
+  <div *ngFor="let type of agentTypes">
+    <div class="col" *ngIf=this.showType(type)>
       <app-info [type]=type> </app-info>
     </div>
   </div>
 </div>
+
 <p>agents-info works!</p>
