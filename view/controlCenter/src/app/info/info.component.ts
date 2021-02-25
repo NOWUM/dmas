@@ -1,11 +1,11 @@
 /* info.component.ts
-|   Info: Agent Info Komponente
+|   Info: Running Agent Info Komponente
 |   Typ: TS Logic
-|   Inhalt: s. HTML Code
+|   Inhalt: Logic to receive a list of running Agents and terminate them for each type
 */
 
 import { Component, OnInit, EventEmitter, Input, Output } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {ConfigService} from "../config.service";
 
 @Component({
   selector: 'app-info',
@@ -17,17 +17,22 @@ export class InfoComponent implements OnInit {
   @Input() type: string;
   @Output() home: EventEmitter<string>;
 
-  readonly ROOT_URL = 'http://149.201.88.75:5010';
   agents: Map<string, string>;
 
-  constructor(private http: HttpClient) {
+  constructor(public service: ConfigService) {
     this.type = 'PWP';
     this.agents = new Map<string, string>();
     this.home = new EventEmitter<string>();
   }
 
   ngOnInit(): void {
-    this.http.get(this.ROOT_URL + '/get_info/' + this.type).subscribe((data: any) => {
+    // Get Agent Info on loading
+    this.get_info();
+  }
+
+  // Get a list of running Agents
+  get_info(){
+    this.service.get_info(this.type).subscribe((data: any) => {
       console.log(data);
       for (var value in data) {
         this.agents.set(value, data[value]);
@@ -35,9 +40,10 @@ export class InfoComponent implements OnInit {
     });
   }
 
+  // Terminate Agent specified by its key (e.g. "DEM_40)
   terminate_agent(key: string): void {
     console.log(key);
-    this.http.get(this.ROOT_URL + '/terminate_agent/' + key).subscribe((data: any) => {
+    this.service.terminate_agent(key).subscribe((data: any) => {
       console.log(data);
       this.agents.delete(key);
     });

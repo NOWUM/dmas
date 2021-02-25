@@ -38,6 +38,11 @@ export class ConfigService implements OnInit{
     return this.http.get<Map<string, string>>(this.ROOT_URL + '/get_config/' + inType);
   }
 
+  get_info(inType:string = 'test'){
+    console.log('service.get_info(): '+ inType);
+    return this.http.get(this.ROOT_URL + '/get_info/' + inType);
+  }
+
   // Get number of running agents per typ from server backend
   get_running_agents(inType:string = 'test') {
     console.log('service.get_running_agents(): ' + inType);
@@ -61,16 +66,27 @@ export class ConfigService implements OnInit{
     })
   }
 
+
+
   // terminate agents per typ
   terminate_agents(inType:string = 'test'): void {
-    console.log('terminate_agents:' + inType);
+    console.log('service.terminate_agents():' + inType);
     this.http.get(this.ROOT_URL + '/terminate_agents/' + inType).subscribe((data: any) => {
       console.log(data);
     });
   }
+
+  // terminate agents per typ
+  terminate_agent(inKey:string = 'test') {
+    console.log('service.terminate_agent():' + inKey);
+    return this.http.get(this.ROOT_URL + '/terminate_agent/' + inKey);
+  }
+
+
+
   // start agents per typ
   start_agents(inType:string = 'test'): void {
-    console.log('start_agents:' + inType);
+    console.log('service.start_agents():' + inType);
     this.http.get(this.ROOT_URL + '/start_agents/' + inType).subscribe((data: any) => {
       console.log(data);
     });
