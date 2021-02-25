@@ -17,6 +17,8 @@ install python modules: `pip3 install -r requirements.txt`
 
 **Hardware**
 
+available IP-Range: 149.201.88.70 - 149.201.88.85
+
 | Physisch | DB Server | Simu-1 | Simu-2 |
 | -- | -- | -- | -- |
 | IPMI IP | 149.201.196.111 | 149.201.196.112 | 149.201.196.113 |
