@@ -2,7 +2,7 @@
 |   Info: Grid-Komponente
 |   Typ: TS Logic & HTML Code
 |   Inhalt: Bindet das Grid per iframe ein
-|   TODO: Umsetzung in Angular, statt Backend aufzurufen?
+|   TODO: Umsetzung in Angular, statt fertigen Plot nur über iframe einbinden?
 */
 import { Component, OnInit } from '@angular/core';
 

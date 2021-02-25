@@ -1,3 +1,9 @@
+/* app-routing.module.ts
+|   Info: Angular Routing Module
+|   Typ: TS Logic
+|   Inhalt: Festlegung der Routes (welcher Anhang zu welcher Component weiterleiten soll)
+*/
+
 import {RouterModule, Routes} from "@angular/router";
 import {NgModule} from "@angular/core";
 import {GridComponent} from "./grid/grid.component";

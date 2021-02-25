@@ -1,3 +1,9 @@
+/* app.module.ts
+|   Info: Angular Module
+|   Typ: TS Logic
+|   Inhalt: Imports und Definition/Rollen aller Components
+*/
+
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';

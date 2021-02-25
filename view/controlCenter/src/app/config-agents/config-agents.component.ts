@@ -1,3 +1,10 @@
+/* config-agents.component.ts
+|   Info: Config-Agents Komponente (Config Komponente untergeordnet)
+|   Typ: TS Logic
+|   Inhalt: Konfiguration der Agenten (Server IP, Bereich) je nach Agent Typ.
+|   Funktionen: Agenten Config ändern, alle Agenten starten/stoppen, Agenten Info aktualisieren
+*/
+
 import {Component, Input, OnInit} from '@angular/core';
 import {ConfigService} from "../config.service";
 
@@ -33,12 +40,13 @@ export class ConfigAgentsComponent implements OnInit {
     this.get_running_agents();
   }
 
-  // update internal config map
+  // update internal config map after input box changed
   update_config(key: string, value: string): void {
     this.config.set(key, value);
     console.log(this.config);
   }
 
+  // Config-Elemente und deren Inhalt vom abrufen
   get_config(){
     this.service.get_config(this.type)
       // clone the data object, using its known Config shape

@@ -6,7 +6,6 @@
 / Singleton: modifications apply to all instances
 */
 
-
 import {EventEmitter, Injectable, Input, OnInit, Output} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 
@@ -66,8 +65,6 @@ export class ConfigService implements OnInit{
     })
   }
 
-
-
   // terminate agents per typ
   terminate_agents(inType:string = 'test'): void {
     console.log('service.terminate_agents():' + inType);
@@ -81,8 +78,6 @@ export class ConfigService implements OnInit{
     console.log('service.terminate_agent():' + inKey);
     return this.http.get(this.ROOT_URL + '/terminate_agent/' + inKey);
   }
-
-
 
   // start agents per typ
   start_agents(inType:string = 'test'): void {

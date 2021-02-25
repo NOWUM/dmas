@@ -1,5 +1,5 @@
 /* app.component.ts
-|   Info: Hauptkomponente
+|   Info: Haupt-Komponente
 |   Typ: TS Logic
 |   Inhalt: s. HTML Code
 */

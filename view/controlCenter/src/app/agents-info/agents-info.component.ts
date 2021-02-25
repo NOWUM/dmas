@@ -1,5 +1,13 @@
+/* agents-info.component.ts
+|   Info: Übersicht und Verwaltung aller laufenden Agenten
+|   Typ: TS Logic
+|   Inhalt: Alle Ageneten sortiert nach Typ auf einer Seite anzeigen mit der Option, diese einzeln stoppen zu können
+|   Funktionen: Service Config anzeigen, konfigurieren und updaten
+|   TODO: Filterlogik implementieren (angezeigte Agenten nach Typ filtern)
+*/
+
 import { Component, OnInit } from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import {ConfigService} from "../config.service";
 
 @Component({
   selector: 'app-agents-info',
@@ -7,7 +15,6 @@ import {HttpClient} from "@angular/common/http";
   styleUrls: ['./agents-info.component.css']
 })
 export class AgentsInfoComponent implements OnInit {
-  readonly ROOT_URL = 'http://149.201.88.75:5010';
   agentTypes: string[] = ['PWP', 'RES', 'DEM', 'STR', 'MRK', 'NET'];
   agents: Map<string, string>;
 
@@ -18,14 +25,14 @@ export class AgentsInfoComponent implements OnInit {
   showMrk = true;
   showNet = true;
 
-  constructor(private http: HttpClient) {
+  constructor(public service: ConfigService) {
     this.agents = new Map<string, string>();
   }
 
   ngOnInit(): void {
-
   }
 
+  // An-/Ausschaltlogik der Checkboxes für jeden Agent Typ
   togglePwp() { this.showPwp = !this.showPwp; }
   toggleRes() { this.showRes = !this.showRes; }
   toggleDem() { this.DEM = !this.DEM; }
@@ -33,14 +40,10 @@ export class AgentsInfoComponent implements OnInit {
   toggleMrk() { this.showMrk = !this.showMrk; }
   toggleNet() { this.showNet = !this.showNet; }
 
-  get_agents_test(inType:string = 'NET'){
-    let test = 0;
-    return test;
-  }
-
+  // Laufende Agenten abrufen
   get_agents(inType:string = 'NET'){
     let test = 0;
-    this.http.get(this.ROOT_URL + '/get_info/' + inType).subscribe((data: any) => {
+    this.service.get_info(inType).subscribe((data: any) => {
       console.log(data);
       for (var value in data) {
         this.agents.set(value, data[value]);

@@ -1,3 +1,10 @@
+/* config.component.ts
+|   Info: Config Komponente für Services und Agenten
+|   Typ: TS Logic
+|   Inhalt: Konfiguration des Services (database, exchange, IPs der influx mongo und rabbit, Suffix)
+|   Funktionen: Service Config anzeigen, konfigurieren und updaten
+*/
+
 import {Component, OnInit, EventEmitter, Input, Output} from '@angular/core';
 import {ConfigService} from "../config.service";
 
@@ -40,6 +47,7 @@ export class ConfigComponent implements OnInit {
     console.log(this.config);
   }
 
+  //get current config
   get_config(){
     this.service.get_config(this.type)
       // // clone the data object, using its known Config shape
