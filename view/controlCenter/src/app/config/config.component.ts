@@ -1,5 +1,4 @@
 import {Component, OnInit, EventEmitter, Input, Output} from '@angular/core';
-//import {HttpClient} from '@angular/common/http';
 import {ConfigService} from "../config.service";
 
 @Component({
@@ -8,14 +7,11 @@ import {ConfigService} from "../config.service";
   styleUrls: ['./config.component.css']
 })
 export class ConfigComponent implements OnInit {
-  //@Input() type: string;
 
   title = 'controlCenter';
   serviceTypes: string[] = ['Control Service'];
   agentTypes: string[] = ['PWP', 'RES', 'DEM', 'STR', 'MRK', 'NET'];
-  //view: string = 'config';
 
-  // test: string = 'test';
   // @Input() type: string;
   // @Output() info: EventEmitter<string>;
   config: Map<string, string>;
@@ -25,46 +21,21 @@ export class ConfigComponent implements OnInit {
   type: string;
 
   constructor(public service: ConfigService) {
-    //TODO: seperate Component for Services similar to ConfigAgentsComponent?
+    //TODO: seperate Component for Services similar to ConfigAgentsComponent? e.g. ConfigServicesComponent
     this.type = 'services';
     this.config = new Map<string, string>();
     this.number = 0;
-
-    // service.type = 'services';
-    // service.config = new Map<string, string>();
-    // //this.info = new EventEmitter<string>();
-    // service.number = 0
-
-
-    //this.service.get_config();
-
-    // //Orig
-    // this.service.ngOnInit();
-    // this.config = service.config;
-
-    //service.get_info()
   }
 
   ngOnInit(): void {
     console.log('OnInit: ' + this.type);
-    // this.type = 'services';
     this.config = new Map<string, string>();
-
-    // this.service.get_config('services');
-    // this.config = this.service.config;
-
-    //this.config = this.service.get_config(this.config,'services');//klappte
     this.get_config();
   }
 
-  //this.service.get_info();
-
-  // change_view(type: string): void {
-  //   this.view = type;
-  // }
-
   // update internal config map
   update_config(key: string, value: string): void {
+    console.log("update_config():");
     this.config.set(key, value);
     console.log(this.config);
   }
@@ -84,12 +55,7 @@ export class ConfigComponent implements OnInit {
           this.config.set(value, data[value]);
         }
       });
-  }
 
-  // get_config(){
-  // this.service.get_config(this.type)
-  //   // clone the data object, using its known Config shape
-  //   .subscribe((data:Map<string, string>) => this.config = { ...data });
-  // }
+  }
 
 }

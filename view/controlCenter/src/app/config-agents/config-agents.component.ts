@@ -11,49 +11,26 @@ export class ConfigAgentsComponent implements OnInit {
   @Input() type: string;
   agentTypes: string[] = ['PWP', 'RES', 'DEM', 'STR', 'MRK', 'NET'];
   config: Map<string, string>;
-  //number: Promise<number>;
   number: number;
 
   constructor(public service: ConfigService) {
-    //Wird nur einmal aufgerufen?
+    // Wird einmalig beim Erstellen eines Agents aufgerufen - immer gleich
     this.type = "agentX";
-    //this.type = 'services';
     this.config = new Map<string, string>();
     this.number = 0;
-    //this.info = new EventEmitter<string>();
-    // service.type = 'services';
-    // service.number = 0;
-    //console.log(this.type);//gibt an dieser stelle 6x agentX aus
   }
 
+  // Hier werden Agenten-spezifische Befehle einmalig aufrufen
   ngOnInit(): void {
+    // Gibt den Typ des erstellten Agenten in der Console aus
     console.log('OnInit: ' + this.type);
-    // hier agent spezifische befehele aufrufen
-    // this.service.type = this.type;
-    // this.service.config = new Map<string, string>();
-    // this.service.type = this.type;
-    // this.service.ngOnInit();
-    //this.number = 11;
+
+    // Get agent specific config
     this.config = new Map<string, string>();
-
-    //console.log('OnInit: ' + this.type);
-    //this.service.type = this.type;
-    //this.service.ngOnInit();
-
-    // this.service.get_config(this.type);
-    // this.config = this.service.config; //config enhält auch noch Werte von services (database etc.) WARUM??? wahrscheinlich weil Singelton -> gelöst mit neuer get_config()
-
-    //this.config = this.service.get_config(this.config, this.type);//klappt
-    //let testConfig = new Map<string, string>();
-    //this.config = this.service.get_config(testConfig, this.type);//klappte
-
-    //this.config = this.service.get_config(this.type);//klappte
     this.get_config();
 
-    //this.service.get_running_agents(this.type).subscribe((data:number) => this.number = data); //https://angular.io/guide/http
+    // Get number of running agents per typ
     this.get_running_agents();
-
-
   }
 
   // update internal config map
@@ -79,12 +56,9 @@ export class ConfigAgentsComponent implements OnInit {
       });
   }
 
-  // get number of running agents per typ
+  // Get number of running agents per typ
   get_running_agents(){
     console.log('get_running_agents(): subscribing for ' + this.type);
-    // //this.number = this.service.get_running_agents(this.type);
-    // this.service.get_running_agents(this.type);
-    // console.log('get_running_agents:' + this.number);
     this.service.get_running_agents(this.type).subscribe((data:number) => {
       this.number = data;
       console.log('get_running_agents(): Subscription received for ' + this.type + ': ' + this.number);

@@ -64,52 +64,6 @@
 <!--      <app-info [type]="view" (home)="change_view($event)"> </app-info>-->
 <!--    </div>-->
 <!--  </div>-->
-
-<!--</div>-->
-
-
-<!--//#alte config component-->
-<!--//input boxen-->
-<!--<div class="row">-->
-<!--  <div *ngFor="let item of service.config | keyvalue">-->
-<!--    <div class="col-2">-->
-<!--      {{ item.key }}:-->
-<!--    </div>-->
-<!--    <div class="col">-->
-<!--      <input type="text" [(ngModel)]="item.value" (blur)="service.update_config(item.key, item.value)">-->
-<!--    </div>-->
-<!--  </div>-->
-<!--</div>-->
-
-<!--<div class="row" style="padding-bottom: 10px">-->
-<!--  <div class="col">-->
-<!--    <br>-->
-<!--    &lt;!&ndash; +++++ For Services +++++ &ndash;&gt;-->
-<!--    <div *ngIf="this.type == 'services'">-->
-<!--      <div class="btn-group" *ngIf="this.type == 'services'">-->
-<!--        <button (click)="service.set_config()" class="btn btn-dark btn-sm"> Submit</button>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    &lt;!&ndash; ++++++++++ &ndash;&gt;-->
-
-<!--&lt;!&ndash;    &lt;!&ndash; +++++ For Agents +++++ &ndash;&gt;&ndash;&gt;-->
-<!--&lt;!&ndash;    <div *ngIf="this.type != 'services'">&ndash;&gt;-->
-<!--&lt;!&ndash;      &lt;!&ndash; +++++ buttons left hand side +++++ &ndash;&gt;&ndash;&gt;-->
-<!--&lt;!&ndash;      <div class="btn-group" *ngIf="this.type != 'services'">&ndash;&gt;-->
-<!--&lt;!&ndash;        <button (click)="service.set_config()" class="btn btn-dark btn-sm"> Submit</button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button (click)="service.start_agents()" class="btn btn-dark btn-sm"> Start</button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button (click)="service.terminate_agents()" class="btn btn-dark btn-sm"> Stop</button>&ndash;&gt;-->
-<!--&lt;!&ndash;      </div>&ndash;&gt;-->
-<!--&lt;!&ndash;      &lt;!&ndash; +++++ buttons right hand side +++++ &ndash;&gt;&ndash;&gt;-->
-<!--&lt;!&ndash;      <b style="padding-left: 10%; padding-right: 2%"> total running: {{ service.number }} </b>&ndash;&gt;-->
-<!--&lt;!&ndash;      <div class="btn-group" *ngIf="service.type != 'services'">&ndash;&gt;-->
-<!--&lt;!&ndash;        <button (click)="service.get_running_agents()" class="btn btn-dark btn-sm"> Refresh</button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button (click)="service.get_info()" *ngIf="service.type != 'services'" class="btn btn-dark btn-sm"> Info</button>&ndash;&gt;-->
-<!--&lt;!&ndash;      </div>&ndash;&gt;-->
-<!--&lt;!&ndash;    </div>&ndash;&gt;-->
-<!--&lt;!&ndash;    &lt;!&ndash; ++++++++++ &ndash;&gt;&ndash;&gt;-->
-
-<!--  </div>-->
 <!--</div>-->
 
 <p>config works!</p>
