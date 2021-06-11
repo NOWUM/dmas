@@ -1,110 +1,182 @@
-from apps.market import dayAhead_clearing
+# third pary modules
 import configparser
 import pandas as pd
-import time as tm
+import numpy as np
+import time as tme
 import random
-from interfaces.interface_mongo import mongoInterface
 import multiprocessing
 from joblib import Parallel, delayed
 
+# model modules
+from apps.market import market
+from interfaces.interface_mongo import mongoInterface
+from interfaces.interface_Influx import InfluxInterface
 
-def getOrders(id, date, database='MAS_2020', host='149.201.88.150'):
-    wait = True                     # Warte solange bis Gebot vorliegt
-    start = tm.time()               # Startzeitpunkt
-    orders = {}
-    i = 0
 
+def get_orders(name, date):
+
+    # initialize connection to mongodb to get the orders
     config = configparser.ConfigParser()
-    config.read('app.cfg')
+    config.read('control_service.cfg')
     database = config['Results']['Database']
-    mongoCon = mongoInterface(host=config['MongoDB']['Host'], database=database)
-
+    mon_db = mongoInterface(host=config['MongoDB']['Host'], database=database)
+    ask_orders = {}                     # all orders from agent
+    bid_orders = {}
+    typ = 'error'
+    wait = True                     # check if orders from agent are delivered
+    start = tme.time()              # start waiting
+    # start collecting orders
     while wait:
-        x = mongoCon.orderDB[date].find_one({"_id": id})  # Abfrage der Gebote
-        # Wenn das Gebot vorliegt, füge es hinzu
+        x = mon_db.orderDB[date].find_one({"_id": name})
         if x is not None:
             if 'DayAhead' in x.keys():
-               for hour in range(24):
-                    dict_ = x['DayAhead']['h_%s' % hour]
-                    num_ = len(dict_['price'])
-                    for k in range(num_):
-                        orders[i] = {'price': dict_['price'][k], 'quantity': dict_['quantity'][k],
-                                         'name': id, 'hour': hour}
-                        i += 1
-                    wait = False  # Warten beenden
-                    continue
+                for key, value in x['DayAhead'].items():
+                    key = eval(key)
+                    if 'dem' in key[0]:
+                        key = (int(key[0].replace('dem', '')), key[1], key[2], key[3])
+                        bid_orders.update({key: (value[0], np.abs(value[1]), value[2])})
+                    elif 'gen' in key[0]:
+                        key = (int(key[0].replace('gen', '')), key[1], key[2], key[3])
+                        ask_orders.update({key: (value[0], np.abs(value[1]), value[2])})
+
+                wait = False
             else:
                 pass
         else:
-            tm.sleep(0.05)
-        end = tm.time()  # aktueller Zeitstempel
-        if end - start >= 120:  # Warte maximal 120 Sekunden
-            print('get no orders of Agent %s' % id)
+            tme.sleep(1)            # wait a second and ask mongodb again
+        end = tme.time()            # aktueller Zeitstempel
+        if end - start >= 120:      # wait maximal 120 seconds
+            print('get no orders of Agent %s' % name)
             wait = False
+
+    mon_db.mongo.close()            # close connection to mongodb
+    orders = (ask_orders, bid_orders)
     return orders
 
-def dayAheadClearing(connectionMongo, influx, date):
 
-    num_cores = min(multiprocessing.cpu_count(), 24)
-    # Abfrage der anmeldeten Agenten
-    agent_ids = connectionMongo.status.find().distinct('_id')
-    random.shuffle(agent_ids)
+def da_clearing(mongo_con, influx_con, date):
 
-    totalOrders = Parallel(n_jobs=num_cores)(delayed(getOrders)(i, str(date.date())) for i in agent_ids)
+    num_cores = min(multiprocessing.cpu_count(), 6)
+    agent_ids = mongo_con.status.find().distinct('_id')               # all logged in Agents
+    random.shuffle(agent_ids)                                         # shuffle ids to prevent long wait
+    # get orders for each agent
+    total_orders = Parallel(n_jobs=num_cores)(delayed(get_orders)(i, str(date.date())) for i in agent_ids)
 
-    totalDict = {}
-    index = 0
-    for element in totalOrders:
-        for key, value in element.items():
-            totalDict[index] = value
-            index += 1
+    da_market = market()
 
-    totalOrders = pd.DataFrame.from_dict(totalDict, "index")
-    totalOrders = totalOrders.set_index('hour', drop=True)
+    for order in total_orders:
+        da_market.set_parameter(ask=order[0], bid=order[1])
 
-    hourlyOrders = []
-    for i in range(24):
-        hourlyOrder = totalOrders[totalOrders.index == i]
-        hourlyOrder.index = [k for k in range(len(hourlyOrder))]
-        hourlyOrders.append(hourlyOrder.to_dict())
+    result = da_market.optimize()
 
-    processed_list = Parallel(n_jobs=num_cores)(delayed(dayAhead_clearing)(hourlyOrder) for hourlyOrder in hourlyOrders)
-
+    # save result in influxdb
     time = date
-    json_body = []
-
-    for element in processed_list:
-
+    for element in result:
+        # save all asks
         ask = pd.DataFrame.from_dict(element[0])
+        ask.columns = ['power']
+        ask['names'] = [name.split('-')[0] for name in ask.index]
+        ask = ask.groupby('names').sum()
+        ask['order'] = ['ask' for _ in range(len(ask))]
+        ask['typ'] = [name.split('_')[0] for name in ask.index]
+        ask['names'] = [name for name in ask.index]
+        ask['area'] = [name.split('_')[1] for name in ask.index]
+        ask.index = [time for _ in range(len(ask))]
+        influx_con.influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
+        # save all bids
         bid = pd.DataFrame.from_dict(element[1])
-        mcp = element[2]
+        bid.columns = ['power']
+        bid['names'] = [name for name in bid.index]
+        bid['order'] = ['bid' for _ in range(len(bid))]
+        bid['typ'] = [name.split('_')[0] for name in bid['names'].to_numpy()]
+        bid['area'] = [name.split('_')[1] for name in bid.index]
+        bid.index = [time for _ in range(len(bid))]
+        influx_con.influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
 
-        for r in ask.index:
-            json_body.append(
-                {
-                    "measurement": 'DayAhead',
-                    "tags": dict(agent=r, order='ask', area=r.split('_')[-1], typ=r.split('_')[0]),
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(power=float(ask.loc[r, 'volume']))
-                }
-            )
-        for r in bid.index:
-            json_body.append(
-                {
-                    "measurement": 'DayAhead',
-                    "tags": dict(agent=r, order='bid', area=r.split('_')[-1], typ=r.split('_')[0]),
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(power=float(bid.loc[r, 'volume']))
-                }
-            )
-
-        json_body.append(
-            {
-                "measurement": 'DayAhead',
-                "time": time.isoformat() + 'Z',
-                "fields": dict(price=mcp)
-            }
-        )
+        # save mcp
+        mcp = pd.DataFrame(data=[np.asarray(element[2], dtype=float)], index=[time], columns=['price'])
+        influx_con.influx.write_points(dataframe=mcp, measurement='DayAhead')
+        # next hour
         time += pd.DateOffset(hours=1)
 
-    influx.saveData(json_body)
+
+if __name__ == "__main__":
+    pass
+
+    from gurobipy import *
+
+    date = pd.to_datetime('2018-01-04')
+    config = configparser.ConfigParser()  # read config file
+    config.read('control_service.cfg')
+
+    database = config['Results']['Database']                                        # name of influxdatabase to store the results
+    mongo_con = mongoInterface(host=config['MongoDB']['Host'], database=database)   # connection and interface to MongoDB
+    influx_con = InfluxInterface(host=config['InfluxDB']['Host'], database=database) # connection and interface to InfluxDB
+
+    # da_clearing(mongo_con, influxCon, date)
+
+    #
+    #num_cores = min(multiprocessing.cpu_count(), 6)
+    agent_ids = mongo_con.status.find().distinct('_id')               # all logged in Agents
+    # #random.shuffle(agent_ids)                                      # shuffle ids to prevent long wait
+    # # get orders for each agent
+    #total_orders = Parallel(n_jobs=num_cores)(delayed(get_orders)(i, str(date.date())) for i in agent_ids)
+    #
+    total_orders = [get_orders(i, str(date.date())) for i in agent_ids]
+    da_market = market()
+    for order in total_orders:
+        da_market.set_parameter(ask=order[0], bid=order[1])
+
+    result = da_market.optimize()
+    element = result[14]
+    ask = pd.DataFrame.from_dict(element[0])
+    bid = pd.DataFrame.from_dict(element[1])
+
+    print(ask['volume'].sum())
+    print(bid['volume'].sum())
+
+    for i in range(24):
+        print('hour %s magic source %s ' %(i, result[i][-1]))
+
+    time = date
+    for element in result:
+        # save all asks
+        ask = pd.DataFrame.from_dict(element[0])
+        ask.columns = ['power']
+        ask['names'] = [name.split('-')[0] for name in ask.index]
+        ask = ask.groupby('names').sum()
+        ask['order'] = ['ask' for _ in range(len(ask))]
+        ask['typ'] = [name.split('_')[0] for name in ask.index]
+        ask['names'] = [name for name in ask.index]
+        ask['area'] = [name.split('_')[1] for name in ask.index]
+        ask.index = [time for _ in range(len(ask))]
+        influx_con.influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
+        # save all bids
+        bid = pd.DataFrame.from_dict(element[1])
+        bid.columns = ['power']
+        bid['names'] = [name for name in bid.index]
+        bid['order'] = ['bid' for _ in range(len(bid))]
+        bid['typ'] = [name.split('_')[0] for name in bid['names'].to_numpy()]
+        bid['area'] = [name.split('_')[1] for name in bid.index]
+        bid.index = [time for _ in range(len(bid))]
+        influx_con.influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order',
+                                                                                           'typ', 'area'])
+        # save mcp
+        mcp = pd.DataFrame(data=[np.asarray(element[2], dtype=float)], index=[time], columns=['price'])
+        influx_con.influx.write_points(dataframe=mcp, measurement='DayAhead')
+        # next hour
+        time += pd.DateOffset(hours=1)
+
+    # ask_id, ask_prc, ask_vol, ask_block = multidict(da_market.ask_orders)
+    # # get all ask agents
+    # ask_agents = np.unique([a[-1] for a in ask_id])
+    # ask_blocks = tuplelist([(i, agent, ask_block.select(i, '*', '*', str(agent))[0]) for agent in ask_agents
+    #                         for i in range(ask_id.select('*', '*', '*', str(agent))[-1][0] + 1) if ask_block.select(i, '*', '*', str(agent))[0] != 'x'])
+    #
+    # for agent in ask_agents:
+    #     num = ask_id.select('*', '*', '*', str(agent))[-1][0] + 1
+    #     for i in range(ask_id.select('*', '*', '*', str(agent))[-1][0] + 1):
+    #         x = (i, agent, ask_block.select(i, '*', '*', str(agent))[0])

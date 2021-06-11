@@ -1,7 +1,7 @@
+# third party modules
 import pymongo
-import json
-import pandas as pd
-import numpy as np
+import socket
+
 
 class mongoInterface:
 
@@ -14,27 +14,26 @@ class mongoInterface:
         self.orderDB = self.mongo[database]
         self.status = self.orderDB['status']
 
-
-    def getPosition(self):
+    def get_position(self):
         try:
             position = self.tableStructur.find_one({'_id': 'Position'})
             return position
         except:
             return {}
-
-
-    def getPowerPlants(self):
+    # todo change if availability is implemented
+    def get_power_plants(self):
         try:
-            powerplants = self.tableStructur.find_one({"_id": 'PowerPlantSystems'})
+            power_plants = self.tableStructur.find_one({"_id": 'PowerPlantSystems'})
             systems = {}
-            for key, value in powerplants.items():
+            for key, value in power_plants.items():
                 if key != '_id':
+                    value.update({'maxPower': 0.93 * value['maxPower']})
                     systems.update({key:value})
             return systems
         except:
             return {}
 
-    def getStorages(self):
+    def get_storages(self):
         try:
             storages = self.tableStructur.find_one({"_id": 'StorageSystems'})
             systems = {}
@@ -45,11 +44,7 @@ class mongoInterface:
         except:
             return {}
 
-    """
-                    Nachfrage und Prosumer
-    """
-
-    def getPVBatteries(self):
+    def get_pv_batteries(self):
         try:
             pvbat = self.tableStructur.find_one({'_id': 'PVBatSystems'})
             position = self.tableStructur.find_one({'_id': 'Position'})
@@ -62,13 +57,7 @@ class mongoInterface:
         except:
             return {}
 
-    def getHeatPumps(self, area):
-        try:
-            return {}
-        except:
-            return {}
-
-    def getPVs(self):
+    def get_pvs(self):
         try:
             pv = self.tableStructur.find_one({'_id': 'PVSystems'})
             position = self.tableStructur.find_one({'_id': 'Position'})
@@ -81,7 +70,7 @@ class mongoInterface:
         except:
             return {}
 
-    def getDemand(self):
+    def get_demand(self):
         try:
             consumer = self.tableStructur.find_one({'_id': 'ConsumerSystems'})
             systems = {}
@@ -92,12 +81,7 @@ class mongoInterface:
         except:
             return {}
 
-    """
-                    Erneuerbare Energien
-    """
-
-    # Wind  Anlagen im entsprechenden PLZ-Gebiet
-    def getWind(self):
+    def get_wind_turbines(self):
         try:
             wind = self.tableStructur.find_one({'_id': 'WindSystems'})
             systems = {}
@@ -109,8 +93,7 @@ class mongoInterface:
         except:
             return {}
 
-    # Freiflächen Photovoltaik im entsprechenden PLZ-Gebiet
-    def getPvParks(self):
+    def get_pv_parks(self):
         try:
             pv = self.tableStructur.find_one({'_id': 'PVParkSystems'})
             position = self.tableStructur.find_one({'_id': 'Position'})
@@ -123,9 +106,7 @@ class mongoInterface:
         except:
             return {}
 
-
-    # Laufwasserkraftwerke im entsprechenden PLZ-Gebiet
-    def getRunRiver(self):
+    def get_runriver_systems(self):
         try:
             water = self.tableStructur.find_one({'_id': 'RunRiverSystems'})
             systems = {}
@@ -137,8 +118,7 @@ class mongoInterface:
         except:
             return {}
 
-    # Biomassekraftwerke im entsprechenden PLZ-Gebiet
-    def getBioMass(self):
+    def get_biomass_systems(self):
         try:
             water = self.tableStructur.find_one({'_id': 'BiomassSystems'})
             systems = {}
@@ -150,40 +130,70 @@ class mongoInterface:
         except:
             return {}
 
-    """
-                    Simulations- und Marktnachrichten
-    """
+    def get_market_status(self, date):
+        try:
+            clearing = self.orderDB[str(date.date())].find_one({'_id': 'market'})
+            return clearing['DayAhead']
+        except:
+            return False
 
+    def set_market_status(self, name, date):
+        query = {"_id": name}
+        clearing = {"$set": {"_id": name, "DayAhead": True}}
+        self.orderDB[str(date.date())].update_one(filter=query, update=clearing, upsert=True)
 
-    def login(self, name, reserve=False):
+    def login(self, name):
+        hostname = socket.gethostname()  # get computer name
+        ip_address = socket.gethostbyname(hostname)
         status = {
                     "_id": name,
                     "connected": True,
-                    "reserve": reserve
+                    "ip": ip_address
                   }
         if self.status.find_one({"_id": name}) is None:
             self.status.insert_one(status)
         else:
             query = {"_id": name}
-            status = {"$set": {"connected": True, "reserve": reserve}}
+            status = {"$set": {"connected": True, "ip": ip_address}}
             self.status.update_one(query, status)
 
     def logout(self, name):
         query = {"_id": name}
-        status = {"$set": {"connected": False, "reserve": False}}
+        status = {"$set": {"connected": False, "ip": ""}}
         self.status.update_one(query, status)
 
-    def setBalancing(self, name, date, orders):
-        query = {"_id": name}
-        orders = {"$set": {"_id": name, "Balancing": orders}}
-        self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)
-
-    def setDayAhead(self, name, date, orders):
+    def set_dayAhead_orders(self, name, date, orders):
         query = {"_id": name}
         orders = {"$set": {"_id": name, "DayAhead": orders}}
         self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)
 
-    def setActuals(self, name, date, orders):
-        query = {"_id": name}
-        orders = {"$set": {"_id": name, "Actual": orders}}
-        self.orderDB[str(date.date())].update_one(filter=query, update=orders, upsert=True)
+    def get_agents(self, sorted=True):
+        if not sorted:
+            agents = []
+            for id_ in self.status.find().distinct('_id'):
+                dict_ = self.status.find_one({"_id": id_})
+                if dict_['connected'] == True:
+                    agents.append(id_)
+        else:
+            agents = {typ: 0 for typ in ['PWP', 'RES', 'DEM', 'STR', 'NET', 'MRK']}
+            for id_ in self.status.find().distinct('_id'):
+                dict_ = self.status.find_one({"_id": id_})
+                typ = id_.split('_')[0]
+                try:
+                    if dict_['connected'] == True:
+                        agents[typ] += 1
+                except Exception as e:
+                    print(e)
+
+        return agents
+
+    def get_agents_ip(self, in_typ):
+
+        agents = {}
+        for id_ in self.status.find().distinct('_id'):
+            dict_ = self.status.find_one({"_id": id_})
+            typ = id_.split('_')[0]
+            if typ == in_typ and dict_['connected']:
+                agents.update({id_: dict_['ip']})
+
+        return agents

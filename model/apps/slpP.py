@@ -34,8 +34,8 @@ class slpGen:
     def get_profile(self, doy=200, dow=5, demand=1000):
 
         if self.typ == 0:
-            f = 1
-            #f = self.x_4 * doy ** 4 + self.x_3 * doy ** 3 + self.x_2 * doy ** 2 + self.x_1 * doy + self.x_0
+            #f = 1
+            f = self.x_4 * doy ** 4 + self.x_3 * doy ** 3 + self.x_2 * doy ** 2 + self.x_1 * doy + self.x_0
         else:
             f = 1
         f *= demand/10**6
@@ -87,8 +87,15 @@ if __name__ == '__main__':
 
     num = 2019
     year = pd.date_range(start='01.01.' + str(num), end='31.12.' + str(num), freq='d')
-    h0Gen = slpGen(typ=0)
+    h0Gen = slpGen(typ=1)
     profile = []
 
     for day in year:
-        profile.append(h0Gen.get_profile(day.dayofyear, day.dayofweek, 12000))
+        profile.append(h0Gen.get_profile(day.dayofyear, day.dayofweek, 3500))
+
+    profile = np.asarray(profile).reshape((-1,))
+    df = pd.DataFrame(data={'Power [kWh]': profile},
+                      index=pd.date_range(start='2019-01-01', freq='15min', periods=len(profile)))
+
+    df.to_csv('SLP_G0.csv')
+    df.plot()

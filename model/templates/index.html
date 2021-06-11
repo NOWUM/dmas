@@ -40,53 +40,96 @@
     <!--Script Elements-->
     <script>
         $(document).ready(function(){
-           $("#run").click(function(){$.post("run",{start: $("#start").val(),end: $("#end").val()},function(data){});});
-                var dem = false
-                var pwp = false
-                var res = false
-                var grd = false
-                var brd = false
+            $("#run").click(function(){$.post("run",{start: $("#start").val(),end: $("#end").val()},function(data){});});
 
+            var net = true
+            var mrk = true
 
-                $(function(){
-                    $("#slider-range").slider({
-                        range: true,
-                        min: 0,
-                        max: 99,
-                        values: [ 40, 45 ],
-                        slide: function(event, ui){$( "#amount" ).val(ui.values[ 0 ] + " - " + ui.values[ 1 ]);}
-                });
-            $("#amount").val($("#slider-range").slider("values", 0) +" - " + $("#slider-range").slider("values", 1));});
-
-            $("#start_area").click(function(){
-                if($("#dem").prop("checked")==true){
-                    dem = true
+            $("#build").click(function(){
+                if(Number($("#NET_start").val()) == 0){
+                    net = false
                 }
-                 if($("#pwp").prop("checked")==true){
-                    pwp = true
-                }
-                 if($("#res").prop("checked")==true){
-                    res = true
-                }
-                if($("#grd").prop("checked")==true){
-                    grd = true
-                }
-                if($("#brd").prop("checked")==true){
-                    brd = true
+                if(Number($("#MRK_start").val()) == 0){
+                    mrk = false
                 }
             });
 
-            $("#start_area").click(function(){$.post("build/start",
-                {start: $("#slider-range").slider("values", 0),
-                 end:   $("#slider-range").slider("values", 1),
-                 dem:   dem,
-                 pwp:   pwp,
-                 res:   res,
-                 grd:   grd,
-                 brd:   brd},
+            $("#build").click(function(){$.post("build",
+                {pwp_ip:        $("#PWP_host").val(),
+                 pwp_start:     $("#PWP_start").val(),
+                 pwp_end:       $("#PWP_end").val(),
+                 res_ip:        $("#RES_host").val(),
+                 res_start:     $("#RES_start").val(),
+                 res_end:       $("#RES_end").val(),
+                 dem_ip:        $("#DEM_host").val(),
+                 dem_start:     $("#DEM_start").val(),
+                 dem_end:       $("#DEM_end").val(),
+                 str_ip:        $("#STR_host").val(),
+                 str_start:     $("#STR_start").val(),
+                 str_end:       $("#STR_end").val(),
+                 net_ip:        $("#NET_host").val(),
+                 mrk_ip:        $("#MRK_host").val(),
+                 mrk_end:       mrk,
+                 net_end:       net},
                  function(data){});});
 
+            $("#conf").click(function(){$.post("change_config",
+                {database:       $("#database").val(),
+                 mongodb:       $("#mongodb").val(),
+                 influxdb:      $("#influxdb").val(),
+                 rabbitmq:      $("#rabbitmq").val(),
+                 exchange:      $("#exchange").val(),
+                 suffix:        $("#suffix").val(),
+                 reset:         $("#reset").val()},
+                 function(data){});});
+
+            $("#kill").click(function(){$.post("kill_agents");});
+
+            $("#refreshServer").click(function(){
+                ////TODO: How to use dict from agent_conf.items() in javascript?
+                //var agents_dict = '{{agent_conf.items()}}';
+                //alert(agents_dict); //output: dict_items([(&#39;PWP&#39;, &lt;Section: PWP-Agent&gt;), (&#39;RES&#39;, &lt;Section: RES-Agent&gt;), (&#39;DEM&#39;, &lt;Section: DEM-Agent&gt;), (&#39;STR&#39;, &lt;Section: STR-Agent&gt;), (&#39;NET&#39;, &lt;Section: NET-Agent&gt;), (&#39;MRK&#39;, &lt;Section: MRK-Agent&gt;)])
+                //for (var key in agents_dict) {
+                //    var value = agents_dict[key];
+                 //   //alert(value);
+                //};
+
+                {% for key, value in agent_conf.items() %}
+                    {% for name, attribute in value.items() %}
+                        {% if name == 'host' %}
+                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: grey;"><i class="fas fa-lightbulb"></i></span>'; // reset Icons to grey
+                        host_ip = document.getElementById('{{key}}_{{name}}').value; //Ip aus Textbox lesen
+
+                        fetch("http://"+host_ip+":5000/test")
+                              .then(function (response) {
+                                return response;
+                              })
+                              .then(function (myResponse) {
+                                console.log('{{key}}_{{name}}','{{attribute}}',myResponse.status,myResponse.statusText);
+                                document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: green;"><i class="fas fa-lightbulb"></i></span>'; // Grünes Icon einfügen
+                              })
+                              .catch(function (error) {
+                                console.log("Error: " + error);
+                                document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: red;"><i class="fas fa-lightbulb"></i></span>'; // Rotes Icon einfügen
+                              });
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+                //alert('Refresh complete!!');//TODO: warum wird diese Zeile vor Beendigung der for (Django) loop ausgeführt? Läuft loop asynchron?
+            });
+
         });
+    </script>
+    <script>
+        function serverStatus(){
+
+        };
+
+        function get_agent_info(elem) {
+            $.post("agent_info", //Verbindung zu @app.route('/agent_info')
+                                  {agent:       elem.value}, //Daten, die geschickt werden (hier: Agent, für dem Daten abgerufen werden sollen)
+                                  function(data){$("#middle").html(data);}); //Element mit id "middle" über jQuery html() Method mit data aus GET updaten
+        };
     </script>
 
 </head>
@@ -100,17 +143,19 @@
                     <div class="col"><h3>MAS zur Anlayse des Energieversorgungssystems</h3></div>
                 </div>
                 <div class="row">
-                    <div class="col"> <p>Fachhochschule Aachen</p> </div>
+                    <div class="col">  </div>
                 </div>
                 <div class="row">
-                    <div class="col-3"></div>
+                    <div class="col-3">
+                        <a class="btn btn-primary" href="" role="button">Home</a>
+                    </div>
                     <div class="col">
                         <span style="color: #f8f9fa; "> <label>Start:</label><br></span>
-                        <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" value="2019-01-01">
+                        <input id="start" max="2030-12-31" min="2018-01-01" name="start" type="date" value="2018-01-01">
                     </div>
                     <div class="col">
                         <span style="color: #f8f9fa; "><label>End:</label><br></span>
-                        <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" value="2019-01-10">
+                        <input id="end" max="2030-12-31" min="2018-01-02" name="end" type="date" value="2018-01-10">
                     </div>
                     <div class="col">
                         <span style="color: #f8f9fa; "><label></label><br></span>
@@ -127,87 +172,92 @@
     <div class="container-fluid bg-light text-dark">
         <!-- First Row -->
         <div class="row bg-light" id="content">
-            <div class="col bg-dark" id="left-menu1">
+            <div class="col bg-dark text-light" id="left-menu1">
                 <nav class="navbar-dark">
-                  <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <div id="nav-powerplant" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="pwp" value="" checked>
-                                <label for="pwp" style="float:left;">Konventionelle Kraftwerke</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <center id="nav-solar">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="res" value="" checked>
-                                <label for="res" style="float:left;">Erneuerbare Energien</label><br>
-                            </a>
-                        </center>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-demand" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="dem" value="1" checked>
-                                <label for="dem" style="float:left;">Stromnachfrage</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-grid" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="grd" value="1" checked>
-                                <label for="grd" style="float:left;">Übertragungsnetzbetreiber</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-CrossBorder" style="text-align: center;">
-                            <a class="nav-link">
-                                <input type="checkbox" class="form-check-input" id="brd" value="1" checked>
-                                <label for="brd" style="float:left;">Import & Export</label><br>
-                            </a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <div id="nav-build" style="text-align: center;">
-                            <a class="nav-link">
-                                <input class="btn btn-warning btn-sm" id="start_area" type="submit" value="Start Agents">
-                            </a>
-                        </div>
-                    </li>
-                  </ul>
+                    <ul class="navbar-nav">
+                        {% for key, value in agents.items() %}
+                        <li class="nav-item">
+                            <div style="text-align: left;">
+                                <button type="button" onclick="get_agent_info(this)" id="btn_{{key}}" value="{{key}}"><img class="img-thumbnail" height="50" src="../static/{{key}}.svg" width="50" alt="{{key}}"></button>
+<!--                                <a href="info"><img class="img-thumbnail" height="50" src="../static/{{key}}.svg" width="50"></a>-->
+                                <b> {{key}} connected: {{value}} </b> <br><br>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        <li class="nav-item">
+                            <div id="nav-reload" style="text-align: center;">
+                                <a href=""> <input class="btn btn-danger btn-sm" id="reload" type="submit" value="Reload"></a>
+                                <br><br><input class="btn btn-danger btn-sm" id="kill" type="submit" value="Kill">
+                            </div>
+                        </li>
+                    </ul>
                 </nav>
             </div>
             <div class="col-9" id="middle">
                 <br>
                 <div class="row">
-                    <div class="col-4">
-                        <label for="amount">Start Agents:</label><br><br>
-                        <input id="amount" readonly style="border:0; color:#04B4AE; font-weight:bold;" type="text">
-                        <div id="slider-range"></div>
+                    <div class="col-6">
+                        <h4>Configuration Agents</h4>
+                        <form>
+                            {% for key, value in agent_conf.items() %}
+                            <div class="form-row">
+                                <div class="form-group col-1"><br><img class="img-thumbnail center" height="40" src="../static/{{key}}.svg" width="40"><br></div>
+                                {% for name, attribute in value.items() %}
+                                <div class="form-group {% if name == 'host' %} col-5 {% else %} col-2 {% endif %}">
+                                    <div class="form-row"><label for="{{key}}_{{name}}">{{name}}:</label></div>
+                                    <div class="form-row">
+                                        <div class="col-9"><input type="text" class="form-control form-control-sm" id="{{key}}_{{name}}" value={{attribute}}></div>
+                                        <div class="col-2" id="host_{{key}}_{{name}}" align="center" {% if name == 'host' %} style="margin-left: auto; margin-right: auto;"{% endif %}>
+                                            {% if name == 'host' %}
+                                            <span style="color: grey;"><i class="fas fa-lightbulb"></i></span>
+                                            <script>
+                                                fetch("http://{{attribute}}:5000/test")
+                                                      .then(function (response) {
+                                                        return response;
+                                                      })
+                                                      .then(function (myResponse) {
+                                                        console.log('{{key}}_{{name}}','{{attribute}}',myResponse.status,myResponse.statusText);
+                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<div style="background:green;">'+myResponse.statusText+'</div>'; //kleineres Kästchen in etxtra div
+                                                        //document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'green' ; // Hintergrundfarbe des vorhandenen Div auf grün ändern
+                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = myResponse.statusText; //print response
+                                                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: green;"><i class="fas fa-lightbulb"></i></span>'; // Grünes Icon einfügen
+                                                      })
+                                                      .catch(function (error) {
+                                                        console.log("Error: " + error);
+                                                        //document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<div style="width:100%; background:red;"> </div>';
+                                                        //document.getElementById('host_{{key}}_{{name}}').style.backgroundColor = 'red' ; // Hintergrundfarbe des vorhandenen Div auf rot ändern
+                                                        document.querySelector("#host_{{key}}_{{name}}").innerHTML = '<span style="color: red;"><i class="fas fa-lightbulb"></i></span>'; // Rotes Icon einfügen
+                                                      });
+                                            </script>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                        </form>
+                        <input class="btn btn-dark btn-sm" id="build" type="submit" value="Submit Agent Config">
+                        <input class="btn btn-dark btn-sm" id="refreshServer" type="submit" value="Refresh"><br><br>
+<!--                    <div id="output">Test output box with id="output"</div>-->
                     </div>
-                    <div class="col">
-                        <a href=""> <input class="btn btn-danger btn-sm" id="reload" type="submit" value="Reload"></a>
+                    <div class="col-6">
+                        <h4>Configuration Server & Infrastructure</h4>
+                        <form>
+                            {% for key, value in system_conf.items() %}
+                            <div class="form-group">
+                                <label for={{key}}>{{ key }}:</label>
+                                <input type="text" class="form-control form-control-sm" id="{{key}}" value={{value}}>
+                            </div>
+                            {% endfor %}
+                        </form>
+                        <input class="btn btn-dark btn-sm" id="conf" type="submit" value="Submit Server Config">
                     </div>
                 </div>
                 <br>
-                <div class="row">
-                <div class="col-5">
-                    <img class="img-thumbnail" height="75" src="../static/5.png" width="75"> <b>Power Plants: {{num[0]}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/2.png" width="75"> <b>Renewable Energy: {{num[1]}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/12.png" width="75"> <b>Demand: {{num[2]}}</b> <br><br>
-                </div>
-                <div class="col-5">
-                    <img class="img-thumbnail" height="75" src="../static/11.png" width="75"> <b>Grid Operator: {{grid}}</b> <br><br>
-                    <img class="img-thumbnail" height="75" src="../static/16.png" width="75"> <b>Cross Border: {{grid}}</b> <br><br>
-                </div>
-                </div>
             </div>
             <div class="col-1" id="right"></div>
         </div>
-
         <div class="row bg-light"><p></p></div>
     </div>
 </body>

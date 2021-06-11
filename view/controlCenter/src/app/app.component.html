@@ -1,0 +1,31 @@
+<!-- app.component.html
+|   Info: Hauptkomponente
+|   Typ: HTML Code
+|   Inhalt: enthält Header (Navbar+Logo) und Platzhalter für Routes (untergeordnete Komponenten)
+-->
+
+<div class="header bg-dark text-light fixed-top d-flex" style="height: 150px">
+  <!-- Header with Title -->
+    <div class="col">
+
+      <h1>dMAS zur Anlayse des Energieversorgungssystems</h1>
+      <p>Fachhochschule Aachen</p>
+
+      <nav>
+      <!-- Navbar content -->
+        <a routerLink="/" routerLinkActive="active">Home</a>
+        <a routerLink="/config" routerLinkActive="active">Config</a>
+        <a routerLink="/agents-info" routerLinkActive="active">Agents Info</a>
+        <a routerLink="/grid" routerLinkActive="active">Grid</a>
+      </nav>
+    </div>
+
+    <img class="ml-auto mh-100" style="background-color: rgba(255,0,0,0.1);" src="assets/img/fh_logo.png" alt="LOGO">
+
+</div>
+<body>
+  <div>
+  <!--  Routes:-->
+    <router-outlet></router-outlet>
+  </div>
+</body>

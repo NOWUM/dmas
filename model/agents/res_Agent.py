@@ -1,319 +1,207 @@
+# third party modules
+from sys import exit
+import time as tme
 import os
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from aggregation.res_Port import resPort
-from agents.basic_Agent import agent as basicAgent
-from apps.qLearn_DayAhead import qLeran as daLearning
 import argparse
 import pandas as pd
 import numpy as np
 
+# model modules
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+from aggregation.portfolio_renewable import RenewablePortfolio
+from agents.basic_Agent import agent as basicAgent
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=25, help='PLZ-Agent')
+    parser.add_argument('--plz', type=int, required=False, default=12, help='PLZ-Agent')
     return parser.parse_args()
 
-class resAgent(basicAgent):
+
+class ResAgent(basicAgent):
 
     def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, exchange='Market', typ='RES')
-        # Aufbau des Portfolios mit den enstprechenden EE-Anlagen
-        self.logger.info('Start des Agenten')
-        self.portfolio = resPort(typ='RES')
+        super().__init__(date=date, plz=plz, typ='RES')
+        # Development of the portfolio with the corresponding ee-systems
+        self.logger.info('starting the agent')
+        start_time = tme.time()
+        self.portfolio = RenewablePortfolio()
 
-        # Aufbau der Freiflächen PV und gewerblich genutzten Anlagen
-        for key, value in self.ConnectionMongo.getPvParks().items():
+        # Construction Windenergy
+        for key, value in self.connections['mongoDB'].get_wind_turbines().items():
+            self.portfolio.capacities['capacityWind'] += value['maxPower']
+            self.portfolio.add_energy_system(key, {key: value})
+        self.logger.info('Windenergy added')
+        self.portfolio.aggregate_wind()
+
+        # Construction of the pv systems (free area)
+        for key, value in self.connections['mongoDB'].get_pv_parks().items():
             if value['typ'] != 'PV70':
-                self.portfolio.capacities['solar'] += value['maxPower']
+                self.portfolio.capacities['capacitySolar'] += value['maxPower']/10**3
             else:
-                self.portfolio.capacities['solar'] += value['maxPower'] * value['number']
-            self.portfolio.addToPortfolio(key, {key: value})
-        self.logger.info('PV(Gewerbe)-Erzeugung hinzugefügt')
+                self.portfolio.capacities['capacitySolar'] += value['maxPower']/10**3 * value['number']
+            self.portfolio.add_energy_system(key, {key: value})
+        self.logger.info('PV(free area) Generation added')
 
-        # Aufbau der EEG vergüteten PV Dachanlgen
-        for key, value in self.ConnectionMongo.getPVs().items():
-            self.portfolio.capacities['solar'] += value['PV']['maxPower'] * value['EEG']
-            self.portfolio.addToPortfolio('Pv' + str(key), {'Pv' + str(key): value})
-        self.logger.info('PV(Haushalte)-Erzeugung hinzugefügt')
+        # Construction of the pv systems (h0)
+        for key, value in self.connections['mongoDB'].get_pvs().items():
+            self.portfolio.capacities['capacitySolar'] += value['PV']['maxPower']/10**3 * value['EEG']
+            self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
+        self.logger.info('PV(H0) Generation added')
 
-        # Einbindung der Laufwasserkraftwerke
-        for key, value in self.ConnectionMongo.getRunRiver().items():
-            self.portfolio.addToPortfolio('runRiver', {'runRiver': value})
-            self.portfolio.capacities['water'] = value['maxPower']
-        self.logger.info('Laufwasserkraftwerke hinzugefügt')
+        # Construction Run River
+        for key, value in self.connections['mongoDB'].get_runriver_systems().items():
+            self.portfolio.add_energy_system('runRiver', {'runRiver': value})
+            self.portfolio.capacities['capacityWater'] += value['maxPower']/10**3
+        self.logger.info('Run River Power Plants added')
 
-        # Einbindung der Biomassekraftwerke
-        for key, value in self.ConnectionMongo.getBioMass().items():
-            self.portfolio.addToPortfolio('bioMass', {'bioMass': value})
-            self.portfolio.capacities['bio'] = value['maxPower']
-        self.logger.info('Biomassekraftwerke hinzugefügt')
+        # Construction Biomass
+        for key, value in self.connections['mongoDB'].get_biomass_systems().items():
+            self.portfolio.add_energy_system('bioMass', {'bioMass': value})
+            self.portfolio.capacities['capacityBio'] += value['maxPower']/10**3
+        self.logger.info('Biomass Power Plants added')
 
-        # Einbindung der Winddaten aus der MongoDB
-        for key, value in self.ConnectionMongo.getWind().items():
-            self.portfolio.capacities['wind'] += value['maxPower']
-            self.portfolio.addToPortfolio(key, {key: value})
-        self.logger.info('Winderzeugung hinzugefügt')
-
-        # Parameter für die Handelsstrategie am Day Ahead Markt
-        self.maxPrice = np.zeros(24)                                                        # Maximalgebote
-        self.minPrice = np.zeros(24)                                                        # Minimalgebote
-        self.actions = np.zeros(24)                                                         # Steigung der Gebotsgeraden für jede Stunde
-        self.espilion = 0.7                                                                 # Faktor zum Abtasten der Möglichkeiten
-        self.lr = 0.8                                                                       # Lernrate des Q-Learning-Einsatzes
-        self.qLearn = daLearning(self.ConnectionInflux, init=np.random.randint(5, 10 + 1))  # Lernalgorithmus im x Tage Rythmus
-        self.qLearn.qus *= 0.5 * (self.portfolio.capacities['wind'] + self.portfolio.capacities['solar'])
-
-        self.risk = np.random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
-
-        self.logger.info('Parameter der Handelsstrategie festgelegt')
-
-        if len(self.portfolio.energySystems) == 0:
-            self.logger.info('Keine Energiesysteme im PLZ-Gebiet vorhanden')
+        # If there are no power systems, terminate the agent
+        if len(self.portfolio.energy_systems) == 0:
+            print('Number: %s No energy systems in the area' % plz)
             exit()
 
-        json_body = []
-        time = self.date                                                                # Zeitstempel = aktueller Tag
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
-        for i in range(365):
-            json_body.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
-                                 agent=self.name,                                       # Name des Agenten
-                                 area=self.plz),                                        # Plz Gebiet
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(capacitySolar=float(self.portfolio.capacities['solar']),
-                                   capacityWind=float(self.portfolio.capacities['wind']),
-                                   capacityWater=float(self.portfolio.capacities['water']),
-                                   capacityBio=float(self.portfolio.capacities['bio']))
-                }
-            )
-            time = time + pd.DateOffset(days=1)
-        self.ConnectionInflux.saveData(json_body)
-
-        self.logger.info('Aufbau des Agenten abgeschlossen')
-
-    def optimize_balancing(self):
-        """Einsatzplanung für den Regelleistungsmarkt"""
-        self.logger.info('Planung Regelleistungsmarkt abgeschlossen')
+        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def optimize_dayAhead(self):
-        """Einsatzplanung für den DayAhead-Markt"""
-        orderbook = dict()                                                  # Oderbook für alle Gebote (Stunde 1-24)
-        json_body = []                                                      # Liste zur Speicherung der Ergebnisse in der InfluxDB
+        """Scheduling before DayAhead Market"""
+        self.logger.info('DayAhead market scheduling started')
 
-        # Prognosen für den kommenden Tag
-        weather = self.weatherForecast(self.date)                           # Wetterdaten (dir,dif,temp,wind)
-        price = self.priceForecast(self.date)                               # Preisdaten (power,gas,nuc,coal,lignite)
-        demand = self.demandForecast(self.date)                             # Lastprognose
+        # Step 1: forecast input data and init the model for the coming day
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()                                         # performance timestamp
 
-        # Standardoptimierung
-        self.portfolio.setPara(self.date, weather, price, demand)
-        self.portfolio.buildModel()
-        power_dayAhead = np.asarray(self.portfolio.optimize(), np.float)    # Berechnung der Einspeiseleitung
+        weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
+        self.portfolio.set_parameter(self.date, weather, dict())
+        self.portfolio.build_model()
 
-        powerDirect = np.zeros(24)
-        powerEEG = np.zeros(24)
-        for key, value in agent.portfolio.energySystems.items():
-            # direkt-vermarktete Leistung
-            if value['typ'] == 'wind' or value['typ'] == 'biomass' or value['typ']=='PVPark':
-                powerDirect += value['model'].generation['wind'].reshape(-1)            # Wind Onshore
-                powerDirect += value['model'].generation['solar'].reshape(-1)           # Freiflächen PV
-                powerDirect += value['model'].generation['bio'].reshape(-1)             # Biomasse-Kraftwerk
-            # EEG-vermarktete Leistung
-            else:
-                powerEEG += value['model'].generation['water'].reshape(-1)              # Laufwasser-Kraftwerk
-                powerEEG += value['model'].generation['solar'].reshape(-1)              # PV-Anlage vor 2013
+        self.performance['initModel'] = np.round(tme.time() - start_time, 3)
 
-        # Portfolioinformationen
-        time = self.date                                                                # Zeitstempel = aktueller Tag
-        for i in self.portfolio.t:
-            json_body.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
-                                 agent=self.name,                                       # Name des Agenten
-                                 area=self.plz,                                         # Plz Gebiet
-                                 timestamp='optimize_dayAhead'),                        # Zeitstempel der Tagesplanung
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(powerTotal=power_dayAhead[i],                        # gesamte geplante Einspeisung  [MW]
-                                   priceForcast=price['power'][i],                      # Day Ahead Preisprognose       [€/MWh]
-                                   powerWind=self.portfolio.generation['wind'][i],      # gesamte Windeinspeisung       [MW]
-                                   powerBio=self.portfolio.generation['bio'][i],        # gesamte Biomasseeinspeisung   [MW]
-                                   powerSolar=self.portfolio.generation['solar'][i],    # gesamte PV-Einspeisung        [MW]
-                                   powerWater=self.portfolio.generation['water'][i],    # gesamte Wasserkraft           [MW]
-                                   powerDirect=powerDirect[i],                          # direkt-vermarktete Leistung   [MW]
-                                   powerEEG=powerEEG[i])                                # EEG-vermarktete Leistung      [MW]
-                }
-            )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
+        # Step 2: standard optimization --> returns power series in [MW]
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()                                         # performance timestamp
 
-        self.ConnectionInflux.saveData(json_body)
+        power_da = self.portfolio.optimize()                            # total portfolio power
+        # split power in eeg and direct marketing part
+        power_direct = agent.portfolio.generation['powerSolar'] + agent.portfolio.generation['powerWind']
+        power_eeg = power_da - power_direct
 
-        # Aufbau der linearen Gebotskurven
-        actions = np.random.randint(1, 8, 24) * 10
-        prc = np.asarray(price['power']).reshape((-1, 1))                               # MCP Porgnose      [€/MWh]
+        self.performance['optModel'] = np.round(tme.time() - start_time, 3)
 
-        # Wenn ein Modell vorliegt und keine neuen Möglichkeiten ausprobiert werden sollen
-        if self.qLearn.fitted:
-            wnd = np.asarray(weather['wind']).reshape((-1, 1))                          # Wind              [m/s]
-            rad = np.asarray(weather['dir']).reshape((-1, 1))                           # Dirkete Strahlung [W/m²]
-            tmp = np.asarray(weather['temp']).reshape((-1, 1))                          # Temperatur        [°C]
-            dem = np.asarray(demand).reshape((-1, 1))                                   # Lastprognose      [MW]
-            actionsBest = self.qLearn.getAction(wnd, rad, tmp, dem, prc)
+        # Step 3: save optimization results in influxDB
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
-            for i in range(24):
-                if self.espilion < np.random.uniform(0, 1):
-                    actions[i] = actionsBest[i]
+        # build dataframe to save results in ifluxdb
+        df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
+                        pd.DataFrame(data=dict(powerDirect=power_direct, powerEEG=power_eeg))],
+                       axis=1)
+        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+                                                                 timestamp='optimize_dayAhead'))
 
-        self.actions = np.asarray(actions).reshape(24,)                                                            # abschpeichern der Aktionen
+        self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
 
-        # Berechnung der Prognosegüte
-        if self.forecasts['price'].mcp.shape[0] > 0:
-            var = np.sqrt(np.var(self.forecasts['price'].mcp, axis=0) * self.forecasts['price'].factor)
-        else:
-            var = np.sqrt(np.var(self.forecasts['price'].y, axis=0) * self.forecasts['price'].factor)
-        self.maxPrice = prc.reshape((-1,)) + np.asarray([max(self.risk*v, 1) for v in var])                       # Maximalpreis      [€/MWh]
+        # Step 4: build orders from optimization results
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
-        self.minPrice = np.zeros_like(self.maxPrice)                                                              # Minimalpreis      [€/MWh]
-
-        slopes = ((self.maxPrice - self.minPrice)/100) * np.tan((actions+10)/180*np.pi) # Preissteigung pro weitere MW
-
-        # Füge für jede Stunde die entsprechenden Gebote hinzu
+        ask_orders = {}                                                     # all block orders for current day
         for i in range(self.portfolio.T):
-            quantity = [-1*powerEEG[i]]
-            price = [-499.98]
-            for _ in range(2, 102, 2):
-                quantity.append(-1*(2/100 * powerDirect[i]))
+            var_cost = 0
+            ask_orders.update({str(('gen%s' % i, i, 0, str(self.name))): (var_cost, power_direct[i], 'x')})
+            ask_orders.update({str(('gen%s' % (i+24), i, 0, str(self.name))): (-499, power_eeg[i], 'x')})
 
-            ub = self.maxPrice[i]
-            lb = self.minPrice[i]
-            slope = slopes[i]
+        self.performance['buildOrders'] = tme.time() - start_time
 
-            if slope > 0:
-                for p in range(2, 102, 2):
-                    price.append(float(min(slope * p + lb, ub)))
-            else:
-                for p in range(2, 102, 2):
-                    price.append(float(min(-1*slope * p + ub, lb)))
+        # Step 5: send orders to market resp. to mongodb
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
-            orderbook.update({'h_%s' % i: {'quantity': quantity, 'price': price, 'hour': i, 'name': self.name}})
+        self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=ask_orders)
 
-        self.ConnectionMongo.setDayAhead(name=self.name, date=self.date, orders=orderbook)
-        self.logger.info('Planung DayAhead-Markt abgeschlossen')
+        self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
+
+        self.logger.info('DayAhead market scheduling completed')
+        print('DayAhead market scheduling completed:', self.name)
 
     def post_dayAhead(self):
-        """Reaktion auf  die DayAhead-Ergebnisse"""
-        json_body = []                                                              # Liste zur Speicherung der Ergebnisse in der InfluxDB
+        """Scheduling after DayAhead Market"""
+        self.logger.info('After DayAhead market scheduling started')
 
-        # Speichern der Daten und Aktionen, um aus diesen zu lernen
-        self.qLearn.collectData(self.date, self.actions.reshape((24, 1)))
-        # geplante Menge Day Ahead
-        planing = self.ConnectionInflux.getPowerScheduling(self.date, self.name, 'optimize_dayAhead')
+        # Step 6: get market results and adjust generation an strategy
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
-        # Abfrage der DayAhead Ergebnisse
-        ask = self.ConnectionInflux.getDayAheadAsk(self.date, self.name)            # Angebotene Menge [MWh]
-        bid = self.ConnectionInflux.getDayAheadBid(self.date, self.name)            # Nachgefragte Menge [MWh]
-        price = self.ConnectionInflux.getDayAheadPrice(self.date)                   # MCP [€/MWh]
-        profit = [float((ask[i] - bid[i]) * price[i]) for i in range(24)]           # erzielte Erlöse
+        # query the DayAhead results
+        ask = self.connections['influxDB'].get_ask_da(self.date, self.name)            # volume to buy
+        bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
+        prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
+        profit = (ask - bid) * prc
 
-        # Differenz aus Planung und Ergebnissen
-        difference = np.asarray(planing).reshape((-1,)) - np.asarray(ask - bid).reshape((-1,))
+        self.week_price_list.remember_price(prcToday=prc)
 
-        # Bestrafe eine nicht Vermarktung
-        missed = [difference[i]*price[i] if price[i] > 0 else 0 for i in range(24)]
+        # adjust power generation
+        self.portfolio.build_model(response=ask - bid)
+        _ = self.portfolio.optimize()
 
-        # Falls ein Modell vorliegt, passe die Gewinnerwartung entsprechend der Lernrate an
-        if self.qLearn.fitted:
-            states = self.qLearn.getStates(self.date)
-            for i in self.portfolio.t:
-                oldValue = self.qLearn.qus[states[i], int((self.actions[i]-10)/10)]
-                self.qLearn.qus[states[i], int((self.actions[i]-10)/10)] = oldValue + self.lr * (profit[i] - missed[i] - oldValue)
-        else:
-            states = [-1 for _ in self.portfolio.t]
+        self.performance['adjustResult'] = np.round(tme.time() - start_time, 3)
 
-        # Portfolioinformation
-        time = self.date                                                                # Zeitstempel
-        power = np.asarray(ask - bid).reshape((-1,))
+        # Step 7: save adjusted results in influxdb
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
-        self.portfolio.buildModel(response=power)
-        self.portfolio.optimize()
+        df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
+                        pd.DataFrame(data=dict(profit=profit))], axis=1)
+        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+                                                                 timestamp='post_dayAhead'))
 
-        for i in self.portfolio.t:
-            json_body.append(
-                {
-                    "measurement": 'Areas',
-                    "tags": dict(typ='RES',                                             # Typ Erneuerbare Energien
-                                 agent=self.name,                                       # Name des Agenten
-                                 area=self.plz,                                         # Plz Gebiet
-                                 state=int(states[i]),
-                                 action=int(self.actions[i]),
-                                 timestamp='post_dayAhead'),
-                    "time": time.isoformat() + 'Z',
-                    "fields": dict(powerTotal=power[i],                                 # gesamte Einspeisung           [MW]
-                                   powerWind=self.portfolio.generation['wind'][i],      # gesamte Windeinspeisung       [MW]
-                                   powerBio=self.portfolio.generation['bio'][i],        # gesamte Biomasseeinspeisung   [MW]
-                                   powerSolar=self.portfolio.generation['solar'][i],    # gesamte PV-Einspeisung        [MW]
-                                   powerWater=self.portfolio.generation['water'][i],    # gesamte Wasserkraft           [MW]
-                                   profit=profit[i],                                    # erzielte Erlöse               [€]
-                                   state=int(states[i]),
-                                   action=int(self.actions[i]))
-                }
-            )
-            time = time + pd.DateOffset(hours=self.portfolio.dt)
+        self.performance['saveResult'] = np.round(tme.time() - start_time, 3)
 
-        self.ConnectionInflux.saveData(json_body)
+        self.logger.info('After DayAhead market adjustment completed')
+        print('After DayAhead market adjustment completed:', self.name)
+        self.logger.info('Next day scheduling started')
 
-        self.logger.info('DayAhead Ergebnisse erhalten')
+        # Step 8: retrain forecast methods and learning algorithm
+        # -------------------------------------------------------------------------------------------------------------
+        start_time = tme.time()
 
-    def optimize_actual(self):
-        """Abruf Prognoseabweichung und Übermittlung der Fahrplanabweichung"""
-        # TODO: Überarbeitung, wenn Regelleistung
-        self.logger.info('Aktuellen Fahrplan erstellt')
+        # No Price Forecast  used actually
+        self.week_price_list.put_price()
 
-    def post_actual(self):
-        """Abschlussplanung des Tages"""
-        # TODO: Überarbeitung, wenn Regelleistung
-        # Planung für den nächsten Tag
-        # Anpassung der Prognosemethoden für den Verbrauch und die Preise
-        if self.delay <= 0:
-            for key, method in self.forecasts.items():
-                if key != 'weather':
-                    method.collectData(self.date)
-                    method.counter += 1
-                    if method.counter >= method.collect:
-                        method.fitFunction()
-                        method.counter = 0
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
-            # Ansappung der Statuspunkte des Energiesystems
-            self.qLearn.counter += 1
-            if self.qLearn.counter >= self.qLearn.collect:
-                self.qLearn.fit()
-                self.qLearn.counter = 0
+        self.performance['nextDay'] = np.round(tme.time() - start_time, 3)
 
-                self.lr = max(self.lr*0.999, 0.4)                                # Lernrate * 0.999 (Annahme Markt ändert sich
-                                                                                 # Zukunft nicht mehr so schnell)
-                self.espilion = max(0.99*self.espilion, 0.01)                    # Epsilion * 0.999 (mit steigender Simulationdauer
-                                                                                 # sind viele Bereiche schon bekannt
-        else:
-            self.delay -= 1
+        df = pd.DataFrame(data=self.performance, index=[self.date])
+        self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
 
-        self.logger.info('Tag %s abgeschlossen' %self.date)
-        print('Agent %s %s done' % (self.name, self.date.date()))
+        self.logger.info('Next day scheduling completed')
+
 
 if __name__ == "__main__":
 
     args = parse_args()
-    agent = resAgent(date='2019-01-01', plz=args.plz)
-    agent.ConnectionMongo.login(agent.name, False)
+    agent = ResAgent(date='2018-01-01', plz=args.plz)
+    agent.connections['mongoDB'].login(agent.name)
     try:
-        agent.run_agent()
+        agent.run()
     except Exception as e:
         print(e)
     finally:
-        agent.ConnectionInflux.influx.close()
-        agent.ConnectionMongo.logout(agent.name)
-        agent.ConnectionMongo.mongo.close()
-        if not agent.connection.is_close:
-            agent.connection.close()
+        agent.connections['mongoDB'].logout(agent.name)
+        agent.connections['influxDB'].influx.close()
+        agent.connections['mongoDB'].mongo.close()
+        if not agent.connections['connectionMQTT'].is_closed:
+            agent.connections['connectionMQTT'].close()
         exit()

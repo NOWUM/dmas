@@ -1,170 +1,223 @@
-# Importe
+from gurobipy import *
 import numpy as np
 import pandas as pd
-import math
-import time
 
+class market:
 
-def orderGen(n):
-    df1 = pd.DataFrame()
-    df1['00:00'] = np.random.uniform(-10, 10, size=n) * 50
-    df2 = pd.DataFrame()
-    df2['00:00'] = np.random.uniform(0, 50, size=n)
-    df3 = pd.DataFrame()
-    names = ['Nils', 'Jochen', 'Christian', 'Kevin', 'Andre', 'Jörg', 'Svea', 'Isabel', 'Dominik', 'Markus',
-             'Denise']
-    df3['00:00'] = np.random.choice(names, size=n)
-    df4 = df1
-    df4['price'] = df2
-    df4['name'] = df3
-    df4 = df4[df4['00:00'] != 0]
-    df4.columns = ['quantity', 'price', 'name']
+    def __init__(self):
+        self.ask_orders = {}
+        self.bid_orders = {}
+        self.bid_check = {}
 
-    return df4
+        self.m = Model('dayAheadMarket')
+        self.m.Params.OutputFlag = 1
+        self.m.Params.TimeLimit = 60
+        self.m.Params.MIPGap = 0.05
+        self.m.__len__ = 1
 
-# Reservemarkt
-def balancing_clearing(orders, ask=1800, minimal=5):
+    def set_parameter(self, bid, ask):
 
-    orders = orders.sort_values(by=['price'])
-    orders['quantity'] = orders['quantity'].cumsum()
-    orders = orders.set_index('quantity')
-    namesOrders = set(orders['name'].to_numpy())
+        # check asks
+        id_ = np.unique([key[3] for key in ask.keys()])                             # unique id for each order
+        for i in id_:
+            blocks = np.unique([key[0] for key in ask.keys() if i == key[3]])       # blocks for each unique id
+            if len(blocks) > 0:                                                     # check if any block exists
+                check_block = np.arange(blocks[-1] + 1)                             # array to proof consistency
+                diff = np.setdiff1d(check_block, blocks)                            # check if block number
+                if len(diff) == 0:                                                  # increments correctly
+                    self.ask_orders.update({key: value for key, value in ask.items()
+                                            if key[3] == i})                        # add orders clearing
 
-    result = orders[orders.index <= ask]
+        # check bids
+        id_ = np.unique([key[3] for key in bid.keys()])                             # unique id for each order
+        for i in id_:
+            blocks = np.unique([key[0] for key in bid.keys() if i == key[3]])       # blocks for each unique id
+            if len(blocks) > 0:                                                     # check if any block exists
+                check_block = np.arange(blocks[-1] + 1)                             # array to proof consistency
+                diff = np.setdiff1d(check_block, blocks)                            # check if block number
+                if len(diff) == 0:                                                  # increments correctly
+                    self.bid_check.update({key: value for key, value in bid.items() # add orders to bid dict to
+                                           if key[3] == i})                         # get right orders
+                    # split in ask in bid for elastic demand
+                    # --> add inelastic demand
+                    self.bid_orders.update({key: value for key, value in bid.items()
+                                            if value[0] == 3000 and key[3] == i})
+                    # --> make elastic demand to inelastic demand
+                    self.bid_orders.update({key: (3000, value[1], value[2]) for key, value in bid.items()
+                                            if value[0] != 3000 and key[3] == i})
+                    # --> add ask orders for elastic demand
+                    self.ask_orders.update({(key[0], key[1], key[2], key[3] + '_b'): value for key, value in bid.items()
+                                            if value[0] != 3000 and key[3] == i})
 
-    if len(result) == 0:
-        result = orders.iloc[[0], :]
-        result.loc[result.index[0],'volume'] = ask
-        result.set_index('name', inplace=True)
-        diff = list(namesOrders.difference(set(result.index)))
-        for n in diff:
-            result.loc[n] = 0
+    def reset_parameter(self):
+        self.ask_orders = {}
+        self.bid_orders = {}
+        self.bid_check = {}
+
+    def optimize(self):
+        # Step 0 initialize model and add magic power source with maximal price (prevent infeasible model)
+        max_prc = [np.round(20000, 2) for i in range(24)]
+        max_vol = self.m.addVars(range(24), vtype=GRB.CONTINUOUS, name='magicSource_', lb=0.0, ub=GRB.INFINITY)
+
+        self.m.remove(self.m.getVars())
+        self.m.remove(self.m.getConstrs())
+
+        # Step 1 initialize orders
+        # -----------------------------------------------------------------------------------------------------------
+        # split in dictionary ids, id:prc, id:vol, id:linked
+        ask_id, ask_prc, ask_vol, ask_block = multidict(self.ask_orders)
+        # get all ask agents
+        ask_agents = np.unique([a[-1] for a in ask_id])
+        # get all blocks and dependency per ask agent
+        ask_blocks = tuplelist([(i, agent, ask_block.select(i, '*', '*', str(agent))[0]) for agent in ask_agents
+                                for i in range(ask_id.select('*', '*', '*', str(agent))[-1][0] + 1) if
+                                ask_block.select(i, '*', '*', str(agent))[0] != 'x'])
+
+        # split in dictionary ids, id:prc, id:vol, _
+        bid_id, bid_prc, bid_vol, _ = multidict(self.bid_orders)
+        # get all bid agents
+        bid_agents = np.unique([b[-1] for b in bid_id])
+
+        # Step 2 initialize binary variables for blocks and orders
+        # -----------------------------------------------------------------------------------------------------------
+        # used block to meet the demand
+        used_ask_blocks = self.m.addVars(ask_blocks, vtype=GRB.BINARY, name='askBlock_')
+        # used ask orders in block
+        used_ask_orders = self.m.addVars(ask_id, vtype=GRB.BINARY, name='askOrder_')
+
+        # Step 3 initialize cost variable for objective function (minimize sum(cost for each hour))
+        # -----------------------------------------------------------------------------------------------------------
+        # resulting costs for each hour
+        x = self.m.addVars(range(24), vtype=GRB.CONTINUOUS, name='costs', lb=-GRB.INFINITY, ub=GRB.INFINITY)
+
+        # Step 4 set constraint: If all orders for one agent in one block are used -> set block id = True
+        # -----------------------------------------------------------------------------------------------------------
+        for agent in ask_agents:
+            self.m.addConstrs(used_ask_blocks[b] * len(used_ask_orders.select(b[0], '*', '*', str(agent))) ==
+                              quicksum(used_ask_orders.select(b[0], '*', '*', str(agent)))
+                              for b in ask_blocks.select('*', str(agent), '*'))
+        self.m.update()
+        constraint_counter = len(self.m.getConstrs())
+        print('added %s constraints' % constraint_counter)
+
+        # Step 5 set constraint: If parent block of an agent is used -> enable usage of child block
+        # -----------------------------------------------------------------------------------------------------------
+        for agent in ask_agents:
+            self.m.addConstrs(used_ask_blocks[b] <= quicksum(used_ask_blocks.select(b[-1], str(agent), '*'))
+                         for b in ask_blocks.select('*', str(agent), '*'))
+        self.m.update()
+        print('added %s constraints' % (len(self.m.getConstrs()) - constraint_counter))
+        constraint_counter = len(self.m.getConstrs())
+
+        # Step 6 set constraint: Meet Demand in each hour
+        # -----------------------------------------------------------------------------------------------------------
+        self.m.addConstrs(quicksum(ask_vol[o] * used_ask_orders[o] for o in ask_id.select('*', i, '*', '*'))
+                          + max_vol[i] == quicksum(bid_vol[o] for o in bid_id.select('*', i, '*', '*'))
+                          for i in range(24))
+
+        self.m.update()
+        print('added %s constraints' % (len(self.m.getConstrs()) - constraint_counter))
+        constraint_counter = len(self.m.getConstrs())
+
+        # Step 7 set constraint: Cost for each hour
+        # -----------------------------------------------------------------------------------------------------------
+        self.m.addConstrs(x[i] == quicksum(ask_vol[o] * ask_prc[o] * used_ask_orders[o]
+                                           for o in ask_id.select('*', i, '*', '*')) + max_vol[i] * max_prc[i]
+                                  for i in range(24))
+
+        self.m.update()
+        print('added %s constraints' % (len(self.m.getConstrs()) - constraint_counter))
+
+        self.m.setObjective(quicksum(x[i] for i in range(24)), GRB.MINIMIZE)
+
+        self.m.update()
+        self.m.optimize()
+
+        # Step 8 get MCP for each hour (max price from last order that is used)
+        # -----------------------------------------------------------------------------------------------------------
+        mcp = [max([ask_prc[id_] * used_ask_orders[id_].x for id_ in ask_id.select('*', i, '*', '*')
+                    if used_ask_orders[id_].x == 1])
+               for i in range(24)]
+
+        # for i in range(24):
+        #     for id_ in ask_id.select('*', i, '*', '*'):
+        #         if used_ask_orders[id_].x == 1 and ask_prc[id_] == mcp[i]:
+        #             print(id_)
+
+        # Step 9 get volumes for each hour per ask agent
+        # -----------------------------------------------------------------------------------------------------------
+        ask_volumes = []
+        ask_total_volumes = []
+        for i in range(24):
+            volumes = {}
+            sum_ = 0
+            for agent in ask_agents:
+                vol = sum([ask_vol[id_] * used_ask_orders[id_].x for id_ in ask_id.select('*', i, '*', str(agent))
+                           if ask_prc[id_] <= mcp[i]])
+                if '_b' not in agent:
+                    volumes.update({agent: np.round(vol, 2)})
+                    sum_ += vol
+            ask_volumes.append(dict(volume=volumes))
+            ask_total_volumes.append(sum_)
+
+        # Step 10 get volumes for each hour per bid agent
+        # -----------------------------------------------------------------------------------------------------------
+        bid_volumes = []
+        bid_total_volumes = []
+        bid_id, bid_prc, bid_vol, _ = multidict(self.bid_check)
+        for i in range(24):
+            volumes = {}
+            sum_ = 0
+            for agent in bid_agents:
+                vol = sum([bid_vol[id_] for id_ in bid_id.select('*', i, '*', str(agent))
+                           if bid_prc[id_] > mcp[i]])
+                sum_ += vol
+                volumes.update({agent: np.round(vol, 2)})
+            bid_volumes.append(dict(volume=volumes))
+            bid_total_volumes.append(sum_)
+
+        # Step 11 check clearing
+        # -----------------------------------------------------------------------------------------------------------
+        for i in range(24):
+            if int(np.abs(bid_total_volumes[i] - ask_total_volumes[i])) > max_vol[i].x:
+                # build data frame and sort by price to generate an incremental market clearing till ask volume
+                prices = [bid_prc[id_] for id_ in bid_id.select('*', i, '*', '*')]      # prices in hour i
+                ids = [id_  for id_ in bid_id.select('*', i, '*', '*')]                 # corresponding id
+                df = pd.DataFrame(data={'price': prices, 'id': ids})                    # data frame to sort
+                df = df.sort_values(by=['price'], ascending=False)                      # sorted data frame
+
+                # add bid order untill total ask volume is used
+                tmp = ask_total_volumes[i]
+                used_bid_orders = []
+                for id_ in df['id'].to_numpy():
+                    if tmp > 0:
+                        used_bid_orders.append(id_)
+                        tmp -= bid_vol[id_]
+                    else:
+                        break
+                used_bid_orders = tuplelist(used_bid_orders)
+
+                # aggregate by agent and save as new result
+                volumes = {}
+                sum_ = 0
+                for agent in bid_agents:
+                    vol = sum([bid_vol[id_] for id_ in used_bid_orders.select('*', i, '*', str(agent))])
+                    sum_ += vol
+                    volumes.update({agent: np.round(vol, 2)})
+                bid_total_volumes[i] = sum_
+                bid_volumes[i] = dict(volume=volumes)
+                # print('adjust bid in hour %s' % i)
+            else:
+                pass
+                # print('no adjustment in hour %s required' % i)
+
+        result = [(ask_volumes[i], bid_volumes[i], mcp[i], bid_total_volumes[i], ask_total_volumes[i],
+                   max_vol[i].x) for i in range(24)]
 
         return result
 
-    rest = ask - result.index[-1]
-
-    if rest >= minimal:
-        df = orders.loc[(orders.index > result.index[-1])]
-        if len(df) > 0:
-            result = result.append(df.iloc[0,:])
-            lst = list(result.index[:-1])
-            lst.append(ask)
-            result.index = lst
-    else:
-        df = orders.loc[(orders.index > result.index[-1])]
-        if len(df) > 0:
-            result = result.append(df.iloc[0,:])
-            lst = list(result.index[:-1])
-            lst.append(lst[-1]+minimal)
-            result.index = lst
-
-    volume = result.index
-    result.set_index('name', inplace=True)
-    result['volume'] = np.diff(volume.insert(0,0))
-    result = result.groupby(['name']).sum()
-
-    diff = list(namesOrders.difference(set(result.index)))
-    for n in diff:
-        result.loc[n] = 0
-
-    return result
-
-# Day Ahead Markt
-def dayAhead_clearing(orders):
-
-    orders = pd.DataFrame.from_dict(orders)
-
-    ask0 = orders[orders['quantity'] < -0.1]
-    ask0 = ask0.sort_values(by=['price'])
-    ask0.loc[:,['quantity']] = -1*ask0['quantity'].round(1)
-    ask0.insert(1,'mo',np.round(ask0['quantity'].cumsum(),1))
-    ask0 = ask0.set_index(ask0['mo'])
-    namesAsk = set(ask0['name'].to_numpy())
-
-    bid0 = orders[orders['quantity'] > 0.1]
-    bid0 = bid0.sort_values(by=['price'], ascending=False)
-    bid0.loc[:,['quantity']] = bid0['quantity'].round(1)
-    bid0.insert(1,'mo', np.round(bid0['quantity'].cumsum(),1))
-    bid0 = bid0.set_index(bid0['mo'])
-    namesBid = set(bid0['name'].to_numpy())
-
-    if bid0['mo'].max() >= ask0['mo'].max():
-        diff = bid0['mo'].max() - ask0['mo'].max()
-        maxPrice = ask0['price'].max() + 1
-        df = pd.DataFrame(index=[diff + ask0['mo'].max()],
-                          data=dict(quantity=diff, mo=diff + ask0['mo'].max(), price=maxPrice, name='extra'))
-        ask0 = ask0.append(df)
-
-    merit_order = pd.DataFrame(index=np.concatenate((ask0.index, bid0.index)))
-
-    merit_order.loc[:, 'buy'] = bid0['price']
-    merit_order.loc[:, 'buyNames'] = bid0['name']
-    merit_order.loc[:, 'sellNames'] = ask0['name']
-    merit_order.loc[:, 'sell'] = ask0['price']
-
-    merit_order = merit_order.sort_index()
-    merit_order = merit_order.bfill()
-    merit_order = merit_order.dropna()
-
-
-    index = list(np.round((np.diff((merit_order.index))),1))
-    index.insert(0, merit_order.index[0])
-    merit_order.index = index
-
-    if ask0['price'].min() > bid0['price'].max():
-        mcp = np.nan
-        mcm = 0
-        ask_last = pd.DataFrame()
-        bid_last = pd.DataFrame()
-
-    else:
-        # Clearing Ergebnisse
-        mcp = merit_order.loc[merit_order['sell'] <= merit_order['buy']]['sell'].max()
-
-        buyers = np.unique(merit_order['buyNames'])
-        buyVolumes = [sum(merit_order[merit_order['buyNames'] == name].index) for name in buyers]
-        sellers = np.unique(merit_order['sellNames'])
-        sellVolume = [sum(merit_order[merit_order['sellNames'] == name].index) for name in sellers]
-
-        ask_last = pd.DataFrame(index=sellers, data=sellVolume, columns=['volume'])
-        bid_last = pd.DataFrame(index=buyers, data=buyVolumes, columns=['volume'])
-
-        mcm = ask_last.sum().volume
-
-    diff = list(namesAsk.difference(set(ask_last.index)))
-    for n in diff:
-        ask_last.loc[n] = 0
-
-    diff = list(namesBid.difference(set(bid_last.index)))
-    for n in diff:
-        bid_last.loc[n] = 0
-
-    result = (ask_last.to_dict(), bid_last.to_dict(), mcp, mcm)
-
-    return result
 
 if __name__ == "__main__":
 
-    df2 = orderGen(10000)
-    df = pd.DataFrame(index=[7], data=dict(quantity=4000, price=250, name='Extra'))
-    df2 = df2.append(df)
-    #df2 = df2[df2['quantity'] <=0]
-
-    #test = [(0, -300, 'Nils'), (3000, 3000, 'Nils')]
-    #df = pd.DataFrame(test, columns=['quantity', 'price', 'name'])
-    #df2 = df2.append(df)
-    #df = pd.read_excel(r'./tmp/DA_2019-01-02_20.xlsx', index_col=0)
-    #df = df[df.index == 5]k
-    #df = df[df['quantity'] != 0]
-
-    orders = df2.to_dict()
-
-    # df = pd.read_excel(r'./tmp/DA_2019-01-01_5.xlsx', index_col=0)
-    #ask, bid, mcp, mcm, test = dayAhead_clearing(df, plot=True)
-    x = dayAhead_clearing(orders)
-
-
-
-
+    my_market = market()
 

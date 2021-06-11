@@ -1,0 +1,43 @@
+<!-- agents-info.component.html
+|   Info: Übersicht und Verwaltung aller laufenden Agenten
+|   Typ: HTML Code
+|   Inhalt: Checkboxes zur Filterung nach Agent Typ, Auflistung der Agents (Platzhalter für Running Agent Info Komponente)
+-->
+
+<div class="row">
+  <div class="col">
+    <h4 style="padding-bottom: 20px; padding-top: 10px">Agent Info:</h4>
+  </div>
+</div>
+
+<!-- Checkboxes -->
+<div>
+  <input type="checkbox" id="pwp" [checked]="showPwp" (click)="togglePwp()">
+  <label for="pwp">PWP</label>
+
+  <input type="checkbox" id="res" [checked]="showRes" (click)="toggleRes()">
+  <label for="res">RES</label>
+
+  <input type="checkbox" id="dem" [checked]="DEM" (click)="toggleDem()">
+  <label for="dem">DEM</label>
+
+  <input type="checkbox" id="str" [checked]="showStr" (click)="toggleStr()">
+  <label for="str">STR</label>
+
+  <input type="checkbox" id="mrk" [checked]="showMrk" (click)="toggleMrk()">
+  <label for="mrk">MRK</label>
+
+  <input type="checkbox" id="net" [checked]="showNet" (click)="toggleNet()">
+  <label for="net">NET</label>
+</div>
+
+<!-- Einbindung der Info Komponente für Running Agents -->
+<div class="row">
+  <div *ngFor="let type of agentTypes">
+    <div class="col" *ngIf=this.showType(type)>
+      <app-info [type]=type> </app-info>
+    </div>
+  </div>
+</div>
+
+<p>agents-info works!</p>

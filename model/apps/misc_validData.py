@@ -1,137 +1,72 @@
 import os
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-from influxdb import InfluxDBClient
+from influxdb import InfluxDBClient, DataFrameClient
 import pandas as pd
 import numpy as np
 
 
-def writeValidData(database, table):
+def write_valid_data(database, table, start, end):
 
-    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', database)
-    validData = pd.read_excel(r'./data/Valid_Data.xlsx', sheet_name=table)
-    # validData.index = pd.date_range(start='2019-01-01', freq='15min', periods=len(validData))
+    client = DataFrameClient('149.201.88.83', 8086, 'root', 'root', database)
+    protocol = 'line'
+    start = pd.to_datetime(start, utc=True)
+    end = pd.to_datetime(end, utc=True)
 
     if table == 0:
-        json_body = []
-        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=35040, freq='15min', tz='CET')
-        index = 0
-        for date in dateRange:
-            json_body.append(
-                {
-                    "measurement": "validation",
-                    "tags": {},
-                    "time": date.isoformat().split('+')[0] + 'Z',
-                    "fields": dict(powerWater=validData.loc[index, 'Laufwasser [MW]'],
-                                   powerBio=validData.loc[index, 'Biomasse [MW]'],
-                                   powerSolar=validData.loc[index, 'Solar [MW]'],
-                                   powerWindOnshore=validData.loc[index,'Wind Onshore [MW]'],
-                                   powerWindOffshore=validData.loc[index, 'Wind Offshore [MW]'],
-                                   powerWind=validData.loc[index, 'Wind [MW]'],
-                                   powerDemand=validData.loc[index,'Last [MW]'],
-                                   powerNuc=validData.loc[index, 'Nuk [MW]'],
-                                   powerCoal=validData.loc[index, 'Steinkohle [MW]'],
-                                   powerLignite=validData.loc[index, 'Braunkohle [MW]'],
-                                   powerGas=validData.loc[index, 'Gas [MW]'])
-                }
-            )
-            index += 1
-        influx.write_points(json_body)
+        valid_data = pd.read_pickle(r'./data/validGeneration.pkl')
+        valid_data.index = pd.date_range(start='2018-01-01', end='2019-12-31 23:45:00', freq='15min', tz='CET')
+        valid_data = valid_data.loc[np.logical_and(start <= valid_data.index, valid_data.index <= end), :]
+        client.write_points(valid_data, 'validation', protocol=protocol)
 
     elif table == 1:
-        json_body = []
-        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=8760, freq='60min')
-        index = 0
-        for date in dateRange:
-            json_body.append(
-                {
-                    "measurement": "validation",
-                    "tags": {},
-                    "time": date.isoformat().split('+')[0] + 'Z',
-                    "fields": dict(price=validData.loc[index, 'Preis'])
-                }
-            )
-            index += 1
-        influx.write_points(json_body)
+        valid_data = pd.read_pickle(r'./data/validPrice.pkl')
+        valid_data.index = pd.date_range(start='2018-01-01', end='2019-12-31 23:00:00', freq='60min', tz='UTC')
+        valid_data = valid_data.loc[np.logical_and(start <= valid_data.index, valid_data.index <= end), :]
+        client.write_points(valid_data, 'validation', protocol=protocol)
 
     elif table == 2:
-        json_body = []
-        dateRange = pd.date_range(start=pd.to_datetime('2019-01-01'), periods=35040, freq='15min', tz='CET')
-        index = 0
-        for date in dateRange:
-            json_body.append(
-                {
-                    "measurement": "validation",
-                    "tags": {},
-                    "time": date.isoformat().split('+')[0] + 'Z',
-                    "fields": dict(capacityWater=validData.loc[index, 'Laufwasser [MW]'],
-                                   capacityBio=validData.loc[index, 'Biomasse [MW]'],
-                                   capacitySolar=validData.loc[index, 'Solar [MW]'],
-                                   capacityWindOnshore=validData.loc[index,'Wind Onshore [MW]'],
-                                   capacityWindOffshore=validData.loc[index, 'Wind Offshore [MW]'],
-                                   capacityWind=validData.loc[index, 'Wind [MW]'],
-                                   capacityNuc=validData.loc[index, 'Nuk [MW]'],
-                                   capacityCoal=validData.loc[index, 'Steinkohle [MW]'],
-                                   capacityLignite=validData.loc[index, 'Braunkohle [MW]'],
-                                   capacityGas=validData.loc[index, 'Gas [MW]'])
-                }
-            )
-            index += 1
-        influx.write_points(json_body)
+        valid_data = pd.read_pickle(r'./data/validCapacity.pkl')
+        valid_data.index = pd.date_range(start='2018-01-01', end='2019-12-31 23:45:00', freq='15min', tz='CET')
+        valid_data = valid_data.loc[np.logical_and(start <= valid_data.index, valid_data.index <= end), :]
+        client.write_points(valid_data, 'validation', protocol=protocol)
 
 def writeDayAheadError(database, date):
 
-    influx = InfluxDBClient('149.201.88.150', 8086, 'root', 'root', database)
+    client = DataFrameClient('149.201.88.83', 8086, 'root', 'root', database)
+    protocol = 'line'
 
-    print(date)
-
-    # Tag im ISO Format
-    date = pd.to_datetime(date)
-    start = date.isoformat() + 'Z'
-    end = (date + pd.DateOffset(days=1)).isoformat() + 'Z'
-    # --> Abfrage
-    query = 'select sum("price") from "DayAhead" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
-            % (start, end)
-    result = influx.query(query)
+    # collect simulation data
+    query = 'select sum("price") as "price" from "DayAhead" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h)'\
+            % (pd.to_datetime(date).isoformat() + 'Z', (pd.to_datetime(date)+pd.DateOffset(days=1)).isoformat() + 'Z')
+    result = client.query(query)
     if result.__len__() > 0:
-        simulation = np.asarray([point['sum'] for point in result.get_points()])
+        simulation = ['DayAhead']['price'].to_numpy()
     else:
         simulation = np.zeros(24)
 
-    # --> Abfrage
-    query = 'select sum("price") from "validation" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h) fill(0)' \
-            % (start, end)
-    result = influx.query(query)
+    # collect original data
+    query = 'select sum("price") as "price" from "validation" where time >= \'%s\' and time < \'%s\' GROUP BY time(1h)'\
+            % (pd.to_datetime(date).isoformat() + 'Z', (pd.to_datetime(date)+pd.DateOffset(days=1)).isoformat() + 'Z')
+    result = client.query(query)
     if result.__len__() > 0:
-        real = np.asarray([point['sum'] for point in result.get_points()])
+        real = ['validation']['price'].to_numpy()
     else:
         real = np.zeros(24)
 
-    errorAbs = np.asarray([np.abs(-real[i] + simulation[i])/real[i] if np.abs(real[i]) > 0.5 else 0.05 for i in range(24)])
-    errorNrm = np.asarray([(-real[i] + simulation[i])/real[i] if np.abs(real[i]) > 0.5 else 0.05 for i in range(24)])
-
-    json_body = []
-    time = date
-    for i in range(24):
-        json_body.append(
-            {
-                "measurement": 'validation',
-                "time": time.isoformat() + 'Z',
-                "fields": dict(errorMean=errorAbs[i],
-                               errorNormal=errorNrm[i])
-            }
-        )
-        time = time + pd.DateOffset(hours=1)
-
-    influx.write_points(json_body)
-
-    influx.close()
+    # claculate error and save results
+    df = pd.DataFrame(index=pd.to_datetime(date), data={'mse': np.mean((real-simulation)**2),
+                                                        'me': np.mean(real-simulation)})
+    client.write_points(df, 'validation', protocol=protocol)
+    client.close()
 
 
 if __name__ == "__main__":
 
-    #writeValidData('MAS2020_7', 0)
-    #writeValidData('MAS2020_7', 1)
-    #writeValidData('MAS2020_7', 2)
+    # writeValidData('MAS2020_9', 0)
 
-    for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
-        writeDayAheadError('MAS2020_6', date)
+    write_valid_data('MAS2020_12', 0, start='2018-01-01', end='2019-01-01')
+    write_valid_data('MAS2020_12', 1, start='2018-01-01', end='2019-01-01')
+    write_valid_data('MAS2020_12', 2, start='2018-01-01', end='2019-01-01')
+
+    # for date in pd.date_range(start='2019-01-01', end='2019-12-31', freq='d'):
+    #     writeDayAheadError('MAS2020_6', date)

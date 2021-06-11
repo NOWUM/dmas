@@ -1,0 +1,17 @@
+<!-- info.component.html
+|   Info: Running Agent Info Komponente
+|   Typ: HTML Code
+|   Inhalt: Laufende Agenten und Button zum terminieren darstellen
+-->
+
+<h6 style="padding-top: 5px; padding-bottom: 5px;"><b>Agent Info {{ type }}:</b></h6>
+<div class="mh-75 overflow-auto" style="max-height: 70%"> <!--warum klappt das nicht nur mit mh-75 ohne extra nochmal style max-height anzugeben? -->
+  <div class="row" style="margin: 2px" *ngFor="let item of agents | keyvalue">
+    <div class="col-1">
+      <span style="color: red;"><i class="fas fa-times-circle" (click)="terminate_agent(item.key)"></i></span>
+    </div>
+    <div class="col">
+      {{ item.key }}: {{ item.value }}
+    </div>
+  </div>
+</div>

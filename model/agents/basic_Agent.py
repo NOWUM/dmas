@@ -1,197 +1,212 @@
+# third party modules
+from sys import exit
 import os
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
+import pandas as pd
+import numpy as np
+import time as tme
+import pika
 import configparser
 import logging
-from interfaces.interface_Influx import influxInterface
+
+# model modules
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+from interfaces.interface_Influx import InfluxInterface
 from interfaces.interface_mongo import mongoInterface
-from apps.frcst_DEM import typFrcst as demTyp
-from apps.frcst_Price import annFrcst as priceTyp
+from apps.frcst_Dem import typFrcst as demandForecast
+from apps.frcst_Price import annFrcst as priceForecast
 from apps.frcst_Weather import weatherForecast
-import pandas as pd
-import pika
-import numpy as np
+from apps.misc_WeekPriceList import WeekPriceList
+# from apps.qLearn_DayAhead import qLeran as daLearning
 
 
 class agent:
 
-    def __init__(self, date, plz, typ='PWP', exchange='Market'):
+    def __init__(self, date, plz, typ='PWP'):
 
-        config = configparser.ConfigParser()
-        config.read(r'./app.cfg')
+        config = configparser.ConfigParser()                        # read config to initialize connection
+        config.read(r'./agent_service.cfg')
 
-        database = config['Results']['Database']
-        mongoHost = config['MongoDB']['Host']
-        influxHost = config['InfluxDB']['Host']
-        marketHost = config['Market']['Host']
-        agentSuffix = config['Market']['agentSuffix']
+        exchange = config['Configuration']['exchange']
+        self.agentSuffix = config['Configuration']['suffix']
 
-        # Metadaten eines Agenten
-        self.name = typ + '_%i' % plz + agentSuffix # Name
-        self.plz = plz  # Gebiet
-        self.date = pd.to_datetime(date)  # aktueller Tag
-        self.typ = typ  # Agententyp (RES,PWP,DEM,...)
-        self.delay = 2
+        # declare meta data for each agent
+        self.name = typ + '_%i' % plz + self.agentSuffix            # name
+        self.plz = plz                                              # area
+        self.date = pd.to_datetime(date)                            # current day
+        self.typ = typ                                              # generation or consumer typ
 
-        self.errorCounter = 0
+        # dictionary for performance measuring
+        self.performance = dict(initModel=0,                        # build model for da optimization
+                                optModel=0,                         # optimize for da market
+                                saveSchedule=0,                     # save optimization results in influx db
+                                buildOrders=0,                      # construct order book
+                                sendOrders=0,                       # send orders to mongodb
+                                adjustResult=0,                     # adjustments corresponding to da results
+                                saveResult=0,                       # save adjustments in influx db
+                                nextDay=0)                          # preparation for coming day
+
+        database = config['Configuration']['database']              # name of simulation database
+        mongo_host = config['Configuration']['mongodb']             # server where mongodb runs
+        influx_host = config['Configuration']['influxdb']           # server where influxdb runs
+        mqtt_host = config['Configuration']['rabbitmq']             # server where mqtt runs
+
+        # connections to simulation infrastructure
+        self.connections = {
+            'mongoDB' : mongoInterface(host=mongo_host, database=database, area=plz),   # connection mongodb
+            'influxDB': InfluxInterface(host=influx_host, database=database)            # connection influxdb
+        }
+
+        # check if area is valid
+        if self.connections['mongoDB'].get_position() is None:
+            print('Number: %s is no valid area' % plz)
+            print(' --> stopping %s_%s' % (typ, plz))
+            exit()
+        else:
+            self.geo = self.connections['mongoDB'].get_position()['geohash']
+
+        if config.getboolean('Configuration', 'local'):
+            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host,virtual_host='SimAgent', heartbeat=0))#TODO: Heartbeat einfügen, der ausreichend hoch ist, sodass Agenten fertig rechnen können
+            self.connections.update({'connectionMQTT': con})
+        else:
+            crd = pika.PlainCredentials('dMAS', 'dMAS2020')
+            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, virtual_host='SimAgent', heartbeat=0, credentials=crd))
+            self.connections.update({'connectionMQTT': con})
+
+        receive = con.channel()
+        receive.exchange_declare(exchange=exchange, exchange_type='fanout')
+        result = receive.queue_declare(queue=self.name, exclusive=True)
+        receive.queue_bind(exchange=exchange, queue=result.method.queue)
+        self.connections.update({'exchangeMQTT': receive})
+
+        # declare logging options
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO)
-
-        # Create ./logs/ folder if not exist to prevent FileNotFoundError
-        if not os.path.exists("./logs/"):
-            os.makedirs("./logs/")
-
+        self.logger.setLevel(logging.WARNING)
         fh = logging.FileHandler(r'./logs/%s.log' % self.name)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
+        self.logger.disabled = True
 
-        # Log-File für jeden Agenten (default-Level Warning, Speicherung unter ./logs)
-        # logging.basicConfig(filename=r'./logs/%s_fix.log' % self.name, level=logging.INFO, filemode='a')
-        # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-        # Verbindungen an die Datenbanken sowie den Marktplatz
-        self.ConnectionInflux = influxInterface(host=influxHost, database=database)            # Datenbank zur Speicherung der Zeitreihen
-        self.ConnectionMongo = mongoInterface(host=mongoHost, database=database, area=plz)     # Datenbank zur Speicherung der Strukurdaten
+        mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
+               42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]
+        self.week_price_list = WeekPriceList(defaultDay=np.asarray(mcp))
 
-        # Laden der Geoinfomationen
-        if self.ConnectionMongo.getPosition() is None:
-            print('Nummer: %s ist kein offizielles PLZ-Gebiet' % plz)
-            print(' --> Aufbau des Agenten %s_%s beendet' % (typ, plz))
-            exit()
-        else:
-            self.geo = self.ConnectionMongo.getPosition()['geohash']
-
-        # Anbindung an MQTT
-        if config.getboolean('Market', 'Local'):
-            # credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0))
-        else:
-            credentials = pika.PlainCredentials('dMAS', 'dMAS2020')
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=marketHost,heartbeat=0, credentials=credentials))
-        self.receive = self.connection.channel()
-        self.receive.exchange_declare(exchange=exchange, exchange_type='fanout')
-        self.result = self.receive.queue_declare(queue=self.name, exclusive=True)
-        self.queue_name = self.result.method.queue
-        self.receive.queue_bind(exchange=exchange, queue=self.queue_name)
-
-        # Prognosemethoden eines Agenten
+        # forecast methods
         self.forecasts = {
-            'demand': demTyp(self.ConnectionInflux),
-            'weather': weatherForecast(self.ConnectionInflux),
-            'price': priceTyp(self.ConnectionInflux, init=np.random.randint(8, 22))
+            'demand': demandForecast(),
+            'weather': weatherForecast(self.connections['influxDB']),
+            'price': priceForecast()
         }
 
-    def weatherForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
-        """ Wetterprognose des jeweiligen PLZ-Gebietes"""
+    def weather_forecast(self, date=pd.to_datetime('2019-01-01'), days=1, mean=False):
         weather = dict(wind=[], dir=[], dif=[], temp=[])
         for i in range(days):
-            w = self.forecasts['weather'].forecast(str(self.geo), date)
+            # get weather data for day (i)
+            w = self.forecasts['weather'].forecast(str(self.geo), date + pd.DateOffset(days=i), mean)
             for key, value in w.items():
-                weather[key] += value
+                weather[key] = np.concatenate((weather[key], value * np.random.uniform(0.95, 1.05, 24)))
         return weather
 
-    def priceForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
-        """ Preisprognose für MCP, Braun- und Steinkohle, Kernkraft und Gas"""
+    def price_forecast(self, date=pd.to_datetime('2019-01-01'), days=1):
+        # max forecast period is one week! --> Error
         price = dict(power=[], gas=[], co=[], lignite=3.5, coal=8.5, nuc=1)
-        for i in range(days):
-            demand = self.forecasts['demand'].forecast(date)
-            p = self.forecasts['price'].forecast(date, demand)
+        start = pd.to_datetime(date)
+        end = pd.to_datetime(date) + pd.DateOffset(days=days-1)
+
+        last_forecast = None
+        counter = 0
+        for d in pd.date_range(start=start, end=end, freq='d'):
+            demand = self.forecasts['demand'].forecast(d)
+            weather = self.forecasts['weather'].forecast(str(self.geo), d, mean=True)
+
+            if last_forecast is None:
+                price_d1 = self.week_price_list.get_price_yesterday()
+                price_d7 = self.week_price_list.get_price_week_before()
+            else:
+                price_d1 = last_forecast
+                price_d7 = self.week_price_list.get_price_x_days_before(max(7 - counter,1))
+
+            p = self.forecasts['price'].forecast(d, demand, weather, price_d1, price_d7)
+
+            last_forecast = p['power']
+            counter += 1
             for key, value in p.items():
                 if key in ['power', 'gas', 'co']:
-                    price[key] += value
-
+                    price[key] = np.round(np.concatenate((price[key], value)), 2)
+                else:
+                    price[key] = np.round(value, 2)
         return price
 
-    def demandForecast(self, date=pd.to_datetime('2019-01-01'), days=1):
-        """ Lastprognose für Gesamtdeutschland"""
+    def demand_forecast(self, date=pd.to_datetime('2019-01-01'), days=1):
         demand = []
         for i in range(days):
             demand += list(self.forecasts['demand'].forecast(date))
         return np.asarray(demand).reshape((-1,))
 
-    def post_actual(self):
-        print('post actual')
-
     def callback(self, ch, method, properties, body):
-        """ Methodenaufruf zugehörig zum Marktsignal"""
         message = body.decode("utf-8")
+        # print(message)
         self.date = pd.to_datetime(message.split(' ')[1])
-        # Aufruf Regelleistungsmarkt
-        if 'opt_balancing' in message:
-            try:
-                self.optimize_balancing()
-            except Exception as inst:
-                self.exceptionHandle(part='Balancing Plan', inst=inst)
-        # Aufruf DayAhead-Markt
+        # Call DayAhead Optimization Methods for each Agent
+        # -----------------------------------------------------------------------------------------------------------
         if 'opt_dayAhead' in message:
             try:
-                self.optimize_dayAhead()
+                if self.typ != 'NET' and self.typ != 'MRK':
+                    self.optimize_dayAhead()
             except Exception as inst:
-                self.exceptionHandle(part='Day Ahead Plan', inst=inst)
-        # Aufruf Ergebnisse DayAhead-Markt
+                self.exception_handle(part='Day Ahead Plan', inst=inst)
+
+        # Call DayAhead Result Methods for each Agent
+        # -----------------------------------------------------------------------------------------------------------
         if 'result_dayAhead' in message:
             try:
-                self.post_dayAhead()
+                if self.typ != 'NET' and self.typ != 'MRK':
+                    self.post_dayAhead()
             except Exception as inst:
-                self.exceptionHandle(part='Day Ahead Result', inst=inst)
-        # Aufruf Berechnung der aktuellen Erzeugung und Verbrauch
-        if 'opt_actual' in message:
+                self.exception_handle(part='Day Ahead Result', inst=inst)
+
+        # Call for Power Flow Calculation
+        # -----------------------------------------------------------------------------------------------------------
+        if 'grid_calc' in message:
             try:
-                self.optimize_actual()
+                if self.typ == 'NET':
+                    self.calc_power_flow()
             except Exception as inst:
-                self.exceptionHandle(part='Actual Plan', inst=inst)
-        # Aufruf Bereitstellung Regelenergie und Planung des nächsten Tages
-        if 'result_actual' in message:
+                self.exception_handle(part='Grid Calculation', inst=inst)
+
+        # Call for Market Clearing
+        # -----------------------------------------------------------------------------------------------------------
+        if 'dayAhead_clearing' in message:
             try:
-                self.post_actual()
+                if self.typ == 'MRK':
+                    self.clearing()
             except Exception as inst:
-                self.exceptionHandle(part='Actual Results', inst=inst)
-        # Aufruf zum Beenden
-        if 'kill' in message:
-            self.ConnectionInflux.influx.close()
-            self.ConnectionMongo.logout(self.name)
-            self.ConnectionMongo.mongo.close()
-            if not self.connection.is_closed:
-                self.connection.close()
-            print('terminate area')
+                self.exception_handle(part='dayAhead Clearing', inst=inst)
+
+        # Terminate Agents
+        # -----------------------------------------------------------------------------------------------------------
+        if 'kill' in message or self.name in message or self.typ + '_all' in message:
+            self.connections['mongoDB'].logout(self.name)
+            self.connections['influxDB'].influx.close()
+            self.connections['mongoDB'].mongo.close()
+            if not self.connections['connectionMQTT'].is_closed:
+                self.connections['connectionMQTT'].close()
+            print('terminate', self.name)
             exit()
 
-    # ----- Learning Next Day -----
-    def nextDay(self):
-
-        for key, method in self.forecasts.items():
-            if key != 'weather':
-                method.collectData(self.date)
-                method.counter += 1
-
-                if method.counter >= method.collect:
-                    method.fitFunction()
-                    method.counter = 0
-
-        if self.typ != 'DEM':
-            for key, func in self.intelligence.items():
-                func.counter += 1
-                if func.counter >= func.collect:
-                    func.fit()
-                    func.counter = 0
-
-    def run_agent(self):
-        """ Verbinden des Agenten mit der Marktplattform und Warten auf Anweisungen """
-        self.receive.basic_consume(queue=self.queue_name, on_message_callback=self.callback, auto_ack=True)
-        print(' --> Agent %s hat sich mit dem Marktplatz verbunden, wartet auf Anweisungen (To exit press CTRL+C)'
+    def run(self):
+        self.connections['exchangeMQTT'].basic_consume(queue=self.name, on_message_callback=self.callback,
+                                                       auto_ack=True)
+        print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
               % self.name)
-        self.receive.start_consuming()
+        self.connections['exchangeMQTT'].start_consuming()
 
-    def exceptionHandle(self, part, inst):
+    def exception_handle(self, part, inst):
         print(self.name)
         print('Error in ' + part)
         print('Error --> ' + str(inst))
-        # logging.error('%s --> %s' % (part, inst))
-        self.errorCounter += 1
-        if self.errorCounter == 5:
-            self.ConnectionMongo.logout(self.name)
-            self.errorCounter = 0
+
 
 if __name__ == "__main__":
     agent = agent(date='2019-01-01', plz=1)
-    # agent.ConnectionRest.login(agent.name, agent.typ)
-    # agent.run_agent()
+
