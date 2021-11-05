@@ -1,0 +1,7 @@
+numpy
+pika
+pandas
+gurobipy
+influxdb
+pymongo
+# socket

@@ -8,7 +8,7 @@ import numpy as np
 import pypsa
 
 # model modules
-from agents.basic_Agent import agent as basicAgent
+from agents.client_Agent import agent as basicAgent
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 def parse_args():

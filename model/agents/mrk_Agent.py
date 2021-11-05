@@ -8,8 +8,7 @@ import numpy as np
 
 # model modules
 from apps.market import market
-from agents.basic_Agent import agent as basicAgent
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
+from agents.basic_Agent import basicAgent
 
 
 def parse_args():
