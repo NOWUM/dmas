@@ -4,3 +4,4 @@ pandas
 influxdb
 pymongo
 pvlib
+numba
