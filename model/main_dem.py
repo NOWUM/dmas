@@ -1,9 +1,9 @@
-from agents.mrk_Agent import MarketAgent
+from agents.dem_Agent import DemAgent
 
 
 if __name__ == "__main__":
-
-    agent = MarketAgent(date='2018-01-01', plz=44)
+    # TODO: Add PLZ-Code as Env-Var
+    agent = DemAgent(date='2018-02-05', plz=44)
     agent.connections['mongoDB'].login(agent.name)
     try:
         agent.run()
