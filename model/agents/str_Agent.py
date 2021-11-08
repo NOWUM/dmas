@@ -8,7 +8,6 @@ from scipy.stats import norm
 from collections import deque
 
 # model modules
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 from aggregation.portfolio_storage import StrPort
 from agents.client_Agent import agent as basicAgent
 

@@ -8,8 +8,6 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
-    volumes:
-      - ./data/sch-pg:/var/lib/postgresql/data
 
   mongo-express:
     container_name: mongoexpress
@@ -21,7 +19,7 @@ services:
       ME_CONFIG_MONGODB_SERVER: mongodb
       ME_CONFIG_MONGODB_ADMINUSERNAME: admin
       ME_CONFIG_MONGODB_ADMINPASSWORD: admin
-      ME_CONFIG_MONGODB_URL: mongodb://admin:admin@mongo:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin@mongodb:27017/
 
   influxdb:
     container_name: influxdb
@@ -46,7 +44,47 @@ services:
     ports:
       - 3000:3000
 
+  market:
+    container_name: market
+    image: mrk_agent:latest
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile_mrk
+    volumes:
+      - ./docker_service.cfg:/src/agent_service.cfg
 
+  dem1:
+    container_name: dem1
+    image: dem_agent:latest
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile_dem
+    volumes:
+      - ./docker_service.cfg:/src/agent_service.cfg
 
+  pwp1:
+    container_name: pwp1
+    image: pwp_agent:latest
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile_pwp
+    volumes:
+      - ./docker_service.cfg:/src/agent_service.cfg
 
+  res1:
+    container_name: res1
+    image: res_agent:latest
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile_res
+    volumes:
+      - ./docker_service.cfg:/src/agent_service.cfg
 
+  net:
+    container_name: net
+    image: net_agent:latest
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile_net
+    volumes:
+      - ./docker_service.cfg:/src/agent_service.cfg

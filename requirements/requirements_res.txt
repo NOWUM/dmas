@@ -1,0 +1,9 @@
+numpy
+pika
+pandas
+influxdb
+pymongo
+pvlib
+sklearn
+windpowerlib
+statsmodels

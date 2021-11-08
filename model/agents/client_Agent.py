@@ -14,7 +14,6 @@ from apps.frcst_Dem import typFrcst as demandForecast
 from apps.frcst_Price import annFrcst as priceForecast
 from apps.frcst_Weather import weatherForecast
 from apps.misc_WeekPriceList import WeekPriceList
-from apps.qLearn_DayAhead import qLeran as daLearning
 
 
 class agent(basicAgent):

@@ -7,7 +7,6 @@ import pandas as pd
 import numpy as np
 
 # model modules
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 from aggregation.portfolio_renewable import RenewablePortfolio
 from agents.client_Agent import agent as basicAgent
 

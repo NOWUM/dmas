@@ -9,7 +9,6 @@ import pypsa
 
 # model modules
 from agents.client_Agent import agent as basicAgent
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 def parse_args():
     parser = argparse.ArgumentParser()

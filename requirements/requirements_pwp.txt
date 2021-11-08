@@ -3,4 +3,5 @@ pika
 pandas
 influxdb
 pymongo
-
+sklearn
+gurobipy

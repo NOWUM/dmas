@@ -1,5 +1,5 @@
 import numpy as np
-from numba import jitclass
+from numba.experimental import jitclass
 from numba import int32, int64, float32
 
 spec = [    ('year', int32), ('startYear', int32), ('typ', int32),('refSLP', float32[:,:]), ('holiday', int64[:]),

@@ -9,7 +9,6 @@ import copy
 
 
 # model modules
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 from aggregation.portfolio_powerPlant import PwpPort
 from agents.client_Agent import agent as basicAgent
 

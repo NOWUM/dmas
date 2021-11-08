@@ -1,7 +1,6 @@
 # third party modules
 import numpy as np
 import pandas as pd
-from gurobipy import *
 
 
 class PortfolioModel:
@@ -51,9 +50,12 @@ class PortfolioModel:
         self.demand = dict(power=np.zeros_like(self.t, dtype=float),                # total power demand
                            heat=np.zeros_like(self.t, dtype=float))                 # total heat demand
 
+
+        # TODO: create a new base class
         # initialize milp optimization for power plant dispatch
         if gurobi:
-            self.m = Model('aggregation')
+            import gurobipy as gp
+            self.m = gp.Model('aggregation')
             self.m.Params.OutputFlag = 0
             self.m.Params.TimeLimit = 30
             self.m.Params.MIPGap = 0.05

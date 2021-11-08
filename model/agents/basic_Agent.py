@@ -45,7 +45,7 @@ class basicAgent:
 
         # connections to simulation infrastructure
         self.connections = {
-            'mongoDB' : mongoInterface(host=mongo_host, database=database, area=plz),   # connection mongodb
+            'mongoDB': mongoInterface(host=mongo_host, database=database, area=plz),   # connection mongodb
             'influxDB': InfluxInterface(host=influx_host, database=database)            # connection influxdb
         }
 

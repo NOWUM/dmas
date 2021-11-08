@@ -3,5 +3,5 @@ pika
 pandas
 influxdb
 pymongo
-pvlib
-numba
+gurobipy
+
