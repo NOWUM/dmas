@@ -1,6 +1,5 @@
 # third party modules
 import time as tme
-import os
 import argparse
 import pandas as pd
 import numpy as np
@@ -51,8 +50,7 @@ class StrAgent(basicAgent):
 
         # If there are no power systems, terminate the agent
         if len(self.portfolio.energy_systems) == 0:
-            print('Number: %s No energy systems in the area' % plz)
-            exit()
+            raise Exception('Number: %s No energy systems in the area' % plz)
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
@@ -215,10 +213,4 @@ if __name__ == "__main__":
         agent.run()
     except Exception as e:
         print(e)
-    finally:
-        agent.connections['mongoDB'].logout(agent.name)
-        agent.connections['influxDB'].influx.close()
-        agent.connections['mongoDB'].mongo.close()
-        if not agent.connections['connectionMQTT'].is_closed:
-            agent.connections['connectionMQTT'].close()
-        exit()
+

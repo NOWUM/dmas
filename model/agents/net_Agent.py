@@ -1,6 +1,4 @@
 # third party modules
-from sys import exit
-import os
 import argparse
 import time as tme
 import pandas as pd
@@ -167,10 +165,3 @@ if __name__ == "__main__":
         agent.run()
     except Exception as e:
         print(e)
-    finally:
-        agent.connections['mongoDB'].logout(agent.name)
-        agent.connections['influxDB'].influx.close()
-        agent.connections['mongoDB'].mongo.close()
-        if not agent.connections['connectionMQTT'].is_closed:
-            agent.connections['connectionMQTT'].close()
-        exit()

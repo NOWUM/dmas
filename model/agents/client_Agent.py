@@ -1,12 +1,6 @@
 # third party modules
-from sys import exit
-import os
 import pandas as pd
 import numpy as np
-import time as tme
-import pika
-import configparser
-import logging
 
 # model modules
 from agents.basic_Agent import basicAgent

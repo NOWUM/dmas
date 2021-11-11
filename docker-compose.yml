@@ -5,9 +5,13 @@ services:
     container_name: mongodb
     image: mongo:4
     restart: always
+    ports:
+      - 27017:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
+    volumes:
+      - ./data/mongodb:/data/db
 
   mongo-express:
     container_name: mongoexpress
@@ -29,6 +33,8 @@ services:
       DOCKER_INFLUXDB_INIT_USERNAME: admin
       DOCKER_INFLUXDB_INIT_PASSWORD: admin
       DOCKER_INFLUXDB_INIT_ORG: dmas
+    volumes:
+      - ./data/influxdb:/var/lib/influxdb
 
   rabbitmq:
     container_name: rabbitmq

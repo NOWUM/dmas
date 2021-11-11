@@ -1,9 +1,5 @@
 # third party modules
-from sys import exit
-import os
 import pandas as pd
-import numpy as np
-import time as tme
 import pika
 import configparser
 import logging
@@ -51,14 +47,15 @@ class basicAgent:
 
         # check if area is valid
         if self.connections['mongoDB'].get_position() is None:
-            print('Number: %s is no valid area' % plz)
-            print(' --> stopping %s_%s' % (typ, plz))
-            exit()
+            print(f'Number: {plz} is no valid area')
+            print(f' --> stopping {typ}_{plz}')
+            raise Exception(f'Number: {plz} is no valid area')
         else:
             self.geo = self.connections['mongoDB'].get_position()['geohash']
 
         if config.getboolean('Configuration', 'local'):
-            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host,virtual_host='SimAgent', heartbeat=0))#TODO: Heartbeat einfügen, der ausreichend hoch ist, sodass Agenten fertig rechnen können
+            # TODO: Heartbeat einfügen, der ausreichend hoch ist, sodass Agenten fertig rechnen können
+            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host,virtual_host='SimAgent', heartbeat=0))
             self.connections.update({'connectionMQTT': con})
         else:
             crd = pika.PlainCredentials('dMAS', 'dMAS2020')
@@ -79,6 +76,13 @@ class basicAgent:
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
         self.logger.disabled = True
+
+    def __del__(self):
+        self.connections['mongoDB'].logout(self.name)
+        self.connections['influxDB'].influx.close()
+        self.connections['mongoDB'].mongo.close()
+        if not self.connections['connectionMQTT'].is_closed:
+            self.connections['connectionMQTT'].close()
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")
@@ -129,7 +133,6 @@ class basicAgent:
             if not self.connections['connectionMQTT'].is_closed:
                 self.connections['connectionMQTT'].close()
             print('terminate', self.name)
-            exit()
 
     def run(self):
         self.connections['exchangeMQTT'].basic_consume(queue=self.name, on_message_callback=self.callback,
@@ -144,6 +147,4 @@ class basicAgent:
         print('Error --> ' + str(inst))
 
 
-if __name__ == "__main__":
-    agent = agent(date='2019-01-01', plz=1)
 
