@@ -1,0 +1,7 @@
+requests
+bz2
+pygrib
+shapely
+pyshp
+pandas
+numpy
