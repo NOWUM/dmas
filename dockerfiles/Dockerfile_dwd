@@ -1,8 +1,6 @@
-FROM python:3.9
+FROM python:3.9-slim
 
 COPY ./requirements/requirements_dwd.txt .
-
-RUN apt-get update && apt-get install -y libbz2-dev
 
 RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements_dwd.txt
@@ -11,16 +9,14 @@ RUN useradd -s /bin/bash admin
 ENV TZ="Europe/Berlin"
 
 RUN mkdir /src
-RUN cd src
-RUN mkdir /crawler
 RUN chown -R admin /src
 
-COPY ../model/crawler/lat_coordinates.npy /src/crawler/lat_coordinates.npy
-COPY ../model/crawler/lon_coordinates.npy /src/crawler/lat_coordinates.npy
-COPY ../model/crawler/plz_matrix.npy /src/crawler/plz_matrix.npy
-COPY ../model/crawler/plz_geo.dbf /src/crawler/plz_geo.dbf
-COPY ../model/crawler/plz_geo.shp /src/crawler/plz_geo.shp
-COPY ../model/main_dwd.py /src/main_dwd.py
+COPY ./model/crawler/lat_coordinates.npy /src/crawler/lat_coordinates.npy
+COPY ./model/crawler/lon_coordinates.npy /src/crawler/lat_coordinates.npy
+COPY ./model/crawler/plz_matrix.npy /src/crawler/plz_matrix.npy
+COPY ./model/crawler/plz_geo.dbf /src/crawler/plz_geo.dbf
+COPY ./model/crawler/plz_geo.shp /src/crawler/plz_geo.shp
+COPY ./model/main_dwd.py /src/main_dwd.py
 
 USER admin
 WORKDIR /src
