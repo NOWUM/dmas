@@ -1,5 +1,5 @@
 requests
-bz2
+bzip2
 pygrib
 shapely
 pyshp
