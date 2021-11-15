@@ -11,6 +11,8 @@ RUN useradd -s /bin/bash admin
 ENV TZ="Europe/Berlin"
 
 RUN mkdir /src
+RUN cd src
+RUN mkdir /crawler
 RUN chown -R admin /src
 
 COPY ../model/crawler/lat_coordinates.npy /src/crawler/lat_coordinates.npy
