@@ -2,7 +2,7 @@ FROM python:3.9
 
 COPY ./requirements/requirements_dwd.txt .
 
-RUN apt-get install libbz2-dev
+RUN apt-get update && apt-get install -y libbz2-dev
 
 RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements_dwd.txt
