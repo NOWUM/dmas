@@ -23,4 +23,4 @@ COPY ./model/main_dwd.py /src/main_dwd.py
 USER admin
 WORKDIR /src
 
-CMD ["python", "main_dwd.py"]
+CMD ["python", "./main_dwd.py"]
