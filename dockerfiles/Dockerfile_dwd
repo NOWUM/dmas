@@ -11,8 +11,7 @@ ENV TZ="Europe/Berlin"
 RUN mkdir /src
 RUN chown -R admin /src
 
-
-COPY ./model/crawler/__init__.py /src/crawler/__init.py__
+COPY ./model/crawler/__init__.py /src/crawler/__init__.py
 COPY ./model/crawler/lat_coordinates.npy /src/crawler/lat_coordinates.npy
 COPY ./model/crawler/lon_coordinates.npy /src/crawler/lat_coordinates.npy
 COPY ./model/crawler/plz_matrix.npy /src/crawler/plz_matrix.npy
