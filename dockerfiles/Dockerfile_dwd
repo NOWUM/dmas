@@ -11,10 +11,10 @@ ENV TZ="Europe/Berlin"
 RUN mkdir /src
 RUN chown -R admin /src
 
-
-COPY ./model/crawler/__init__.py /src/crawler/__init.py__
+COPY ./model/crawler/__init__.py /src/crawler/__init__.py
+COPY ./model/crawler/OpenDWD_Crawler.py /src/crawler/OpenDWD_Crawler.py
 COPY ./model/crawler/lat_coordinates.npy /src/crawler/lat_coordinates.npy
-COPY ./model/crawler/lon_coordinates.npy /src/crawler/lat_coordinates.npy
+COPY ./model/crawler/lon_coordinates.npy /src/crawler/lon_coordinates.npy
 COPY ./model/crawler/plz_matrix.npy /src/crawler/plz_matrix.npy
 COPY ./model/crawler/plz_geo.dbf /src/crawler/plz_geo.dbf
 COPY ./model/crawler/plz_geo.shp /src/crawler/plz_geo.shp

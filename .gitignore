@@ -4,3 +4,4 @@ data
 ./model/.idea
 *.idx
 *.grb
+.spyproject
