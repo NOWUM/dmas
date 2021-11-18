@@ -14,7 +14,7 @@ RUN chown -R admin /src
 COPY ./model/crawler/__init__.py /src/crawler/__init__.py
 COPY ./model/crawler/OpenDWD_Crawler.py /src/crawler/MaStR_Crawler.py
 
-COPY ./model/main_dwd.py /src/main_dwd.py
+COPY ./model/main_mastr.py /src/main_mastr.py
 
 USER admin
 WORKDIR /src
