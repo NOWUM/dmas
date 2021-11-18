@@ -2,6 +2,9 @@ from crawler.OpenDWD_Crawler import OpenDWDCrawler
 import logging
 import os
 
+log = logging.getLogger('openDWD_cosmo')
+log.setLevel(logging.INFO)
+
 
 if __name__ == "__main__":
 
