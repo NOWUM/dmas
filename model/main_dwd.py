@@ -1,4 +1,5 @@
 from crawler.OpenDWD_Crawler import OpenDWDCrawler
+import logging
 import os
 
 
