@@ -12,3 +12,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--plz', type=int, required=False, default=50, help='PLZ-Agent')
     return parser.parse_args()
+
+
+class WtrAgent(basicAgent):
+
+    def __init__(self):
+        super.__init__()

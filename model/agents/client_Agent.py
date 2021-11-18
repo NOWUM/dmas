@@ -3,14 +3,14 @@ import pandas as pd
 import numpy as np
 
 # model modules
-from agents.basic_Agent import basicAgent
+from agents.basic_Agent import BasicAgent
 from apps.frcst_Dem import typFrcst as demandForecast
 from apps.frcst_Price import annFrcst as priceForecast
 from apps.frcst_Weather import weatherForecast
 from apps.misc_WeekPriceList import WeekPriceList
 
 
-class agent(basicAgent):
+class agent(BasicAgent):
 
     def __init__(self, date, plz, typ='PWP'):
         super().__init__(date=date, plz=plz, typ=typ)
@@ -52,7 +52,7 @@ class agent(basicAgent):
                 price_d7 = self.week_price_list.get_price_week_before()
             else:
                 price_d1 = last_forecast
-                price_d7 = self.week_price_list.get_price_x_days_before(max(7 - counter,1))
+                price_d7 = self.week_price_list.get_price_x_days_before(max(7 - counter, 1))
 
             p = self.forecasts['price'].forecast(d, demand, weather, price_d1, price_d7)
 

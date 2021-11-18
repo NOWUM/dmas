@@ -3,26 +3,24 @@ import pandas as pd
 import pika
 import configparser
 import logging
+import os
 
-# model modules
-from interfaces.interface_Influx import InfluxInterface
-from interfaces.interface_mongo import mongoInterface
 
-class basicAgent:
+class BasicAgent:
 
     def __init__(self, date, plz, typ='PWP'):
+        os.getenv('USER', 'default_user')
 
-        config = configparser.ConfigParser()                        # read config to initialize connection
-        config.read(r'./agent_service.cfg')
-
-        exchange = config['Configuration']['exchange']
-        self.agentSuffix = config['Configuration']['suffix']
+        port = os.getenv('TIMESCALEDB_PORT', 5432)
+        user = os.environ['TIMESCALEDB_USER']
+        password = os.environ['TIMESCALEDB_PASSWORD']
+        database = os.environ['TIMESCALEDB_DATABASE']
 
         # declare meta data for each agent
-        self.name = typ + '_%i' % plz + self.agentSuffix            # name
-        self.plz = plz                                              # area
+        self.plz = int(os.getenv('PLZ_NUMBER', 52))                 # plz code
+        self.typ = os.getenv('AGENT_TYP', 'DEM')                    # agent type
+        self.name = f'{self.typ}_{self.plz}'                        # name
         self.date = pd.to_datetime(date)                            # current day
-        self.typ = typ                                              # generation or consumer typ
 
         # dictionary for performance measuring
         self.performance = dict(initModel=0,                        # build model for da optimization
@@ -34,55 +32,30 @@ class basicAgent:
                                 saveResult=0,                       # save adjustments in influx db
                                 nextDay=0)                          # preparation for coming day
 
-        database = config['Configuration']['database']              # name of simulation database
-        mongo_host = config['Configuration']['mongodb']             # server where mongodb runs
-        influx_host = config['Configuration']['influxdb']           # server where influxdb runs
-        mqtt_host = config['Configuration']['rabbitmq']             # server where mqtt runs
-
-        # connections to simulation infrastructure
-        self.connections = {
-            'mongoDB': mongoInterface(host=mongo_host, database=database, area=plz),   # connection mongodb
-            'influxDB': InfluxInterface(host=influx_host, database=database)            # connection influxdb
-        }
-
-        # check if area is valid
-        if self.connections['mongoDB'].get_position() is None:
-            print(f'Number: {plz} is no valid area')
-            print(f' --> stopping {typ}_{plz}')
-            raise Exception(f'Number: {plz} is no valid area')
-        else:
-            self.geo = self.connections['mongoDB'].get_position()['geohash']
-
-        if config.getboolean('Configuration', 'local'):
-            # TODO: Heartbeat einfügen, der ausreichend hoch ist, sodass Agenten fertig rechnen können
-            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host,virtual_host='SimAgent', heartbeat=0))
-            self.connections.update({'connectionMQTT': con})
-        else:
-            crd = pika.PlainCredentials('dMAS', 'dMAS2020')
-            con = pika.BlockingConnection(pika.ConnectionParameters(host=mqtt_host, virtual_host='SimAgent', heartbeat=0, credentials=crd))
-            self.connections.update({'connectionMQTT': con})
-
-        receive = con.channel()
+        exchange = os.getenv('MQTT_EXCHANGE', 'dMAS')
+        crd = pika.PlainCredentials('dMAS', 'dMAS')
+        self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq',
+                                                                                 virtual_host='SimAgent', heartbeat=0,
+                                                                                 credentials=crd))
+        receive = self.mqtt_connection.channel()
         receive.exchange_declare(exchange=exchange, exchange_type='fanout')
         result = receive.queue_declare(queue=self.name, exclusive=True)
         receive.queue_bind(exchange=exchange, queue=result.method.queue)
-        self.connections.update({'exchangeMQTT': receive})
+
+        self.database = os.getenv('SIMULATION_DATABASE', 'dMAS')    # name of simulation database
 
         # declare logging options
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(logging.INFO)
         fh = logging.FileHandler(r'./logs/%s.log' % self.name)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
-        self.logger.disabled = True
+        # self.logger.disabled = True
 
     def __del__(self):
-        self.connections['mongoDB'].logout(self.name)
-        self.connections['influxDB'].influx.close()
-        self.connections['mongoDB'].mongo.close()
-        if not self.connections['connectionMQTT'].is_closed:
-            self.connections['connectionMQTT'].close()
+        if not self.mqtt_connection.is_closes:
+            self.mqtt_connection.close()
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")

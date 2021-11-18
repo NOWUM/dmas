@@ -6,7 +6,7 @@ import numpy as np
 
 # model modules
 from apps.market import market
-from agents.basic_Agent import basicAgent
+from agents.basic_Agent import BasicAgent
 
 
 def parse_args():
@@ -15,7 +15,7 @@ def parse_args():
     return parser.parse_args()
 
 
-class MarketAgent(basicAgent):
+class MarketAgent(BasicAgent):
 
     def __init__(self, date, plz):
         super().__init__(date=date, plz=plz, typ='MRK')

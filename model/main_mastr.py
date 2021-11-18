@@ -1,16 +1,35 @@
-from crawler.MaStR_Crawler import init_database, get_data_from_MaStR, create_db_from_export
+from crawler.MaStR_Crawler import init_database, create_db_from_export
+import os
 import time
 from sqlalchemy import create_engine
 
+
 if __name__ == "__main__":
 
-    engine = create_engine('postgresql://opendata:opendata@10.13.10.41:5432')
+    host = os.getenv('TIMESCALEDB_HOST', '10.13.10.41')
+    port = int(os.getenv('TIMESCALEDB_PORT', 5432))
+    user = os.getenv('TIMESCALEDB_USER', 'opendata')
+    password = os.getenv('TIMESCALEDB_PASSWORD', 'opendata')
+    database = os.getenv('TIMESCALEDB_DATABASE', 'mastr')
 
-    # while True:
-    with engine.connect() as connection:
-        init_database(connection=connection)
-    create_db_from_export(connection=engine)
+    try:
+        engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}')
+        init_database(connection=engine, database=database)
+        engine.dispose()
 
-    # time.sleep(2*(60*60*24))
+        while True:
+            try:
+                engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
+                create_db_from_export(connection=engine)
+                engine.dispose()
+                time.sleep(2 * (60 * 60 * 24))
+            except Exception as e:
+                time.sleep(300)
+                print(e)
+    except Exception as e:
+        print(e)
+
+
+
 
 
