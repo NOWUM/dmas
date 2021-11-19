@@ -9,7 +9,10 @@ RUN useradd -s /bin/bash admin
 ENV TZ="Europe/Berlin"
 
 RUN mkdir /src
+RUN mkdir /src/grb_files
 RUN chown -R admin /src
+RUN chown -R admin /src/grb_files
+
 
 COPY ./model/crawler/__init__.py /src/crawler/__init__.py
 COPY ./model/crawler/OpenDWD_Crawler.py /src/crawler/OpenDWD_Crawler.py
