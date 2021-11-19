@@ -18,8 +18,8 @@ for year in range(1995,2016):
       context: .
       dockerfile: ./dockerfiles/Dockerfile_dwd
     environment:
-        START_DATE: {year}01
-        END_DATE: {year}12
+      START_DATE: {year}01
+      END_DATE: {year}12
       ''')
 
 with open('docker-compose.yml', 'w') as f:
