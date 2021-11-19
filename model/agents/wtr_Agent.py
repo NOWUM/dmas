@@ -17,4 +17,6 @@ def parse_args():
 class WtrAgent(basicAgent):
 
     def __init__(self):
-        super.__init__()
+        pass
+
+

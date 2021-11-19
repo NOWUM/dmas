@@ -2,7 +2,9 @@ from crawler.MaStR_Crawler import init_database, create_db_from_export
 import os
 import time
 from sqlalchemy import create_engine
+import logging
 
+logging.basicConfig()
 
 if __name__ == "__main__":
 
