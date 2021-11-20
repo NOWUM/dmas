@@ -15,12 +15,12 @@ class BioMassModel(EnergySystem):
 
         # initialize default biomass power plant
         if bio_mass is None:
-            bio_mass = dict(maxPower=50)
+            bio_mass = dict(Power=50)
         self.bio_mass = bio_mass
 
     def optimize(self):
-        random = np.random.uniform(low=0.95, high=1, size=self.T)
-        power_bio = random * self.bio_mass['maxPower']*0.65
+        random = np.random.uniform(low=0.95, high=0.99, size=self.T)
+        power_bio = random * self.bio_mass['Power']
         self.generation['powerBio'] = power_bio.reshape((-1,))/10**3
         self.power = power_bio.reshape((-1,))/10**3
 

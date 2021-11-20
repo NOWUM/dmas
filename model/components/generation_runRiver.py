@@ -19,22 +19,9 @@ class RunRiverModel(EnergySystem):
             run_river = dict(maxPower=50)
         self.run_river = run_river
 
-        self.ref_values = np.load(open(r'./data/Ref_Run_River.array', 'rb'))
-        self.mod = sm.tsa.statespace.SARIMAX(self.ref_values, order=(1, 1, 1), seasonal_order=(1, 0, 1, 24),
-                                             simple_differencing=False)
-
-        self.states = np.load(open(r'./data/States_Run_River.array', 'rb'))
-        self.params = np.asarray([0.6941, -0.9042, 0.8464, -0.7537, 0.0003])
-
     def optimize(self):
-
-        i = self.date.dayofyear
-
-        random = self.mod.simulate(params=self.params, nsimulations=24, anchor='start',
-                                   initial_state=self.states[int(24*np.random.choice(np.arange(max(i-15,0),
-                                                                                               min(i+15, 365)))), :])
-
-        power_water = random*self.run_river['maxPower']
-        self.generation['powerWater'] = np.asarray(power_water, np.float).reshape((-1,))/10**3
-        self.power = np.asarray(power_water, np.float).reshape((-1,))/10**3
+        random = np.random.uniform(low=0.95, high=0.99, size=self.T)
+        power_water = random * self.run_river['Power']
+        self.generation['powerBio'] = power_water.reshape((-1,))/10**3
+        self.power = power_water.reshape((-1,))/10**3
 

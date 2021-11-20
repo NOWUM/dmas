@@ -9,12 +9,6 @@ from aggregation.portfolio_renewable import RenewablePortfolio
 from agents.client_Agent import agent as basicAgent
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=12, help='PLZ-Agent')
-    return parser.parse_args()
-
-
 class ResAgent(basicAgent):
 
     def __init__(self, date, plz):
@@ -24,46 +18,27 @@ class ResAgent(basicAgent):
         start_time = tme.time()
         self.portfolio = RenewablePortfolio()
 
-        # Construction Windenergy
-        for key, value in self.connections['mongoDB'].get_wind_turbines().items():
-            self.portfolio.capacities['capacityWind'] += value['maxPower']
-            self.portfolio.add_energy_system(key, {key: value})
-        self.logger.info('Windenergy added')
-        self.portfolio.aggregate_wind()
+        # Construction Wind energy
+        # TODO: add wind
+        self.logger.info('Run River Power Plants added')
 
         # Construction of the pv systems (free area)
-        for key, value in self.connections['mongoDB'].get_pv_parks().items():
-            if value['typ'] != 'PV70':
-                self.portfolio.capacities['capacitySolar'] += value['maxPower']/10**3
-            else:
-                self.portfolio.capacities['capacitySolar'] += value['maxPower']/10**3 * value['number']
-            self.portfolio.add_energy_system(key, {key: value})
-        self.logger.info('PV(free area) Generation added')
+        # TODO: add free area solar systems
+        self.logger.info('Free Area PV added')
 
         # Construction of the pv systems (h0)
-        for key, value in self.connections['mongoDB'].get_pvs().items():
-            self.portfolio.capacities['capacitySolar'] += value['PV']['maxPower']/10**3 * value['EEG']
-            self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
-        self.logger.info('PV(H0) Generation added')
+        # TODO: add pv households
+        self.logger.info('Household PV added')
 
         # Construction Run River
-        for key, value in self.connections['mongoDB'].get_runriver_systems().items():
-            self.portfolio.add_energy_system('runRiver', {'runRiver': value})
-            self.portfolio.capacities['capacityWater'] += value['maxPower']/10**3
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
-        for key, value in self.connections['mongoDB'].get_biomass_systems().items():
-            self.portfolio.add_energy_system('bioMass', {'bioMass': value})
-            self.portfolio.capacities['capacityBio'] += value['maxPower']/10**3
         self.logger.info('Biomass Power Plants added')
 
-        # If there are no power systems, terminate the agent
-        if len(self.portfolio.energy_systems) == 0:
-            raise Exception('Number: %s No energy systems in the area' % plz)
-
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
+        # TODO: Add Insert in TimescaleDB
+        # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
@@ -73,9 +48,9 @@ class ResAgent(basicAgent):
 
         # Step 1: forecast input data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()                                         # performance timestamp
+        start_time = tme.time()                                             # performance timestamp
 
-        weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
+        weather = self.weather_forecast(self.date, mean=False)              # local weather forecast dayAhead
         self.portfolio.set_parameter(self.date, weather, dict())
         self.portfolio.build_model()
 

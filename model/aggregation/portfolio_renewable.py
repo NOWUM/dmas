@@ -12,7 +12,7 @@ from windpowerlib import power_curves
 class RenewablePortfolio(PortfolioModel):
 
     def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
-        super().__init__(T, dt, gurobi, date)
+        super().__init__(T, dt, date)
 
         # initialize tmp. variables to aggregate the wind turbines to a single one (self.windModel)
         self.powerCurve = None                      # smoothed power curve for aggregated turbine

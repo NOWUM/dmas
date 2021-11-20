@@ -12,7 +12,7 @@ from aggregation.portfolio import PortfolioModel
 class DemandPortfolio(PortfolioModel):
 
     def __int__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
-        super().__init__(T, dt, gurobi, date)
+        super().__init__(T, dt, date)
 
     def add_energy_system(self, name, energy_system):
 

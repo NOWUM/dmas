@@ -8,7 +8,7 @@ class EnergySystem:
     def __init__(self, t=np.arange(24), T=24, dt=1):
         self.t, self.T, self.dt = t, T, dt
 
-        self.demand = dict(power=np.zeros_like(self.t),     # elec. power
+        self.demand = dict(power=np.zeros_like(self.t),     # elect. power
                            heat=np.zeros_like(self.t))      # heat demand
 
         self.generation = dict(powerTotal=np.zeros_like(self.t, dtype=float),       # total generation

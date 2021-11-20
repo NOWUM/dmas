@@ -1,6 +1,6 @@
 # third party modules
 import numpy as np
-from gurobipy import *
+import gurobipy as gby
 
 # model modules
 from components.storage_hydroPlant import Storage
@@ -10,7 +10,13 @@ from aggregation.portfolio import PortfolioModel
 class StrPort(PortfolioModel):
 
     def __int__(self, T=24, dt=1, gurobi=True, date='2020-01-01'):
-        super().__init__(T, dt, gurobi, date)
+        super().__init__(T, dt, date)
+
+        self.m = gby.Model('aggregation')
+        self.m.Params.OutputFlag = 0
+        self.m.Params.TimeLimit = 30
+        self.m.Params.MIPGap = 0.05
+        self.m.__len__ = 1
 
         self.power = np.zeros_like(self.t, np.float)
         self.volume = np.zeros_like(self.t, np.float)
@@ -37,30 +43,30 @@ class StrPort(PortfolioModel):
         self.m.update()
 
         # total power in portfolio
-        power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='P', lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        self.m.addConstrs(power[i] == quicksum(p for p in [x for x in self.m.getVars() if 'P_' in x.VarName]
+        power = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P', lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        self.m.addConstrs(power[i] == gby.quicksum(p for p in [x for x in self.m.getVars() if 'P_' in x.VarName]
                                                if '[%i]' % i in p.VarName) for i in self.t)
         # total volume in portfolio
-        volume = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='V', lb=0, ub=GRB.INFINITY)
-        self.m.addConstrs(volume[i] == quicksum(v for v in [x for x in self.m.getVars() if 'V_' in x.VarName]
+        volume = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='V', lb=0, ub=gby.GRB.INFINITY)
+        self.m.addConstrs(volume[i] == gby.quicksum(v for v in [x for x in self.m.getVars() if 'V_' in x.VarName]
                                                 if '[%i]' % i in v.VarName) for i in self.t)
         # total profit in portfolio
-        profit = self.m.addVar(vtype=GRB.CONTINUOUS, name='Profit', lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        self.m.addConstr(profit == quicksum(power[i] * self.prices['power'][i] for i in self.t))
+        profit = self.m.addVar(vtype=gby.GRB.CONTINUOUS, name='Profit', lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        self.m.addConstr(profit == gby.quicksum(power[i] * self.prices['power'][i] for i in self.t))
 
         self.m.update()
         if response is None:
             # objective function (max cashflow)
-            self.m.setObjective(profit, GRB.MAXIMIZE)
+            self.m.setObjective(profit, gby.GRB.MAXIMIZE)
             self.fix = False
         else:
             self.fix = True
-            delta_power = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='ReBA', lb=0, ub=GRB.INFINITY)
-            minus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='minus', lb=0, ub=GRB.INFINITY)
-            plus = self.m.addVars(self.t, vtype=GRB.CONTINUOUS, name='plus', lb=0, ub=GRB.INFINITY)
+            delta_power = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='ReBA', lb=0, ub=gby.GRB.INFINITY)
+            minus = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='minus', lb=0, ub=gby.GRB.INFINITY)
+            plus = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='plus', lb=0, ub=gby.GRB.INFINITY)
             self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
             self.m.addConstrs(minus[i] + plus[i] == delta_power[i] for i in self.t)
-            self.m.setObjective(quicksum(delta_power[i] for i in self.t), GRB.MINIMIZE)
+            self.m.setObjective(gby.quicksum(delta_power[i] for i in self.t), gby.GRB.MINIMIZE)
 
         self.m.update()
 
