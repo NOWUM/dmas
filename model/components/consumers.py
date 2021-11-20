@@ -41,6 +41,8 @@ class G0Model(es):
         self.e_el = e_el
         self.slpP = slpP(typ=1, refSLP=np.asarray(np.load(open(r'./data/Ref_G0.array', 'rb')), np.float32))
 
+        return self.power
+
     def optimize(self):
         # adjustment Due to the overestimated simultaneity in the SLP
         power = self.e_el * 0.2

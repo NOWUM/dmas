@@ -63,6 +63,7 @@ class PvModel(es):
         grid_use = self.demand['power'] - self.generation['powerSolar']
         # gird usage in [kW]
         self.power = np.asarray(grid_use, np.float).reshape((-1,))
+
         return self.power
 
 

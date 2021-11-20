@@ -1,6 +1,5 @@
 # third party modules
 import time as tme
-import argparse
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
@@ -9,12 +8,6 @@ from collections import deque
 # model modules
 from aggregation.portfolio_storage import StrPort
 from agents.client_Agent import agent as basicAgent
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=57, help='PLZ-Agent')
-    return parser.parse_args()
 
 
 class StrAgent(basicAgent):
@@ -203,14 +196,4 @@ class StrAgent(basicAgent):
 
         self.logger.info('Next day scheduling completed')
 
-
-if __name__ == "__main__":
-
-    args = parse_args()
-    agent = StrAgent(date='2018-01-01', plz=args.plz)
-    agent.connections['mongoDB'].login(agent.name)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)
 

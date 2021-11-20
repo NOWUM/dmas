@@ -63,4 +63,6 @@ class WindModel(EnergySystem):
         self.generation['powerWind'] = np.nan_to_num(power_wind)/10**6
         self.power = np.nan_to_num(power_wind)/10**6
 
+        return self.power
+
 

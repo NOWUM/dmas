@@ -1,7 +1,6 @@
 # third party modules
 import pandas as pd
 import pika
-import configparser
 import logging
 import os
 

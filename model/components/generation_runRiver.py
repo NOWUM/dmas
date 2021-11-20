@@ -25,3 +25,5 @@ class RunRiverModel(EnergySystem):
         self.generation['powerBio'] = power_water.reshape((-1,))/10**3
         self.power = power_water.reshape((-1,))/10**3
 
+        return self.power
+

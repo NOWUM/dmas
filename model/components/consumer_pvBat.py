@@ -115,8 +115,8 @@ class PvBatModel(es):
 
         # gird usage in [kW]
         self.power = np.asarray(grid_use, np.float).reshape((-1,))
-        return self.power
 
+        return self.power
 
 if __name__ == "__main__":
 

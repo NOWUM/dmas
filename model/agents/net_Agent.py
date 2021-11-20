@@ -1,5 +1,4 @@
 # third party modules
-import argparse
 import time as tme
 import pandas as pd
 import numpy as np
@@ -8,10 +7,6 @@ import pypsa
 # model modules
 from agents.client_Agent import agent as basicAgent
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=24, help='PLZ-Agent')
-    return parser.parse_args()
 
 class NetAgent(basicAgent):
 
@@ -156,12 +151,3 @@ class NetAgent(basicAgent):
 
             time += pd.DateOffset(hours=1)
 
-
-if __name__ == "__main__":
-
-    agent = NetAgent(date='2018-01-01', plz=44)
-    agent.connections['mongoDB'].login(agent.name)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)

@@ -1,5 +1,4 @@
 # third party modules
-import argparse
 import time as tme
 import pandas as pd
 import numpy as np
@@ -7,12 +6,6 @@ import numpy as np
 # model modules
 from apps.market import market
 from agents.basic_Agent import BasicAgent
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=24, help='PLZ-Agent')
-    return parser.parse_args()
 
 
 class MarketAgent(BasicAgent):
@@ -100,12 +93,3 @@ class MarketAgent(BasicAgent):
         self.connections['mongoDB'].set_market_status(name='market', date=self.date)
 
         self.market.reset_parameter()
-
-if __name__ == "__main__":
-
-    agent = MarketAgent(date='2018-01-01', plz=44)
-    agent.connections['mongoDB'].login(agent.name)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)

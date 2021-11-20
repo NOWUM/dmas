@@ -1,6 +1,5 @@
 # third party modules
 import time as tme
-import argparse
 import pandas as pd
 import numpy as np
 import os

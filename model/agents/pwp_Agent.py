@@ -1,6 +1,5 @@
 # third party modules
 import time as tme
-import argparse
 import pandas as pd
 import numpy as np
 import copy
@@ -9,12 +8,6 @@ import copy
 # model modules
 from aggregation.portfolio_powerPlant import PwpPort
 from agents.client_Agent import agent as basicAgent
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--plz', type=int, required=False, default=25, help='PLZ-Agent')
-    return parser.parse_args()
 
 
 class PwpAgent(basicAgent):
@@ -429,14 +422,3 @@ class PwpAgent(basicAgent):
         self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.logger.info('Next day scheduling completed')
-
-
-if __name__ == "__main__":
-
-    args = parse_args()
-    agent = PwpAgent(date='2018-01-10', plz=args.plz)
-    agent.connections['mongoDB'].login(agent.name)
-    try:
-        agent.run()
-    except Exception as e:
-        print(e)

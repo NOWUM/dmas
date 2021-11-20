@@ -24,6 +24,8 @@ class BioMassModel(EnergySystem):
         self.generation['powerBio'] = power_bio.reshape((-1,))/10**3
         self.power = power_bio.reshape((-1,))/10**3
 
+        return self.power
+
 
 
 
