@@ -1,4 +1,4 @@
-from gurobipy import *
+import gurobipy as gby
 import numpy as np
 import pandas as pd
 
@@ -9,7 +9,7 @@ class market:
         self.bid_orders = {}
         self.bid_check = {}
 
-        self.m = Model('dayAheadMarket')
+        self.m = gby.Model('dayAheadMarket')
         self.m.Params.OutputFlag = 1
         self.m.Params.TimeLimit = 60
         self.m.Params.MIPGap = 0.05
