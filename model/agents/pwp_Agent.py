@@ -18,28 +18,19 @@ class PwpAgent(basicAgent):
 
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = PwpPort(gurobi=True, T=24)
+        self.portfolio = PwpPort(T=24)
 
         self.init_state = {}
 
         self.step_width = [-10, -5, 0, 5, 10, 500]
 
-        self.shadow_portfolio = PwpPort(gurobi=True, T=48)
+        self.shadow_portfolio = PwpPort(T=48)
 
         # Construction power plants
-        for key, value in self.connections['mongoDB'].get_power_plants().items():
-            if value['maxPower'] > 1:
-                self.portfolio.add_energy_system(key, {key: value})
-                self.shadow_portfolio.add_energy_system(key, {key: value})
-                self.portfolio.capacities['capacity%s' % value['fuel'].capitalize()] += value['maxPower']
         self.logger.info('Power Plants added')
 
-        # If there are no power systems, terminate the agent
-        if len(self.portfolio.energy_systems) == 0:
-            raise Exception('Number: %s No energy systems in the area' % plz)
-
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
+        # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         # initialize dicts for optimization results
         self.portfolio_results = {key: {offset: dict(power=np.array([]),

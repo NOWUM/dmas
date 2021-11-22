@@ -17,6 +17,10 @@ class MarketAgent(BasicAgent):
         self.market = market()
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
+
+
+
+
     def get_orders(self, name, date):
         ask_orders = {}                                                     # all orders (ask)
         bid_orders = {}                                                     # all orders (bid)

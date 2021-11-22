@@ -22,7 +22,7 @@ class agent(BasicAgent):
         # forecast methods
         self.forecasts = {
             'demand': demandForecast(),
-            'weather': weatherForecast(self.connections['influxDB']),
+            # 'weather': weatherForecast(self.connections['influxDB']),
             'price': priceForecast()
         }
 

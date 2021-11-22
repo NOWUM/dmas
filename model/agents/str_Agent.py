@@ -17,15 +17,10 @@ class StrAgent(basicAgent):
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = StrPort(gurobi=True, T=24)
+        self.portfolio = StrPort(T=24)
 
         self.max_volume = 0
         # Construction storages
-        for key, value in self.connections['mongoDB'].get_storages().items():
-            self.portfolio.capacities['capacityWater'] += value['P+_Max']
-            self.portfolio.add_energy_system(key, {key: value})
-            self.max_volume += value['VMax']
-
         self.logger.info('Storages added')
 
         mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
@@ -41,12 +36,7 @@ class StrAgent(basicAgent):
         self.q_ask = [0.55, 0.60, 0.65, 0.75, 0.85, 0.95]
         self.q_bid = [0.45, 0.40, 0.35, 0.25, 0.15, 0.05]
 
-        # If there are no power systems, terminate the agent
-        if len(self.portfolio.energy_systems) == 0:
-            raise Exception('Number: %s No energy systems in the area' % plz)
-
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
