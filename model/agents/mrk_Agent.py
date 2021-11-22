@@ -10,8 +10,8 @@ from agents.basic_Agent import BasicAgent
 
 class MarketAgent(BasicAgent):
 
-    def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, typ='MRK')
+    def __init__(self, date, plz, mqtt_exchange, simulation_database):
+        super().__init__(date, plz, 'MRK', mqtt_exchange, simulation_database)
         self.logger.info('starting the agent')
         start_time = tme.time()
         self.market = market()

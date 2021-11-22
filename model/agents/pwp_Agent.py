@@ -12,8 +12,8 @@ from agents.client_Agent import agent as basicAgent
 
 class PwpAgent(basicAgent):
 
-    def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, typ='PWP')
+    def __init__(self, date, plz, mqtt_exchange, simulation_database):
+        super().__init__(date, plz, 'PWP', mqtt_exchange, simulation_database)
         # Development of the portfolio with the corresponding power plants and storages
 
         self.logger.info('starting the agent')

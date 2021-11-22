@@ -10,8 +10,8 @@ from agents.client_Agent import agent as basicAgent
 
 class ResAgent(basicAgent):
 
-    def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, typ='RES')
+    def __init__(self, date, plz, mqtt_exchange, simulation_database):
+        super().__init__(date, plz, 'RES', mqtt_exchange, simulation_database)
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = tme.time()

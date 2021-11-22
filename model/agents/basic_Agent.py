@@ -7,12 +7,12 @@ import os
 
 class BasicAgent:
 
-    def __init__(self, date, plz, typ='PWP'):
+    def __init__(self, date, plz, typ, mqtt_exchange, simulation_database):
         os.getenv('USER', 'default_user')
 
         # declare meta data for each agent
-        self.plz = int(os.getenv('PLZ_NUMBER', 52))                 # plz code
-        self.typ = os.getenv('AGENT_TYP', 'DEM')                    # agent type
+        self.plz = plz                                              # plz code
+        self.typ = typ                                              # agent type
         self.name = f'{self.typ}_{self.plz}'                        # name
         self.date = pd.to_datetime(date)                            # current day
 
@@ -26,7 +26,7 @@ class BasicAgent:
                                 saveResult=0,                       # save adjustments in influx db
                                 nextDay=0)                          # preparation for coming day
 
-        self.exchange = os.getenv('MQTT_EXCHANGE', 'dMAS')
+        self.exchange = mqtt_exchange
         crd = pika.PlainCredentials('dMAS', 'dMAS')
         self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0))
                                                                                  # credentials=crd))
@@ -35,7 +35,7 @@ class BasicAgent:
         result = self.channel.queue_declare(queue=self.name, exclusive=True)
         self.channel.queue_bind(exchange=self.exchange, queue=result.method.queue)
 
-        self.database = os.getenv('SIMULATION_DATABASE', 'dMAS')    # name of simulation database
+        self.database = simulation_database                          # name of simulation database
 
         # declare logging options
         self.logger = logging.getLogger(self.name)
@@ -45,6 +45,8 @@ class BasicAgent:
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
         # self.logger.disabled = True
+
+
 
     def __del__(self):
         if not self.mqtt_connection.is_closed:

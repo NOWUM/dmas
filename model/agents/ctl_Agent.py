@@ -9,8 +9,9 @@ from agents.basic_Agent import BasicAgent
 
 class CtlAgent(BasicAgent):
 
-    def __init__(self, date, plz):
-        super().__init__(date=date, plz=plz, typ='CTL')
+    def __init__(self, date, plz, mqtt_exchange, simulation_database):
+        super().__init__(date, plz, 'CTL', mqtt_exchange, simulation_database)
+
         self.logger.info('starting the agent')
         start_time = tme.time()
         self.start = os.getenv('SIMULATION_START_DATE', '2018-01-01')

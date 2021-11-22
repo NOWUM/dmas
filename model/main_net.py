@@ -1,11 +1,19 @@
+import logging
+import os
 from agents.net_Agent import NetAgent
 
 
 if __name__ == "__main__":
 
-    agent = NetAgent(date='2018-01-01', plz=44)
-    agent.connections['mongoDB'].login(agent.name)
+    init_dict = {
+        'date': os.getenv('SIMULATION_START_DATE', '2018-01-01'),
+        'plz': os.getenv('PLZ_CODE', 52),
+        'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
+        'simulation_database': os.getenv('SIMULATIONS_DATABASE', 'dMAS')
+    }
+
+    agent = NetAgent(**init_dict)
     try:
         agent.run()
     except Exception as e:
-        print(e)
+        logging.exception(f'Error during Simulation {agent.name}')
