@@ -18,35 +18,19 @@ class DemAgent(basicAgent):
         self.portfolio = DemandPortfolio()
 
         # Construction of the prosumer with photovoltaic and battery
-        for key, value in self.connections['mongoDB'].get_pv_batteries().items():
-            self.portfolio.add_energy_system('PvBat' + str(key), {'PvBat' + str(key): value})
         self.logger.info('Prosumer PV-Bat added')
 
         # Construction consumer with photovoltaic
-        for key, value in self.connections['mongoDB'].get_pvs().items():
-            self.portfolio.add_energy_system('Pv' + str(key), {'Pv' + str(key): value})
         self.logger.info('Consumer PV added')
 
-        demand = self.connections['mongoDB'].get_demand()
-
         # Construction Standard Consumer H0
-        name = 'plz_' + str(plz) + '_h0'
-        self.portfolio.add_energy_system(name, {name: {'demandP': np.round(demand['h0'] * 10 ** 6, 2), 'typ': 'H0'}})
         self.logger.info('H0 added')
 
         # Construction Standard Consumer G0
-        name = 'plz_' + str(plz) + '_g0'
-        self.portfolio.add_energy_system(name, {name: {'demandP': np.round(demand['g0'] * 10 ** 6, 2), 'typ': 'G0'}})
         self.logger.info('G0 added')
 
         # Construction Standard Consumer RLM
-        name = 'plz_' + str(plz) + '_rlm'
-        self.portfolio.add_energy_system(name, {name: {'demandP': np.round(demand['rlm'] * 10 ** 6, 2), 'typ': 'RLM'}})
         self.logger.info('RLM added')
-
-        # If there are no power systems, terminate the agent
-        if len(self.portfolio.energy_systems) == 0:
-            raise Exception('Number: %s No energy systems in the area' % plz)
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 

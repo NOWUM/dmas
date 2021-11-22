@@ -28,7 +28,7 @@ class BasicAgent:
 
         self.exchange = mqtt_exchange
         crd = pika.PlainCredentials('dMAS', 'dMAS')
-        self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=0))
+        self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='10.13.10.41', heartbeat=0))
                                                                                  # credentials=crd))
         self.channel = self.mqtt_connection.channel()
         self.channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
