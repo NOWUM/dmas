@@ -80,24 +80,23 @@ class Infrastructure:
         df['RatedPower'] = df['RatedPower']/10**3
 
         parameters = []
-        for date in df['StartDate'].to_numpy():
-            year = pd.to_datetime(date).year
-            type = 'typ1'
-            for key in self.technical_type.keys():
-                if year > key:
-                    type = self.technical_type[key]
-            # print(type)
-            try:
-                parameters.append(self.technical_parameter[fuel_typ][type])
-            except Exception as e:
-                print(e)
         try:
+            for date in df['StartDate'].to_numpy():
+                year = pd.to_datetime(date).year
+                type = 'typ1'
+                for key in self.technical_type.keys():
+                    if year > key:
+                        type = self.technical_type[key]
+                parameters.append(self.technical_parameter[fuel_typ][type])
+
             tech_df = pd.DataFrame(parameters)
+
             for column in tech_df.columns:
                 if column == 'gradient':
                     df[column] = tech_df[column] * 60 * df['RatedPower']
                 if column == 'MinPower':
                     df[column] = tech_df[column] * df['RatedPower']
+
         except Exception as e:
             print(e)
 
