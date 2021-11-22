@@ -9,7 +9,7 @@ from apps.frcst_Price import annFrcst as priceForecast
 from apps.frcst_Weather import weatherForecast
 from apps.misc_WeekPriceList import WeekPriceList
 
-
+# TODO: Implement in Forecast Package!
 class agent(BasicAgent):
 
     def __init__(self, date, plz, typ, mqtt_exchange, simulation_database):

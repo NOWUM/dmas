@@ -17,9 +17,21 @@ class MarketAgent(BasicAgent):
         self.market = market()
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
-
-
-
+    def callback(self, ch, method, properties, body):
+        message = body.decode("utf-8")
+        self.date = pd.to_datetime(message.split(' ')[1])
+        # Call for Market Clearing
+        # -----------------------------------------------------------------------------------------------------------
+        if 'dayAhead_clearing' in message:
+            try:
+                self.clearing()
+            except:
+                self.logger.exception('Error while caluctating market clearing')
+        # Terminate Agent
+        # -----------------------------------------------------------------------------------------------------------
+        if 'kill' in message or self.name in message or self.typ + '_all' in message:
+            if not self.mqtt_connection.is_closed:
+                self.mqtt_connection.close()
 
     def get_orders(self, name, date):
         ask_orders = {}                                                     # all orders (ask)

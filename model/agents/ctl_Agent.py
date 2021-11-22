@@ -11,11 +11,8 @@ class CtlAgent(BasicAgent):
 
     def __init__(self, date, plz, mqtt_exchange, simulation_database):
         super().__init__(date, plz, 'CTL', mqtt_exchange, simulation_database)
-
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.start = os.getenv('SIMULATION_START_DATE', '2018-01-01')
-        self.end = os.getenv('SIMULATION_END_DATE', '2020-01-01')
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def run(self):
