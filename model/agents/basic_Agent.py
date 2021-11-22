@@ -46,8 +46,6 @@ class BasicAgent:
         self.logger.addHandler(fh)
         # self.logger.disabled = True
 
-
-
     def __del__(self):
         if not self.mqtt_connection.is_closed:
             self.mqtt_connection.close()

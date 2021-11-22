@@ -12,8 +12,6 @@ ENV TZ="Europe/Berlin"
 RUN mkdir /src
 RUN chown -R admin /src
 
-COPY ./model/agent_service.cfg /src/agent_service.cfg
-
 COPY ./model/agents/__init__.py /src/agents/__init__.py
 COPY ./model/agents/basic_Agent.py /src/agents/basic_Agent.py
 COPY ./model/agents/mrk_Agent.py /src/agents/mrk_Agent.py
