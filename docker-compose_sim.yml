@@ -1,30 +1,6 @@
 version: "3"
 services:
 
-  postgresdb:
-    container_name: postgresdb
-    image: postgres
-    restart: always
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: MaStRUser
-      POSTGRES_PASSWORD: MaStR
-      POSTGRES_DB: MaStR
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-
-  influxdb:
-    container_name: influxdb
-    image: influxdb:1.8
-    restart: always
-    environment:
-      DOCKER_INFLUXDB_INIT_USERNAME: admin
-      DOCKER_INFLUXDB_INIT_PASSWORD: admin
-      DOCKER_INFLUXDB_INIT_ORG: dmas
-    volumes:
-      - ./data/influxdb:/var/lib/influxdb
-
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq
@@ -39,14 +15,19 @@ services:
     ports:
       - 3000:3000
 
+  weather:
+    container_name: wtr
+    image: wtr_agent_latest
+    build:
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile_wtr
+
   market:
     container_name: market
     image: mrk_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_mrk
-    volumes:
-      - ./docker_service.cfg:/src/agent_service.cfg
 
   dem1:
     container_name: dem1
@@ -54,8 +35,6 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_dem
-    volumes:
-      - ./docker_service.cfg:/src/agent_service.cfg
 
   pwp1:
     container_name: pwp1
@@ -63,8 +42,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_pwp
-    volumes:
-      - ./docker_service.cfg:/src/agent_service.cfg
+
 
   res1:
     container_name: res1
@@ -72,8 +50,6 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_res
-    volumes:
-      - ./docker_service.cfg:/src/agent_service.cfg
 
   net:
     container_name: net
@@ -81,5 +57,3 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_net
-    volumes:
-      - ./docker_service.cfg:/src/agent_service.cfg
