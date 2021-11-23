@@ -3,4 +3,4 @@ pika
 pandas
 influxdb
 pymongo
-
+sqlalchemy

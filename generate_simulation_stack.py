@@ -11,7 +11,7 @@ output.append('services:\n')
 output.append('''
   rabbitmq:
     container_name: rabbitmq
-    image: rabbitmq
+    image: rabbitmq:3-management
     restart: always
     ports:
       - 15672:15672
