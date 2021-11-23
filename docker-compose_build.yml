@@ -17,28 +17,28 @@ services:
 
   weather:
     container_name: wtr
-    image: wtr_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/dmas/wtr_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_wtr
 
   market:
     container_name: market
-    image: mrk_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/dmas/mrk_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_mrk
 
   dem1:
     container_name: dem1
-    image: dem_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/dmas/dem_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_dem
 
   pwp1:
     container_name: pwp1
-    image: pwp_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/dmas/pwp_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_pwp
@@ -46,14 +46,14 @@ services:
 
   res1:
     container_name: res1
-    image: res_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/dmas/res_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_res
 
   net:
     container_name: net
-    image: net_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/dmas/net_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_net
