@@ -17,7 +17,7 @@ class WtrAgent(BasicAgent):
         self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', index_col=0, sep=';', decimal=',')
         self.geo_info = self.geo_info.set_index('hash')
 
-        self.sim_date = pd.to_datetime(1995, format='%y')
+        self.sim_date = pd.to_datetime('1995', format='%y')
         self.year = self.date.year
         self.leap_years = set([i for i in range(1996, 2016, 4)])
         self.norm_years = set([i for i in range(1995, 2016)]).difference(self.leap_years)
@@ -56,7 +56,7 @@ class WtrAgent(BasicAgent):
 
 
 if __name__ == "__main__":
-    test = WtrAgent(date='2019-01-01', plz=4, mqtt_exchange='dMAS', simulation_database='dMAS')
+    test = WtrAgent(date='2019-01-01', plz=4, mqtt_exchange='dMAS', simulation_database='dMAS', weather_database='weather')
 
 
 
