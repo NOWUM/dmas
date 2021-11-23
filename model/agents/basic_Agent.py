@@ -18,6 +18,8 @@ class BasicAgent:
         # declare logging options
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
+        if not os.path.exists(r'./logs'):
+            os.mkdir(r'./logs')
         fh = logging.FileHandler(r'./logs/%s.log' % self.name)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         fh.setFormatter(formatter)
@@ -37,6 +39,7 @@ class BasicAgent:
         self.database = simulation_database  # name of simulation database
 
         self.exchange = mqtt_exchange
+        self.mqtt_connection = False
         try:
             self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
             self.channel = self.mqtt_connection.channel()
