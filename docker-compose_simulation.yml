@@ -1,6 +1,31 @@
 version: "3"
 services:
 
+  simulationdb:
+    container_name: simulationdb
+    image: timescale/timescaledb:latest-pg12
+    restart: always
+    environment:
+      - POSTGRES_USER=dMAS
+      - POSTGRES_PASSWORD=dMAS
+      - POSTGRES_DB=dMAS
+    volumes:
+      - ./data/open-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    environment:
+        PGADMIN_DEFAULT_EMAIL: nowum-energy@fh-aachen.de
+        PGADMIN_DEFAULT_PASSWORD: nowum
+        PGADMIN_LISTEN_PORT: 80
+    ports:
+        - 9090:80
+    volumes:
+        - ./data/pgadmin:/var/lib/pgadmin
+
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management
@@ -15,6 +40,8 @@ services:
     restart: always
     ports:
       - 3000:3000
+    volumes:
+     - ./data/grafana:/var/lib/grafana
 
   market:
     container_name: mrk
@@ -23,7 +50,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
 
   weather:
     container_name: wtr
@@ -32,8 +59,9 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
-      WEATHER_DATABASE: 'weather'
+      SIMULATIONS_DATABASE: dMAS
+      WEATHER_DATABASE: weather
+      WEATHER_HOST: 10.13.10.41
 
   tso:
     container_name: net
@@ -42,7 +70,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
 
   dem50:
     container_name: dem50
@@ -51,7 +79,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   dem51:
     container_name: dem51
@@ -60,7 +88,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   dem52:
     container_name: dem52
@@ -69,7 +97,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   dem53:
     container_name: dem53
@@ -78,7 +106,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   dem54:
     container_name: dem54
@@ -87,7 +115,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   dem55:
     container_name: dem55
@@ -96,7 +124,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   pwp50:
     container_name: pwp50
@@ -105,7 +133,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   pwp51:
     container_name: pwp51
@@ -114,7 +142,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   pwp52:
     container_name: pwp52
@@ -123,7 +151,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   pwp53:
     container_name: pwp53
@@ -132,7 +160,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   pwp54:
     container_name: pwp54
@@ -141,7 +169,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   pwp55:
     container_name: pwp55
@@ -150,7 +178,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   res50:
     container_name: res50
@@ -159,7 +187,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   res51:
     container_name: res51
@@ -168,7 +196,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   res52:
     container_name: res52
@@ -177,7 +205,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   res53:
     container_name: res53
@@ -186,7 +214,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   res54:
     container_name: res54
@@ -195,7 +223,7 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       
   res55:
     container_name: res55
@@ -204,5 +232,5 @@ services:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: dMAS
       

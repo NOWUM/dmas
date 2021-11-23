@@ -43,7 +43,7 @@ class WtrAgent(BasicAgent):
         if 'calculate_weather' in message:
             try:
                 self.set_weather()
-            except:
+            except Exception as e:
                 self.logger.exception('Error while calculating')
         # Terminate Agent
         # -----------------------------------------------------------------------------------------------------------

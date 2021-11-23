@@ -3,10 +3,43 @@
 # generates a docker-compose.yml to crawl the data from dwd
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/dmas/'
+simulation_database = 'dMAS'
+weather_database = 'weather'
+weather_host = '10.13.10.41'
+
 
 output = []
 output.append('version: "3"\n')
 output.append('services:\n')
+# Build TimescaleDB
+output.append(f'''
+  simulationdb:
+    container_name: simulationdb
+    image: timescale/timescaledb:latest-pg12
+    restart: always
+    environment:
+      - POSTGRES_USER=dMAS
+      - POSTGRES_PASSWORD=dMAS
+      - POSTGRES_DB={simulation_database}
+    volumes:
+      - ./data/open-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+''')
+# Build PGAdmin
+output.append('''
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    environment:
+        PGADMIN_DEFAULT_EMAIL: nowum-energy@fh-aachen.de
+        PGADMIN_DEFAULT_PASSWORD: nowum
+        PGADMIN_LISTEN_PORT: 80
+    ports:
+        - 9090:80
+    volumes:
+        - ./data/pgadmin:/var/lib/pgadmin
+''')
 # Build Rabbitmq
 output.append('''
   rabbitmq:
@@ -25,6 +58,8 @@ output.append('''
     restart: always
     ports:
       - 3000:3000
+    volumes:
+     - ./data/grafana:/var/lib/grafana
 ''')
 # Build one Market
 output.append(f'''
@@ -35,7 +70,7 @@ output.append(f'''
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: {simulation_database}
 ''')
 # Build one Weather Agent
 output.append(f'''
@@ -46,8 +81,9 @@ output.append(f'''
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
-      WEATHER_DATABASE: 'weather'
+      SIMULATIONS_DATABASE: {simulation_database}
+      WEATHER_DATABASE: {weather_database}
+      WEATHER_HOST: {weather_host}
 ''')
 # Build one TSO
 output.append(f'''
@@ -58,7 +94,7 @@ output.append(f'''
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: {simulation_database}
 ''')
 # Build Demand Agents
 for plz in range(50, 56):
@@ -70,7 +106,7 @@ for plz in range(50, 56):
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: {simulation_database}
       ''')
 # Build Power Plant Agents
 for plz in range(50, 56):
@@ -82,7 +118,7 @@ for plz in range(50, 56):
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: {simulation_database}
       ''')
 # Build Renewable Energy Agents
 for plz in range(50, 56):
@@ -94,7 +130,7 @@ for plz in range(50, 56):
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: 'dMAS'
+      SIMULATIONS_DATABASE: {simulation_database}
       ''')
 
 with open('docker-compose_simulation.yml', 'w') as f:

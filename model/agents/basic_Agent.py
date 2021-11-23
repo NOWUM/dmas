@@ -24,7 +24,7 @@ class BasicAgent:
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
-        self.logger.disabled = True
+        # self.logger.disabled = True
 
         # dictionary for performance measuring
         self.performance = dict(initModel=0,                        # build model for da optimization
