@@ -15,6 +15,15 @@ class BasicAgent:
         self.name = f'{self.typ}_{self.plz}'                        # name
         self.date = pd.to_datetime(date)                            # current day
 
+        # declare logging options
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.INFO)
+        fh = logging.FileHandler(r'./logs/%s.log' % self.name)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
+        self.logger.disabled = True
+
         # dictionary for performance measuring
         self.performance = dict(initModel=0,                        # build model for da optimization
                                 optModel=0,                         # optimize for da market
@@ -25,28 +34,21 @@ class BasicAgent:
                                 saveResult=0,                       # save adjustments in influx db
                                 nextDay=0)                          # preparation for coming day
 
+        self.database = simulation_database  # name of simulation database
+
         self.exchange = mqtt_exchange
-        crd = pika.PlainCredentials('dMAS', 'dMAS')
-        self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
-
-        self.channel = self.mqtt_connection.channel()
-        self.channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
-        result = self.channel.queue_declare(queue=self.name, exclusive=True)
-        self.channel.queue_bind(exchange=self.exchange, queue=result.method.queue)
-
-        self.database = simulation_database                          # name of simulation database
-
-        # declare logging options
-        self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO)
-        fh = logging.FileHandler(r'./logs/%s.log' % self.name)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        fh.setFormatter(formatter)
-        self.logger.addHandler(fh)
-        self.logger.disabled = True
+        try:
+            self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
+            self.channel = self.mqtt_connection.channel()
+            self.channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
+            result = self.channel.queue_declare(queue=self.name, exclusive=True)
+            self.channel.queue_bind(exchange=self.exchange, queue=result.method.queue)
+        except Exception as e:
+            self.mqtt_connection = False
+            self.logger.exception('Cant connect to MQTT')
 
     def __del__(self):
-        if not self.mqtt_connection.is_closed:
+        if self.mqtt_connection and not self.mqtt_connection.is_closed:
             self.mqtt_connection.close()
 
     def callback(self, ch, method, properties, body):
@@ -54,10 +56,11 @@ class BasicAgent:
         self.date = pd.to_datetime(message.split(' ')[1])
 
     def run(self):
-        self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
-        print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
-              % self.name)
-        self.channel.start_consuming()
+        if self.mqtt_connection:
+            self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
+            print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
+                  % self.name)
+            self.channel.start_consuming()
 
 
 if __name__ == '__main__':

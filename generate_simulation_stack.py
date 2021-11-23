@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # generates a docker-compose.yml to crawl the data from dwd
 
+image_repo = 'registry.git.fh-aachen.de/nowum-energy/dmas/'
+
 output = []
 output.append('version: "3"\n')
 output.append('services:\n')
@@ -25,28 +27,28 @@ output.append('''
       - 3000:3000
 ''')
 # Build one Market
-output.append('''
+output.append(f'''
   market:
     container_name: mrk
-    image: mrk_agent_latest
+    image: {image_repo}mrk_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_mrk
 ''')
 # Build one Weather Agent
-output.append('''
+output.append(f'''
   weather:
     container_name: wtr
-    image: wtr_agent_latest
+    image: {image_repo}wtr_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_wtr
 ''')
 # Build one TSO
-output.append('''
+output.append(f'''
   tso:
     container_name: net
-    image: net_agent_latest
+    image: {image_repo}net_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_net
@@ -56,7 +58,7 @@ for plz in range(50, 56):
     output.append(f'''
   dem{plz}:
     container_name: dem{plz}
-    image: dem_agent:latest
+    image: {image_repo}dem_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_dem
@@ -66,7 +68,7 @@ for plz in range(50, 56):
     output.append(f'''
   pwp{plz}:
     container_name: pwp{plz}
-    image: pwp_agent:latest
+    image: {image_repo}pwp_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_pwp
@@ -76,7 +78,7 @@ for plz in range(50, 56):
     output.append(f'''
   res{plz}:
     container_name: res{plz}
-    image: res_agent:latest
+    image: {image_repo}res_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_res

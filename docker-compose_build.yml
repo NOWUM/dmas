@@ -17,7 +17,7 @@ services:
 
   weather:
     container_name: wtr
-    image: wtr_agent_latest
+    image: wtr_agent:latest
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile_wtr
