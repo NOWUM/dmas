@@ -1,6 +1,4 @@
 # third party modules
-import os
-import time as tme
 import pandas as pd
 import numpy as np
 import calendar
@@ -9,11 +7,13 @@ import calendar
 from agents.basic_Agent import BasicAgent
 from interfaces.weather import Weather
 
+
 class WtrAgent(BasicAgent):
 
-    def __init__(self, date, plz, mqtt_exchange, simulation_database):
+    def __init__(self, date, plz, mqtt_exchange, simulation_database, weather_database):
         super().__init__(date, plz, 'CTL', mqtt_exchange, simulation_database)
         self.interface_weather = Weather()
+        self.weather_database = weather_database
         self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', index_col=0, sep=';', decimal=',')
         self.geo_info = self.geo_info.set_index('hash')
 
@@ -57,5 +57,7 @@ class WtrAgent(BasicAgent):
 
 if __name__ == "__main__":
     test = WtrAgent(date='2019-01-01', plz=4, mqtt_exchange='dMAS', simulation_database='dMAS')
+
+
 
 
