@@ -31,18 +31,34 @@ output.append(f'''
   market:
     container_name: mrk
     image: {image_repo}mrk_agent:latest
+    environment:
+      SIMULATION_START_DATE: '2018-01-01'
+      PLZ_CODE: 1
+      MQTT_EXCHANGE: 'dMAS'
+      SIMULATIONS_DATABASE: 'dMAS'
 ''')
 # Build one Weather Agent
 output.append(f'''
   weather:
     container_name: wtr
     image: {image_repo}wtr_agent:latest
+    environment:
+      SIMULATION_START_DATE: '2018-01-01'
+      PLZ_CODE: 1
+      MQTT_EXCHANGE: 'dMAS'
+      SIMULATIONS_DATABASE: 'dMAS'
+      WEATHER_DATABASE: 'weather'
 ''')
 # Build one TSO
 output.append(f'''
   tso:
     container_name: net
     image: {image_repo}net_agent:latest
+    environment:
+      SIMULATION_START_DATE: '2018-01-01'
+      PLZ_CODE: 1
+      MQTT_EXCHANGE: 'dMAS'
+      SIMULATIONS_DATABASE: 'dMAS'
 ''')
 # Build Demand Agents
 for plz in range(50, 56):
@@ -50,6 +66,11 @@ for plz in range(50, 56):
   dem{plz}:
     container_name: dem{plz}
     image: {image_repo}dem_agent:latest
+    environment:
+      SIMULATION_START_DATE: '2018-01-01'
+      PLZ_CODE: {plz}
+      MQTT_EXCHANGE: 'dMAS'
+      SIMULATIONS_DATABASE: 'dMAS'
       ''')
 # Build Power Plant Agents
 for plz in range(50, 56):
@@ -57,6 +78,11 @@ for plz in range(50, 56):
   pwp{plz}:
     container_name: pwp{plz}
     image: {image_repo}pwp_agent:latest
+    environment:
+      SIMULATION_START_DATE: '2018-01-01'
+      PLZ_CODE: {plz}
+      MQTT_EXCHANGE: 'dMAS'
+      SIMULATIONS_DATABASE: 'dMAS'
       ''')
 # Build Renewable Energy Agents
 for plz in range(50, 56):
@@ -64,6 +90,11 @@ for plz in range(50, 56):
   res{plz}:
     container_name: res{plz}
     image: {image_repo}res_agent:latest
+    environment:
+      SIMULATION_START_DATE: '2018-01-01'
+      PLZ_CODE: {plz}
+      MQTT_EXCHANGE: 'dMAS'
+      SIMULATIONS_DATABASE: 'dMAS'
       ''')
 
 with open('docker-compose_simulation.yml', 'w') as f:

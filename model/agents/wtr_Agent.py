@@ -17,7 +17,7 @@ class WtrAgent(BasicAgent):
         self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', index_col=0, sep=';', decimal=',')
         self.geo_info = self.geo_info.set_index('hash')
 
-        self.sim_date = pd.to_datetime(self.sim_year, format='%y')
+        self.sim_date = pd.to_datetime(1995, format='%y')
         self.year = self.date.year
         self.leap_years = set([i for i in range(1996, 2016, 4)])
         self.norm_years = set([i for i in range(1995, 2016)]).difference(self.leap_years)
