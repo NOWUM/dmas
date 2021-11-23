@@ -4,3 +4,4 @@ pandas
 influxdb
 pymongo
 sqlalchemy
+psycopg2-binary

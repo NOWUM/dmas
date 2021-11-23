@@ -7,3 +7,5 @@ pvlib
 sklearn
 windpowerlib
 statsmodels
+sqlalchemy
+psycopg2-binary
