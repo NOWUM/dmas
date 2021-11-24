@@ -1,0 +1,19 @@
+# run: conda env create -f environment.yml
+# or to recreate: conda env create -f environment.yml --force
+name: dmas
+dependencies:
+- python=3.9
+- numpy
+- pandas
+- matplotlib
+- Flask
+- SQLAlchemy
+- pip
+- pip:
+  - -r requirements/requirements_mrk.txt
+- pip:
+  - -r requirements/requirements_dem.txt
+- spyder<5
+- jupyter
+- pytest
+- pytest-cov
