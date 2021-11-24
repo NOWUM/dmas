@@ -1,6 +1,6 @@
 # third party modules
 import os
-from gurobipy import *
+import gurobipy as gby
 import numpy as np
 
 
@@ -22,7 +22,7 @@ class Storage(EnergySystem):
         self.name = name  # storage name
 
         # initialize gurobi model for optimization
-        self.m = Model('storage')
+        self.m = gby.Model('storage')
         self.m.Params.OutputFlag = 0
         self.m.Params.TimeLimit = 30
         self.m.Params.MIPGap = 0.05
@@ -33,16 +33,16 @@ class Storage(EnergySystem):
     def initialize_model(self, model, name):
 
         # power and volume
-        power = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='P_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        volume = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='V_' + name, lb=self.storage['VMin'],
+        power = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P_' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        volume = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='V_' + name, lb=self.storage['VMin'],
                                ub=self.storage['VMax'])
 
-        pP = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='P+_' + name, lb=0, ub=self.storage['P+_Max'])
-        pM = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='P-_' + name, lb=0, ub=self.storage['P-_Max'])
-        on = model.addVars(self.t, vtype=GRB.BINARY, name='On_' + name)
+        pP = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P+_' + name, lb=0, ub=self.storage['P+_Max'])
+        pM = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P-_' + name, lb=0, ub=self.storage['P-_Max'])
+        on = model.addVars(self.t, vtype=gby.GRB.BINARY, name='On_' + name)
 
         # profit
-        profit = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='Profit_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
+        profit = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='Profit_' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
         model.addConstrs(profit[i] == power[i] * self.prices['power'][i] for i in self.t)
 
         # power = charge + discharge
@@ -59,7 +59,7 @@ class Storage(EnergySystem):
         model.addConstrs(volume[i] == volume[i-1] + self.dt *
                          (self.storage['eta+'] * pP[i] - pM[i] / self.storage['eta-']) for i in self.t[1:])
 
-        model.setObjective(quicksum(profit[i] for i in self.t), GRB.MAXIMIZE)
+        model.setObjective(gby.quicksum(profit[i] for i in self.t), gby.GRB.MAXIMIZE)
 
         model.update()
 

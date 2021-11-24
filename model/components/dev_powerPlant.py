@@ -1,6 +1,6 @@
 # third party modules
 import os
-from gurobipy import *
+import gurobipy as gby
 import numpy as np
 
 # model modules
@@ -34,7 +34,7 @@ class PowerPlant(EnergySystem):
         self.name = name  # power plant block name
 
         # initialize gurobi model for optimization
-        self.m = Model('power_plant')
+        self.m = gby.Model('power_plant')
         self.m.Params.OutputFlag = 0
         self.m.Params.TimeLimit = 30
         self.m.Params.MIPGap = 0.05
@@ -65,17 +65,17 @@ class PowerPlant(EnergySystem):
         su = self.power_plant['minPower']
         sd = self.power_plant['minPower']
 
-        p_out = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='P_' + name, lb=0, ub=self.power_plant['maxPower'])
+        p_out = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P_' + name, lb=0, ub=self.power_plant['maxPower'])
         # power at each time t
         model.addConstr(p_out[0] <= self.power_plant['P0'] + self.power_plant['gradP'])
         model.addConstr(p_out[0] >= self.power_plant['P0'] - self.power_plant['gradM'])
         # power corresponding to the optimization
-        p_opt = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='opt_', lb=0, ub=delta)
+        p_opt = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='opt_', lb=0, ub=delta)
 
         # states (on, ramp up, ramp down)
-        z = model.addVars(self.t, vtype=GRB.BINARY, name='z_' + name)
-        v = model.addVars(self.t, vtype=GRB.BINARY, name='v_' + name)
-        w = model.addVars(self.t, vtype=GRB.BINARY, name='w_' + name)
+        z = model.addVars(self.t, vtype=gby.GRB.BINARY, name='z_' + name)
+        v = model.addVars(self.t, vtype=gby.GRB.BINARY, name='v_' + name)
+        w = model.addVars(self.t, vtype=gby.GRB.BINARY, name='w_' + name)
         model.addConstrs(p_out[i] == p_opt[i] + z[i] * self.power_plant['minPower'] for i in self.t)
 
         # power limits
@@ -89,9 +89,9 @@ class PowerPlant(EnergySystem):
         model.addConstrs(p_opt[i - 1] - p_opt[i] <= self.power_plant['gradM'] * z[i] for i in self.t[1:])
 
         # run- & stop-times
-        model.addConstrs(1 - z[i] >= quicksum(w[k] for k in range(max(0, i + 1 - self.power_plant['stopTime']), i))
+        model.addConstrs(1 - z[i] >= gby.quicksum(w[k] for k in range(max(0, i + 1 - self.power_plant['stopTime']), i))
                          for i in self.t)
-        model.addConstrs(z[i] >= quicksum(v[k] for k in range(max(0, i + 1 - self.power_plant['runTime']), i))
+        model.addConstrs(z[i] >= gby.quicksum(v[k] for k in range(max(0, i + 1 - self.power_plant['runTime']), i))
                          for i in self.t)
         model.addConstrs(z[i - 1] - z[i] + v[i] - w[i] == 0 for i in self.t[1:])
 
@@ -103,7 +103,7 @@ class PowerPlant(EnergySystem):
             model.addConstrs(z[i] == 0 for i in range(0, self.power_plant['stopTime']
                                                       - self.power_plant['off']))
         # fuel cost
-        fuel = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='F_' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
+        fuel = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='F_' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
         if self.power_plant['fuel'] == 'lignite':
             model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['lignite'] for i in self.t)
         if self.power_plant['fuel'] == 'coal':
@@ -114,18 +114,18 @@ class PowerPlant(EnergySystem):
             model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['nuc'] for i in self.t)
 
         # emission cost
-        emission = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='E_' + name, lb=0, ub=GRB.INFINITY)
+        emission = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='E_' + name, lb=0, ub=gby.GRB.INFINITY)
         model.addConstrs(emission[i] == p_out[i] * self.power_plant['chi'] / self.power_plant['eta']
                          * self.prices['co'][i] for i in self.t)
 
         # start cost
-        start_up = model.addVars(self.t, vtype=GRB.CONTINUOUS, name='S_' + name, lb=0, ub=GRB.INFINITY)
+        start_up = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='S_' + name, lb=0, ub=gby.GRB.INFINITY)
         model.addConstrs(start_up[i] == v[i] * self.start_cost for i in self.t)
 
-        profit = model.addVar(vtype=GRB.CONTINUOUS, name='Profit' + name, lb=-GRB.INFINITY, ub=GRB.INFINITY)
-        model.addConstr(profit == quicksum(p_out[i] * self.prices['power'][i] for i in self.t))
-        model.setObjective(profit - quicksum(fuel[i] + emission[i] + start_up[i] for i in self.t),
-                           GRB.MAXIMIZE)
+        profit = model.addVar(vtype=gby.GRB.CONTINUOUS, name='Profit' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        model.addConstr(profit == gby.quicksum(p_out[i] * self.prices['power'][i] for i in self.t))
+        model.setObjective(profit - gby.quicksum(fuel[i] + emission[i] + start_up[i] for i in self.t),
+                           gby.GRB.MAXIMIZE)
 
         model.update()
 
@@ -360,4 +360,3 @@ if __name__ == "__main__":
                         block_number += 1                                   # increment block number
 
             last_power = result[0][:24]                                      # set last_power to current power
-

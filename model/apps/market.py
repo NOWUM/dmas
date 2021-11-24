@@ -57,7 +57,7 @@ class market:
     def optimize(self):
         # Step 0 initialize model and add magic power source with maximal price (prevent infeasible model)
         max_prc = [np.round(20000, 2) for i in range(24)]
-        max_vol = self.m.addVars(range(24), vtype=GRB.CONTINUOUS, name='magicSource_', lb=0.0, ub=GRB.INFINITY)
+        max_vol = self.m.addVars(range(24), vtype=gby.GRB.CONTINUOUS, name='magicSource_', lb=0.0, ub=gby.GRB.INFINITY)
 
         self.m.remove(self.m.getVars())
         self.m.remove(self.m.getConstrs())
@@ -65,36 +65,36 @@ class market:
         # Step 1 initialize orders
         # -----------------------------------------------------------------------------------------------------------
         # split in dictionary ids, id:prc, id:vol, id:linked
-        ask_id, ask_prc, ask_vol, ask_block = multidict(self.ask_orders)
+        ask_id, ask_prc, ask_vol, ask_block = gby.multidict(self.ask_orders)
         # get all ask agents
         ask_agents = np.unique([a[-1] for a in ask_id])
         # get all blocks and dependency per ask agent
-        ask_blocks = tuplelist([(i, agent, ask_block.select(i, '*', '*', str(agent))[0]) for agent in ask_agents
+        ask_blocks = gby.tuplelist([(i, agent, ask_block.select(i, '*', '*', str(agent))[0]) for agent in ask_agents
                                 for i in range(ask_id.select('*', '*', '*', str(agent))[-1][0] + 1) if
                                 ask_block.select(i, '*', '*', str(agent))[0] != 'x'])
 
         # split in dictionary ids, id:prc, id:vol, _
-        bid_id, bid_prc, bid_vol, _ = multidict(self.bid_orders)
+        bid_id, bid_prc, bid_vol, _ = gby.multidict(self.bid_orders)
         # get all bid agents
         bid_agents = np.unique([b[-1] for b in bid_id])
 
         # Step 2 initialize binary variables for blocks and orders
         # -----------------------------------------------------------------------------------------------------------
         # used block to meet the demand
-        used_ask_blocks = self.m.addVars(ask_blocks, vtype=GRB.BINARY, name='askBlock_')
+        used_ask_blocks = self.m.addVars(ask_blocks, vtype=gby.GRB.BINARY, name='askBlock_')
         # used ask orders in block
-        used_ask_orders = self.m.addVars(ask_id, vtype=GRB.BINARY, name='askOrder_')
+        used_ask_orders = self.m.addVars(ask_id, vtype=gby.GRB.BINARY, name='askOrder_')
 
         # Step 3 initialize cost variable for objective function (minimize sum(cost for each hour))
         # -----------------------------------------------------------------------------------------------------------
         # resulting costs for each hour
-        x = self.m.addVars(range(24), vtype=GRB.CONTINUOUS, name='costs', lb=-GRB.INFINITY, ub=GRB.INFINITY)
+        x = self.m.addVars(range(24), vtype=gby.GRB.CONTINUOUS, name='costs', lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
 
         # Step 4 set constraint: If all orders for one agent in one block are used -> set block id = True
         # -----------------------------------------------------------------------------------------------------------
         for agent in ask_agents:
             self.m.addConstrs(used_ask_blocks[b] * len(used_ask_orders.select(b[0], '*', '*', str(agent))) ==
-                              quicksum(used_ask_orders.select(b[0], '*', '*', str(agent)))
+                              gby.quicksum(used_ask_orders.select(b[0], '*', '*', str(agent)))
                               for b in ask_blocks.select('*', str(agent), '*'))
         self.m.update()
         constraint_counter = len(self.m.getConstrs())
@@ -103,7 +103,7 @@ class market:
         # Step 5 set constraint: If parent block of an agent is used -> enable usage of child block
         # -----------------------------------------------------------------------------------------------------------
         for agent in ask_agents:
-            self.m.addConstrs(used_ask_blocks[b] <= quicksum(used_ask_blocks.select(b[-1], str(agent), '*'))
+            self.m.addConstrs(used_ask_blocks[b] <= gby.quicksum(used_ask_blocks.select(b[-1], str(agent), '*'))
                          for b in ask_blocks.select('*', str(agent), '*'))
         self.m.update()
         print('added %s constraints' % (len(self.m.getConstrs()) - constraint_counter))
@@ -111,8 +111,8 @@ class market:
 
         # Step 6 set constraint: Meet Demand in each hour
         # -----------------------------------------------------------------------------------------------------------
-        self.m.addConstrs(quicksum(ask_vol[o] * used_ask_orders[o] for o in ask_id.select('*', i, '*', '*'))
-                          + max_vol[i] == quicksum(bid_vol[o] for o in bid_id.select('*', i, '*', '*'))
+        self.m.addConstrs(gby.quicksum(ask_vol[o] * used_ask_orders[o] for o in ask_id.select('*', i, '*', '*'))
+                          + max_vol[i] == gby.quicksum(bid_vol[o] for o in bid_id.select('*', i, '*', '*'))
                           for i in range(24))
 
         self.m.update()
@@ -121,14 +121,14 @@ class market:
 
         # Step 7 set constraint: Cost for each hour
         # -----------------------------------------------------------------------------------------------------------
-        self.m.addConstrs(x[i] == quicksum(ask_vol[o] * ask_prc[o] * used_ask_orders[o]
+        self.m.addConstrs(x[i] == gby.quicksum(ask_vol[o] * ask_prc[o] * used_ask_orders[o]
                                            for o in ask_id.select('*', i, '*', '*')) + max_vol[i] * max_prc[i]
                                   for i in range(24))
 
         self.m.update()
         print('added %s constraints' % (len(self.m.getConstrs()) - constraint_counter))
 
-        self.m.setObjective(quicksum(x[i] for i in range(24)), GRB.MINIMIZE)
+        self.m.setObjective(gby.quicksum(x[i] for i in range(24)), gby.GRB.MINIMIZE)
 
         self.m.update()
         self.m.optimize()
@@ -164,7 +164,7 @@ class market:
         # -----------------------------------------------------------------------------------------------------------
         bid_volumes = []
         bid_total_volumes = []
-        bid_id, bid_prc, bid_vol, _ = multidict(self.bid_check)
+        bid_id, bid_prc, bid_vol, _ = gby.multidict(self.bid_check)
         for i in range(24):
             volumes = {}
             sum_ = 0
@@ -195,7 +195,7 @@ class market:
                         tmp -= bid_vol[id_]
                     else:
                         break
-                used_bid_orders = tuplelist(used_bid_orders)
+                used_bid_orders = gby.tuplelist(used_bid_orders)
 
                 # aggregate by agent and save as new result
                 volumes = {}
@@ -220,4 +220,3 @@ class market:
 if __name__ == "__main__":
 
     my_market = market()
-
