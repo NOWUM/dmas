@@ -58,6 +58,12 @@ class BasicAgent:
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
 
+        # Terminate Agent
+        # -----------------------------------------------------------------------------------------------------------
+        if 'kill' in message or self.name in message or self.typ + '_all' in message:
+            if not self.mqtt_connection.is_closed:
+                self.mqtt_connection.close()
+
     def run(self):
         if self.mqtt_connection:
             self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)

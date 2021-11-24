@@ -41,6 +41,8 @@ class StrAgent(basicAgent):
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def callback(self, ch, method, properties, body):
+        super().callback(ch, method, properties, body)
+
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
         # Call DayAhead Optimization
@@ -58,11 +60,6 @@ class StrAgent(basicAgent):
                 self.post_dayAhead()
             except:
                 self.logger.exception('Error in After day Ahead process')
-        # Terminate Agent
-        # -----------------------------------------------------------------------------------------------------------
-        if 'kill' in message or self.name in message or self.typ + '_all' in message:
-            if not self.mqtt_connection.is_closed:
-                self.mqtt_connection.close()
 
     def optimize_dayAhead(self):
         """scheduling for the DayAhead market"""
@@ -209,5 +206,3 @@ class StrAgent(basicAgent):
         #self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         self.logger.info('Next day scheduling completed')
-
-

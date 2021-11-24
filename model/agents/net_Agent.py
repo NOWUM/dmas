@@ -56,6 +56,7 @@ class NetAgent(basicAgent):
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def callback(self, ch, method, properties, body):
+        super().callback(ch, method, properties, body)
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
         # Call for Power Flow Calculation
@@ -65,11 +66,7 @@ class NetAgent(basicAgent):
                 self.calc_power_flow()
             except:
                 self.logger.exception('Error while calculation power flow')
-        # Terminate Agents
-        # -----------------------------------------------------------------------------------------------------------
-        if 'kill' in message or self.name in message or self.typ + '_all' in message:
-            if not self.mqtt_connection.is_closed:
-                self.mqtt_connection.close()
+
 
     def calc_power_flow(self): # Hier findet die Netzberechnung statt
         """power flow calculation 380kV and 220kV grid"""
@@ -166,4 +163,3 @@ class NetAgent(basicAgent):
                                                              tag_columns=['area', 'voltage'])
 
             time += pd.DateOffset(hours=1)
-

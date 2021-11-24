@@ -27,6 +27,7 @@ class WtrAgent(BasicAgent):
             self.sim_year = np.random.choice(list(self.norm_years))
 
     def callback(self, ch, method, properties, body):
+        super().callback(ch, method, properties, body)
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
         # if new year
@@ -43,13 +44,8 @@ class WtrAgent(BasicAgent):
         if 'calculate_weather' in message:
             try:
                 self.set_weather()
-            except Exception as e:
+            except Exception:
                 self.logger.exception('Error while calculating')
-        # Terminate Agent
-        # -----------------------------------------------------------------------------------------------------------
-        if 'kill' in message or self.name in message or self.typ + '_all' in message:
-            if not self.mqtt_connection.is_closed:
-                self.mqtt_connection.close()
 
     def set_weather(self):
         pass
@@ -57,7 +53,3 @@ class WtrAgent(BasicAgent):
 
 if __name__ == "__main__":
     test = WtrAgent(date='2019-01-01', plz=4, mqtt_exchange='dMAS', simulation_database='dMAS', weather_database='weather')
-
-
-
-
