@@ -1,0 +1,27 @@
+default:
+  tags:
+    - shared
+
+stages:
+- build
+
+build-docker:
+  image: docker:dind
+  services:
+    - docker:dind
+  stage: build
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -f dockerfiles/Dockerfile_wtr  -t "$CI_REGISTRY_IMAGE/wtr_agent:latest" .
+    - docker push $CI_REGISTRY_IMAGE/wtr_agent:latest
+    - docker build -f dockerfiles/Dockerfile_mrk  -t "$CI_REGISTRY_IMAGE/mrk_agent:latest" .
+    - docker push $CI_REGISTRY_IMAGE/mrk_agent:latest
+    - docker build -f dockerfiles/Dockerfile_dem  -t "$CI_REGISTRY_IMAGE/dem_agent:latest" .
+    - docker push $CI_REGISTRY_IMAGE/dem_agent:latest
+    - docker build -f dockerfiles/Dockerfile_pwp  -t "$CI_REGISTRY_IMAGE/pwp_agent:latest" .
+    - docker push $CI_REGISTRY_IMAGE/pwp_agent:latest
+    - docker build -f dockerfiles/Dockerfile_res  -t "$CI_REGISTRY_IMAGE/res_agent:latest" .
+    - docker push $CI_REGISTRY_IMAGE/res_agent:latest
+    - docker build -f dockerfiles/Dockerfile_net  -t "$CI_REGISTRY_IMAGE/net_agent:latest" .
+    - docker push $CI_REGISTRY_IMAGE/net_agent:latest
