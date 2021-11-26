@@ -21,24 +21,8 @@ output.append(f'''
       - POSTGRES_USER=dMAS
       - POSTGRES_PASSWORD=dMAS
       - POSTGRES_DB={simulation_database}
-    volumes:
-      - ./data/open-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
-''')
-# Build PGAdmin
-output.append('''
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin4
-    environment:
-        PGADMIN_DEFAULT_EMAIL: nowum-energy@fh-aachen.de
-        PGADMIN_DEFAULT_PASSWORD: nowum
-        PGADMIN_LISTEN_PORT: 80
-    ports:
-        - 9090:80
-    volumes:
-        - ./data/pgadmin:/var/lib/pgadmin
 ''')
 # Build Rabbitmq
 output.append('''
@@ -49,17 +33,6 @@ output.append('''
     ports:
       - 15672:15672
       - 5672:5672
-''')
-# Build Grafana
-output.append('''
-  grafana:
-    container_name: grafana
-    image: grafana/grafana
-    restart: always
-    ports:
-      - 3000:3000
-    volumes:
-     - ./data/grafana:/var/lib/grafana
 ''')
 # Build one Market
 output.append(f'''
