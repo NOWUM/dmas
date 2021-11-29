@@ -26,9 +26,9 @@ COPY ./model/components ./src/components
 
 COPY ./model/data ./src/data
 
-COPY ./model/main_res.py /src/main_res.py
+COPY ./model/main.py /src/main.py
 
 USER admin
 WORKDIR /src
 
-CMD ["python", "./main_res.py"]
+CMD ["python", "-u" ,"./main.py"]

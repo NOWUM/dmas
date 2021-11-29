@@ -57,7 +57,7 @@ class PortfolioModel:
         self.prices = prices
 
     # ddd energy system to portfolio
-    def add_energy_system(self, name, energysystem):
+    def add_energy_system(self, energy_system):
         pass
 
     # build model with constrains for optimization

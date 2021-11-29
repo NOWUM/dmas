@@ -26,9 +26,9 @@ COPY ./model/components ./src/components
 
 COPY ./model/data ./src/data
 
-COPY ./model/main_pwp.py /src/main_pwp.py
+COPY ./model/main.py /src/main.py
 
 USER admin
 WORKDIR /src
 
-CMD ["python", "./main_pwp.py"]
+CMD ["python", "-u" ,"./main.py"]

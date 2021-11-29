@@ -44,6 +44,8 @@ output.append(f'''
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: {simulation_database}
+      AGENT_TYPE: 'MRK'
+      CONNECT: True
 ''')
 # Build one Weather Agent
 output.append(f'''
@@ -57,6 +59,8 @@ output.append(f'''
       SIMULATIONS_DATABASE: {simulation_database}
       WEATHER_DATABASE: {weather_database}
       WEATHER_HOST: {weather_host}
+      AGENT_TYPE: 'WTR'
+      CONNECT: True
 ''')
 # Build one TSO
 output.append(f'''
@@ -68,6 +72,8 @@ output.append(f'''
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: {simulation_database}
+      AGENT_TYPE: 'NET'
+      CONNECT: True
 ''')
 # Build Demand Agents
 for plz in range(50, 56):
@@ -80,6 +86,8 @@ for plz in range(50, 56):
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: {simulation_database}
+      AGENT_TYPE: 'DEM'
+      CONNECT: True
       ''')
 # Build Power Plant Agents
 for plz in range(50, 56):
@@ -92,6 +100,8 @@ for plz in range(50, 56):
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: {simulation_database}
+      AGENT_TYPE: 'PWP'
+      CONNECT: True
       ''')
 # Build Renewable Energy Agents
 for plz in range(50, 56):
@@ -104,6 +114,8 @@ for plz in range(50, 56):
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: {simulation_database}
+      AGENT_TYPE: 'RES'
+      CONNECT: True
       ''')
 
 with open('docker-compose_simulation.yml', 'w') as f:

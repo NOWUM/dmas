@@ -20,9 +20,9 @@ COPY ./model/interfaces /src/interfaces
 
 COPY ./model/data/Ref_GeoInfo.csv /src/data/Ref_GeoInfo.csv
 
-COPY ./model/main_wtr.py /src/main_wtr.py
+COPY ./model/main.py /src/main.py
 
 USER admin
 WORKDIR /src
 
-CMD ["python", "./main_wtr.py"]
+CMD ["python", "-u" ,"./main.py"]

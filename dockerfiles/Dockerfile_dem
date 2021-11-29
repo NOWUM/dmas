@@ -26,9 +26,9 @@ COPY ./model/components ./src/components
 
 COPY ./model/data ./src/data
 
-COPY ./model/main_dem.py /src/main_dem.py
+COPY ./model/main.py /src/main.py
 
 USER admin
 WORKDIR /src
 
-CMD ["python", "./main_dem.py"]
+CMD ["python", "-u" ,"./main.py"]

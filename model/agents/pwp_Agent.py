@@ -12,19 +12,25 @@ from agents.client_Agent import agent as basicAgent
 
 class PwpAgent(basicAgent):
 
-    def __init__(self, date, plz, mqtt_exchange, simulation_database):
-        super().__init__(date, plz, 'PWP', mqtt_exchange, simulation_database)
+    def __init__(self, date, plz, agent_type, mqtt_exchange, simulation_database, connect):
+        super().__init__(date, plz, agent_type, mqtt_exchange, simulation_database, connect)
         # Development of the portfolio with the corresponding power plants and storages
 
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = PwpPort(T=24)
-
+        fuel_typs = ['lignite', 'coal', 'gas', 'nuclear']
         self.init_state = {}
-
         self.step_width = [-10, -5, 0, 5, 10, 500]
 
+        self.portfolio = PwpPort(T=24)
+        self.x = self.infrastructure_interface.get_power_plant_in_area(area=plz, fuel_typ='lignite')
         self.shadow_portfolio = PwpPort(T=48)
+
+        for fuel in ['lignite', 'coal', 'gas', 'nuclear']:
+            power_plants = self.infrastructure_interface.get_power_plant_in_area(area=plz, fuel_typ=fuel)
+            if power_plants is not None:
+                for _, data in power_plants.iterrows():
+                    self.portfolio.add_energy_system(data.to_dict())
 
         # Construction power plants
         self.logger.info('Power Plants added')

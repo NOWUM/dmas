@@ -27,14 +27,13 @@ class PwpPort(PortfolioModel):
 
         self.fix = True
 
-    def add_energy_system(self, name, energy_system):
-        # print(energy_system)
-        data = copy.deepcopy(energy_system[name])
+    def add_energy_system(self, energy_system):
+        data = copy.deepcopy(energy_system)
         # build power plants
-        data.update(dict(model=PowerPlant(name=name, power_plant=copy.deepcopy(data),
+        data.update(dict(model=PowerPlant(name=energy_system['unitID'], power_plant=copy.deepcopy(data),
                                           T=self.T, t=np.arange(self.T), dt=self.dt)))
 
-        self.energy_systems.update({name: data})
+        self.energy_systems.update({energy_system['unitID']: data})
 
     def build_model(self, response=None, max_power=False):
         self.m.remove(self.m.getVars())

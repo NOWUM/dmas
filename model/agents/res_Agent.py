@@ -10,32 +10,63 @@ from agents.client_Agent import agent as basicAgent
 
 class ResAgent(basicAgent):
 
-    def __init__(self, date, plz, mqtt_exchange, simulation_database):
-        super().__init__(date, plz, 'RES', mqtt_exchange, simulation_database)
+    def __init__(self, date, plz, agent_type, mqtt_exchange, simulation_database, connect):
+        super().__init__(date, plz, agent_type, mqtt_exchange, simulation_database, connect)
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.portfolio = RenewablePortfolio()
+        self.eeg_portfolio = RenewablePortfolio()
+        self.mrk_portfolio = RenewablePortfolio()
 
         # Construction Wind energy
-        # TODO: add wind
-        self.logger.info('Run River Power Plants added')
+        wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=plz, wind_type='on_shore')
+        wind_data['type'] = 'wind'
+        for wind_farm in wind_data['windFarm'].unique():
+            if wind_farm != 'x':
+                turbines = [row.to_dict() for _, row in wind_data[wind_data['windFarm'] == wind_farm].iterrows()]
+                self.mrk_portfolio.add_energy_system({'unitID': wind_farm, 'turbines': turbines, 'type': 'wind'})
+            else:
+                for _, turbine in wind_data[wind_data['windFarm'] == wind_farm].iterrows():
+                    self.mrk_portfolio.add_energy_system({'unitID': turbine['unitID'], 'turbines': turbine.to_dict(),
+                                                          'type': 'wind'})
+        self.logger.info('Wind Power Plants added')
 
         # Construction of the pv systems (free area)
-        # TODO: add free area solar systems
+        pv_1 = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='free_area')
+        pv_2 = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='other')
+        pv_data = pd.concat([pv_1, pv_2])
+        pv_data['type'] = 'solar'
+        pv_data['open_space'] = True
+        for _, system_ in pv_data[pv_data['eeg'] == 1].iterrows():
+            self.eeg_portfolio.add_energy_system(system_.to_dict())
+        for _, system_ in pv_data[pv_data['eeg'] == 0].iterrows():
+            self.mrk_portfolio.add_energy_system(system_.to_dict())
         self.logger.info('Free Area PV added')
 
         # Construction of the pv systems (h0)
-        # TODO: add pv households
+        pv_data = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
+        pv_data['type'] = 'solar'
+        pv_data['open_space'] = False
+        for _, system_ in pv_data[pv_data['eeg'] == 1].iterrows():
+            self.eeg_portfolio.add_energy_system(system_.to_dict())
         self.logger.info('Household PV added')
+        self.pv_data = pv_data
 
         # Construction Run River
+        run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(area=plz)
+        run_river_data['type'] = 'water'
+        for _, system_ in run_river_data.iterrows():
+            self.eeg_portfolio.add_energy_system(system_.to_dict())
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
+        bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(area=plz)
+        bio_mass_data['type'] = 'bio'
+        for _, system_ in bio_mass_data.iterrows():
+            self.eeg_portfolio.add_energy_system(system_.to_dict())
         self.logger.info('Biomass Power Plants added')
 
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        # df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         # TODO: Add Insert in TimescaleDB
         # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 

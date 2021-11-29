@@ -11,7 +11,7 @@ class Infrastructure:
 
     def __init__(self, user='opendata', password='opendata', database='mastr', host='10.13.10.41', port=5432):
         self.engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
-        self.geo_info = pd.read_csv(r'../data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
+        self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
         # MaStR Codes for fuel types used in Power Plant Table
         self.fuel_codes = {
             'coal':         2407,
@@ -79,14 +79,15 @@ class Infrastructure:
         }
 
         self.wind_codes = {
-            'on_shore': 888
+            'on_shore': 888,
+            'off_shore': 889
         }
-        turbine_typs = pd.read_csv(r'../data/technical_parameter_wind.csv')
+        turbine_typs = pd.read_csv(r'./data/technical_parameter_wind.csv')
         self.pattern_wind = '(?:'
         for typ in turbine_typs['turbine_type'].to_numpy():
             self.pattern_wind += str(typ).split('/')[0].replace('-', '') + '|'
         self.pattern_wind += ')'
-        self.wind_manufacturer = pd.read_csv(r'../data/manufacturer_wind.csv', index_col=0)
+        self.wind_manufacturer = pd.read_csv(r'./data/manufacturer_wind.csv', index_col=0)
 
 
     def get_power_plant_in_area(self, area=52, fuel_typ='lignite'):
@@ -192,7 +193,7 @@ class Infrastructure:
                         df.at[line, 'fuel'] = 'gas_combined'
 
             # Set technical parameter corresponding to the type (0, 2000, 2018)
-            technical_parameter = pd.read_csv(fr'../data/technical_parameter_{fuel_typ}.csv', sep=';', decimal=',',
+            technical_parameter = pd.read_csv(fr'./data/technical_parameter_{fuel_typ}.csv', sep=';', decimal=',',
                                               index_col=0)
             for line, row in df.iterrows():
                 df.at[line, 'minPower'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'minPower'] / 100
@@ -217,7 +218,7 @@ class Infrastructure:
                 f'"Leistungsbegrenzung" as "limited", ' \
                 f'"Einspeisungsart" as "ownConsumption", ' \
                 f'COALESCE("HauptausrichtungNeigungswinkel", 809) as "tiltCode", ' \
-                f'COALESCE("Inbetriebnahmedatum", "2018-01-01") as "startDate",' \
+                f'COALESCE("Inbetriebnahmedatum", \'2018-01-01\') as "startDate",' \
                 f'"InanspruchnahmeZahlungNachEeg" as "eeg" ' \
                 f'FROM "EinheitenSolar" ' \
                 f'INNER JOIN "AnlagenEegSolar" ON "EinheitMastrNummer" = "VerknuepfteEinheitenMastrNummern" ' \
@@ -294,11 +295,13 @@ class Infrastructure:
                 f'"Rotordurchmesser" as "diameter", ' \
                 f'"ClusterNordsee" as "nordicSea", ' \
                 f'"ClusterOstsee" as "balticSea", ' \
+                f'"GenMastrNummer" as "generatorID", ' \
                 f'"Inbetriebnahmedatum" as "startDate" ' \
                 f'FROM "EinheitenWind" ' \
-                f'WHERE "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000} ' \
-                f'AND "Lage" = {self.wind_codes[wind_type]} ' \
-                f'AND "EinheitBetriebsstatus" = 35;'
+                f'WHERE "EinheitBetriebsstatus" = 35 ' \
+                f'AND "Lage" = {self.wind_codes[wind_type]}'
+        if wind_type == 'on_shore':
+            query += f' AND "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000};'
 
         # Get Data from Postgres
         df = pd.read_sql(query, self.engine)
@@ -325,6 +328,18 @@ class Infrastructure:
                          for typ in df['typ']]
             df['typ'] = df['typ'].replace('', 'default')
 
+            df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
+            df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
+
+            wind_farm_prefix = f'{area * 1000}F'
+            df['windFarm'] = 'x'
+            counter = 0
+            for genId in df['generatorID'].unique():
+                if genId is not None and len(df[df['generatorID'] == genId]) > 1:
+                    windFarm = df[df['generatorID'] == genId]
+                    for line, row in windFarm.iterrows():
+                        df.at[line, 'windFarm'] = f'{wind_farm_prefix}{counter}'
+                    counter += 1
             return df
 
         return None
@@ -372,37 +387,64 @@ class Infrastructure:
 
         return None
 
+    def get_water_storage_systems(self, area=80):
+        query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
+                f'"Inbetriebnahmedatum" as "startDate", ' \
+                f'"Nettonennleistung" as "maxPower", ' \
+                f'"Laengengrad" as "lon", ' \
+                f'"Breitengrad" as "lat" ' \
+                f'FROM "EinheitenWasser"' \
+                f'WHERE "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000} AND ' \
+                f'"EinheitBetriebsstatus" = 35 AND "ArtDerWasserkraftanlage" = 891'
+        # Get Data from Postgres
+        df = pd.read_sql(query, self.engine)
+        # If the response Dataframe is not empty set technical parameter
+        if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
+            df['maxPower'] = df['maxPower'] / 10**3
+            df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
+            df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
+            return df
+
 if __name__ == "__main__":
     interface = Infrastructure()
 
     x = interface.get_wind_turbines_in_area(area=52)
 
-    installed_capacity_model = dict(lignite=0, coal=0, gas=0, nuclear=0, solar=0, water=0, bio=0)
-    installed_capacity_real = dict(lignite=20, coal=23, gas=30, nuclear=8, solar=58, water=4, bio=8.5)
-    for i in range(1, 100):
-        print(i)
-        check_pwp = True
-        check_solar = True
-        check_water = True
-        check_bio = True
-        check_wind = False
-        if check_pwp:
-            for key in ['lignite', 'coal', 'gas', 'nuclear']:
-                print(key)
-                df = interface.get_power_plant_in_area(area=i, fuel_typ=key)
-                if df is not None:
-                    installed_capacity_model.update({key: (installed_capacity_model[key] + df['maxPower'].sum())})
-        if check_solar:
-            for key in ['roof_top', 'free_area', 'other']:
-                print(key)
-                df = interface.get_solar_systems_in_area(area=i, solar_type=key)
-                if df is not None:
-                    installed_capacity_model.update({'solar': (installed_capacity_model['solar'] + df['maxPower'].sum())})
-        if check_water:
-            df = interface.get_run_river_systems_in_area(area=i)
-            if df is not None:
-                installed_capacity_model.update({'water': (installed_capacity_model['water'] + df['maxPower'].sum())})
-        if check_bio:
-            df = interface.get_biomass_systems_in_area(area=i)
-            if df is not None:
-                installed_capacity_model.update({'bio': (installed_capacity_model['bio'] + df['maxPower'].sum())})
+    wt = interface.get_water_storage_systems(area=52)
+
+    # installed_capacity_model = dict(lignite=0, coal=0, gas=0, nuclear=0, solar=0, water=0, bio=0, on_shore=0, off_shore=0)
+    # installed_capacity_real = dict(lignite=20, coal=23, gas=30, nuclear=8, solar=58, water=4, bio=8.5, wind=62)
+    # for i in range(1, 100):
+    #     print(i)
+    #     check_pwp = True
+    #     check_solar = True
+    #     check_water = True
+    #     check_bio = True
+    #     check_wind = True
+    #     if check_pwp:
+    #         for key in ['lignite', 'coal', 'gas', 'nuclear']:
+    #             print(key)
+    #             df = interface.get_power_plant_in_area(area=i, fuel_typ=key)
+    #             if df is not None:
+    #                 installed_capacity_model.update({key: (installed_capacity_model[key] + df['maxPower'].sum())})
+    #     if check_solar:
+    #         for key in ['roof_top', 'free_area', 'other']:
+    #             print(key)
+    #             df = interface.get_solar_systems_in_area(area=i, solar_type=key)
+    #             if df is not None:
+    #                 installed_capacity_model.update({'solar': (installed_capacity_model['solar'] + df['maxPower'].sum())})
+    #     if check_water:
+    #         df = interface.get_run_river_systems_in_area(area=i)
+    #         if df is not None:
+    #             installed_capacity_model.update({'water': (installed_capacity_model['water'] + df['maxPower'].sum())})
+    #     if check_bio:
+    #         df = interface.get_biomass_systems_in_area(area=i)
+    #         if df is not None:
+    #             installed_capacity_model.update({'bio': (installed_capacity_model['bio'] + df['maxPower'].sum())})
+    #     if check_wind:
+    #         df = interface.get_wind_turbines_in_area(area=i, wind_type='on_shore')
+    #         if df is not None:
+    #             installed_capacity_model.update({'on_shore': (installed_capacity_model['on_shore'] + df['maxPower'].sum())})
+    #
+    # off_shore = interface.get_wind_turbines_in_area(area=1, wind_type='off_shore')
+    # installed_capacity_model.update({'off_shore': (installed_capacity_model['off_shore'] + off_shore['maxPower'].sum())})

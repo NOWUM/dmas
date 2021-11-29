@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import numpy as np
 from windpowerlib import WindTurbine, ModelChain, wind_turbine as wt
-
+from windpowerlib import wind_farm
 
 # model modules
 from components.energy_system import EnergySystem
@@ -12,34 +12,33 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class WindModel(EnergySystem):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1, wind_turbine=None, power_curve=None):
+    def __init__(self, t=np.arange(24), T=24, dt=1, wind_turbine=None):
         super().__init__(t, T, dt)
 
         if wind_turbine is None:
             wind_turbine = dict(turbine_type='E-82/2300', height=112, diameter=102)
-        self.wind_turbine = wind_turbine
 
-        self.default_turbine_type = 'E-82/2300'
+        self.wind_turbine = None
+        # TODO: Replace default with new data
+        df = pd.read_excel(r'./data/Ref_TurbineData.xlsx', sheet_name=0)
 
-        if power_curve is None:
+        if isinstance(wind_turbine, list):
+            wind_turbines = {}
 
-            if wind_turbine['turbine_type'] in wt.get_turbine_types(print_out=False)['turbine_type'].unique():
-                self.wind_turbine = WindTurbine(hub_height=self.wind_turbine['height'],
-                                                rotor_diameter=self.wind_turbine['diameter'],
-                                                turbine_type=self.wind_turbine['turbine_type'])
-            elif wind_turbine['turbine_type'] in ['AN/1000', 'AN/1300', 'E-66/1500']:
-                df = pd.read_excel(r'./data/Ref_TurbineData.xlsx', sheet_name=wind_turbine['turbine_type'].replace('/', ' '))
-                self.wind_turbine = WindTurbine(hub_height=self.wind_turbine['height'],
-                                                rotor_diameter=self.wind_turbine['diameter'],
-                                                power_curve=df)
-            else:
-                self.wind_turbine = WindTurbine(hub_height=self.wind_turbine['height'],
-                                                rotor_diameter=self.wind_turbine['diameter'],
-                                                turbine_type=self.default_turbine_type)
+            for turbine in wind_turbines:
+                wind_turbines.update({turbine['unitID']: {'hub_height': turbine['height'],
+                                                          'rotor_diameter': turbine['diameter'],
+                                                          'power_curve': df}})
+
+            wind_turbine_fleet = pd.DataFrame({'wind_turbine': [value for _, value in wind_turbines.items()],
+                                               'number_of_turbines': [1 for _, _ in wind_turbines.items()]})
+
+            self.wind_turbine = wind_farm.WindFarm(wind_turbine_fleet)
 
         else:
-            self.wind_turbine = WindTurbine(hub_height=self.wind_turbine['height'],
-                                            rotor_diameter=wind_turbine['diameter'], power_curve=power_curve)
+            self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
+                                            rotor_diameter=wind_turbine['diameter'],
+                                            power_curve=df)
 
         self.mc = ModelChain(self.wind_turbine)
 
@@ -64,5 +63,3 @@ class WindModel(EnergySystem):
         self.power = np.nan_to_num(power_wind)/10**6
 
         return self.power
-
-

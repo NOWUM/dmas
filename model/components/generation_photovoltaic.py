@@ -14,19 +14,19 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class PvModel(es):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1, photovoltaic=None, lat=50.77, lon=6.09, open_space=True):
+    def __init__(self, t, T, dt, photovoltaic=None):
         super().__init__(t, T, dt)
 
         # initialize default photovoltaic
         if photovoltaic is None:
-            photovoltaic = dict(maxPower=2.9, azimuth=180, tilt=30)
+            photovoltaic = dict(maxPower=2.9, azimuth=180, tilt=30, lat=50, lon=5, open_space=True, limited=100)
 
-        self.location = Location(lat, lon)
-        if open_space:
+        self.location = Location(photovoltaic['lat'], photovoltaic['lat'])
+        if photovoltaic['open_space']:
             temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['pvsyst']['freestanding']
         else:
             temperature_model_parameters = TEMPERATURE_MODEL_PARAMETERS['pvsyst']['insulated']
-
+        self.maxPower = photovoltaic['maxPower'] * 10**3 * photovoltaic['limited']
         # add photovoltaic system
         pv_system = PVSystem(module_parameters=dict(pdc0=1000 * photovoltaic['maxPower'], gamma_pdc=-0.004),
                              inverter_parameters=dict(pdc0=1000 * photovoltaic['maxPower']),
@@ -34,7 +34,7 @@ class PvModel(es):
                              temperature_model_parameters=temperature_model_parameters,
                              losses_parameters=dict(availability=0, lid=0, shading=1, soiling=1))
 
-        self.photovoltaic = ModelChain(pv_system, Location(lat, lon), aoi_model='physical', spectral_model='no_loss',
+        self.photovoltaic = ModelChain(pv_system, self.location, aoi_model='physical', spectral_model='no_loss',
                                        temperature_model='pvsyst', losses_model='pvwatts', ac_model='pvwatts')
 
     def set_parameter(self, date, weather=None, prices=None):
@@ -50,7 +50,7 @@ class PvModel(es):
     def optimize(self):
         self.photovoltaic.run_model(self.weather)
         # get generation in [MW]
-        self.generation['powerSolar'] = self.photovoltaic.ac.to_numpy()/10**6
+        self.generation['powerSolar'] = np.clip(self.photovoltaic.ac.to_numpy(), self.maxPower)/10**6
         self.power = self.generation['powerSolar']
 
         return self.power

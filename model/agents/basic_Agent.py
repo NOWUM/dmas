@@ -3,11 +3,12 @@ import pandas as pd
 import pika
 import logging
 import os
+from interfaces.infrastructure import Infrastructure
 
 
 class BasicAgent:
 
-    def __init__(self, date, plz, typ, mqtt_exchange, simulation_database):
+    def __init__(self, date, plz, typ, mqtt_exchange, simulation_database, connect):
 
         # declare meta data for each agent
         self.plz = plz                                              # plz code
@@ -40,15 +41,20 @@ class BasicAgent:
 
         self.exchange = mqtt_exchange
         self.mqtt_connection = False
+        if connect:
+            try:
+                self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
+                self.channel = self.mqtt_connection.channel()
+                self.channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
+                result = self.channel.queue_declare(queue=self.name, exclusive=True)
+                self.channel.queue_bind(exchange=self.exchange, queue=result.method.queue)
+            except Exception as e:
+                self.mqtt_connection = False
+                self.logger.exception('Cant connect to MQTT')
         try:
-            self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
-            self.channel = self.mqtt_connection.channel()
-            self.channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
-            result = self.channel.queue_declare(queue=self.name, exclusive=True)
-            self.channel.queue_bind(exchange=self.exchange, queue=result.method.queue)
+            self.infrastructure_interface = Infrastructure()
         except Exception as e:
-            self.mqtt_connection = False
-            self.logger.exception('Cant connect to MQTT')
+            self.logger.exception('Cant connect to Infrastructure Database')
 
     def __del__(self):
         if self.mqtt_connection and not self.mqtt_connection.is_closed:
