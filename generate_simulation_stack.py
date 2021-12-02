@@ -24,6 +24,17 @@ output.append(f'''
     ports:
       - 5432:5432
 ''')
+output.append('''
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    environment:
+        PGADMIN_DEFAULT_EMAIL: nowum-energy@fh-aachen.de
+        PGADMIN_DEFAULT_PASSWORD: nowum
+        PGADMIN_LISTEN_PORT: 80
+    ports:
+        - 9090:80
+''')
 # Build Rabbitmq
 output.append('''
   rabbitmq:
