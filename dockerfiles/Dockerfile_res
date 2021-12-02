@@ -22,7 +22,7 @@ COPY ./model/interfaces /src/interfaces
 
 COPY ./model/aggregation ./src/aggregation
 
-COPY ./model/components ./src/components
+COPY ./model/systems ./src/systems
 
 COPY ./model/data ./src/data
 
