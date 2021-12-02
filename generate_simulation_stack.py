@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # generates a docker-compose.yml to crawl the data from dwd
 
-image_repo = 'registry.git.fh-aachen.de/nowum-energy/dmas/'
+image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 simulation_database = 'dMAS'
 weather_database = 'weather'
 weather_host = '10.13.10.41'
