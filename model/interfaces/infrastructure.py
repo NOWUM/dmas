@@ -9,8 +9,9 @@ import re
 
 class Infrastructure:
 
-    def __init__(self, user='opendata', password='opendata', database='mastr', host='10.13.10.41', port=5432):
-        self.engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
+    def __init__(self, user='opendata', password='opendata', host='10.13.10.41', port=5432):
+        self.engine_mastr = create_engine(f'postgresql://{user}:{password}@{host}:{port}/mastr')
+        self.engine_enet = create_engine(f'postgresql://{user}:{password}@{host}:{port}/enet')
         self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
         # MaStR Codes for fuel types used in Power Plant Table
         self.fuel_codes = {
@@ -77,7 +78,6 @@ class Infrastructure:
             805: 50,
             1535: 100
         }
-
         self.wind_codes = {
             'on_shore': 888,
             'off_shore': 889
@@ -89,6 +89,33 @@ class Infrastructure:
         self.pattern_wind += ')'
         self.wind_manufacturer = pd.read_csv(r'./data/manufacturer_wind.csv', index_col=0)
 
+        self.storage_volumes = {
+            'Niederwartha': 591,
+            'Bleiloch': 753,
+            'Hohenwarte 1': 795,
+            'Hohenwarte 2': 2087,
+            'Wendefurth': 532,
+            'Markersbach': 4018,
+            'Geesthacht': 600,
+            'Waldeck 1': 478,
+            'Waldeck 2': 3428,
+            'Bringhausen': 0,
+            'Hemfurth': 0,
+            'illwerke': 0,
+            'Glems': 560,
+            'Schwarzenbach': 198,
+            'Witznau': 220,
+            'Säckingen': 2064,
+            'Häusern': 463,
+            'Waldshut': 402,
+            'Wehr': 6073,
+            'Walchenseekraftwerk': 0,
+            'Happurg': 900,
+            'Schnitzel': 0,
+            'Langenprozelten': 950,
+            'E2307101': 0,
+            'Goldisthal': 8480,
+        }
 
     def get_power_plant_in_area(self, area=52, fuel_typ='lignite'):
         query = f'SELECT ev."EinheitMastrNummer" as "unitID", ' \
@@ -120,7 +147,7 @@ class Infrastructure:
             query = query.replace('AND ev."ArtDerStilllegung" isnull ;', ';')
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine)
+        df = pd.read_sql(query, self.engine_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in list(self.geo_info['PLZ'])]):
             # set default values for technical parameters
@@ -227,7 +254,7 @@ class Infrastructure:
                 f'AND "EinheitBetriebsstatus" = 35;'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine)
+        df = pd.read_sql(query, self.engine_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in list(self.geo_info['PLZ'])]):
             # all PVs with are implemented in 2018
@@ -304,7 +331,7 @@ class Infrastructure:
             query += f' AND "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000};'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine)
+        df = pd.read_sql(query, self.engine_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             # set max Power to [MW]
@@ -355,7 +382,7 @@ class Infrastructure:
                 f'"EinheitBetriebsstatus" = 35 ;'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine)
+        df = pd.read_sql(query, self.engine_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             df['maxPower'] = df['maxPower'] / 10**3
@@ -377,7 +404,7 @@ class Infrastructure:
                 f'"EinheitBetriebsstatus" = 35 AND "ArtDerWasserkraftanlage" = 890'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine)
+        df = pd.read_sql(query, self.engine_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             df['maxPower'] = df['maxPower'] / 10**3
@@ -389,28 +416,115 @@ class Infrastructure:
 
     def get_water_storage_systems(self, area=80):
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
+                f'"LokationMastrNummer" as "locationID", ' \
+                f'"SpeMastrNummer" as "storageID", ' \
+                f'"NameStromerzeugungseinheit" as "name", ' \
                 f'"Inbetriebnahmedatum" as "startDate", ' \
-                f'"Nettonennleistung" as "maxPower", ' \
+                f'"Nettonennleistung" as "P-_max", ' \
+                f'"NutzbareSpeicherkapazitaet" as "VMax", ' \
+                f'"PumpbetriebLeistungsaufnahme" as "P+_max", ' \
                 f'"Laengengrad" as "lon", ' \
                 f'"Breitengrad" as "lat" ' \
-                f'FROM "EinheitenWasser"' \
+                f'FROM "EinheitenStromSpeicher"' \
+                f'LEFT JOIN "AnlagenStromSpeicher" ON "EinheitMastrNummer" = "VerknuepfteEinheitenMastrNummern" ' \
                 f'WHERE "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000} AND ' \
-                f'"EinheitBetriebsstatus" = 35 AND "ArtDerWasserkraftanlage" = 891'
+                f'"EinheitBetriebsstatus" = 35 AND "Technologie" = 1537 AND "EinheitSystemstatus"=472 AND "Land"=84 ' \
+                f'AND "Nettonennleistung" > 500' \
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine)
+        df = pd.read_sql(query, self.engine_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
-            df['maxPower'] = df['maxPower'] / 10**3
+            # set charge and discharge power
+            df['P+_max'] = df['P+_max'].fillna(df['P-_max'])            # fill na with Rated Power
+            df['P-_max'] = df['P-_max'] / 10**3                         # [kW] --> [MW]
+            df['P-_min'] = 0                                            # set min to zero
+            df['P+_max'] = df['P+_max'] / 10**3                         # [kW] --> [MW]
+            df['P+_min'] = 0                                            # set min to zero
+
+            # fill nan values with default from wiki
+            df['VMax'] = df['VMax'].fillna(0)
+            df['VMax'] = df['VMax'] / 10**3
+            print(df['name'])
+            for index, row in df[df['VMax'] == 0].iterrows():
+                for key, value in self.storage_volumes.items():
+                    if key in row['name']:
+                        df.at[index, 'VMax'] = value
+
             df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
             df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
-            return df
+
+            storages = []
+            for id_ in df['storageID'].unique():
+                data = df[df['storageID'] == id_]
+                storage = {'unitID': id_,
+                           'startDate': pd.to_datetime(data['startDate'].to_numpy()[0]),
+                           'P-_max': data['P-_max'].sum(),
+                           'P+_max': data['P+_max'].sum(),
+                           'VMax': data['VMax'].to_numpy()[0],
+                           'VMin': 0,
+                           'V0': data['VMax'].to_numpy()[0]/2,
+                           'lat': data['lat'].to_numpy()[0],
+                           'lon': data['lon'].to_numpy()[0],
+                           'eta+': 0.85,
+                           'eta-': 0.80}
+                storages.append(storage)
+
+            return pd.DataFrame(storages)
+
+        return None
+
+    # TODO: Check Enet Data for better Estimation
+    def get_demand_in_area(self, area=52):
+        grids = {'nsp': [], 'msp': []}
+        val = {'nsp': 'netz_nsp', 'msp': 'netz_nr_msp'}
+
+        for voltage_level in ['nsp', 'msp']:
+            query = f'SELECT distinct (no.ortsteil, no.ort, {val[voltage_level]}) ' \
+                    f'FROM netze_ortsteile no where plz >= {area*1000} and plz < {area*1000+1000} ' \
+                    f'and no.gueltig_bis = \'2100-01-01 00:00:00\''
+
+            df = pd.read_sql(query, self.engine_enet)
+            if not df.empty:
+                for _, series in df.iterrows():
+                    x = tuple(map(str, series.values[0][1:-1].split(',')))
+                    grid_id = int(x[-1])
+                    if grid_id not in grids[voltage_level]:
+                        grids[voltage_level].append(grid_id)
+
+        val = {'nsp': 'arbeit_ns', 'msp': 'arbeit_ms'}
+        demand_factor = 0
+        for key, value in grids.items():
+            for grid in value:
+                query = f'SELECT {val[key]} FROM netzdaten where netz_nr = {grid} order by stand desc limit 1 '
+                df = pd.read_sql(query, self.engine_enet)
+                if not df.empty:
+                    df = df.fillna(0)
+                    demand_factor += df[val[key]].to_numpy()[0]
+
+        return (demand_factor/10**6)/2668.37        # --> 2668.37 = Sum over all PLZ Areas
+
 
 if __name__ == "__main__":
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    # mpl.use('Qt5Agg')
+
+
     interface = Infrastructure()
+    plz_matrix = np.load(r'./crawler/plz_matrix.npy')
+    # x = interface.get_wind_turbines_in_area(area=52)
+    list_ = []
+    for i in range(1, 100):
+        # list_.append(interface.get_water_storage_systems(area=i))
+        value = interface.get_demand_in_area(i)
+        list_.append((i, value))
+        plz_matrix[plz_matrix == i] = value
+    plz_matrix[plz_matrix == 100] = 0
+    plz_matrix[plz_matrix == 101] = 0
+    test = plz_matrix[300:600, 300:600]
+    plt.imshow(test, cmap='hot', interpolation='nearest')
+    plt.show()
 
-    x = interface.get_wind_turbines_in_area(area=52)
-
-    wt = interface.get_water_storage_systems(area=52)
 
     # installed_capacity_model = dict(lignite=0, coal=0, gas=0, nuclear=0, solar=0, water=0, bio=0, on_shore=0, off_shore=0)
     # installed_capacity_real = dict(lignite=20, coal=23, gas=30, nuclear=8, solar=58, water=4, bio=8.5, wind=62)

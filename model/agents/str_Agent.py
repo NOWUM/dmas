@@ -12,8 +12,8 @@ from agents.client_Agent import agent as basicAgent
 
 class StrAgent(basicAgent):
 
-    def __init__(self, date, plz, mqtt_exchange, simulation_database):
-        super().__init__(date, plz, 'STR', mqtt_exchange, simulation_database)
+    def __init__(self, date, plz, agent_type, mqtt_exchange, simulation_database, connect):
+        super().__init__(date, plz, agent_type, mqtt_exchange, simulation_database, connect)
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
@@ -21,6 +21,11 @@ class StrAgent(basicAgent):
 
         self.max_volume = 0
         # Construction storages
+        storages = self.infrastructure_interface.get_water_storage_systems(area=plz)
+        if storages is not None:
+            for _, data in storages.iterrows():
+                    self.portfolio.add_energy_system(data.to_dict())
+
         self.logger.info('Storages added')
 
         mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,

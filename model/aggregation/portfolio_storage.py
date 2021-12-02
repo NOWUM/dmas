@@ -23,13 +23,10 @@ class StrPort(PortfolioModel):
 
         self.fix = True
 
-    def add_energy_system(self, name, energy_system):
-
-        data = energy_system[name]
-
+    def add_energy_system(self, energy_system):
         # build power plants
-        if data['typ'] == 'storage':
-            data.update(dict(model=Storage(name=name, storage=data)))
+        energy_system.update(dict(model=Storage(name=energy_system['unitID'], storage=energy_system,
+                                                T=self.T, t=np.arange(self.T), dt=self.dt)))
 
         self.energy_systems.update(energy_system)
 
