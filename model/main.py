@@ -1,6 +1,6 @@
 import logging
 import os
-# from agents.dem_Agent import DemAgent
+from agents.dem_Agent import DemAgent
 from agents.res_Agent import ResAgent
 from agents.pwp_Agent import PwpAgent
 from agents.str_Agent import StrAgent
@@ -14,19 +14,17 @@ if __name__ == "__main__":
 
     init_dict = {
         'date': os.getenv('SIMULATION_START_DATE', '2018-01-01'),
-        'plz': os.getenv('PLZ_CODE', 98),
+        'plz': os.getenv('PLZ_CODE', 52),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
         'simulation_database': os.getenv('SIMULATIONS_DATABASE', 'dMAS'),
-        'agent_type': os.getenv('AGENT_TYPE', 'STR'),
+        'agent_type': os.getenv('AGENT_TYPE', 'DEM'),
         'connect': os.getenv('CONNECT', False),
     }
 
     try:
 
-        agent = None
         if init_dict['agent_type'] == 'DEM':
-            # agent = DemAgent(**init_dict)
-            pass
+            agent = DemAgent(**init_dict)
         elif init_dict['agent_type'] == 'RES':
             agent = ResAgent(**init_dict)
         elif init_dict['agent_type'] == 'PWP':
@@ -42,7 +40,7 @@ if __name__ == "__main__":
             init_dict.update({'weather_host': os.getenv('WEATHER_HOST', 'weather')})
             agent = WtrAgent(**init_dict)
 
-        # agent.run()
+        agent.run()
 
     except Exception as e:
         logging.exception(f'Error during Simulation {agent.name}')

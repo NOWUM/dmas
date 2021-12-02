@@ -3,45 +3,33 @@ import numpy as np
 
 
 # model modules
-from components.consumer_pvBat import PvBatModel
-from components.consumer_pv import PvModel
-from components.consumers import H0Model, G0Model, RlmModel
+from systems.demand_pv_bat import PvBatModel
+from systems.demand_pv import HouseholdPvModel
+from systems.demand import HouseholdModel, BusinessModel, IndustryModel
 from aggregation.portfolio import PortfolioModel
 
 
 class DemandPortfolio(PortfolioModel):
 
-    def __int__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
-        super().__init__(T, dt, date)
+    def __int__(self, T=24, date='2020-01-01'):
+        super().__init__(T, date)
 
-    def add_energy_system(self, name, energy_system):
-
-        data = energy_system[name]
+    def add_energy_system(self, energy_system):
 
         # build photovoltaic with battery
-        if data['typ'] == 'PvBat':
-            data.update(dict(model=PvBatModel(lat=data['position'][0],
-                                              lon=data['position'][1],
-                                              photovoltaic=data['PV'],
-                                              battery=data['Bat'],
-                                              e_el=data['demandP'])))
+        if energy_system['type'] == 'bat':
+            energy_system.update(dict(model=PvBatModel(T=self.T, **energy_system)))
         # build photovoltaic
-        elif data['typ'] == 'Pv':
-            data.update(dict(model=PvModel(lat=data['position'][0],
-                                           lon=data['position'][1],
-                                           photovoltaic=data['PV'],
-                                           e_el=data['demandP'])))
-        # build residential
-        elif data['typ'] == 'H0':
-            data.update(dict(model=H0Model(e_el=data['demandP'])))
-        # build Trade and Service
-        elif data['typ'] == 'G0':
-            data.update(dict(model=G0Model(e_el=data['demandP'])))
-        # build industry
-        elif data['typ'] == 'RLM':
-            data.update(dict(model=RlmModel(e_el=data['demandP'])))
+        elif energy_system['type'] == 'solar':
+            energy_system.update(dict(model=HouseholdPvModel(T=self.T, **energy_system)))
+        elif energy_system['type'] == 'household':
+            energy_system.update(dict(model=HouseholdModel(T=self.T, **energy_system)))
+        elif energy_system['type'] == 'business':
+            energy_system.update(dict(model=BusinessModel(T=self.T, **energy_system)))
+        elif energy_system['type'] == 'industry':
+            energy_system.update(dict(model=IndustryModel(T=self.T, **energy_system)))
 
-        self.energy_systems.update(energy_system)
+        self.energy_systems.update({energy_system['unitID']: energy_system})
 
     def build_model(self, response=[]):
         for _, data in self.energy_systems.items():

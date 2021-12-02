@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-from components.generation_wind import WindModel
-from components.generation_photovoltaic import PvModel
-from components.generation_runRiver import RunRiverModel
-from components.generation_biomass import BioMassModel
+from systems.generation_wind import WindModel
+from systems.generation_photovoltaic import PvModel
+from systems.generation_runRiver import RunRiverModel
+from systems.generation_biomass import BioMassModel
 from aggregation.portfolio import PortfolioModel
 from scipy import interpolate
 from windpowerlib import power_curves
@@ -12,8 +12,8 @@ import copy
 
 class RenewablePortfolio(PortfolioModel):
 
-    def __init__(self, T=24, dt=1, gurobi=False, date='2020-01-01'):
-        super().__init__(T, dt, date)
+    def __init__(self, T=24, date='2020-01-01'):
+        super().__init__(T, date)
 
         self.fix = True
 

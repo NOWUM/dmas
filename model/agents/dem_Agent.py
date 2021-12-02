@@ -10,26 +10,45 @@ from agents.client_Agent import agent as basicAgent
 
 class DemAgent(basicAgent):
 
-    def __init__(self, date, plz, mqtt_exchange, simulation_database):
-        super().__init__(date, plz, 'DEM', mqtt_exchange, simulation_database)
+    def __init__(self, date, plz, agent_type, mqtt_exchange, simulation_database, connect):
+        super().__init__(date, plz, agent_type, mqtt_exchange, simulation_database, connect)
         # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = tme.time()
         self.portfolio = DemandPortfolio()
 
+        demand = 0
         # Construction of the prosumer with photovoltaic and battery
-        self.logger.info('Prosumer PV-Bat added')
+        bats = self.infrastructure_interface.get_solar_storage_systems_in_area(area=plz)
+        bats['type'] = 'bat'
+        for index, system in bats.iterrows():
+            self.portfolio.add_energy_system(system.to_dict())
+            demand += system['demandP'] / 10**9
+        self.logger.info('Prosumer Photovoltaic and Battery added')
 
         # Construction consumer with photovoltaic
-        self.logger.info('Consumer PV added')
+        pvs = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
+        pvs['type'] = 'solar'
+        for index, system in pvs.iterrows():
+            self.portfolio.add_energy_system(system.to_dict())
+            demand += system['demandP'] / 10**9
+        self.logger.info('Prosumer Photovoltaic added')
+
+        total_demand, household, industry_business = self.infrastructure_interface.get_demand_in_area(area=plz)
+        household_demand = (total_demand * household - demand) * 10**9
+        business_demand = total_demand * industry_business * 0.5 * 10**9
+        industry_demand = business_demand
 
         # Construction Standard Consumer H0
+        self.portfolio.add_energy_system({'unitID': 'household', 'demandP': household_demand, 'type': 'household'})
         self.logger.info('H0 added')
 
         # Construction Standard Consumer G0
+        self.portfolio.add_energy_system({'unitID': 'business', 'demandP': business_demand, 'type': 'business'})
         self.logger.info('G0 added')
 
         # Construction Standard Consumer RLM
+        self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))

@@ -5,7 +5,7 @@ import pandas as pd
 
 class PortfolioModel:
 
-    def __init__(self, T=24, dt=1,  date='2020-01-01'):
+    def __init__(self, T=24, date='2020-01-01'):
 
         self.date = pd.to_datetime(date)                        # current day
         self.energy_systems = {}                                # energy systems in portfolio
@@ -13,7 +13,7 @@ class PortfolioModel:
         # calculation and optimization parameters
         self.T = T                                              # number of steps
         self.t = np.arange(T)                                   # array with steps
-        self.dt = dt                                            # step length [h]
+        self.dt = T/24                                          # step length [h]
 
         self.weather = {}                                       # weather data (forecast)
         self.prices = {}                                        # price (forecast)

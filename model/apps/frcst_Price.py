@@ -30,7 +30,7 @@ class annFrcst:
         self.y = np.asarray([]).reshape((-1,24))
 
         self.default_power = pd.read_csv(r'./data/Ref_DA_Prices.csv', sep=';', decimal=',', index_col=0)
-        self.default_power.index = pd.to_datetime(self.default_power.index)
+        self.default_power.index = pd.to_datetime(self.default_power.index, infer_datetime_format=True)
         # month mean values year 2018
         self.default_gas = [18.6, 20.0, 24.2, 19.5, 21.7, 22.0, 22.4, 23.8, 27.8, 26.0, 24.9, 24.1]
         # month mean values year 2018
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     x = []
     z = []
     original_price = pd.read_csv(r'./data/Ref_DA_Prices.csv', index_col=0, decimal=',', sep=';')
-    original_price.index = pd.to_datetime(original_price.index)
+    original_price.index = pd.to_datetime(original_price.index, infer_datetime_format=True)
 
     for d in pd.date_range(start='2018-01-01', end='2018-12-31', freq='d'):
         # demand = my_demand.forecast(d)

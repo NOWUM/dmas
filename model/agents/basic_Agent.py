@@ -3,7 +3,9 @@ import pandas as pd
 import pika
 import logging
 import os
-from interfaces.infrastructure import Infrastructure
+from sqlalchemy import create_engine
+
+from interfaces.infrastructure import InfrastructureInterface
 
 
 class BasicAgent:
@@ -37,7 +39,8 @@ class BasicAgent:
                                 saveResult=0,                       # save adjustments in influx db
                                 nextDay=0)                          # preparation for coming day
 
-        self.database = simulation_database  # name of simulation database
+        self.database = simulation_database                         # name of simulation database
+        self.engine = create_engine(f'postgresql://dMas:dMas@simulationdb/dMas')
 
         self.exchange = mqtt_exchange
         self.mqtt_connection = False
@@ -52,7 +55,7 @@ class BasicAgent:
                 self.mqtt_connection = False
                 self.logger.exception('Cant connect to MQTT')
         try:
-            self.infrastructure_interface = Infrastructure()
+            self.infrastructure_interface = InfrastructureInterface()
         except Exception as e:
             self.logger.exception('Cant connect to Infrastructure Database')
 

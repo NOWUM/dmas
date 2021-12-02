@@ -5,14 +5,14 @@ import copy
 
 
 # model modules
-from components.generation_powerPlant import PowerPlant
+from systems.generation_powerPlant import PowerPlant
 from aggregation.portfolio import PortfolioModel
 
 
 class PwpPort(PortfolioModel):
 
-    def __int__(self, T=24, dt=1, gurobi=True, date='2020-01-01'):
-        super().__init__(T, dt, date)
+    def __int__(self, T=24, date='2020-01-01'):
+        super().__init__(T, date)
 
         self.m = gby.Model('aggregation')
         self.m.Params.OutputFlag = 0

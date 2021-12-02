@@ -36,6 +36,7 @@ class PwpAgent(basicAgent):
         self.logger.info('Power Plants added')
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        df.to_sql(name=self.name, con=self.engine)
         # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         # initialize dicts for optimization results

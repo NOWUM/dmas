@@ -3,14 +3,14 @@ import numpy as np
 import gurobipy as gby
 
 # model modules
-from components.storage_hydroPlant import Storage
+from systems.storage_hydroPlant import Storage
 from aggregation.portfolio import PortfolioModel
 
 
 class StrPort(PortfolioModel):
 
-    def __int__(self, T=24, dt=1, gurobi=True, date='2020-01-01'):
-        super().__init__(T, dt, date)
+    def __int__(self, T=24, date='2020-01-01'):
+        super().__init__(T, date)
 
         self.m = gby.Model('aggregation')
         self.m.Params.OutputFlag = 0

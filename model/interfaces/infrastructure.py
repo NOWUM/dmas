@@ -1,13 +1,10 @@
 from sqlalchemy import create_engine
-# from windpowerlib.data import store_turbine_data_from_oedb
-# store_turbine_data_from_oedb()
 import pandas as pd
 import numpy as np
-import windpowerlib
 import re
 
 
-class Infrastructure:
+class InfrastructureInterface:
 
     def __init__(self, user='opendata', password='opendata', host='10.13.10.41', port=5432):
         self.engine_mastr = create_engine(f'postgresql://{user}:{password}@{host}:{port}/mastr')
@@ -82,6 +79,7 @@ class Infrastructure:
             'on_shore': 888,
             'off_shore': 889
         }
+
         turbine_typs = pd.read_csv(r'./data/technical_parameter_wind.csv')
         self.pattern_wind = '(?:'
         for typ in turbine_typs['turbine_type'].to_numpy():
@@ -118,33 +116,32 @@ class Infrastructure:
         }
 
     def get_power_plant_in_area(self, area=52, fuel_typ='lignite'):
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+
         query = f'SELECT ev."EinheitMastrNummer" as "unitID", ' \
                 f'ev."Energietraeger" as "fuel", ' \
-                f'ev."Laengengrad" as "lon", ' \
-                f'ev."Breitengrad" as "lat", ' \
-                f'ev."AnlageIstImKombibetrieb" as "combination", ' \
-                f'ev."Inbetriebnahmedatum" as "startDate", ' \
+                f'COALESCE(ev."Laengengrad", {longitude}) as "lon", ' \
+                f'COALESCE(ev."Breitengrad", {latitude}) as "lat", ' \
+                f'COALESCE(ev."Inbetriebnahmedatum", \'2010-01-01\') as "startDate", ' \
                 f'ev."Nettonennleistung" as "maxPower", ' \
                 f'ev."Technologie" as "turbineTyp",' \
-                f'ev."GenMastrNummer" as "generatorID", ' \
-                f'kwk."ThermischeNutzleistung" as "kwkPowerTherm", ' \
-                f'kwk."ElektrischeKwkLeistung" as "kwkPowerElec" ' \
-                f'FROM "EinheitenVerbrennung" ev ' \
-                f'LEFT JOIN "AnlagenKwk" kwk ON kwk."KwkMastrNummer" = ev."KwkMastrNummer" ' \
-                f'WHERE ev."Postleitzahl" >= {area * 1000} AND ev."Postleitzahl" < {area * 1000 + 1000} ' \
-                f'AND ev."Energietraeger" = {self.fuel_codes[fuel_typ]} ' \
-                f'AND ev."Nettonennleistung" > 5000 AND ev."EinheitBetriebsstatus" = 35 ' \
-                f'AND ev."ArtDerStilllegung" isnull ;'
-        # Edit Query for fuel typ nuclear
-        if fuel_typ == 'nuclear':
-            query = query.replace('ev."AnlageIstImKombibetrieb" as "combination",', '')         # remove combination
-            query = query.replace('"generatorID", ', '"generatorID" ')                          # remove generatorID
-            query = query.replace('kwk."ThermischeNutzleistung" as "kwkPowerTherm", ', '')      # remove kwk attributes
-            query = query.replace('kwk."ElektrischeKwkLeistung" as "kwkPowerElec" ', '')
-            query = query.replace("EinheitenVerbrennung", "EinheitenKernkraft")                 # replace Table
-            # no kwk usage and "Art der Stilllegung"
-            query = query.replace('LEFT JOIN "AnlagenKwk" kwk ON kwk."KwkMastrNummer" = ev."KwkMastrNummer" ', '')
-            query = query.replace('AND ev."ArtDerStilllegung" isnull ;', ';')
+                f'ev."GenMastrNummer" as "generatorID"'
+        if fuel_typ != 'nuclear':
+            query += f', ' + \
+                     f'kwk."ThermischeNutzleistung" as "kwkPowerTherm", ' + \
+                     f'kwk."ElektrischeKwkLeistung" as "kwkPowerElec" ' + \
+                     f'ev."AnlageIstImKombibetrieb" as "combination" ' + \
+                     f'FROM "EinheitenVerbrennung" ev ' + \
+                     f'LEFT JOIN "AnlagenKwk" kwk ON kwk."KwkMastrNummer" = ev."KwkMastrNummer" ' + \
+                     f'WHERE ev."Postleitzahl" >= {area * 1000} AND ev."Postleitzahl" < {area * 1000 + 1000} ' + \
+                     f'AND ev."Energietraeger" = {self.fuel_codes[fuel_typ]} ' + \
+                     f'AND ev."Nettonennleistung" > 5000 AND ev."EinheitBetriebsstatus" = 35 ' + \
+                     f'AND ev."ArtDerStilllegung" isnull ;'
+        else:
+            query += f' ' + \
+                     f'FROM "EinheitenKernkraft" ev ' + \
+                     f'WHERE ev."Postleitzahl" >= {area * 1000} AND ev."Postleitzahl" < {area * 1000 + 1000} ' \
 
         # Get Data from Postgres
         df = pd.read_sql(query, self.engine_mastr)
@@ -237,10 +234,13 @@ class Infrastructure:
         return None
 
     def get_solar_systems_in_area(self, area=52, solar_type='roof_top'):
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
                 f'"Nettonennleistung" as "maxPower", ' \
-                f'"Laengengrad" as "lon", ' \
-                f'"Breitengrad" as "lat", ' \
+                f'COALESCE("Laengengrad", {longitude}) as "lon", ' \
+                f'COALESCE("Breitengrad", {latitude}) as "lat", ' \
                 f'COALESCE("Hauptausrichtung", 699) as "azimuthCode", ' \
                 f'"Leistungsbegrenzung" as "limited", ' \
                 f'"Einspeisungsart" as "ownConsumption", ' \
@@ -265,9 +265,6 @@ class Infrastructure:
             # all PVs with nan have a tilt angle of 30°
             df['tilt'] = [self.tilt_codes[code][1] for code in df['tiltCode']]
             del df['tiltCode']
-            # all PVs with nan are located in the middle of the area
-            df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
-            df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
             if solar_type == 'roof_top':
                 # all PVs with nan and startDate > 2013 have ownConsumption
                 missing_values = df['ownConsumption'].isna()
@@ -278,6 +275,8 @@ class Infrastructure:
                 df.loc[grid_use, 'ownConsumption'] = 0
                 df['ownConsumption'] = df['ownConsumption'].replace(689, 1)
                 df['ownConsumption'] = df['ownConsumption'].replace(688, 0)
+                # assumption "regenerative Energiesysteme"
+                df['demandP'] = df['maxPower'] * 10 ** 3
             elif solar_type == 'free_area' or solar_type == 'other':
                 # set own consumption for free area mounted PVs to 0, because the demand is unknown
                 df['ownConsumption'] = 0
@@ -312,18 +311,21 @@ class Infrastructure:
         return None
 
     def get_wind_turbines_in_area(self, area=50, wind_type='on_shore'):
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
                 f'"Nettonennleistung" as "maxPower", ' \
-                f'"Laengengrad" as "lon", ' \
-                f'"Breitengrad" as "lat", ' \
+                f'COALESCE("Laengengrad", {longitude}) as "lon", ' \
+                f'COALESCE("Breitengrad", {latitude}) as "lat", ' \
                 f'"Typenbezeichnung" as "typ", ' \
-                f'"Hersteller" as "manufacturer", ' \
+                f'COALESCE("Hersteller", 1586) as "manufacturer", ' \
                 f'"Nabenhoehe" as "height", ' \
                 f'"Rotordurchmesser" as "diameter", ' \
                 f'"ClusterNordsee" as "nordicSea", ' \
                 f'"ClusterOstsee" as "balticSea", ' \
                 f'"GenMastrNummer" as "generatorID", ' \
-                f'"Inbetriebnahmedatum" as "startDate" ' \
+                f'COALESCE("Inbetriebnahmedatum", \'2018-01-01\') as "startDate" ' \
                 f'FROM "EinheitenWind" ' \
                 f'WHERE "EinheitBetriebsstatus" = 35 ' \
                 f'AND "Lage" = {self.wind_codes[wind_type]}'
@@ -340,24 +342,17 @@ class Infrastructure:
             df['height'] = df['height'].fillna(df['height'].mean())
             # all WEA with nan set hight to mean diameter
             df['diameter'] = df['diameter'].fillna(df['diameter'].mean())
-            # all WEA with nan set default date 2018
-            df['startDate'] = df['startDate'].fillna('2018-01-01')
-            df['startDate'] = pd.to_datetime(df['startDate'])
-
+            # all WEA with na are on shore and not allocated to a sea cluster
             df['nordicSea'] = df['nordicSea'].fillna(0)
             df['balticSea'] = df['balticSea'].fillna(0)
-
-            df['manufacturer'] = df['manufacturer'].fillna(1586)
+            # get name of manufacturer
             df['manufacturer'] = [self.wind_manufacturer.loc[x].Wert for x in df['manufacturer']]
-
+            # try to find the correct type TODO: Check Pattern of new turbines
             df['typ'] = [str(typ).replace(' ', '').replace('-', '').upper() for typ in df['typ']]
             df['typ'] = [None if re.search(self.pattern_wind, typ) is None else re.search(self.pattern_wind, typ).group()
                          for typ in df['typ']]
             df['typ'] = df['typ'].replace('', 'default')
-
-            df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
-            df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
-
+            # set tag for wind farms
             wind_farm_prefix = f'{area * 1000}F'
             df['windFarm'] = 'x'
             counter = 0
@@ -370,13 +365,17 @@ class Infrastructure:
             return df
 
         return None
+
     def get_biomass_systems_in_area(self, area=50):
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+
         # TODO: Add more Parameters, if the model get more complex
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
-                f'"Inbetriebnahmedatum" as "startDate", ' \
+                f'COALESCE("Inbetriebnahmedatum", \'2018-01-01\') as "startDate", ' \
                 f'"Nettonennleistung" as "maxPower", ' \
-                f'"Laengengrad" as "lon", ' \
-                f'"Breitengrad" as "lat" ' \
+                f'COALESCE("Laengengrad", {longitude}) as "lon", ' \
+                f'COALESCE("Breitengrad", {latitude}) as "lat" ' \
                 f'FROM "EinheitenBiomasse"' \
                 f'WHERE "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000} AND ' \
                 f'"EinheitBetriebsstatus" = 35 ;'
@@ -386,19 +385,21 @@ class Infrastructure:
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             df['maxPower'] = df['maxPower'] / 10**3
-            df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
-            df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
+
             return df
 
         return None
 
     def get_run_river_systems_in_area(self, area=50):
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+
         # TODO: Add more Parameters, if the model get more complex
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
-                f'"Inbetriebnahmedatum" as "startDate", ' \
+                f'COALESCE("Inbetriebnahmedatum", \'2018-01-01\') as "startDate", ' \
                 f'"Nettonennleistung" as "maxPower", ' \
-                f'"Laengengrad" as "lon", ' \
-                f'"Breitengrad" as "lat" ' \
+                f'COALESCE("Laengengrad", {longitude}) as "lon", ' \
+                f'COALESCE("Breitengrad", {latitude}) as "lat" ' \
                 f'FROM "EinheitenWasser"' \
                 f'WHERE "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000} AND ' \
                 f'"EinheitBetriebsstatus" = 35 AND "ArtDerWasserkraftanlage" = 890'
@@ -408,28 +409,31 @@ class Infrastructure:
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             df['maxPower'] = df['maxPower'] / 10**3
-            df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
-            df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
+
             return df
 
         return None
 
     def get_water_storage_systems(self, area=80):
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
                 f'"LokationMastrNummer" as "locationID", ' \
                 f'"SpeMastrNummer" as "storageID", ' \
                 f'"NameStromerzeugungseinheit" as "name", ' \
-                f'"Inbetriebnahmedatum" as "startDate", ' \
+                f'COALESCE("Inbetriebnahmedatum", \'2018-01-01\') as "startDate", ' \
                 f'"Nettonennleistung" as "P-_max", ' \
                 f'"NutzbareSpeicherkapazitaet" as "VMax", ' \
                 f'"PumpbetriebLeistungsaufnahme" as "P+_max", ' \
-                f'"Laengengrad" as "lon", ' \
-                f'"Breitengrad" as "lat" ' \
+                f'COALESCE("Laengengrad", {longitude}) as "lon", ' \
+                f'COALESCE("Breitengrad", {latitude}) as "lat", ' \
                 f'FROM "EinheitenStromSpeicher"' \
                 f'LEFT JOIN "AnlagenStromSpeicher" ON "EinheitMastrNummer" = "VerknuepfteEinheitenMastrNummern" ' \
                 f'WHERE "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000} AND ' \
                 f'"EinheitBetriebsstatus" = 35 AND "Technologie" = 1537 AND "EinheitSystemstatus"=472 AND "Land"=84 ' \
                 f'AND "Nettonennleistung" > 500' \
+
         # Get Data from Postgres
         df = pd.read_sql(query, self.engine_mastr)
         # If the response Dataframe is not empty set technical parameter
@@ -444,14 +448,10 @@ class Infrastructure:
             # fill nan values with default from wiki
             df['VMax'] = df['VMax'].fillna(0)
             df['VMax'] = df['VMax'] / 10**3
-            print(df['name'])
             for index, row in df[df['VMax'] == 0].iterrows():
                 for key, value in self.storage_volumes.items():
                     if key in row['name']:
                         df.at[index, 'VMax'] = value
-
-            df['lat'] = df['lat'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0])
-            df['lon'] = df['lon'].fillna(self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0])
 
             storages = []
             for id_ in df['storageID'].unique():
@@ -473,8 +473,8 @@ class Infrastructure:
 
         return None
 
-    # TODO: Check Enet Data for better Estimation
     def get_demand_in_area(self, area=52):
+        # TODO: Check Enet Data for better Estimation
         grids = {'nsp': [], 'msp': []}
         val = {'nsp': 'netz_nsp', 'msp': 'netz_nr_msp'}
 
@@ -493,6 +493,8 @@ class Infrastructure:
 
         val = {'nsp': 'arbeit_ns', 'msp': 'arbeit_ms'}
         demand_factor = 0
+        nsp = 0
+        msp = 0
         for key, value in grids.items():
             for grid in value:
                 query = f'SELECT {val[key]} FROM netzdaten where netz_nr = {grid} order by stand desc limit 1 '
@@ -500,30 +502,84 @@ class Infrastructure:
                 if not df.empty:
                     df = df.fillna(0)
                     demand_factor += df[val[key]].to_numpy()[0]
+                    if key == 'nsp':
+                        nsp += df[val[key]].to_numpy()[0]
+                    else:
+                        msp += df[val[key]].to_numpy()[0]
 
-        return (demand_factor/10**6)/2668.37        # --> 2668.37 = Sum over all PLZ Areas
+        return 540*(demand_factor/10**6)/2668.37, nsp/(nsp+msp), msp/(nsp+msp)        # --> 2668.37 = Sum over all PLZ Areas
+
+    def get_solar_storage_systems_in_area(self, area=52):
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+
+        query = f'SELECT spe."LokationMastrNummer" as "unitID", ' \
+                f'so."Nettonennleistung" as "maxPower", ' \
+                f'spe."Nettonennleistung" as "batPower", ' \
+                f'COALESCE(so."Laengengrad", {longitude}) as "lon", ' \
+                f'COALESCE(so."Breitengrad", {latitude}) as "lat", ' \
+                f'COALESCE(so."Hauptausrichtung", 699) as "azimuthCode", ' \
+                f'COALESCE(so."Leistungsbegrenzung", 802) as "limited", ' \
+                f'COALESCE(so."Einspeisungsart", 689) as "ownConsumption", ' \
+                f'COALESCE(so."HauptausrichtungNeigungswinkel", 809) as "tiltCode", ' \
+                f'COALESCE(so."Inbetriebnahmedatum", \'2018-01-01\') as "startDate", ' \
+                f'an."NutzbareSpeicherkapazitaet" as "VMax" ' \
+                f'FROM "EinheitenStromSpeicher" spe ' \
+                f'INNER JOIN "EinheitenSolar" so ON spe."LokationMastrNummer" = so."LokationMastrNummer" ' \
+                f'INNER JOIN "AnlagenStromSpeicher" an ON spe."SpeMastrNummer" = an."MastrNummer"' \
+                f'WHERE so."Postleitzahl" >= {area * 1000} AND so."Postleitzahl" < {area * 1000 + 1000} ' \
+                f'AND so."EinheitBetriebsstatus" = 35;'
+
+        # Get Data from Postgres
+        df = pd.read_sql(query, self.engine_mastr)
+        # If the response Dataframe is not empty set technical parameter
+        if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
+            df['VMax'] = df['VMax'].fillna(10)
+            df['ownConsumption'] = df['ownConsumption'].replace(689, 1)
+            df['ownConsumption'] = df['ownConsumption'].replace(688, 0)
+            df['limited'] = [self.limit_codes[code] for code in df['limited']]
+
+            # all PVs with nan are south oriented assets
+            df['azimuth'] = [self.azimuth_codes[code][1] for code in df['azimuthCode']]
+            del df['azimuthCode']
+            # all PVs with nan have a tilt angle of 30°
+            df['tilt'] = [self.tilt_codes[code][1] for code in df['tiltCode']]
+            del df['tiltCode']
+            # assumption "regenerative Energiesysteme"
+            df['demandP'] = df['maxPower'] * 10**3
+
+            df['eta'] = 0.96
+            df['V0'] = 0
+
+            return df
 
 
 if __name__ == "__main__":
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    # mpl.use('Qt5Agg')
 
-
-    interface = Infrastructure()
-    plz_matrix = np.load(r'./crawler/plz_matrix.npy')
-    # x = interface.get_wind_turbines_in_area(area=52)
-    list_ = []
-    for i in range(1, 100):
-        # list_.append(interface.get_water_storage_systems(area=i))
-        value = interface.get_demand_in_area(i)
-        list_.append((i, value))
-        plz_matrix[plz_matrix == i] = value
-    plz_matrix[plz_matrix == 100] = 0
-    plz_matrix[plz_matrix == 101] = 0
-    test = plz_matrix[300:600, 300:600]
-    plt.imshow(test, cmap='hot', interpolation='nearest')
-    plt.show()
+    interface = InfrastructureInterface()
+    wea = interface.get_wind_turbines_in_area(area=52)
+    pwp = interface.get_power_plant_in_area(area=52, fuel_typ='nuclear')
+    bat = interface.get_solar_storage_systems_in_area(area=52)
+    dem, n, m = interface.get_demand_in_area(area=52)
+    # import matplotlib as mpl
+    # import matplotlib.pyplot as plt
+    # # mpl.use('Qt5Agg')
+    #
+    #
+    # interface = Infrastructure()
+    # plz_matrix = np.load(r'./crawler/plz_matrix.npy')
+    # # x = interface.get_wind_turbines_in_area(area=52)
+    # list_ = []
+    # for i in range(1, 100):
+    #     # list_.append(interface.get_water_storage_systems(area=i))
+    #     value = interface.get_demand_in_area(i)
+    #     list_.append((i, value))
+    #     plz_matrix[plz_matrix == i] = value
+    # plz_matrix[plz_matrix == 100] = 0
+    # plz_matrix[plz_matrix == 101] = 0
+    # test = plz_matrix[300:600, 300:600]
+    # plt.imshow(test, cmap='hot', interpolation='nearest')
+    # plt.show()
 
 
     # installed_capacity_model = dict(lignite=0, coal=0, gas=0, nuclear=0, solar=0, water=0, bio=0, on_shore=0, off_shore=0)

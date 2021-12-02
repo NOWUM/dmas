@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import calendar
+from datetime import date as dt
 
 # model modules
 from agents.basic_Agent import BasicAgent
@@ -10,14 +11,10 @@ from interfaces.weather import Weather
 
 class WtrAgent(BasicAgent):
 
-    def __init__(self, date, plz, mqtt_exchange, simulation_database, weather_database):
-        super().__init__(date, plz, 'CTL', mqtt_exchange, simulation_database)
-        self.interface_weather = Weather()
-        self.weather_database = weather_database
-        self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', index_col=0, sep=';', decimal=',')
-        self.geo_info = self.geo_info.set_index('hash')
+    def __init__(self, date, plz, agent_type, mqtt_exchange, simulation_database, connect):
+        super().__init__(date, plz, agent_type, mqtt_exchange, simulation_database, connect)
 
-        self.sim_date = pd.to_datetime('1995', format='%y')
+        self.sim_date = dt(1995, 1, 1)
         self.year = self.date.year
         self.leap_years = set([i for i in range(1996, 2016, 4)])
         self.norm_years = set([i for i in range(1995, 2016)]).difference(self.leap_years)
@@ -38,7 +35,7 @@ class WtrAgent(BasicAgent):
             else:
                 self.sim_year = np.random.choice(list(self.norm_years))
 
-        self.sim_date = pd.to_datetime(f'{self.sim_year}{self.date.month}{self.date.days_in_month}', format='%y%m%d')
+        self.sim_date = dt(self.sim_year, self.date.month, int(self.date.days_in_month))
         # Call for Market Clearing
         # -----------------------------------------------------------------------------------------------------------
         if 'calculate_weather' in message:
@@ -48,8 +45,4 @@ class WtrAgent(BasicAgent):
                 self.logger.exception('Error while calculating')
 
     def set_weather(self):
-        pass
-
-
-if __name__ == "__main__":
-    test = WtrAgent(date='2019-01-01', plz=4, mqtt_exchange='dMAS', simulation_database='dMAS', weather_database='weather')
+        self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'weather_date {self.sim_date}')
