@@ -11,7 +11,7 @@ ENV TZ="Europe/Berlin"
 RUN mkdir /src
 RUN chown -R admin /src
 
-COPY ./model/agents/* /src/agents/*
+COPY ./model/agents /src/agents
 
 COPY ./model/apps /src/apps
 
@@ -19,7 +19,7 @@ COPY ./model/interfaces /src/interfaces
 
 COPY ./model/aggregation ./src/aggregation
 
-COPY ./model/demandlib/* ./src/demandlib/*
+COPY ./model/demandlib ./src/demandlib
 COPY ./model/systems ./src/systems
 
 COPY ./model/data ./src/data

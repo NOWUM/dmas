@@ -13,7 +13,7 @@ RUN mkdir -p /home/admin
 RUN chown -R admin /src
 RUN chown -R admin /home/admin
 
-COPY ./model/agents/* /src/agents/*
+COPY ./model/agents /src/agents
 
 COPY ./model/apps /src/apps
 

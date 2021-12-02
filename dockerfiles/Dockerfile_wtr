@@ -12,7 +12,7 @@ ENV TZ="Europe/Berlin"
 RUN mkdir /src
 RUN chown -R admin /src
 
-COPY ./model/agents/* /src/agents/*
+COPY ./model/agents /src/agents
 
 COPY ./model/interfaces /src/interfaces
 
