@@ -39,7 +39,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'MRK'
-      CONNECT: True
+      CONNECT: 'True'
 
   weather:
     container_name: wtr
@@ -52,7 +52,7 @@ services:
       WEATHER_DATABASE: weather
       WEATHER_HOST: 10.13.10.41
       AGENT_TYPE: 'WTR'
-      CONNECT: True
+      CONNECT: 'True'
 
   tso:
     container_name: net
@@ -63,7 +63,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'NET'
-      CONNECT: True
+      CONNECT: 'True'
 
   dem50:
     container_name: dem50
@@ -74,7 +74,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
-      CONNECT: True
+      CONNECT: 'True'
       
   dem51:
     container_name: dem51
@@ -85,7 +85,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
-      CONNECT: True
+      CONNECT: 'True'
       
   dem52:
     container_name: dem52
@@ -96,7 +96,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
-      CONNECT: True
+      CONNECT: 'True'
       
   dem53:
     container_name: dem53
@@ -107,7 +107,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
-      CONNECT: True
+      CONNECT: 'True'
       
   dem54:
     container_name: dem54
@@ -118,7 +118,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
-      CONNECT: True
+      CONNECT: 'True'
       
   dem55:
     container_name: dem55
@@ -129,7 +129,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
-      CONNECT: True
+      CONNECT: 'True'
       
   pwp50:
     container_name: pwp50
@@ -140,7 +140,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
-      CONNECT: True
+      CONNECT: 'True'
       
   pwp51:
     container_name: pwp51
@@ -151,7 +151,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
-      CONNECT: True
+      CONNECT: 'True'
       
   pwp52:
     container_name: pwp52
@@ -162,7 +162,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
-      CONNECT: True
+      CONNECT: 'True'
       
   pwp53:
     container_name: pwp53
@@ -173,7 +173,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
-      CONNECT: True
+      CONNECT: 'True'
       
   pwp54:
     container_name: pwp54
@@ -184,7 +184,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
-      CONNECT: True
+      CONNECT: 'True'
       
   pwp55:
     container_name: pwp55
@@ -195,7 +195,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
-      CONNECT: True
+      CONNECT: 'True'
       
   res50:
     container_name: res50
@@ -206,7 +206,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
-      CONNECT: True
+      CONNECT: 'True'
       
   res51:
     container_name: res51
@@ -217,7 +217,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
-      CONNECT: True
+      CONNECT: 'True'
       
   res52:
     container_name: res52
@@ -228,7 +228,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
-      CONNECT: True
+      CONNECT: 'True'
       
   res53:
     container_name: res53
@@ -239,7 +239,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
-      CONNECT: True
+      CONNECT: 'True'
       
   res54:
     container_name: res54
@@ -250,7 +250,7 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
-      CONNECT: True
+      CONNECT: 'True'
       
   res55:
     container_name: res55
@@ -261,5 +261,5 @@ services:
       MQTT_EXCHANGE: 'dMAS'
       SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
-      CONNECT: True
+      CONNECT: 'True'
       

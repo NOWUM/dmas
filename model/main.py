@@ -18,7 +18,7 @@ if __name__ == "__main__":
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
         'simulation_database': os.getenv('SIMULATIONS_DATABASE', 'dMAS'),
         'agent_type': os.getenv('AGENT_TYPE', 'DEM'),
-        'connect': os.getenv('CONNECT', False),
+        'connect': bool(os.getenv('CONNECT', False)),
     }
 
     try:
