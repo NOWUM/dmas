@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-COPY ./requirements/requirements_str.txt .
+COPY ./requirements_.txt .
 
 RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements_str.txt
