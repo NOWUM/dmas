@@ -39,7 +39,7 @@ output.append('''
 ''')
 # Build one Control Agent
 output.append(f'''
-  market:
+  controller:
     container_name: ctl
     image: {image_repo}agent:latest
     environment:
