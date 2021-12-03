@@ -1,4 +1,3 @@
-data
 *.pyc
 .idea
 ./model/.idea
