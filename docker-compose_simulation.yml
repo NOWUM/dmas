@@ -34,10 +34,8 @@ services:
     container_name: mrk
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'MRK'
       CONNECT: 'True'
 
@@ -45,12 +43,8 @@ services:
     container_name: wtr
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
-      WEATHER_DATABASE: weather
-      WEATHER_HOST: 10.13.10.41
       AGENT_TYPE: 'WTR'
       CONNECT: 'True'
 
@@ -58,10 +52,8 @@ services:
     container_name: net
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'NET'
       CONNECT: 'True'
 
@@ -69,10 +61,8 @@ services:
     container_name: dem50
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
@@ -80,10 +70,8 @@ services:
     container_name: dem51
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
@@ -91,10 +79,8 @@ services:
     container_name: dem52
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
@@ -102,10 +88,8 @@ services:
     container_name: dem53
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
@@ -113,10 +97,8 @@ services:
     container_name: dem54
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
@@ -124,10 +106,8 @@ services:
     container_name: dem55
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
@@ -135,10 +115,8 @@ services:
     container_name: pwp50
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       
@@ -146,10 +124,8 @@ services:
     container_name: pwp51
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       
@@ -157,10 +133,8 @@ services:
     container_name: pwp52
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       
@@ -168,10 +142,8 @@ services:
     container_name: pwp53
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       
@@ -179,10 +151,8 @@ services:
     container_name: pwp54
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       
@@ -190,10 +160,8 @@ services:
     container_name: pwp55
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       
@@ -201,10 +169,8 @@ services:
     container_name: res50
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
@@ -212,10 +178,8 @@ services:
     container_name: res51
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
@@ -223,10 +187,8 @@ services:
     container_name: res52
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
@@ -234,10 +196,8 @@ services:
     container_name: res53
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
@@ -245,10 +205,8 @@ services:
     container_name: res54
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
@@ -256,10 +214,8 @@ services:
     container_name: res55
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: dMAS
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
