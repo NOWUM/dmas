@@ -43,7 +43,7 @@ class StrAgent(basicAgent):
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         df['agent'] = self.name
-        df.to_sql(name='installed capacities', con=self.simulation_database)
+        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 

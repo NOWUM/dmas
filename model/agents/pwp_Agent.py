@@ -38,7 +38,7 @@ class PwpAgent(basicAgent):
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         df['agent'] = self.name
-        df.to_sql(name='installed capacities', con=self.simulation_database)
+        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
         # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         # initialize dicts for optimization results
