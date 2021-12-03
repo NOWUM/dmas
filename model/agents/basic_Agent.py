@@ -39,7 +39,7 @@ class BasicAgent:
                                 saveResult=0,                       # save adjustments in influx db
                                 nextDay=0)                          # preparation for coming day
 
-        self.simulation_database = create_engine(f'postgresql://dMas:dMas@simulationdb/dMAS',
+        self.simulation_database = create_engine(f'postgresql://dMAS:dMAS@simulationdb/dMAS',
                                                  connect_args={"application_name": self.name})
 
         self.exchange = mqtt_exchange

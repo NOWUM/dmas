@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# generates a docker-compose.yml to crawl the data from dwd
-
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 
 output = []

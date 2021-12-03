@@ -31,7 +31,7 @@ class PwpPort(PortfolioModel):
         data = copy.deepcopy(energy_system)
         # build power plants
         data.update(dict(model=PowerPlant(name=energy_system['unitID'], power_plant=copy.deepcopy(data),
-                                          T=self.T, t=np.arange(self.T), dt=self.dt)))
+                                          T=self.T)))
 
         self.energy_systems.update({energy_system['unitID']: data})
 
