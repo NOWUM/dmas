@@ -3,10 +3,6 @@
 # generates a docker-compose.yml to crawl the data from dwd
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
-simulation_database = 'dMAS'
-weather_database = 'weather'
-weather_host = '10.13.10.41'
-
 
 output = []
 output.append('version: "3"\n')
@@ -20,7 +16,7 @@ output.append(f'''
     environment:
       - POSTGRES_USER=dMAS
       - POSTGRES_PASSWORD=dMAS
-      - POSTGRES_DB={simulation_database}
+      - POSTGRES_DB=dMAS
     ports:
       - 5432:5432
 ''')
@@ -51,10 +47,8 @@ output.append(f'''
     container_name: mrk
     image: {image_repo}agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: {simulation_database}
       AGENT_TYPE: 'MRK'
       CONNECT: 'True'
 ''')
@@ -64,12 +58,8 @@ output.append(f'''
     container_name: wtr
     image: {image_repo}agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: {simulation_database}
-      WEATHER_DATABASE: {weather_database}
-      WEATHER_HOST: {weather_host}
       AGENT_TYPE: 'WTR'
       CONNECT: 'True'
 ''')
@@ -79,10 +69,8 @@ output.append(f'''
     container_name: net
     image: {image_repo}agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: {simulation_database}
       AGENT_TYPE: 'NET'
       CONNECT: 'True'
 ''')
@@ -93,10 +81,8 @@ for plz in range(50, 56):
     container_name: dem{plz}
     image: {image_repo}agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: {simulation_database}
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       ''')
@@ -107,10 +93,8 @@ for plz in range(50, 56):
     container_name: pwp{plz}
     image: {image_repo}agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: {simulation_database}
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       ''')
@@ -121,10 +105,8 @@ for plz in range(50, 56):
     container_name: res{plz}
     image: {image_repo}agent:latest
     environment:
-      SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
       MQTT_EXCHANGE: 'dMAS'
-      SIMULATIONS_DATABASE: {simulation_database}
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       ''')

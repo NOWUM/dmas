@@ -10,7 +10,7 @@ from interfaces.infrastructure import InfrastructureInterface
 
 class BasicAgent:
 
-    def __init__(self, date, plz, typ, mqtt_exchange, simulation_database, connect):
+    def __init__(self, date, plz, typ, mqtt_exchange, connect, infrastructure_source, infrastructure_login):
 
         # declare meta data for each agent
         self.plz = plz                                              # plz code
@@ -39,8 +39,8 @@ class BasicAgent:
                                 saveResult=0,                       # save adjustments in influx db
                                 nextDay=0)                          # preparation for coming day
 
-        self.database = simulation_database                         # name of simulation database
-        self.engine = create_engine(f'postgresql://dMas:dMas@simulationdb/dMas')
+        self.simulation_database = create_engine(f'postgresql://dMas:dMas@simulationdb/dMAS',
+                                                 connect_args={"application_name": self.name})
 
         self.exchange = mqtt_exchange
         self.mqtt_connection = False
@@ -55,7 +55,7 @@ class BasicAgent:
                 self.mqtt_connection = False
                 self.logger.exception('Cant connect to MQTT')
         try:
-            self.infrastructure_interface = InfrastructureInterface()
+            self.infrastructure_interface = InfrastructureInterface(infrastructure_source, infrastructure_login)
         except Exception as e:
             self.logger.exception('Cant connect to Infrastructure Database')
 

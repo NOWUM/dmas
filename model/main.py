@@ -13,12 +13,14 @@ logging.basicConfig()
 if __name__ == "__main__":
 
     init_dict = {
-        'date': os.getenv('SIMULATION_START_DATE', '2018-01-01'),
+        'date': os.getenv('SIMULATION_START_DATE', '2020-01-01'),
         'plz': int(os.getenv('PLZ_CODE', 52)),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
         'simulation_database': os.getenv('SIMULATIONS_DATABASE', 'dMAS'),
         'agent_type': os.getenv('AGENT_TYPE', 'DEM'),
         'connect': bool(os.getenv('CONNECT', False)),
+        'infrastructure_source': os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432'),
+        'infrastructure_login': os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
     }
 
     try:

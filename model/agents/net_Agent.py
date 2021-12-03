@@ -10,8 +10,8 @@ from agents.client_Agent import agent as basicAgent
 
 class NetAgent(basicAgent):
 
-    def __init__(self, date, plz, mqtt_exchange, simulation_database):
-        super().__init__(date, plz, 'NET', mqtt_exchange, simulation_database)
+    def __init__(self, date, plz, agent_type, mqtt_exchange, connect,  infrastructure_source, infrastructure_login):
+        super().__init__(date, plz, agent_type, mqtt_exchange, connect, infrastructure_source, infrastructure_login)
         self.logger.info('starting the agent')
         # create pypsa instance for powerflow
         self.network = pypsa.Network()

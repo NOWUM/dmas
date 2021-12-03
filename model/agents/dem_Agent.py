@@ -10,8 +10,8 @@ from agents.client_Agent import agent as basicAgent
 
 class DemAgent(basicAgent):
 
-    def __init__(self, date, plz, agent_type, mqtt_exchange, simulation_database, connect):
-        super().__init__(date, plz, agent_type, mqtt_exchange, simulation_database, connect)
+    def __init__(self, date, plz, agent_type, mqtt_exchange, connect,  infrastructure_source, infrastructure_login):
+        super().__init__(date, plz, agent_type, mqtt_exchange, connect, infrastructure_source, infrastructure_login)
         # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = tme.time()

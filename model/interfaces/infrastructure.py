@@ -6,11 +6,13 @@ import re
 
 class InfrastructureInterface:
 
-    def __init__(self, user='opendata', password='opendata', host='10.13.10.41', port=5432):
-        self.engine_mastr = create_engine(f'postgresql://{user}:{password}@{host}:{port}/mastr')
-        self.engine_enet = create_engine(f'postgresql://{user}:{password}@{host}:{port}/enet')
-        self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
+    def __init__(self, infrastructure_source, infrastructure_login):
+        self.database_mastr = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/mastr',
+                                            connect_args={"application_name": "myapp"})
+        self.database_enet = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/enet',
+                                           connect_args={"application_name": "myapp"})
 
+        self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
         # MaStR Codes for fuel types used in Power Plant Table
         self.fuel_codes = {
             'coal':         2407,
@@ -145,7 +147,7 @@ class InfrastructureInterface:
                      f'WHERE ev."Postleitzahl" >= {area * 1000} AND ev."Postleitzahl" < {area * 1000 + 1000} ' \
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine_mastr)
+        df = pd.read_sql(query, self.database_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in list(self.geo_info['PLZ'])]):
             # set default values for technical parameters
@@ -255,7 +257,7 @@ class InfrastructureInterface:
                 f'AND "EinheitBetriebsstatus" = 35;'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine_mastr)
+        df = pd.read_sql(query, self.database_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in list(self.geo_info['PLZ'])]):
             # all PVs with are implemented in 2018
@@ -334,7 +336,7 @@ class InfrastructureInterface:
             query += f' AND "Postleitzahl" >= {area * 1000} AND "Postleitzahl" < {area * 1000 + 1000};'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine_mastr)
+        df = pd.read_sql(query, self.database_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             # set max Power to [MW]
@@ -382,7 +384,7 @@ class InfrastructureInterface:
                 f'"EinheitBetriebsstatus" = 35 ;'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine_mastr)
+        df = pd.read_sql(query, self.database_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             df['maxPower'] = df['maxPower'] / 10**3
@@ -406,7 +408,7 @@ class InfrastructureInterface:
                 f'"EinheitBetriebsstatus" = 35 AND "ArtDerWasserkraftanlage" = 890'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine_mastr)
+        df = pd.read_sql(query, self.database_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             df['maxPower'] = df['maxPower'] / 10**3
@@ -436,7 +438,7 @@ class InfrastructureInterface:
                 f'AND "Nettonennleistung" > 500' \
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine_mastr)
+        df = pd.read_sql(query, self.database_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             # set charge and discharge power
@@ -484,7 +486,7 @@ class InfrastructureInterface:
                     f'FROM netze_ortsteile no where plz >= {area*1000} and plz < {area*1000+1000} ' \
                     f'and no.gueltig_bis = \'2100-01-01 00:00:00\''
 
-            df = pd.read_sql(query, self.engine_enet)
+            df = pd.read_sql(query, self.database_enet)
             if not df.empty:
                 for _, series in df.iterrows():
                     x = tuple(map(str, series.values[0][1:-1].split(',')))
@@ -499,7 +501,7 @@ class InfrastructureInterface:
         for key, value in grids.items():
             for grid in value:
                 query = f'SELECT {val[key]} FROM netzdaten where netz_nr = {grid} order by stand desc limit 1 '
-                df = pd.read_sql(query, self.engine_enet)
+                df = pd.read_sql(query, self.database_enet)
                 if not df.empty:
                     df = df.fillna(0)
                     demand_factor += df[val[key]].to_numpy()[0]
@@ -532,7 +534,7 @@ class InfrastructureInterface:
                 f'AND so."EinheitBetriebsstatus" = 35;'
 
         # Get Data from Postgres
-        df = pd.read_sql(query, self.engine_mastr)
+        df = pd.read_sql(query, self.database_mastr)
         # If the response Dataframe is not empty set technical parameter
         if all([not df.empty, area in [int(i) for i in self.geo_info['PLZ']]]):
             df['VMax'] = df['VMax'].fillna(10)
