@@ -10,6 +10,7 @@ class InfrastructureInterface:
         self.engine_mastr = create_engine(f'postgresql://{user}:{password}@{host}:{port}/mastr')
         self.engine_enet = create_engine(f'postgresql://{user}:{password}@{host}:{port}/enet')
         self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
+        print(self.geo_info)
         # MaStR Codes for fuel types used in Power Plant Table
         self.fuel_codes = {
             'coal':         2407,
