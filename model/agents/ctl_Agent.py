@@ -32,13 +32,18 @@ class CtlAgent(BasicAgent):
         self.agent_list[agent] = status
 
     def check_orders(self):
-        self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
-        print(' --> Waiting for orders'
-              % self.name)
-        self.channel.start_consuming()
+        try:
+            self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
+            print(' --> Waiting for orders'
+                  % self.name)
+            self.channel.start_consuming()
+        except Exception as e:
+            print(repr(e))
 
     def simulation_routine(self):
         self.logger.info('simulation started')
+        channel = self.get_rabbitmq_connection()
+        # TODO Find place for exchange
         for date in pd.date_range(start=self.start_date, end=self.stop_date, freq='D'):
             if self.sim_stop:
                 self.logger.info('simulation terminated')
@@ -47,18 +52,18 @@ class CtlAgent(BasicAgent):
                 try:
                     start_time = time.time()  # timestamp to measure simulation time
                     # 1.Step: Run optimization for dayAhead Market
-                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'opt_dayAhead {date}')
+                    channel.basic_publish(exchange='dMas', routing_key='', body=f'opt_dayAhead {date}')
                     orders_setting = True
                     while orders_setting:
                         time.sleep(0.1)
                         if all([values for _, values in self.agent_list.items()]):
                             orders_setting = False
                     # 2. Step: Run Market Clearing
-                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'dayAhead_clearing {date}')
+                    channel.basic_publish(exchange='dMas', routing_key='', body=f'dayAhead_clearing {date}')
                     # 3. Step: Run Power Flow calculation
-                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'grid_calc {date}')
+                    channel.basic_publish(exchange='dMas', routing_key='', body=f'grid_calc {date}')
                     # 4. Step: Publish Market Results
-                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'result_dayAhead {date}')
+                    channel.basic_publish(exchange='dMas', routing_key='', body=f'result_dayAhead {date}')
                     # 5. Step: Rest agent list for next day
                     for key, _ in self.agent_list.items():
                         self.agent_list[key] = False
@@ -102,16 +107,13 @@ class CtlAgent(BasicAgent):
                 </div>
                 '''
 
-
-
-
         @app.route('/stop')
         def stop_simulation():
             self.sim_stop = True
             self.logger.info('stopping simulation')
             return 'OK'
 
-        @app.route('/run', methods=['POST'])
+        @app.route('/start', methods=['POST'])
         def run_simulation():
             rf = request.form
             self.start_date = rf.get('start', '2018-01-01')
@@ -119,7 +121,7 @@ class CtlAgent(BasicAgent):
 
             if not self.sim_start:
                 headers = {'content-type': 'application/json',}
-                response = requests.get('rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
+                response = requests.get('http://rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
                 agents = response.json()
                 print(agents)
                 simulation = threading.Thread(target=self.simulation_routine)

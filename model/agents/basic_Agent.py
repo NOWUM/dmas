@@ -1,4 +1,6 @@
 # third party modules
+import time
+
 import pandas as pd
 import pika
 import logging
@@ -41,27 +43,33 @@ class BasicAgent:
 
         self.simulation_database = create_engine(f'postgresql://dMAS:dMAS@simulationdb/dMAS',
                                                  connect_args={"application_name": self.name})
-
-        self.exchange = mqtt_exchange
-        self.mqtt_connection = False
+        self.channels = []
         if connect:
-            try:
-                self.mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
-                self.channel = self.mqtt_connection.channel()
-                self.channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
-                result = self.channel.queue_declare(queue=self.name, exclusive=True)
-                self.channel.queue_bind(exchange=self.exchange, queue=result.method.queue)
-            except Exception as e:
-                self.mqtt_connection = False
-                self.logger.exception('Cant connect to MQTT')
-        try:
-            self.infrastructure_interface = InfrastructureInterface(infrastructure_source, infrastructure_login)
-        except Exception as e:
-            self.logger.exception('Cant connect to Infrastructure Database')
+            self.channel = self.get_rabbitmq_connection()
+            result = self.channel.queue_declare(queue=self.name, exclusive=True)
+            self.channel.queue_bind(exchange='dMas', queue=result.method.queue)
 
     def __del__(self):
-        if self.mqtt_connection and not self.mqtt_connection.is_closed:
-            self.mqtt_connection.close()
+        for connection, channel in self.channels:
+            if connection and connection.is_closed:
+                connection.close()
+
+    def get_rabbitmq_connection(self):
+        for i in range(5):
+            try:
+                mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
+                channel = mqtt_connection.channel()
+                channel.exchange_declare(exchange='dMas', exchange_type='fanout')
+                self.logger.info(f'connected to rabbitmq')
+                self.channels.append((mqtt_connection, channel))
+                return channel
+            except pika.exceptions.AMQPConnectionError:
+                    self.logger.info(f'could not connect - try: {i}')
+                    time.sleep(i ** 2)
+            except Exception as e:
+                    self.mqtt_connection = False
+                    self.logger.exception(f'could not connect - try: {i}')
+        return False, None
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")
