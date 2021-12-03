@@ -66,9 +66,9 @@ class ResAgent(basicAgent):
             self.eeg_portfolio.add_energy_system(system_.to_dict())
         self.logger.info('Biomass Power Plants added')
 
-        # df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        # TODO: Add Insert in TimescaleDB
-        # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.mrk_portfolio.capacities)
+        df['agent'] = self.name
+        df.to_sql(name='installed capacities', con=self.simulation_database)
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
@@ -113,7 +113,7 @@ class ResAgent(basicAgent):
 
         power_da = self.portfolio.optimize()                            # total portfolio power
         # split power in eeg and direct marketing part
-        power_direct = agent.portfolio.generation['powerSolar'] + agent.portfolio.generation['powerWind']
+        power_direct = self.portfolio.generation['powerSolar'] + self.portfolio.generation['powerWind']
         power_eeg = power_da - power_direct
 
         self.performance['optModel'] = np.round(tme.time() - start_time, 3)

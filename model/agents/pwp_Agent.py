@@ -31,12 +31,14 @@ class PwpAgent(basicAgent):
             if power_plants is not None:
                 for _, data in power_plants.iterrows():
                     self.portfolio.add_energy_system(data.to_dict())
+                    self.shadow_portfolio.energy_systems(data.to_dict())
 
         # Construction power plants
         self.logger.info('Power Plants added')
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        df.to_sql(name=self.name, con=self.simulation_database)
+        df['agent'] = self.name
+        df.to_sql(name='installed capacities', con=self.simulation_database)
         # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz))
 
         # initialize dicts for optimization results

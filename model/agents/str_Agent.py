@@ -42,6 +42,8 @@ class StrAgent(basicAgent):
         self.q_bid = [0.45, 0.40, 0.35, 0.25, 0.15, 0.05]
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        df['agent'] = self.name
+        df.to_sql(name='installed capacities', con=self.simulation_database)
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 

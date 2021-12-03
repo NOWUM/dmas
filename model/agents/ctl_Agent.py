@@ -62,7 +62,7 @@ class CtlAgent(BasicAgent):
                     # 5. Step: Rest agent list for next day
                     for key, _ in self.agent_list.items():
                         self.agent_list[key] = False
-
+                    # TODO: for first day add primary keys to tabels
                     end_time = time.time() - start_time
                     self.logger.info('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
                 except Exception as e:
@@ -73,6 +73,37 @@ class CtlAgent(BasicAgent):
         self.logger.info('simulation finished')
 
     def run(self):
+        @app.route('/')
+        def main_page():
+            if self.sim_start:
+                content = '''
+                <form method="POST" action="/start" style="display: flex;flex-direction: column;">
+                    <span style="margin-bottom: 20px;">
+                        <label for="start_date">Start Date</label><br>
+                        <input type="date" id="start_date" name="start_date" value="1995-01-01" />
+                    </span>
+                    <span style="margin-bottom: 20px;">
+                        <label for="end_date">End Date</label><br>
+                        <input type="date" id="end_date" name="end_date" value="1995-02-01" />
+                    </span>
+                    <input type="submit" value="Start Simulation">
+                </form>'''
+            else:
+                content = '''
+                <form method="POST" action="/stop" style="display: flex;flex-direction: column;">
+                    <input type="submit" value="Stop Simulation">
+                </form>'''
+            return f'''
+                <div center style="width: 60%; margin: auto; height: 80%" >
+                <h1>Docker Agent-based Simulation</h1>
+                Simulation running: {self.sim_start}
+                {content}
+
+                </div>
+                '''
+
+
+
 
         @app.route('/stop')
         def stop_simulation():
@@ -80,10 +111,11 @@ class CtlAgent(BasicAgent):
             self.logger.info('stopping simulation')
             return 'OK'
 
-        @app.route('/run')
+        @app.route('/run', methods=['POST'])
         def run_simulation():
-            self.start_date = request.args.get('start')      # example.com/data?abc=123
-            self.stop_date = request.args.get('stop')
+            rf = request.form
+            self.start_date = rf.get('start', '2018-01-01')
+            self.stop_date = rf.get('stop', '2018-02-01')
 
             if not self.sim_start:
                 headers = {'content-type': 'application/json',}
