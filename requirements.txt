@@ -11,3 +11,10 @@ sklearn
 windpowerlib
 statsmodels
 pypsa
+scikit-learn
+pyproj
+shapely
+joblib
+requests
+flask
+scipy

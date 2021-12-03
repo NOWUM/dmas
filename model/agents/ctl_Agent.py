@@ -1,11 +1,14 @@
 # third party modules
-import time as tme
+import time
 import pandas as pd
-import numpy as np
-import os
+from flask import Flask, request
+import threading
+import requests
 
 # model modules
 from agents.basic_Agent import BasicAgent
+
+app = Flask('dMAS_controller')
 
 
 class CtlAgent(BasicAgent):
@@ -13,45 +16,84 @@ class CtlAgent(BasicAgent):
     def __init__(self, date, plz, agent_type, mqtt_exchange, connect,  infrastructure_source, infrastructure_login):
         super().__init__(date, plz, agent_type, mqtt_exchange, connect, infrastructure_source, infrastructure_login)
         self.logger.info('starting the agent')
-        start_time = tme.time()
-        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
+        start_time = time.time()
+        self.sim_start = False
+        self.sim_stop = False
+
+        self.start_date = '2018-01-01'
+        self.stop_date = '2018-02-01'
+        self.logger.info('setup of the agent completed in %s' % (time.time() - start_time))
+        self.agent_list = {}
+
+    def callback(self, ch, method, properties, body):
+        super().callback(ch, method, properties, body)
+        message = body.decode("utf-8")
+        agent, status = message.split(' ')
+        self.agent_list[agent] = status
+
+    def check_orders(self):
+        self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
+        print(' --> Waiting for orders'
+              % self.name)
+        self.channel.start_consuming()
+
+    def simulation_routine(self):
+        self.logger.info('simulation started')
+        for date in pd.date_range(start=self.start_date, end=self.stop_date, freq='D'):
+            if self.sim_stop:
+                self.logger.info('simulation terminated')
+                break
+            else:
+                try:
+                    start_time = time.time()  # timestamp to measure simulation time
+                    # 1.Step: Run optimization for dayAhead Market
+                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'opt_dayAhead {date}')
+                    orders_setting = True
+                    while orders_setting:
+                        time.sleep(0.1)
+                        if all([values for _, values in self.agent_list.items()]):
+                            orders_setting = False
+                    # 2. Step: Run Market Clearing
+                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'dayAhead_clearing {date}')
+                    # 3. Step: Run Power Flow calculation
+                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'grid_calc {date}')
+                    # 4. Step: Publish Market Results
+                    self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'result_dayAhead {date}')
+                    end_time = time.time() - start_time
+                    self.logger.info('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
+                except Exception as e:
+                    print(repr(e))
+                    self.logger.exception('Error in Simulation')
+
+        self.sim_start = False
+        self.logger.info('simulation finished')
 
     def run(self):
 
-        # for date in pd.date_range(start=self.start, end=self.end, freq='D'):
+        @app.route('/stop')
+        def stop_simulation():
+            self.sim_stop = True
+            self.logger.info('stopping simulation')
+            return 'OK'
 
-            try:
-                pass
-                # start_time = tme.time()  # timestamp to measure simulation time
-                #
-                # # 1.Step: Run optimization for dayAhead Market
-                # self.channel.basic_publish(exchange=self.exchange, routing_key='',
-                #                            body='opt_dayAhead ' + str(date))
-                # # 2. Step: Run Market Clearing
-                # self.channel.basic_publish(exchange=self.exchange, routing_key='',
-                #                            body='dayAhead_clearing ' + str(date))
-                #
-                # # TODO: Changes for wtr Agent
-                # # weather_generator.generate_weather(valid=valid, date=pd.to_datetime(start))
-                # # while not m_con.get_market_status(date):  # check if clearing done
-                # #     if gen_weather:
-                # #         weather_generator.generate_weather(valid, date + pd.DateOffset(days=1))
-                # #         gen_weather = False
-                # #     else:
-                # #         tme.sleep(1)
-                # gen_weather = True
-                #
-                # # 3. Step: Run Power Flow calculation
-                # self.channel.basic_publish(exchange=self.exchange, routing_key='',
-                #                            body='grid_calc ' + str(date))
-                # # 4. Step: Publish Market Results
-                # self.channel.basic_publish(exchange=self.exchange, routing_key='',
-                #                            body='result_dayAhead ' + str(date))
-                #
-                # end_time = tme.time() - start_time
-                # self.logger.info('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
+        @app.route('/run')
+        def run_simulation():
+            self.start_date = request.args.get('start')      # example.com/data?abc=123
+            self.stop_date = request.args.get('stop')
 
-            except Exception as e:
-                print('Error ' + str(date.date()))
-                print(e)
+            if not self.sim_start:
+                headers = {'content-type': 'application/json',}
+                response = requests.get('rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
+                agents = response.json()
+                print(agents)
+                simulation = threading.Thread(target=self.simulation_routine)
+                check_orders = threading.Thread(target=self.check_orders)
+                simulation.start()
+                check_orders.start()
+                self.sim_start = True
+
+            return 'OK'
+
+        app.run(debug=False, host="0.0.0.0", port=5000)
+
 

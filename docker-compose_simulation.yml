@@ -31,6 +31,15 @@ services:
       - 5672:5672
 
   market:
+    container_name: ctl
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 1
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'CTL'
+      CONNECT: 'True'
+
+  market:
     container_name: mrk
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:

@@ -37,6 +37,17 @@ output.append('''
       - 15672:15672
       - 5672:5672
 ''')
+# Build one Control Agent
+output.append(f'''
+  market:
+    container_name: ctl
+    image: {image_repo}agent:latest
+    environment:
+      PLZ_CODE: 1
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'CTL'
+      CONNECT: 'True'
+''')
 # Build one Market
 output.append(f'''
   market:

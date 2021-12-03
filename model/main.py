@@ -7,6 +7,8 @@ from agents.str_Agent import StrAgent
 from agents.net_Agent import NetAgent
 from agents.mrk_Agent import MarketAgent
 from agents.wtr_Agent import WtrAgent
+from agents.ctl_Agent import CtlAgent
+
 
 logging.basicConfig()
 
@@ -16,8 +18,8 @@ if __name__ == "__main__":
         'date': os.getenv('SIMULATION_START_DATE', '2020-01-01'),
         'plz': int(os.getenv('PLZ_CODE', 52)),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
-        'agent_type': os.getenv('AGENT_TYPE', 'DEM'),
-        'connect': bool(os.getenv('CONNECT', False)),
+        'agent_type': os.getenv('AGENT_TYPE', 'CTL'),
+        'connect': bool(os.getenv('CONNECT', True)),
         'infrastructure_source': os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432'),
         'infrastructure_login': os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
     }
@@ -37,9 +39,9 @@ if __name__ == "__main__":
         elif init_dict['agent_type'] == 'MRK':
             agent = MarketAgent(**init_dict)
         elif init_dict['agent_type'] == 'WTR':
-            init_dict.update({'weather_database': os.getenv('WEATHER_DATABASE', 'weather')})
-            init_dict.update({'weather_host': os.getenv('WEATHER_HOST', 'weather')})
             agent = WtrAgent(**init_dict)
+        elif init_dict['agent_type'] == 'CTL':
+            agent = CtlAgent(**init_dict)
 
         agent.run()
 
