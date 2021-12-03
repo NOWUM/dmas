@@ -20,16 +20,16 @@ class RenewablePortfolio(PortfolioModel):
     def add_energy_system(self, energy_system):
 
         if energy_system['type'] == 'wind':
-            energy_system.update({'model': WindModel(self.t, self.T, self.dt, energy_system['turbines'])})
+            energy_system.update({'model': WindModel(self.T, energy_system['turbines'])})
             self.energy_systems.update({energy_system['unitID']: energy_system})
         if energy_system['type'] == 'solar':
-            energy_system.update({'model': PvModel(self.t, self.T, self.dt, energy_system)})
+            energy_system.update({'model': PvModel( self.T, energy_system)})
             self.energy_systems.update({energy_system['unitID']: energy_system})
         if energy_system['type'] == 'water':
-            energy_system.update({'model': RunRiverModel(self.t, self.T, self.dt, energy_system)})
+            energy_system.update({'model': RunRiverModel(self.T, energy_system)})
             self.energy_systems.update({energy_system['unitID']: energy_system})
         if energy_system['type'] == 'bio':
-            energy_system.update({'model': BioMassModel(self.t, self.T, self.dt, energy_system)})
+            energy_system.update({'model': BioMassModel(self.T, energy_system)})
             self.energy_systems.update({energy_system['unitID']: energy_system})
 
     def build_model(self, response=None):
