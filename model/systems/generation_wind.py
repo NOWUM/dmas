@@ -12,8 +12,8 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class WindModel(EnergySystem):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1, wind_turbine=None):
-        super().__init__(t, T, dt)
+    def __init__(self, T, wind_turbine=None):
+        super().__init__(T)
 
         if wind_turbine is None:
             wind_turbine = dict(turbine_type='E-82/2300', height=112, diameter=102)

@@ -11,8 +11,8 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class RunRiverModel(EnergySystem):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1, run_river=None):
-        super().__init__(t, T, dt)
+    def __init__(self, T, run_river=None):
+        super().__init__(T)
 
         # initialize default run river power plant
         if run_river is None:

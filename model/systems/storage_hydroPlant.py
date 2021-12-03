@@ -11,8 +11,8 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class Storage(EnergySystem):
 
-    def __init__(self, t=np.arange(24), T=24, dt=1, name='default', storage=None):
-        super().__init__(t, T, dt)
+    def __init__(self, T, name='default', storage=None):
+        super().__init__(T)
 
         # initialize default power plant
         if storage is None:

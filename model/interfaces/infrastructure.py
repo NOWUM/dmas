@@ -10,7 +10,7 @@ class InfrastructureInterface:
         self.engine_mastr = create_engine(f'postgresql://{user}:{password}@{host}:{port}/mastr')
         self.engine_enet = create_engine(f'postgresql://{user}:{password}@{host}:{port}/enet')
         self.geo_info = pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
-        print(self.geo_info)
+
         # MaStR Codes for fuel types used in Power Plant Table
         self.fuel_codes = {
             'coal':         2407,
@@ -126,12 +126,12 @@ class InfrastructureInterface:
                 f'COALESCE(ev."Breitengrad", {latitude}) as "lat", ' \
                 f'COALESCE(ev."Inbetriebnahmedatum", \'2010-01-01\') as "startDate", ' \
                 f'ev."Nettonennleistung" as "maxPower", ' \
-                f'ev."Technologie" as "turbineTyp",' \
+                f'ev."Technologie" as "turbineTyp", ' \
                 f'ev."GenMastrNummer" as "generatorID"'
         if fuel_typ != 'nuclear':
             query += f', ' + \
                      f'kwk."ThermischeNutzleistung" as "kwkPowerTherm", ' + \
-                     f'kwk."ElektrischeKwkLeistung" as "kwkPowerElec" ' + \
+                     f'kwk."ElektrischeKwkLeistung" as "kwkPowerElec", ' + \
                      f'ev."AnlageIstImKombibetrieb" as "combination" ' + \
                      f'FROM "EinheitenVerbrennung" ev ' + \
                      f'LEFT JOIN "AnlagenKwk" kwk ON kwk."KwkMastrNummer" = ev."KwkMastrNummer" ' + \
@@ -559,7 +559,7 @@ if __name__ == "__main__":
 
     interface = InfrastructureInterface()
     wea = interface.get_wind_turbines_in_area(area=52)
-    pwp = interface.get_power_plant_in_area(area=52, fuel_typ='nuclear')
+    pwp = interface.get_power_plant_in_area(area=50, fuel_typ='lignite')
     bat = interface.get_solar_storage_systems_in_area(area=52)
     dem, n, m = interface.get_demand_in_area(area=52)
     # import matplotlib as mpl

@@ -14,8 +14,8 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class PvModel(es):
 
-    def __init__(self, t, T, dt, photovoltaic=None):
-        super().__init__(t, T, dt)
+    def __init__(self, T, photovoltaic=None):
+        super().__init__(T)
 
         # initialize default photovoltaic
         if photovoltaic is None:
