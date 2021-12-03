@@ -1,9 +1,0 @@
-numpy
-pika
-pandas
-influxdb
-pymongo
-pvlib
-sklearn
-psycopg2-binary
-sqlalchemy
