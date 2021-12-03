@@ -75,7 +75,7 @@ class CtlAgent(BasicAgent):
     def run(self):
         @app.route('/')
         def main_page():
-            if self.sim_start:
+            if not self.sim_start:
                 content = '''
                 <form method="POST" action="/start" style="display: flex;flex-direction: column;">
                     <span style="margin-bottom: 20px;">
