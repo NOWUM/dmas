@@ -32,7 +32,7 @@ services:
 
   market:
     container_name: mrk
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/mrk_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
@@ -43,7 +43,7 @@ services:
 
   weather:
     container_name: wtr
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/wtr_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
@@ -56,7 +56,7 @@ services:
 
   tso:
     container_name: net
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/net_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
@@ -67,7 +67,7 @@ services:
 
   dem50:
     container_name: dem50
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/dem_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
@@ -78,7 +78,7 @@ services:
       
   dem51:
     container_name: dem51
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/dem_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
@@ -89,7 +89,7 @@ services:
       
   dem52:
     container_name: dem52
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/dem_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
@@ -100,7 +100,7 @@ services:
       
   dem53:
     container_name: dem53
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/dem_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
@@ -111,7 +111,7 @@ services:
       
   dem54:
     container_name: dem54
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/dem_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
@@ -122,7 +122,7 @@ services:
       
   dem55:
     container_name: dem55
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/dem_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
@@ -133,7 +133,7 @@ services:
       
   pwp50:
     container_name: pwp50
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/pwp_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
@@ -144,7 +144,7 @@ services:
       
   pwp51:
     container_name: pwp51
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/pwp_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
@@ -155,7 +155,7 @@ services:
       
   pwp52:
     container_name: pwp52
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/pwp_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
@@ -166,7 +166,7 @@ services:
       
   pwp53:
     container_name: pwp53
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/pwp_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
@@ -177,7 +177,7 @@ services:
       
   pwp54:
     container_name: pwp54
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/pwp_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
@@ -188,7 +188,7 @@ services:
       
   pwp55:
     container_name: pwp55
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/pwp_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55
@@ -199,7 +199,7 @@ services:
       
   res50:
     container_name: res50
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/res_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 50
@@ -210,7 +210,7 @@ services:
       
   res51:
     container_name: res51
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/res_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 51
@@ -221,7 +221,7 @@ services:
       
   res52:
     container_name: res52
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/res_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 52
@@ -232,7 +232,7 @@ services:
       
   res53:
     container_name: res53
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/res_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 53
@@ -243,7 +243,7 @@ services:
       
   res54:
     container_name: res54
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/res_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 54
@@ -254,7 +254,7 @@ services:
       
   res55:
     container_name: res55
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/res_agent:latest
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 55

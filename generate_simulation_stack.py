@@ -49,7 +49,7 @@ output.append('''
 output.append(f'''
   market:
     container_name: mrk
-    image: {image_repo}mrk_agent:latest
+    image: {image_repo}agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
@@ -62,7 +62,7 @@ output.append(f'''
 output.append(f'''
   weather:
     container_name: wtr
-    image: {image_repo}wtr_agent:latest
+    image: {image_repo}agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
@@ -77,7 +77,7 @@ output.append(f'''
 output.append(f'''
   tso:
     container_name: net
-    image: {image_repo}net_agent:latest
+    image: {image_repo}agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: 1
@@ -91,7 +91,7 @@ for plz in range(50, 56):
     output.append(f'''
   dem{plz}:
     container_name: dem{plz}
-    image: {image_repo}dem_agent:latest
+    image: {image_repo}agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
@@ -105,7 +105,7 @@ for plz in range(50, 56):
     output.append(f'''
   pwp{plz}:
     container_name: pwp{plz}
-    image: {image_repo}pwp_agent:latest
+    image: {image_repo}agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
@@ -119,7 +119,7 @@ for plz in range(50, 56):
     output.append(f'''
   res{plz}:
     container_name: res{plz}
-    image: {image_repo}res_agent:latest
+    image: {image_repo}agent:latest
     environment:
       SIMULATION_START_DATE: '2018-01-01'
       PLZ_CODE: {plz}
