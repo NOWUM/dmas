@@ -1,13 +1,9 @@
 import numpy as np
-import pandas as pd
 from systems.generation_wind import WindModel
 from systems.generation_photovoltaic import PvModel
 from systems.generation_runRiver import RunRiverModel
 from systems.generation_biomass import BioMassModel
 from aggregation.portfolio import PortfolioModel
-from scipy import interpolate
-from windpowerlib import power_curves
-import copy
 
 
 class RenewablePortfolio(PortfolioModel):

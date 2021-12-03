@@ -20,7 +20,7 @@ class WindModel(EnergySystem):
 
         self.wind_turbine = None
         # TODO: Replace default with new data
-        df = pd.read_excel(r'./data/Ref_TurbineData.xlsx', sheet_name=0)
+        df = pd.read_csv(r'./data/default_turbine', sep=';', decimal=',')
 
         if isinstance(wind_turbine, list):
             wind_turbines = {}
