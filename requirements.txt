@@ -10,3 +10,4 @@ pvlib
 sklearn
 windpowerlib
 statsmodels
+pypsa
