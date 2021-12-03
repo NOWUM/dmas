@@ -30,7 +30,7 @@ services:
       - 15672:15672
       - 5672:5672
 
-  market:
+  controller:
     container_name: ctl
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
