@@ -59,6 +59,10 @@ class CtlAgent(BasicAgent):
                     self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'grid_calc {date}')
                     # 4. Step: Publish Market Results
                     self.channel.basic_publish(exchange=self.exchange, routing_key='', body=f'result_dayAhead {date}')
+                    # 5. Step: Rest agent list for next day
+                    for key, _ in self.agent_list.items():
+                        self.agent_list[key] = False
+
                     end_time = time.time() - start_time
                     self.logger.info('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
                 except Exception as e:

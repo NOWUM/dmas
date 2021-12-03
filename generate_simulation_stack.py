@@ -47,6 +47,8 @@ output.append(f'''
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'CTL'
       CONNECT: 'True'
+    ports:
+      - 5000:5000
 ''')
 # Build one Market
 output.append(f'''
