@@ -119,8 +119,8 @@ class InfrastructureInterface:
         }
 
     def get_power_plant_in_area(self, area=52, fuel_typ='lignite'):
-        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
-        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].y[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].y[0]
 
         query = f'SELECT ev."EinheitMastrNummer" as "unitID", ' \
                 f'ev."Energietraeger" as "fuel", ' \
@@ -237,8 +237,8 @@ class InfrastructureInterface:
         return None
 
     def get_solar_systems_in_area(self, area=52, solar_type='roof_top'):
-        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
-        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].y[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].y[0]
 
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
                 f'"Nettonennleistung" as "maxPower", ' \
@@ -314,8 +314,8 @@ class InfrastructureInterface:
         return None
 
     def get_wind_turbines_in_area(self, area=50, wind_type='on_shore'):
-        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
-        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].y[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].y[0]
 
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
                 f'"Nettonennleistung" as "maxPower", ' \
@@ -370,8 +370,8 @@ class InfrastructureInterface:
         return None
 
     def get_biomass_systems_in_area(self, area=50):
-        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
-        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].y[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].y[0]
 
         # TODO: Add more Parameters, if the model get more complex
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
@@ -394,8 +394,8 @@ class InfrastructureInterface:
         return None
 
     def get_run_river_systems_in_area(self, area=50):
-        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
-        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].y[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].y[0]
 
         # TODO: Add more Parameters, if the model get more complex
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
@@ -418,8 +418,8 @@ class InfrastructureInterface:
         return None
 
     def get_water_storage_systems(self, area=80):
-        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
-        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].y[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].y[0]
 
         query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
                 f'"LokationMastrNummer" as "locationID", ' \
@@ -513,8 +513,8 @@ class InfrastructureInterface:
         return 540*(demand_factor/10**6)/2668.37, nsp/(nsp+msp), msp/(nsp+msp)        # --> 2668.37 = Sum over all PLZ Areas
 
     def get_solar_storage_systems_in_area(self, area=52):
-        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].values[0]
-        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].values[0]
+        latitude = self.geo_info[self.geo_info['PLZ'] == area]['Latitude'].y[0]
+        longitude = self.geo_info[self.geo_info['PLZ'] == area]['Longitude'].y[0]
 
         query = f'SELECT spe."LokationMastrNummer" as "unitID", ' \
                 f'so."Nettonennleistung" as "maxPower", ' \

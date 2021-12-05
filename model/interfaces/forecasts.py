@@ -2,7 +2,7 @@ import numpy as np
 
 from apps.frcst_Dem import typFrcst as demandForecast
 from apps.frcst_Price import annFrcst as priceForecast
-from apps.frcst_Weather import weatherForecast
+from forecasts.weather import weatherForecast
 from apps.misc_WeekPriceList import WeekPriceList
 
 

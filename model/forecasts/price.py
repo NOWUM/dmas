@@ -1,12 +1,8 @@
 # third party modules
 import numpy as np
-import pandas as pd
 from forecasts.dummies import create_dummies
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
-from warnings import simplefilter
-simplefilter(action='ignore', category=FutureWarning)
 from collections import deque
 
 with open(r'./forecasts/data/default_price.pkl', 'rb') as file:
@@ -45,43 +41,34 @@ class PriceForecast:
 
     def fit_function(self):
 
-        self.x = np.asarray(self.deque_x)
-        self.y = np.asarray(self.deque_y)
-        self.scaler.fit(self.x)                                         # Step 1: scale data
-        x_std = self.scaler.transform(self.x)
-        self.model.fit(x_std, self.y)                                   # Step 3: fit model
-        self.fitted = True                                              # Step 4: set fitted-flag to true
+        self.scale.fit(np.asarray(self.x))              # Step 1: scale data
+        x_std = self.scale.transform(self.x)
+        self.model.fit(x_std, self.y)                   # Step 2: fit model
+        self.fitted = True                              # Step 3: set fitted-flag to true
         self.score = self.model.score(x_std, self.y)
 
-
-    def forecast(self, date, dem, weather, prc_1, prc_7):
+    def forecast(self, date, demand, wind, radiation_dir, radiation_dif, temperature,
+                 price_yesterday, price_last_week, *args, **kwargs):
 
         if self.fitted:
-            # Schritt 0: Aufbau der Arrays
-            dem = dem.reshape((-1, 24))
-            wnd = (weather['wind'] * np.random.uniform(0.95, 1.05, 24)).reshape((-1, 24))
-            rad = ((weather['dir'] + weather['dif']) * np.random.uniform(0.95, 1.05, 24)).reshape((-1, 24))
-            tmp = (weather['temp'] * np.random.uniform(0.95, 1.05, 24)).reshape((-1, 24))
-            prc_1 = prc_1.reshape((-1, 24))
-            prc_7 = prc_7.reshape((-1, 24))
-            dummies = createSaisonDummy(date, date).reshape((-1, 24))
             # Schritt 1: Skalieren der Daten
-            x = np.concatenate((dem, rad, wnd, tmp, prc_1, prc_7, dummies), axis=1)
-            self.scaler.partial_fit(x)
-            x_std = self.scaler.transform(x)
+            x = np.concatenate((demand, radiation_dir + radiation_dif, wind, temperature,
+                                price_yesterday, price_last_week, create_dummies(date)), axis=1)
+            self.scale.partial_fit(x)
+            x_std = self.scale.transform(x)
             # Schritt 2: Berechnung des Forecasts
             power_price = self.model.predict(x_std).reshape((24,))
         else:
             power_price = default_power_price
 
         # Emission Price        [€/t]
-        co = np.ones_like(power_price) * self.default_emission[date.month - 1]  * np.random.uniform(0.95, 1.05, 24)
+        co = np.ones_like(power_price) * default_emission[date.month - 1]  * np.random.uniform(0.95, 1.05, 24)
         # Gas Price             [€/MWh]
-        gas = np.ones_like(power_price) * self.default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24)
+        gas = np.ones_like(power_price) * default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24)
         # Hard Coal Price       [€/MWh]
-        coal = self.default_coal * np.random.uniform(0.95, 1.05)
+        coal = default_coal * np.random.uniform(0.95, 1.05)
         # Lignite Price         [€/MWh]
-        lignite = self.default_lignite * np.random.uniform(0.95, 1.05)
+        lignite = default_lignite * np.random.uniform(0.95, 1.05)
         # -- Nuclear Price      [€/MWh]
         nuc = 1.0 * np.random.uniform(0.95, 1.05)
 

@@ -66,6 +66,3 @@ def create_dummies(d):
     dummies = pd.get_dummies(dummies).replace(False, 0)
 
     return dummies.to_numpy()[:24,:]
-
-if __name__ == "__main__":
-    test = create_dummies(pd.to_datetime('2018-01-01'))

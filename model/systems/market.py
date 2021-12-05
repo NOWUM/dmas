@@ -2,7 +2,7 @@ import gurobipy as gby
 import numpy as np
 import pandas as pd
 
-class market:
+class Market:
 
     def __init__(self):
         self.ask_orders = {}
@@ -219,4 +219,4 @@ class market:
 
 if __name__ == "__main__":
 
-    my_market = market()
+    my_market = Market()

@@ -10,25 +10,25 @@ class DemandForecast:
     def __init__(self):
 
         self.fitted = False
-        self.time_stamps = deque(maxlen=1000)
-        self.values = deque(maxlen=1000)
+        self.x = deque(maxlen=1000)
+        self.y = deque(maxlen=1000)
         self.model = {i: [] for i in range(7)}
         self.counter = 0
 
     def collect_data(self, date, demand, *args, **kwargs):
         t = pd.date_range(start=date, periods=24, freq='h')
         for i in range(24):
-            self.time_stamps.append(t[i])
-            self.values.append(demand[i])
+            self.x.append(t[i])
+            self.y.append(demand[i])
 
     def fit_function(self):
-        data = {self.time_stamps[i]: self.values[i] for i in range(len(self.time_stamps))}
+        data = {self.x[i]: self.y[i] for i in range(len(self.x))}
         df = pd.DataFrame.from_dict(data, orient='index')
         for i in range(7):
             day = df.loc[df.index.dayofweek == i,:]
             self.model[i] = day.groupby(day.index.hour).mean().to_numpy()
 
-    def forecast(self, date):
+    def forecast(self, date, *args, **kwargs):
         if self.fitted:
             demand = self.model[int(pd.to_datetime(date)).dayofweek].reshape((-1,))
         else:

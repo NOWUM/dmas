@@ -6,7 +6,6 @@ import numpy as np
 from agents.basic_Agent import BasicAgent
 from apps.frcst_Dem import typFrcst as demandForecast
 from apps.frcst_Price import annFrcst as priceForecast
-from apps.frcst_Weather import weatherForecast
 from apps.misc_WeekPriceList import WeekPriceList
 
 # TODO: Implement in Forecast Package!

@@ -269,7 +269,7 @@ class InfluxInterface:
             code = key[1][0][1]
             if len(code) == 1:
                 code = '0' + code
-            power = int(element['sum'].values[0] / 10 ** 3)
+            power = int(element['sum'].y[0] / 10 ** 3)
             powers.update({code: power})
         df = pd.DataFrame.from_dict(powers, orient='index', columns=['power'])
         df['plz'] = df.index

@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 # model modules
-from apps.market import market
+from systems.market import Market
 from agents.basic_Agent import BasicAgent
 
 
@@ -14,7 +14,7 @@ class MarketAgent(BasicAgent):
         super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.market = market()
+        self.market = Market()
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def callback(self, ch, method, properties, body):
