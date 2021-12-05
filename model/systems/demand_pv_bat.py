@@ -9,7 +9,7 @@ from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
 
 # model modules
 from systems.basic_system import EnergySystem as es
-from demandlib.standard_load_profile import StandardLoadProfile
+from demandlib.electric_profile import StandardLoadProfile
 
 
 class PvBatModel(es):

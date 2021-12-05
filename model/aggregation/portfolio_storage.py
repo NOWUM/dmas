@@ -26,9 +26,9 @@ class StrPort(PortfolioModel):
     def add_energy_system(self, energy_system):
         # build power plants
         energy_system.update(dict(model=Storage(name=energy_system['unitID'], storage=energy_system,
-                                                T=self.T, t=np.arange(self.T), dt=self.dt)))
-
-        self.energy_systems.update(energy_system)
+                                                T=self.T)))
+        self.energy_systems.update({energy_system['unitID']: energy_system})
+        self.capacities['storages'] += energy_system['VMax']
 
     def build_model(self, response=None):
         self.m.remove(self.m.getVars())

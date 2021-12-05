@@ -26,14 +26,8 @@ class PortfolioModel:
         # self.start = np.zeros(T, dtype=np.float)               # total start costs [€]
 
         # installed capacities [MW]
-        self.capacities = dict(capacityBio=0.,
-                               capacityCoal=0.,
-                               capacityGas=0.,
-                               capacityLignite=0.,
-                               capacityNuc=0.,
-                               capacitySolar=0.,
-                               capacityWater=0.,
-                               capacityWind=0.)
+        self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0.,
+                               solar=0., water=0., wind=0., storage=0.)
 
         # current generation series [MW]
         self.generation = dict(powerTotal=np.zeros_like(self.t, dtype=float),       # total generation

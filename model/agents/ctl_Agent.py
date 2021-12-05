@@ -1,7 +1,7 @@
 # third party modules
 import time
 import pandas as pd
-from flask import Flask, request
+from flask import Flask, request, redirect
 import threading
 import requests
 
@@ -13,8 +13,8 @@ app = Flask('dMAS_controller')
 
 class CtlAgent(BasicAgent):
 
-    def __init__(self, date, plz, agent_type, mqtt_exchange, connect,  infrastructure_source, infrastructure_login):
-        super().__init__(date, plz, agent_type, mqtt_exchange, connect, infrastructure_source, infrastructure_login)
+    def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
+        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
         self.logger.info('starting the agent')
         start_time = time.time()
         self.sim_start = False
@@ -43,7 +43,6 @@ class CtlAgent(BasicAgent):
     def simulation_routine(self):
         self.logger.info('simulation started')
         channel = self.get_rabbitmq_connection()
-        # TODO Find place for exchange
         for date in pd.date_range(start=self.start_date, end=self.stop_date, freq='D'):
             if self.sim_stop:
                 self.logger.info('simulation terminated')
@@ -52,22 +51,22 @@ class CtlAgent(BasicAgent):
                 try:
                     start_time = time.time()  # timestamp to measure simulation time
                     # 1.Step: Run optimization for dayAhead Market
-                    channel.basic_publish(exchange='dMas', routing_key='', body=f'opt_dayAhead {date}')
+                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'opt_dayAhead {date}')
                     orders_setting = True
                     while orders_setting:
                         time.sleep(0.1)
                         if all([values for _, values in self.agent_list.items()]):
                             orders_setting = False
                     # 2. Step: Run Market Clearing
-                    channel.basic_publish(exchange='dMas', routing_key='', body=f'dayAhead_clearing {date}')
+                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'dayAhead_clearing {date}')
                     # 3. Step: Run Power Flow calculation
-                    channel.basic_publish(exchange='dMas', routing_key='', body=f'grid_calc {date}')
+                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'grid_calc {date}')
                     # 4. Step: Publish Market Results
-                    channel.basic_publish(exchange='dMas', routing_key='', body=f'result_dayAhead {date}')
+                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'result_dayAhead {date}')
                     # 5. Step: Rest agent list for next day
                     for key, _ in self.agent_list.items():
                         self.agent_list[key] = False
-                    # TODO: for first day add primary keys to tabels
+                    # TODO: for first day add primary keys to tables
                     end_time = time.time() - start_time
                     self.logger.info('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
                 except Exception as e:
@@ -85,18 +84,18 @@ class CtlAgent(BasicAgent):
                 <form method="POST" action="/start" style="display: flex;flex-direction: column;">
                     <span style="margin-bottom: 20px;">
                         <label for="start_date">Start Date</label><br>
-                        <input type="date" id="start_date" name="start_date" value="1995-01-01" />
+                        <data type="date" id="start_date" name="start_date" value="1995-01-01" />
                     </span>
                     <span style="margin-bottom: 20px;">
                         <label for="end_date">End Date</label><br>
-                        <input type="date" id="end_date" name="end_date" value="1995-02-01" />
+                        <data type="date" id="end_date" name="end_date" value="1995-02-01" />
                     </span>
-                    <input type="submit" value="Start Simulation">
+                    <data type="submit" value="Start Simulation">
                 </form>'''
             else:
                 content = '''
                 <form method="POST" action="/stop" style="display: flex;flex-direction: column;">
-                    <input type="submit" value="Stop Simulation">
+                    <data type="submit" value="Stop Simulation">
                 </form>'''
             return f'''
                 <div center style="width: 60%; margin: auto; height: 80%" >
@@ -111,7 +110,7 @@ class CtlAgent(BasicAgent):
         def stop_simulation():
             self.sim_stop = True
             self.logger.info('stopping simulation')
-            return 'OK'
+            return redirect('/')
 
         @app.route('/start', methods=['POST'])
         def run_simulation():
@@ -130,7 +129,7 @@ class CtlAgent(BasicAgent):
                 check_orders.start()
                 self.sim_start = True
 
-            return 'OK'
+            return redirect('/')
 
         app.run(debug=False, host="0.0.0.0", port=5000)
 

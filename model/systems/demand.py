@@ -1,6 +1,6 @@
 # model modules
 from systems.basic_system import EnergySystem
-from demandlib.standard_load_profile import StandardLoadProfile
+from demandlib.electric_profile import StandardLoadProfile
 
 
 class HouseholdModel(EnergySystem):

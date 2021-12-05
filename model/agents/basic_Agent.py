@@ -12,13 +12,15 @@ from interfaces.infrastructure import InfrastructureInterface
 
 class BasicAgent:
 
-    def __init__(self, date, plz, typ, mqtt_exchange, connect, infrastructure_source, infrastructure_login):
+    def __init__(self, date, plz, typ, connect, infrastructure_source, infrastructure_login, *args, **kwargs):
 
         # declare meta data for each agent
         self.plz = plz                                              # plz code
         self.typ = typ                                              # agent type
         self.name = f'{self.typ}_{self.plz}'                        # name
         self.date = pd.to_datetime(date)                            # current day
+        self.exchange_name = 'dMas'
+
 
         # declare logging options
         self.logger = logging.getLogger(self.name)
@@ -43,11 +45,13 @@ class BasicAgent:
 
         self.simulation_database = create_engine(f'postgresql://dMAS:dMAS@simulationdb/dMAS',
                                                  connect_args={"application_name": self.name})
+        self.infrastructure_interface = InfrastructureInterface(infrastructure_source, infrastructure_login)
+
         self.channels = []
         if connect:
             self.channel = self.get_rabbitmq_connection()
             result = self.channel.queue_declare(queue=self.name, exclusive=True)
-            self.channel.queue_bind(exchange='dMas', queue=result.method.queue)
+            self.channel.queue_bind(exchange=self.exchange_name, queue=result.method.queue)
 
     def __del__(self):
         for connection, channel in self.channels:
@@ -59,7 +63,7 @@ class BasicAgent:
             try:
                 mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
                 channel = mqtt_connection.channel()
-                channel.exchange_declare(exchange='dMas', exchange_type='fanout')
+                channel.exchange_declare(exchange=self.exchange_name, exchange_type='fanout')
                 self.logger.info(f'connected to rabbitmq')
                 self.channels.append((mqtt_connection, channel))
                 return channel

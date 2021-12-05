@@ -29,7 +29,7 @@ class annFrcst:
         self.x = np.asarray([]).reshape((-1,168))
         self.y = np.asarray([]).reshape((-1,24))
 
-        self.default_power = pd.read_csv(r'./data/Ref_DA_Prices.csv', sep=';', decimal=',', index_col=0)
+        self.default_power = pd.read_csv(r'./data/history_prices.csv', sep=';', decimal=',', index_col=0)
         self.default_power.index = pd.to_datetime(self.default_power.index, infer_datetime_format=True)
         # month mean values year 2018
         self.default_gas = [18.6, 20.0, 24.2, 19.5, 21.7, 22.0, 22.4, 23.8, 27.8, 26.0, 24.9, 24.1]
@@ -44,7 +44,7 @@ class annFrcst:
 
         if pre_train:               # use historical data to fit a model at the beginning
             with open(r'./data/preTrain_Input.array', 'rb') as file:    # Step 0: load data
-                x = np.load(file)                                       # input (2017-2018)
+                x = np.load(file)                                       # data (2017-2018)
                 for line in range(len(x)):
                     self.deque_x.append(x[line,:])
             with open(r'./data/preTrain_Output.array', 'rb') as file:
@@ -61,7 +61,7 @@ class annFrcst:
             self.score = self.model.score(x_std, self.y)
 
     def collect_data(self, date, dem, weather, prc, prc_1, prc_7):
-        # collect input data
+        # collect data data
         dummies = createSaisonDummy(date, date).reshape((-1,))
         x = np.hstack((dem, weather['wind'], weather['dir'] + weather['dif'], weather['temp'], prc_1, prc_7, dummies))
         y = prc
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     x = []
     z = []
-    original_price = pd.read_csv(r'./data/Ref_DA_Prices.csv', index_col=0, decimal=',', sep=';')
+    original_price = pd.read_csv(r'./data/history_prices.csv', index_col=0, decimal=',', sep=';')
     original_price.index = pd.to_datetime(original_price.index, infer_datetime_format=True)
 
     for d in pd.date_range(start='2018-01-01', end='2018-12-31', freq='d'):
@@ -176,4 +176,4 @@ if __name__ == "__main__":
     # prc_7 = price_d7.reshape((-1, 24))
     # dummies = createSaisonDummy(d, d).reshape((-1, 24))
     # # Schritt 1: Skalieren der Daten
-    # input = np.concatenate((dem, rad, wnd, tmp, prc_1, prc_7, dummies), axis=1)
+    # data = np.concatenate((dem, rad, wnd, tmp, prc_1, prc_7, dummies), axis=1)

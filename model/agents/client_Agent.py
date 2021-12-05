@@ -12,8 +12,8 @@ from apps.misc_WeekPriceList import WeekPriceList
 # TODO: Implement in Forecast Package!
 class agent(BasicAgent):
 
-    def __init__(self, date, plz, typ, mqtt_exchange, connect, infrastructure_source, infrastructure_login):
-        super().__init__(date, plz, typ, mqtt_exchange, connect, infrastructure_source, infrastructure_login)
+    def __init__(self, date, plz, typ, connect, infrastructure_source, infrastructure_login):
+        super().__init__(date, plz, typ, connect, infrastructure_source, infrastructure_login)
 
         mcp = [37.70, 35.30, 33.90, 33.01, 33.27, 35.78, 43.17, 50.21, 52.89, 51.18, 48.24, 46.72, 44.23,
                42.29, 41.60, 43.12, 45.37, 50.95, 55.12, 56.34, 52.70, 48.20, 45.69, 40.25]

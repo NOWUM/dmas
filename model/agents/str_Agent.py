@@ -12,8 +12,8 @@ from agents.client_Agent import agent as basicAgent
 
 class StrAgent(basicAgent):
 
-    def __init__(self, date, plz, agent_type, mqtt_exchange, connect,  infrastructure_source, infrastructure_login):
-        super().__init__(date, plz, agent_type, mqtt_exchange, connect, infrastructure_source, infrastructure_login)
+    def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
+        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()
@@ -72,7 +72,7 @@ class StrAgent(basicAgent):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
 
-        # Step 1: forecast input data and init the model for the coming day
+        # Step 1: forecast data data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
 
         prices = self.price_forecast(self.date)                        # price forecast dayAhead

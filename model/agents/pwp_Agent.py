@@ -23,7 +23,6 @@ class PwpAgent(basicAgent):
         self.step_width = [-10, -5, 0, 5, 10, 500]
 
         self.portfolio = PwpPort(T=24)
-        self.x = self.infrastructure_interface.get_power_plant_in_area(area=plz, fuel_typ='lignite')
         self.shadow_portfolio = PwpPort(T=48)
 
         for fuel in ['lignite', 'coal', 'gas', 'nuclear']:
@@ -112,7 +111,7 @@ class PwpAgent(basicAgent):
         """scheduling for the DayAhead market"""
         self.logger.info('DayAhead market scheduling started')
 
-        # Step 1: forecast input data and init the model for the coming day
+        # Step 1: forecast data data and init the model for the coming day
         # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()
 

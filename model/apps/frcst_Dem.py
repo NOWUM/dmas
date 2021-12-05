@@ -9,7 +9,7 @@ class typFrcst:
         self.collect = 10                       # days before a retrain is started
         self.counter = 0  # day counter
 
-        self.index = []                         # input data for typ days (date)
+        self.index = []                         # data data for typ days (date)
         self.demand = []                        # output data (demand)
         self.typDays = []                       # "model" of typ days
 
@@ -38,7 +38,7 @@ class typFrcst:
             date = pd.to_datetime(date).dayofweek
             demand = self.typDays[date].to_numpy().reshape((-1,))
         else:
-            with open(r'./data/Ref_Demand.array', 'rb') as file:
+            with open(r'./data/default_demand.pkl', 'rb') as file:
                 demand = np.load(file).reshape((24,))
 
         return demand

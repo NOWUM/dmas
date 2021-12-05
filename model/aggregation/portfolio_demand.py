@@ -19,9 +19,11 @@ class DemandPortfolio(PortfolioModel):
         # build photovoltaic with battery
         if energy_system['type'] == 'bat':
             energy_system.update(dict(model=PvBatModel(T=self.T, **energy_system)))
+            self.capacities['solar'] += energy_system['maxPower']
         # build photovoltaic
         elif energy_system['type'] == 'solar':
             energy_system.update(dict(model=HouseholdPvModel(T=self.T, **energy_system)))
+            self.capacities['solar'] += energy_system['maxPower']
         elif energy_system['type'] == 'household':
             energy_system.update(dict(model=HouseholdModel(T=self.T, **energy_system)))
         elif energy_system['type'] == 'business':

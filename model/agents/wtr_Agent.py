@@ -11,8 +11,8 @@ from interfaces.weather import Weather
 
 class WtrAgent(BasicAgent):
 
-    def __init__(self, date, plz, agent_type, mqtt_exchange, connect,  infrastructure_source, infrastructure_login):
-        super().__init__(date, plz, agent_type, mqtt_exchange, connect, infrastructure_source, infrastructure_login)
+    def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
+        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
 
         self.sim_date = dt(1995, 1, 1)
         self.year = self.date.year
