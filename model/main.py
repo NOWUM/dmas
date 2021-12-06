@@ -18,8 +18,8 @@ if __name__ == "__main__":
         'date': os.getenv('SIMULATION_START_DATE', '2020-01-01'),
         'plz': int(os.getenv('PLZ_CODE', 52)),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
-        'agent_type': os.getenv('AGENT_TYPE', 'CTL'),
-        'connect': bool(os.getenv('CONNECT', True)),
+        'agent_type': os.getenv('AGENT_TYPE', 'DEM'),
+        'connect': bool(os.getenv('CONNECT', False)),
         'infrastructure_source': os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432'),
         'infrastructure_login': os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
     }
@@ -43,7 +43,8 @@ if __name__ == "__main__":
         elif init_dict['agent_type'] == 'CTL':
             agent = CtlAgent(**init_dict)
 
-        agent.run()
+        agent.optimize_day_ahead()
+        # agent.run()
 
     except Exception as e:
         logging.exception(f'Error during Simulation {agent.name}')

@@ -7,10 +7,10 @@ import copy
 
 # model modules
 from aggregation.portfolio_powerPlant import PwpPort
-from agents.client_Agent import agent as basicAgent
+from agents.basic_Agent import BasicAgent
 
 
-class PwpAgent(basicAgent):
+class PwpAgent(BasicAgent):
 
     def __init__(self, date, plz, agent_type, mqtt_exchange, connect,  infrastructure_source, infrastructure_login):
         super().__init__(date, plz, agent_type, mqtt_exchange, connect, infrastructure_source, infrastructure_login)

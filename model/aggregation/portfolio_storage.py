@@ -25,8 +25,7 @@ class StrPort(PortfolioModel):
 
     def add_energy_system(self, energy_system):
         # build power plants
-        energy_system.update(dict(model=Storage(name=energy_system['unitID'], storage=energy_system,
-                                                T=self.T)))
+        energy_system.update(dict(model=Storage(name=energy_system['unitID'], storage=energy_system, T=self.T)))
         self.energy_systems.update({energy_system['unitID']: energy_system})
         self.capacities['storages'] += energy_system['VMax']
 
@@ -73,39 +72,31 @@ class StrPort(PortfolioModel):
         self.volume = np.zeros_like(self.t, np.float)
 
         # initialize dict for fuel sum calculation
-        self.generation = dict(powerWater=np.zeros_like(self.t, np.float))          # dispatch storage(s)   [MW]
+        self.generation = dict(water=np.zeros_like(self.t, np.float))
 
-        try:
-            self.m.optimize()
-            power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
-            self.power = np.round(power, 2)
-            # total emissions costs [€] for each hour
-            volume = np.asarray([self.m.getVarByName('V[%i]' % i).x for i in self.t], np.float).reshape((-1,))
-            self.volume = np.round(volume, 2)
+        self.m.optimize()
+        power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+        self.power = np.round(power, 2)
+        # total emissions costs [€] for each hour
+        volume = np.asarray([self.m.getVarByName('V[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+        self.volume = np.round(volume, 2)
 
-            for key, value in self.energy_systems.items():
-                # set output power for each energy system (storage)
-                value['model'].power = np.asarray([self.m.getVarByName('P_%s[%i]' % (key, i)).x
-                                                   for i in self.t], np.float).reshape((-1,))
-                value['model'].volume = np.asarray([self.m.getVarByName('V_%s[%i]' % (key, i)).x
-                                                    for i in self.t], np.float).reshape((-1,))
+        for key, value in self.energy_systems.items():
+            # set output power for each energy system (storage)
+            value['model'].power = np.asarray([self.m.getVarByName('P_%s[%i]' % (key, i)).x
+                                               for i in self.t], np.float).reshape((-1,))
+            value['model'].volume = np.asarray([self.m.getVarByName('V_%s[%i]' % (key, i)).x
+                                                for i in self.t], np.float).reshape((-1,))
 
-                self.generation['power%s' % value['fuel'].capitalize()] += value['model'].power
+            self.generation['power%s' % value['fuel'].capitalize()] += value['model'].power
 
-                if self.fix:
-                    value['model'].storage['P+0'] = self.m.getVarByName('P+_%s[%i]' % (key, 23)).x
-                    value['model'].storage['P-0'] = self.m.getVarByName('P-_%s[%i]' % (key, 23)).x
-                    value['model'].storage['V0'] = self.m.getVarByName('V_%s[%i]' % (key, 23)).x
-                    value['model'].power = [self.m.getVarByName('P_%s[%i]' % (key, i)).x for i in self.t]
-                    value['model'].volume = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t]
+            if self.fix:
+                value['model'].storage['P+0'] = self.m.getVarByName('P+_%s[%i]' % (key, 23)).x
+                value['model'].storage['P-0'] = self.m.getVarByName('P-_%s[%i]' % (key, 23)).x
+                value['model'].storage['V0'] = self.m.getVarByName('V_%s[%i]' % (key, 23)).x
+                value['model'].power = [self.m.getVarByName('P_%s[%i]' % (key, i)).x for i in self.t]
+                value['model'].volume = [self.m.getVarByName('V_%s[%i]' % (key, i)).x for i in self.t]
 
-            self.generation['powerTotal'] = power
-
-        except Exception as e:
-            print(e)
+        self.generation['powerTotal'] = power
 
         return self.power, self.volume
-
-
-if __name__ == "__main__":
-    pass

@@ -1,22 +1,33 @@
+from forecasts.basic_forecast import BasicForecast
+import numpy as np
 
-class weatherForecast:
 
-    def __init__(self, influx, init=8):
+class WeatherForecast(BasicForecast):
 
-        self.influx = influx
-        self.collect = init         # days before a retrain is started
-        self.counter = 0            # day counter
-
+    def __init__(self):
+        super().__init__()
         self.mean_weather = {}
 
-    def forecast(self, geo, date, mean):
-        weather = self.influx.get_weather(geo, date, mean)
-        if mean:
-            self.mean_weather = weather
-        return weather
+    def forecast(self, date):
+        random_factor = np.random.uniform(low=0.95, high=1.05)
+        temperature = self.weather_database.get_temperature(date) * random_factor
+        wind = self.weather_database.get_wind(date) * random_factor
+        direct_radiation = self.weather_database.get_direct_radiation(date) * random_factor
+        diffuse_radiation = self.weather_database.get_diffuse_radiation(date) * random_factor
 
-    def collect_data(self, date, dem, weather, prc, prc_1, prc_7):
+        return temperature, wind, direct_radiation + diffuse_radiation
+
+    def forecast_for_area(self, date, area):
+        random_factor = np.random.uniform(low=0.95, high=1.05)
+        temperature = self.weather_database.get_temperature_in_area(date, area) * random_factor
+        wind = self.weather_database.get_wind_in_area(date, area) * random_factor
+        direct_radiation = self.weather_database.get_direct_radiation_in_area(date, area) * random_factor
+        diffuse_radiation = self.weather_database.get_diffuse_radiation_in_area(date, area) * random_factor
+
+        return temperature, wind, direct_radiation, diffuse_radiation
+
+    def collect_data(self, date):
         pass
 
-    def fit_function(self):
+    def fit_model(self):
         pass

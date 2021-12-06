@@ -11,7 +11,8 @@ class HouseholdModel(EnergySystem):
 
 
     def optimize(self):
-        self.profile_generator.run_model(self.date)
+        self.power = self.profile_generator.run_model(self.date)
+        self.demand['power'] = self.power
         return self.power
 
 
@@ -22,7 +23,8 @@ class BusinessModel(EnergySystem):
         self.profile_generator = StandardLoadProfile(demandP, type='business')
 
     def optimize(self):
-        self.profile_generator.run_model(self.date)
+        self.power = self.profile_generator.run_model(self.date)
+        self.demand['power'] = self.power
         return self.power
 
 
@@ -33,6 +35,7 @@ class IndustryModel(EnergySystem):
         self.profile_generator = StandardLoadProfile(demandP, type='industry')
 
     def optimize(self):
-        self.profile_generator.run_model(self.date)
+        self.power = self.profile_generator.run_model(self.date)
+        self.demand['power'] = self.power
         return self.power
 

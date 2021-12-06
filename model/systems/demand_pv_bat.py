@@ -46,11 +46,11 @@ class PvBatModel(es):
     def optimize(self):
         self.pv_system.run_model(self.weather)
         # get generation in [kW]
-        self.generation['powerSolar'] = self.pv_system.ac.to_numpy()/1000
+        self.generation['solar'] = self.pv_system.results.ac.to_numpy()/1000
         # get demand in [kW]
-        self.demand = self.demand_system.run_model(self.date)
+        self.demand['power'] = self.demand_system.run_model(self.date)
         # get grid usage in [kW]
-        residual = self.demand['power'] - self.generation['powerSolar']
+        residual = self.demand['power'] - self.generation['solar']
         vt = self.battery['v0']
         grid_use, volume = [], []
         for r in residual:
@@ -62,14 +62,14 @@ class PvBatModel(es):
                 continue
             # case 2: storage volume < residual -> use rest volume
             if (r >= 0) & (vt *  self.battery['efficiency'] <= r):
-                grid_use.append(r - vt *  self.battery['efficiency'])
+                grid_use.append(r - vt * self.battery['efficiency'])
                 vt = 0
                 volume.append(0)
                 continue
             # case 3: storage volume > residual -> use volume
-            if (r >= 0) & (vt *  self.battery['efficiency'] >= r):
+            if (r >= 0) & (vt * self.battery['efficiency'] >= r):
                 grid_use.append(0)
-                vt -= r  / self.battery['efficiency']
+                vt -= r / self.battery['efficiency']
                 volume.append(vt)
                 continue
             # ----- residual < 0 -----

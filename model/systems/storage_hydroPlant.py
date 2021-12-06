@@ -54,9 +54,9 @@ class Storage(EnergySystem):
         model.addConstrs(pM[i] >= (1 - on[i]) * self.storage['P-_Min'] for i in self.t)
 
         # volume restriction
-        model.addConstr(volume[0] == self.storage['V0'] + self.dt *
+        model.addConstr(volume[0] == self.storage['V0'] +
                         (self.storage['eta+'] * pP[0] - pM[0] / self.storage['eta-']))
-        model.addConstrs(volume[i] == volume[i-1] + self.dt *
+        model.addConstrs(volume[i] == volume[i-1] +
                          (self.storage['eta+'] * pP[i] - pM[i] / self.storage['eta-']) for i in self.t[1:])
 
         model.setObjective(gby.quicksum(profit[i] for i in self.t), gby.GRB.MAXIMIZE)

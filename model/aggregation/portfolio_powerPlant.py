@@ -25,7 +25,7 @@ class PwpPort(PortfolioModel):
         self.start = np.zeros_like(self.t, np.float)
         self.emission = np.zeros_like(self.t, np.float)
 
-        self.fix = True
+        self.lock_generation = True
 
     def add_energy_system(self, energy_system):
         data = copy.deepcopy(energy_system)
@@ -73,9 +73,9 @@ class PwpPort(PortfolioModel):
                 # objective function (max cash_flow)
                 self.m.setObjective(profit - gby.quicksum(fuel[i] + emission[i] + start[i] for i in self.t),
                                     gby.GRB.MAXIMIZE)
-            self.fix = False
+            self.lock_generation = False
         else:
-            self.fix = True
+            self.lock_generation = True
             delta_power = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='delta_power', lb=0, ub=gby.GRB.INFINITY)
             minus = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='minus', lb=0, ub=gby.GRB.INFINITY)
             plus = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='plus', lb=0, ub=gby.GRB.INFINITY)
@@ -129,7 +129,7 @@ class PwpPort(PortfolioModel):
 
                 self.generation['power%s' % value['fuel'].capitalize()] += value['model'].power
 
-                if self.fix:
+                if self.lock_generation:
                     value['model'].power_plant['P0'] = self.m.getVarByName('P_%s[%i]' % (key, 23)).x
                     z = np.asanyarray([self.m.getVarByName('z_%s[%i]' % (key, i)).x for i in self.t[:24]], np.float)
                     if z[-1] > 0:

@@ -7,10 +7,10 @@ from collections import deque
 
 # model modules
 from aggregation.portfolio_storage import StrPort
-from agents.client_Agent import agent as basicAgent
+from agents.basic_Agent import BasicAgent
 
 
-class StrAgent(basicAgent):
+class StrAgent(BasicAgent):
 
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
         super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)

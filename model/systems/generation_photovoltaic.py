@@ -50,8 +50,8 @@ class PvModel(es):
     def optimize(self):
         self.photovoltaic.run_model(self.weather)
         # get generation in [MW]
-        self.generation['powerSolar'] = np.clip(self.photovoltaic.ac.to_numpy(), self.maxPower)/10**6
-        self.power = self.generation['powerSolar']
+        self.generation['solar'] = np.clip(self.photovoltaic.ac.to_numpy(), self.maxPower)/10**6
+        self.power = self.generation['solar']
 
         return self.power
 

@@ -13,15 +13,15 @@ class EnergySystem:
         self.demand = dict(power=np.zeros_like(self.t),     # elect. power
                            heat=np.zeros_like(self.t))      # heat demand
 
-        self.generation = dict(powerTotal=np.zeros_like(self.t, dtype=float),       # total generation
-                               powerSolar=np.zeros_like(self.t, dtype=float),       # solar generation
-                               powerWind=np.zeros_like(self.t, dtype=float),        # wind generation
-                               powerWater=np.zeros_like(self.t, dtype=float),       # run river or storage generation
-                               powerBio=np.zeros_like(self.t, dtype=float),         # biomass generation
-                               powerLignite=np.zeros_like(self.t, dtype=float),     # lignite generation
-                               powerCoal=np.zeros_like(self.t, dtype=float),        # hard coal generation
-                               powerGas=np.zeros_like(self.t, dtype=float),         # gas generation
-                               powerNuc=np.zeros_like(self.t, dtype=float))         # nuclear generation
+        self.generation = dict(total=np.zeros_like(self.t, dtype=float),       # total generation
+                               solar=np.zeros_like(self.t, dtype=float),       # solar generation
+                               wind=np.zeros_like(self.t, dtype=float),        # wind generation
+                               water=np.zeros_like(self.t, dtype=float),       # run river or storage generation
+                               bio=np.zeros_like(self.t, dtype=float),         # biomass generation
+                               lignite=np.zeros_like(self.t, dtype=float),     # lignite generation
+                               coal=np.zeros_like(self.t, dtype=float),        # hard coal generation
+                               gas=np.zeros_like(self.t, dtype=float),         # gas generation
+                               nuclear=np.zeros_like(self.t, dtype=float))         # nuclear generation
 
         self.power = np.zeros_like(self.t)
 

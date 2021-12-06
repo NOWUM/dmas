@@ -20,25 +20,25 @@ class PortfolioModel:
 
         # sum parameters
         self.power = np.zeros(T, dtype=np.float)                # sum power         [MW]
-        # self.emission = np.zeros(T, dtype=np.float)            # sum emissions     [€]
-        # self.fuel = np.zeros(T, dtype=np.float)                # sum fuel          [€]
-        # self.volume = np.zeros(T, dtype=np.float)              # total volume      [MWh]
-        # self.start = np.zeros(T, dtype=np.float)               # total start costs [€]
+        # self.emission = np.zeros(T, dtype=np.float)           # sum emissions     [€]
+        # self.fuel = np.zeros(T, dtype=np.float)               # sum fuel          [€]
+        # self.volume = np.zeros(T, dtype=np.float)             # total volume      [MWh]
+        # self.start = np.zeros(T, dtype=np.float)              # total start costs [€]
 
         # installed capacities [MW]
         self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0.,
                                solar=0., water=0., wind=0., storage=0.)
 
         # current generation series [MW]
-        self.generation = dict(powerTotal=np.zeros_like(self.t, dtype=float),       # total generation
-                               powerSolar=np.zeros_like(self.t, dtype=float),       # solar generation
-                               powerWind=np.zeros_like(self.t, dtype=float),        # wind generation
-                               powerWater=np.zeros_like(self.t, dtype=float),       # run river or storage generation
-                               powerBio=np.zeros_like(self.t, dtype=float),         # biomass generation
-                               powerLignite=np.zeros_like(self.t, dtype=float),     # lignite generation
-                               powerCoal=np.zeros_like(self.t, dtype=float),        # hard coal generation
-                               powerGas=np.zeros_like(self.t, dtype=float),         # gas generation
-                               powerNuc=np.zeros_like(self.t, dtype=float))         # nuclear generation
+        self.generation = dict(total=np.zeros_like(self.t, dtype=float),            # total generation
+                               solar=np.zeros_like(self.t, dtype=float),            # solar generation
+                               wind=np.zeros_like(self.t, dtype=float),             # wind generation
+                               water=np.zeros_like(self.t, dtype=float),            # run river or storage generation
+                               bio=np.zeros_like(self.t, dtype=float),              # biomass generation
+                               lignite=np.zeros_like(self.t, dtype=float),          # lignite generation
+                               coal=np.zeros_like(self.t, dtype=float),             # hard coal generation
+                               gas=np.zeros_like(self.t, dtype=float),              # gas generation
+                               nuclear=np.zeros_like(self.t, dtype=float))          # nuclear generation
 
         # current demand series [MW]
         self.demand = dict(power=np.zeros_like(self.t, dtype=float),                # total power demand

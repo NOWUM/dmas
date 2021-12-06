@@ -5,6 +5,12 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.neural_network import MLPRegressor
 from collections import deque
 
+
+from forecasts.basic_forecast import BasicForecast
+from forecasts.demand import DemandForecast
+from forecasts.weather import WeatherForecast
+
+
 with open(r'./forecasts/data/default_price.pkl', 'rb') as file:
     default_power_price = np.load(file).reshape((24,))                  # hourly mean values 2015-2018
 with open(r'./forecasts/data/default_gas.pkl', 'rb') as file:
@@ -15,54 +21,60 @@ with open(r'./forecasts/data/default_emission.pkl', 'rb') as file:
 default_coal = 65.18 / 8.141                                            # €/ske --> €/MWh
 default_lignite = 1.5                                                   # agora Deutsche "Braunkohlewirtschaft"
 
-class PriceForecast:
+
+class PriceForecast(BasicForecast):
 
     def __init__(self):
-
-        self.fitted = False         # flag for fitted or not fitted model
-        self.counter = 0
+        super().__init__()
 
         # initialize neural network and corresponding scaler
         self.model = MLPRegressor(hidden_layer_sizes=(15, 15,), activation='identity', early_stopping=True,
                                   solver='adam', learning_rate_init=0.02, shuffle=True, max_iter=500)
         self.scale = MinMaxScaler()
-
-        self.x = deque(maxlen=1000)
-        self.y = deque(maxlen=1000)
-
         self.score = 0.
 
-    def collect_data(self, date, demand, wind, radiation_dir, radiation_dif, temperature,
-                     price, price_yesterday, price_last_week, *args, **kwargs):
+        self.price_register = deque(maxlen=8)
 
-        self.x.append(np.hstack((demand, wind, radiation_dir + radiation_dif, temperature,
-                                       price_yesterday, price_last_week, create_dummies(date))))
-        self.y.append(price)
+        self.demand_model = DemandForecast()
+        self.weather_model = WeatherForecast()
 
-    def fit_function(self):
+    def collect_data(self, date):
+        self.demand_model.collect_data(date)
+        self.weather_model.collect_data(date)
 
-        self.scale.fit(np.asarray(self.x))              # Step 1: scale data
-        x_std = self.scale.transform(self.x)
-        self.model.fit(x_std, self.y)                   # Step 2: fit model
-        self.fitted = True                              # Step 3: set fitted-flag to true
-        self.score = self.model.score(x_std, self.y)
+        demand = self.simulation_database.get_demand(date)
+        wind = self.weather_database.get_wind(date)
+        radiation = self.weather_database.get_direct_radiation(date) + self.weather_database.get_diffuse_radiation(date)
+        temperature = self.weather_database.get_temperature(date)
+        price = self.simulation_database.get_power_price(date)
 
-    def forecast(self, date, demand, wind, radiation_dir, radiation_dif, temperature,
-                 price_yesterday, price_last_week, *args, **kwargs):
+        self.input.append(np.hstack((demand, wind, radiation, temperature, self.price_register[-1],
+                                     self.price_register[0], create_dummies(date))))
+        self.output.append(price)
+        self.price_register.append(price)
 
-        if self.fitted:
-            # Schritt 1: Skalieren der Daten
-            x = np.concatenate((demand, radiation_dir + radiation_dif, wind, temperature,
-                                price_yesterday, price_last_week, create_dummies(date)), axis=1)
+    def fit_model(self):
+
+        self.scale.fit(np.asarray(self.input))              # Step 1: scale data
+        x_std = self.scale.transform(self.output)
+        self.model.fit(x_std, self.output)                  # Step 2: fit model
+        self.fitted = True                                  # Step 3: set fitted-flag to true
+        self.score = self.model.score(x_std, self.output)
+
+    def forecast(self, date):
+        if not self.fitted:
+            power_price = default_power_price
+        else:
+            demand = self.demand_model.forecast(date)
+            temperature, wind, radiation = self.weather_model.forecast(date)
+            x = np.concatenate((demand, radiation, wind, temperature, self.price_register[-1], self.price_register[0],
+                                create_dummies(date)), axis=1)
             self.scale.partial_fit(x)
             x_std = self.scale.transform(x)
-            # Schritt 2: Berechnung des Forecasts
             power_price = self.model.predict(x_std).reshape((24,))
-        else:
-            power_price = default_power_price
 
         # Emission Price        [€/t]
-        co = np.ones_like(power_price) * default_emission[date.month - 1]  * np.random.uniform(0.95, 1.05, 24)
+        co = np.ones_like(power_price) * default_emission[date.month - 1] * np.random.uniform(0.95, 1.05, 24)
         # Gas Price             [€/MWh]
         gas = np.ones_like(power_price) * default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24)
         # Hard Coal Price       [€/MWh]

@@ -36,13 +36,13 @@ def get_holidays(year):
 
 
 profiles = {
-    'household': np.asarray(np.load(open(r'./demandlib/household.pkl', 'rb'))),
-    'business': np.asarray(np.load(open(r'./demandlib/business.pkl', 'rb'))),
-    'industry': np.asarray(np.load(open(r'./demandlib/industry.pkl', 'rb')))
+    'household': np.asarray(np.load(open(r'./demandlib/data/household.pkl', 'rb'))),
+    'business': np.asarray(np.load(open(r'./demandlib/data/business.pkl', 'rb'))),
+    'industry': np.asarray(np.load(open(r'./demandlib/data/industry.pkl', 'rb')))
 }
 
-winter = np.asarray(np.load(open(r'./demandlib/winter.pkl', 'rb')))
-summer = np.asarray(np.load(open(r'./demandlib/summer.pkl', 'rb')))
+winter = np.asarray(np.load(open(r'./demandlib/data/winter.pkl', 'rb')))
+summer = np.asarray(np.load(open(r'./demandlib/data/summer.pkl', 'rb')))
 
 class StandardLoadProfile:
 

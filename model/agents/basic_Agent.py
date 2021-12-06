@@ -33,16 +33,6 @@ class BasicAgent:
         self.logger.addHandler(fh)
         # self.logger.disabled = True
 
-        # dictionary for performance measuring
-        self.performance = dict(initModel=0,                        # build model for da optimization
-                                optModel=0,                         # optimize for da market
-                                saveSchedule=0,                     # save optimization results in influx db
-                                buildOrders=0,                      # construct order book
-                                sendOrders=0,                       # send orders to mongodb
-                                adjustResult=0,                     # adjustments corresponding to da results
-                                saveResult=0,                       # save adjustments in influx db
-                                nextDay=0)                          # preparation for coming day
-
         self.simulation_database = create_engine(f'postgresql://dMAS:dMAS@simulationdb/dMAS',
                                                  connect_args={"application_name": self.name})
         self.infrastructure_interface = InfrastructureInterface(infrastructure_source, infrastructure_login)

@@ -5,10 +5,10 @@ import numpy as np
 import pypsa
 
 # model modules
-from agents.client_Agent import agent as basicAgent
+from agents.basic_Agent import BasicAgent
 
 
-class NetAgent(basicAgent):
+class NetAgent(BasicAgent):
 
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
         super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)

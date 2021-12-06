@@ -59,7 +59,7 @@ class WindModel(EnergySystem):
 
         power_wind = np.asarray(self.mc.power_output, dtype=np.float64)
 
-        self.generation['powerWind'] = np.nan_to_num(power_wind)/10**6
+        self.generation['wind'] = np.nan_to_num(power_wind)/10**6
         self.power = np.nan_to_num(power_wind)/10**6
 
         return self.power

@@ -1,37 +1,48 @@
 # third party modules
-import time as tme
+import time as time
 import pandas as pd
 import numpy as np
 
 # model modules
+from forecasts.weather import WeatherForecast
 from aggregation.portfolio_demand import DemandPortfolio
-from agents.client_Agent import agent as basicAgent
+from agents.basic_Agent import BasicAgent
 
 
-class DemAgent(basicAgent):
+class DemAgent(BasicAgent):
 
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
         super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
         # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
-        start_time = tme.time()
+        start_time = time.time()
         self.portfolio = DemandPortfolio()
+
+        self.weather_model = WeatherForecast()
 
         demand = 0
         # Construction of the prosumer with photovoltaic and battery
         bats = self.infrastructure_interface.get_solar_storage_systems_in_area(area=plz)
-        bats['type'] = 'bat'
+        bats['type'] = 'battery'
+        c = 0
         for index, system in bats.iterrows():
             self.portfolio.add_energy_system(system.to_dict())
             demand += system['demandP'] / 10**9
+            if c > 10000:
+                break
+            c += 1
         self.logger.info('Prosumer Photovoltaic and Battery added')
 
         # Construction consumer with photovoltaic
         pvs = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
         pvs['type'] = 'solar'
+        c = 0
         for index, system in pvs.iterrows():
             self.portfolio.add_energy_system(system.to_dict())
             demand += system['demandP'] / 10**9
+            if c > 10000:
+                break
+            c += 1
         self.logger.info('Prosumer Photovoltaic added')
 
         total_demand, household, industry_business = self.infrastructure_interface.get_demand_in_area(area=plz)
@@ -51,83 +62,68 @@ class DemAgent(basicAgent):
         self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
-        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
+        self.logger.info('setup of the agent completed in %s' % (time.time() - start_time))
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
+
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-        # Call DayAhead Optimization
-        # -----------------------------------------------------------------------------------------------------------
+
         if 'opt_dayAhead' in message:
-            try:
-                self.optimize_dayAhead()
-            except:
-                self.logger.exception('Error during day Ahead optimization')
-
-        # Call DayAhead Result
-        # -----------------------------------------------------------------------------------------------------------
+            self.optimize_day_ahead()
         if 'result_dayAhead' in message:
-            try:
-                self.post_dayAhead()
-            except:
-                self.logger.exception('Error in After day Ahead process')
+            self.post_dayAhead()
 
-    def optimize_dayAhead(self):
+    def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
-        self.logger.info('DayAhead market scheduling started')
-
+        self.logger.info('Starting day ahead optimization')
+        start_time = time.time()
         # Step 1: forecast data data and init the model for the coming day
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()                                          # performance timestamp
-
-        weather = self.weather_forecast(self.date, mean=False)           # local weather forecast dayAhead
+        # temperature, wind, radiation = self.weather_model.forecast_for_area(self.date, self.plz)
+        temperature = np.random.uniform(low=15, high=25, size=24)
+        wind = np.random.uniform(low=2, high=5, size=24)
+        radiation_dir = np.random.uniform(low=500, high=800, size=24)
+        radiation_dif = np.random.uniform(low=500, high=800, size=24)
+        weather = dict(temperature=temperature, wind=wind, dir=radiation_dir, dif=radiation_dif)
         self.portfolio.set_parameter(self.date, weather, dict())
         self.portfolio.build_model()
-
-        self.performance['initModel'] = np.round(tme.time() - start_time,3)
-
+        self.logger.info(f'bla in {time.time() - start_time}')
+        start_time = time.time()
         # Step 2: standard optimization --> returns power series in [kW]
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()                                         # performance timestamp
-
-        power_da = self.portfolio.optimize()                            # total portfolio power
-
-        self.performance['optModel'] = np.round(tme.time() - start_time, 3)
-
+        power_da = self.portfolio.optimize()
+        self.logger.info(f'Finished day ahead optimization in {time.time() - start_time}')
         # Step 3: save optimization results in influxDB
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
 
-        df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
-                                    powerSolar=self.portfolio.generation['powerSolar']/10**3),
-                          index=pd.date_range(start=self.date, freq='60min', periods=self.portfolio.T))
-
-        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
-                                                                 timestamp='optimize_dayAhead'))
-
-        self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
-
-        # Step 4: build orders from optimization results
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
-
-        bid_orders = dict()
-        for i in range(self.portfolio.T):
-            bid_orders.update({str(('dem%s' % i, i, 0, str(self.name))): (3000, power_da[i]/10**3, 'x')})
-
-        self.performance['buildOrders'] = np.round(tme.time() - start_time, 3)
-
-        # Step 5: send orders to market resp. to mongodb
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
-
-        self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=bid_orders)
-
-        self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
-
-        self.logger.info('DayAhead market scheduling completed')
-        print('DayAhead market scheduling completed:', self.name)
+        # df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
+        #                             powerSolar=self.portfolio.generation['powerSolar']/10**3),
+        #                   index=pd.date_range(start=self.date, freq='60min', periods=self.portfolio.T))
+        #
+        # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+        #                                                          timestamp='optimize_dayAhead'))
+        #
+        # self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
+        #
+        # # Step 4: build orders from optimization results
+        # # -------------------------------------------------------------------------------------------------------------
+        # start_time = tme.time()
+        #
+        # bid_orders = dict()
+        # for i in range(self.portfolio.T):
+        #     bid_orders.update({str(('dem%s' % i, i, 0, str(self.name))): (3000, power_da[i]/10**3, 'x')})
+        #
+        # self.performance['buildOrders'] = np.round(tme.time() - start_time, 3)
+        #
+        # # Step 5: send orders to market resp. to mongodb
+        # # -------------------------------------------------------------------------------------------------------------
+        # start_time = tme.time()
+        #
+        # self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=bid_orders)
+        #
+        # self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
+        #
+        # self.logger.info('DayAhead market scheduling completed')
+        # print('DayAhead market scheduling completed:', self.name)
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""
@@ -135,7 +131,7 @@ class DemAgent(basicAgent):
 
         # Step 6: get market results and adjust generation an strategy
         # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
+        start_time = time.time()
 
         # query the DayAhead results
         ask = self.connections['influxDB'].get_ask_da(self.date, self.name)            # volume to buy
@@ -147,7 +143,7 @@ class DemAgent(basicAgent):
 
         power_da = np.asarray(self.portfolio.optimize(), np.float)                     # [kW]
 
-        self.performance['adjustResult'] = tme.time() - start_time
+        self.performance['adjustResult'] = time.time() - start_time
 
         # Step 7: save adjusted results in influxdb
         # -------------------------------------------------------------------------------------------------------------

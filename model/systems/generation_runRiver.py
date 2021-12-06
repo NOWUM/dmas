@@ -22,7 +22,7 @@ class RunRiverModel(EnergySystem):
     def optimize(self):
         random = np.random.uniform(low=0.95, high=0.99, size=self.T)
         power_water = random * self.run_river['Power']
-        self.generation['powerWater'] = power_water.reshape((-1,))/10**3
+        self.generation['water'] = power_water.reshape((-1,))/10**3
         self.power = power_water.reshape((-1,))/10**3
 
         return self.power

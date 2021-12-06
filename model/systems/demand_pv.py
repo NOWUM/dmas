@@ -44,11 +44,11 @@ class HouseholdPvModel(EnergySystem):
     def optimize(self):
         self.pv_system.run_model(self.weather)
         # get generation in [kW]
-        self.generation['powerSolar'] = self.pv_system.ac.to_numpy()/1000
+        self.generation['solar'] = self.pv_system.results.ac.to_numpy()/1000
         # get demand in [kW]
-        self.demand = self.demand_system.run_model(self.date)
+        self.demand['power'] = self.demand_system.run_model(self.date)
         # get grid usage in [kW]
-        grid_use = self.demand['power'] - self.generation['powerSolar']
+        grid_use = self.demand['power'] - self.generation['solar']
         # gird usage in [kW]
         self.power = np.asarray(grid_use, np.float).reshape((-1,))
 

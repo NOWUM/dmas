@@ -9,6 +9,10 @@ class Weather:
                  table='cosmo'):
 
         self.engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
+        self.year_offset = 0
+
+    def set_year_offset(self):
+        self.year_offset = 0
 
     def get_temperature_in_area(self, area=50, timestamps=[]):
         # TODO: Check Performance during the Simulation
@@ -64,6 +68,18 @@ class Weather:
                                     'radiation_dif': value})
 
         return pd.DataFrame(data_avg).set_index('time', drop=True)
+
+    def get_wind(self, date):
+        pass
+
+    def get_direct_radiation(self, date):
+        pass
+
+    def get_diffuse_radiation(self, date):
+        pass
+
+    def get_temperature(self, date):
+        pass
 
 
 if __name__ == "__main__":

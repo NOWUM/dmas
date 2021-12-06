@@ -1,6 +1,6 @@
 # third party modules
 import numpy as np
-
+import threading, queue
 
 # model modules
 from systems.demand_pv_bat import PvBatModel
@@ -16,11 +16,9 @@ class DemandPortfolio(PortfolioModel):
 
     def add_energy_system(self, energy_system):
 
-        # build photovoltaic with battery
-        if energy_system['type'] == 'bat':
+        if energy_system['type'] == 'battery':
             energy_system.update(dict(model=PvBatModel(T=self.T, **energy_system)))
             self.capacities['solar'] += energy_system['maxPower']
-        # build photovoltaic
         elif energy_system['type'] == 'solar':
             energy_system.update(dict(model=HouseholdPvModel(T=self.T, **energy_system)))
             self.capacities['solar'] += energy_system['maxPower']
@@ -33,38 +31,40 @@ class DemandPortfolio(PortfolioModel):
 
         self.energy_systems.update({energy_system['unitID']: energy_system})
 
-    def build_model(self, response=[]):
+    def build_model(self, response=None):
         for _, data in self.energy_systems.items():
             data['model'].set_parameter(weather=self.weather, date=self.date)
 
     def optimize(self):
 
-        # optimize each energy system
+        q = queue.Queue()
+
+        def worker():
+            while True:
+                item = q.get()
+                item.optimize()
+                q.task_done()
+
         for _, data in self.energy_systems.items():
-            data['model'].optimize()
-        # collect results
-        power = np.zeros_like(self.t)       # initialize power with zeros
-        try:
-            power, solar, demand = [], [], []
-            for _, value in self.energy_systems.items():
-                if 'Pv' in value['typ']:
-                    factor = (value['num'] - value['EEG'])
-                    power.append(value['model'].power * factor)
-                    solar.append(value['model'].generation['powerSolar'] * factor)
-                    demand.append(value['model'].demand['power'] * factor)
-                else:
-                    power.append(value['model'].power)
-                    solar.append(value['model'].generation['powerSolar'])
-                    demand.append(value['model'].demand['power'])
-            power = np.sum(np.asarray(power, np.float), axis=0)
-            self.generation['powerSolar'] = np.sum(np.asarray(solar, np.float), axis=0)
-            self.demand['power'] = np.sum(np.asarray(demand, np.float), axis=0)
+            q.put(data['model'])
+        for i in range(20):
+            threading.Thread(target=worker, daemon=True).start()
 
-        except Exception as e:
-            print(e)
+        q.join()
 
-        self.power = power
-        self.generation['powerTotal'] = power
+        power, solar, demand = [], [], []
+        for _, value in self.energy_systems.items():
+            if 'solar' in value['type'] or 'battery' in value['type']:
+                solar.append(value['model'].generation['solar'])
+
+            power.append(value['model'].power)
+            demand.append(value['model'].demand['power'])
+
+        self.generation['solar'] = np.sum(np.asarray(solar, np.float), axis=0)
+        self.demand['power'] = np.sum(np.asarray(demand, np.float), axis=0)
+        self.generation['total'] = self.generation['solar']
+
+        self.power = self.generation['total'] - self.demand['power']
 
         return self.power
 

@@ -21,7 +21,7 @@ class BioMassModel(EnergySystem):
     def optimize(self):
         random = np.random.uniform(low=0.95, high=0.99, size=self.T)
         power_bio = random * self.bio_mass['Power']
-        self.generation['powerBio'] = power_bio.reshape((-1,))/10**3
+        self.generation['bio'] = power_bio.reshape((-1,))/10**3
         self.power = power_bio.reshape((-1,))/10**3
 
         return self.power
