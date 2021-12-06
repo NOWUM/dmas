@@ -34,10 +34,7 @@ class HouseholdPvModel(EnergySystem):
     def set_parameter(self, date, weather=None, prices=None):
         self.date = pd.to_datetime(date)
         # set weather parameter for calculation
-        self.weather = pd.DataFrame.from_dict(weather)
-        self.weather['ghi'] = self.weather['dir'] + self.weather['dif']
-        self.weather.columns = ['wind_speed', 'dni', 'dhi', 'temp_air', 'ghi']
-        self.weather.index = pd.date_range(start=date, periods=len(self.weather), freq='60min')
+        self.weather = weather
         # set prices
         self.prices = prices
 
@@ -53,4 +50,3 @@ class HouseholdPvModel(EnergySystem):
         self.power = np.asarray(grid_use, np.float).reshape((-1,))
 
         return self.power
-

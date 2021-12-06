@@ -19,7 +19,6 @@ class PvBatModel(es):
 
 
         # initialize weather for generation calculation
-        self.weather = None
         self.demand_system = StandardLoadProfile(type='household', demandP=demandP)
 
         pv_system = PVSystem(module_parameters=dict(pdc0=1000 * maxPower, gamma_pdc=-0.004),
@@ -31,16 +30,12 @@ class PvBatModel(es):
         self.pv_system = ModelChain(pv_system, Location(lat, lon), aoi_model='physical', spectral_model='no_loss',
                                     temperature_model='pvsyst', losses_model='pvwatts', ac_model='pvwatts')
         # add battery storage
-        self.battery = dict(v0=V0, v_max=VMax, efficiency=eta, maxPower=batPower, vt=np.zeros_like(self.t))
+        self.battery = dict(v0=V0, v_max=VMax, efficiency=eta, maxPower=batPower, vt=np.zeros((self.T,)))
 
     def set_parameter(self, date, weather=None, prices=None):
         self.date = date
         # set weather parameter for calculation
-        self.weather = pd.DataFrame.from_dict(weather)
-        self.weather['ghi'] = self.weather['dir'] + self.weather['dif']
-        self.weather.columns = ['wind_speed', 'dni', 'dhi', 'temp_air', 'ghi']
-        self.weather.index = pd.date_range(start=date, periods=len(self.weather), freq='60min')
-        # set prices
+        self.weather = weather
         self.prices = prices
 
     def optimize(self):
@@ -99,4 +94,3 @@ class PvBatModel(es):
         self.power = np.asarray(grid_use, np.float).reshape((-1,))
 
         return self.power
-

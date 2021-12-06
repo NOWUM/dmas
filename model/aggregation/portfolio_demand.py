@@ -29,12 +29,9 @@ class DemandPortfolio(PortfolioModel):
         elif energy_system['type'] == 'industry':
             energy_system.update(dict(model=IndustryModel(T=self.T, **energy_system)))
 
-        self.energy_systems.update({energy_system['unitID']: energy_system})
+        self.energy_systems.append(energy_system)
 
     def build_model(self, response=None):
-        for _, data in self.energy_systems.items():
-            data['model'].set_parameter(weather=self.weather, date=self.date)
-
     def optimize(self):
 
         q = queue.Queue()
@@ -53,7 +50,7 @@ class DemandPortfolio(PortfolioModel):
         q.join()
 
         power, solar, demand = [], [], []
-        for _, value in self.energy_systems.items():
+        for value in self.energy_systems:
             if 'solar' in value['type'] or 'battery' in value['type']:
                 solar.append(value['model'].generation['solar'])
 
