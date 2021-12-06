@@ -1,13 +1,30 @@
 # third party modules
 import numpy as np
 import threading, queue
+import multiprocessing as mp
 
 # model modules
 from systems.demand_pv_bat import PvBatModel
 from systems.demand_pv import HouseholdPvModel
 from systems.demand import HouseholdModel, BusinessModel, IndustryModel
 from aggregation.portfolio import PortfolioModel
+import pandas as pd
 
+import logging
+import time
+log = logging.getLogger()
+log.setLevel('INFO')
+
+def do_work(in_queue, out_queue):
+    i = 0
+    while in_queue.qsize() > 0:
+        item = in_queue.get()
+        item['model'].optimize()
+        item['model'].generation['solar'][0] = 1
+        out_queue.put(item)
+        #log.info(f'New {i}, {in_queue.qsize()}')
+        #i +=1
+    log.info('finished')
 
 class DemandPortfolio(PortfolioModel):
 
@@ -32,23 +49,55 @@ class DemandPortfolio(PortfolioModel):
         self.energy_systems.append(energy_system)
 
     def build_model(self, response=None):
+        t = time.time()
+        log.info('start time')
+        self.weather['ghi'] = self.weather['dir'] + self.weather['dif']
+        self.weather.columns = ['wind_speed', 'dni', 'dhi', 'temp_air', 'ghi']
+        self.weather.index = pd.date_range(start=self.date, periods=len(self.weather), freq='60min')
+
+        for data in self.energy_systems:
+            data['model'].set_parameter(weather=self.weather, date=self.date)
+        log.info(time.time() - t)
+
+
+    def f(self, item):
+        item['model'].optimize()
+        item['model'].generation['solar'][0] = 1
+        return item
+
     def optimize(self):
+        t = time.time()
+        pool = False
+        if pool:
+            with mp.Pool(6) as p:
+                v = p.map(self.f, self.energy_systems)
+            self.energy_systems = v
+        else:
+            processes = []
+            in_q = mp.Queue()
+            out_q = mp.Queue()
+            for en in self.energy_systems:
+                in_q.put(en)
 
-        q = queue.Queue()
+            for i in range(6):
+                p = mp.Process(target=do_work, args=(in_q, out_q))
+                p.daemon = True
+                p.name = 'worker' + str(i)
+                processes.append(p)
+                p.start()
 
-        def worker():
-            while True:
-                item = q.get()
-                item.optimize()
-                q.task_done()
+            while not in_q.empty():
+                    time.sleep(0.2)
+            for proc in processes:
+                proc.join(0)
+            log.info(in_q.empty())
+            es = []
+            while not out_q.empty():
+                es.append(out_q.get())
+            self.energy_systems = es
 
-        for _, data in self.energy_systems.items():
-            q.put(data['model'])
-        for i in range(20):
-            threading.Thread(target=worker, daemon=True).start()
-
-        q.join()
-
+        log.info(time.time() - t)
+        t = time.time()
         power, solar, demand = [], [], []
         for value in self.energy_systems:
             if 'solar' in value['type'] or 'battery' in value['type']:
@@ -62,11 +111,11 @@ class DemandPortfolio(PortfolioModel):
         self.generation['total'] = self.generation['solar']
 
         self.power = self.generation['total'] - self.demand['power']
-
+        log.info(time.time() - t)
+        t = time.time()
         return self.power
 
 
 if __name__ == "__main__":
 
     portfolio = DemandPortfolio()
-
