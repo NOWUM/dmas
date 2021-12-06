@@ -1,6 +1,7 @@
 *.pyc
 .idea
-./model/.idea
+model/.idea
 *.idx
 *.grb
 .spyproject
+model/logs

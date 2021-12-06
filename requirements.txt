@@ -1,7 +1,5 @@
 numpy
 pandas
-influxdb
-pymongo
 pika
 sqlalchemy
 psycopg2-binary
