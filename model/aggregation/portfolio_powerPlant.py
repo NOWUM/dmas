@@ -20,10 +20,10 @@ class PwpPort(PortfolioModel):
         self.m.Params.MIPGap = 0.05
         self.m.__len__ = 1
 
-        self.power = np.zeros_like(self.t, np.float)
-        self.fuel = np.zeros_like(self.t, np.float)
-        self.start = np.zeros_like(self.t, np.float)
-        self.emission = np.zeros_like(self.t, np.float)
+        self.power = np.zeros((self.T,), np.float)
+        self.fuel = np.zeros((self.T,), np.float)
+        self.start = np.zeros((self.T,), np.float)
+        self.emission = np.zeros((self.T,), np.float)
 
         self.lock_generation = True
 
@@ -90,16 +90,16 @@ class PwpPort(PortfolioModel):
 
     def optimize(self):
 
-        self.power = np.zeros_like(self.t, np.float)
-        self.emission = np.zeros_like(self.t, np.float)
-        self.fuel = np.zeros_like(self.t, np.float)
-        self.start = np.zeros_like(self.t, np.float)
+        self.power = np.zeros((self.T,), np.float)
+        self.emission = np.zeros((self.T,), np.float)
+        self.fuel = np.zeros((self.T,), np.float)
+        self.start = np.zeros((self.T,), np.float)
 
         # initialize dict for fuel sum calculation
-        self.generation = dict(powerLignite=np.zeros_like(self.t, np.float),     # total generation lignite   [MW]
-                               powerCoal=np.zeros_like(self.t, np.float),        # total generation caol      [MW]
-                               powerGas=np.zeros_like(self.t, np.float),         # total generation gas       [MW]
-                               powerNuc=np.zeros_like(self.t, np.float))         # total generation nuc       [MW])
+        self.generation = dict(powerLignite=np.zeros((self.T,), np.float),     # total generation lignite   [MW]
+                               powerCoal=np.zeros((self.T,), np.float),        # total generation caol      [MW]
+                               powerGas=np.zeros((self.T,), np.float),         # total generation gas       [MW]
+                               powerNuc=np.zeros((self.T,), np.float))         # total generation nuc       [MW])
 
         self.m.optimize()
 

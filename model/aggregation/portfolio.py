@@ -8,11 +8,10 @@ class PortfolioModel:
     def __init__(self, T=24, date='2020-01-01'):
 
         self.date = pd.to_datetime(date)                        # current day
-        self.energy_systems = {}                                # energy systems in portfolio
+        self.energy_systems = []                                # energy systems in portfolio
 
         # calculation and optimization parameters
         self.T = T                                              # number of steps
-        self.t = np.arange(T)                                   # array with steps
         self.dt = T/24                                          # step length [h]
 
         self.weather = {}                                       # weather data (forecast)
@@ -30,19 +29,19 @@ class PortfolioModel:
                                solar=0., water=0., wind=0., storage=0.)
 
         # current generation series [MW]
-        self.generation = dict(total=np.zeros_like(self.t, dtype=float),            # total generation
-                               solar=np.zeros_like(self.t, dtype=float),            # solar generation
-                               wind=np.zeros_like(self.t, dtype=float),             # wind generation
-                               water=np.zeros_like(self.t, dtype=float),            # run river or storage generation
-                               bio=np.zeros_like(self.t, dtype=float),              # biomass generation
-                               lignite=np.zeros_like(self.t, dtype=float),          # lignite generation
-                               coal=np.zeros_like(self.t, dtype=float),             # hard coal generation
-                               gas=np.zeros_like(self.t, dtype=float),              # gas generation
-                               nuclear=np.zeros_like(self.t, dtype=float))          # nuclear generation
+        self.generation = dict(total=np.zeros((self.T,), dtype=float),            # total generation
+                               solar=np.zeros((self.T,), dtype=float),            # solar generation
+                               wind=np.zeros((self.T,), dtype=float),             # wind generation
+                               water=np.zeros((self.T,), dtype=float),            # run river or storage generation
+                               bio=np.zeros((self.T,), dtype=float),              # biomass generation
+                               lignite=np.zeros((self.T,), dtype=float),          # lignite generation
+                               coal=np.zeros((self.T,), dtype=float),             # hard coal generation
+                               gas=np.zeros((self.T,), dtype=float),              # gas generation
+                               nuclear=np.zeros((self.T,), dtype=float))          # nuclear generation
 
         # current demand series [MW]
-        self.demand = dict(power=np.zeros_like(self.t, dtype=float),                # total power demand
-                           heat=np.zeros_like(self.t, dtype=float))                 # total heat demand
+        self.demand = dict(power=np.zeros((self.T,), dtype=float),                # total power demand
+                           heat=np.zeros((self.T,), dtype=float))                 # total heat demand
 
     # set parameter for optimization
     def set_parameter(self, date, weather, prices):
@@ -59,12 +58,10 @@ class PortfolioModel:
         pass
 
     def optimize(self):
-        power = np.zeros_like(self.t)
+        power = np.zeros((self.T,))
         return power
 
 
 if __name__ == "__main__":
     test = PortfolioModel()
     pass
-
-

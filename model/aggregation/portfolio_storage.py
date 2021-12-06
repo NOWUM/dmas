@@ -18,8 +18,8 @@ class StrPort(PortfolioModel):
         self.m.Params.MIPGap = 0.05
         self.m.__len__ = 1
 
-        self.power = np.zeros_like(self.t, np.float)
-        self.volume = np.zeros_like(self.t, np.float)
+        self.power = np.zeros((self.T,), np.float)
+        self.volume = np.zeros((self.T,), np.float)
 
         self.fix = True
 
@@ -68,11 +68,11 @@ class StrPort(PortfolioModel):
 
     def optimize(self):
 
-        self.power = np.zeros_like(self.t, np.float)
-        self.volume = np.zeros_like(self.t, np.float)
+        self.power = np.zeros((self.T,), np.float)
+        self.volume = np.zeros((self.T,), np.float)
 
         # initialize dict for fuel sum calculation
-        self.generation = dict(water=np.zeros_like(self.t, np.float))
+        self.generation = dict(water=np.zeros((self.T,), np.float))
 
         self.m.optimize()
         power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))

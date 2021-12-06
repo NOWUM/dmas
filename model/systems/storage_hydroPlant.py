@@ -28,7 +28,7 @@ class Storage(EnergySystem):
         self.m.Params.MIPGap = 0.05
         self.m.__len__ = 1
 
-        self.volume = np.zeros_like(self.t, np.float)
+        self.volume = np.zeros((self.T,), np.float)
 
     def initialize_model(self, model, name):
 

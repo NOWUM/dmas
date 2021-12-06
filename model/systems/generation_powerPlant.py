@@ -47,10 +47,10 @@ class PowerPlant(EnergySystem):
         if power_plant['fuel'] == 'nuc':
             self.start_cost = 250 * power_plant['maxPower']
 
-        self.power, self. emission, self.fuel, self.start = np.zeros_like(self.t, np.float), \
-                                                            np.zeros_like(self.t, np.float), \
-                                                            np.zeros_like(self.t, np.float), \
-                                                            np.zeros_like(self.t, np.float)
+        self.power, self. emission, self.fuel, self.start = np.zeros((self.T,), np.float), \
+                                                            np.zeros((self.T,), np.float), \
+                                                            np.zeros((self.T,), np.float), \
+                                                            np.zeros((self.T,), np.float)
 
     def initialize_model(self, model, name):
 

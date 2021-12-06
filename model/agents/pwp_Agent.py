@@ -142,7 +142,7 @@ class PwpAgent(BasicAgent):
             pr12 = dict(power=prices['power'] + offset, gas=prices['gas'], co=prices['co'],
                         lignite=prices['lignite'], coal=prices['coal'], nuc=prices['nuc'])
 
-            self.portfolio.set_parameter(date=self.date, weather=dict(), prices=pr1)
+            self.portfolio.set_parameter(date=self.date, weather=pd.DataFrame(), prices=pr1)
             self.portfolio.build_model()
             power, _, _, _ = self.portfolio.optimize()
 

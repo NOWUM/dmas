@@ -8,7 +8,6 @@ from forecasts.weather import WeatherForecast
 from aggregation.portfolio_demand import DemandPortfolio
 from agents.basic_Agent import BasicAgent
 
-
 class DemAgent(BasicAgent):
 
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
@@ -25,8 +24,8 @@ class DemAgent(BasicAgent):
         bats = self.infrastructure_interface.get_solar_storage_systems_in_area(area=plz)
         bats['type'] = 'battery'
         c = 0
-        for index, system in bats.iterrows():
-            self.portfolio.add_energy_system(system.to_dict())
+        for system in bats.to_dict(orient='records'):
+            self.portfolio.add_energy_system(system)
             demand += system['demandP'] / 10**9
             if c > 10000:
                 break
@@ -37,8 +36,8 @@ class DemAgent(BasicAgent):
         pvs = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
         pvs['type'] = 'solar'
         c = 0
-        for index, system in pvs.iterrows():
-            self.portfolio.add_energy_system(system.to_dict())
+        for system in pvs.to_dict(orient='records'):
+            self.portfolio.add_energy_system(system)
             demand += system['demandP'] / 10**9
             if c > 10000:
                 break
@@ -102,25 +101,25 @@ class DemAgent(BasicAgent):
         # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
         #                                                          timestamp='optimize_dayAhead'))
         #
-        # self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
+        # self.performance['saveSchedule'] = np.round(time.time() - start_time, 3)
         #
         # # Step 4: build orders from optimization results
         # # -------------------------------------------------------------------------------------------------------------
-        # start_time = tme.time()
+        # start_time = time.time()
         #
         # bid_orders = dict()
         # for i in range(self.portfolio.T):
         #     bid_orders.update({str(('dem%s' % i, i, 0, str(self.name))): (3000, power_da[i]/10**3, 'x')})
         #
-        # self.performance['buildOrders'] = np.round(tme.time() - start_time, 3)
+        # self.performance['buildOrders'] = np.round(time.time() - start_time, 3)
         #
         # # Step 5: send orders to market resp. to mongodb
         # # -------------------------------------------------------------------------------------------------------------
-        # start_time = tme.time()
+        # start_time = time.time()
         #
         # self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=bid_orders)
         #
-        # self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
+        # self.performance['sendOrders'] = np.round(time.time() - start_time, 3)
         #
         # self.logger.info('DayAhead market scheduling completed')
         # print('DayAhead market scheduling completed:', self.name)
@@ -147,7 +146,7 @@ class DemAgent(BasicAgent):
 
         # Step 7: save adjusted results in influxdb
         # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
+        start_time = time.time()
 
         df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
                                     powerSolar=self.portfolio.generation['powerSolar']/10**3,
@@ -156,7 +155,7 @@ class DemAgent(BasicAgent):
         self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
                                                                  timestamp='post_dayAhead'))
 
-        self.performance['saveResult'] = np.round(tme.time() - start_time, 3)
+        self.performance['saveResult'] = np.round(time.time() - start_time, 3)
 
         self.logger.info('After DayAhead market adjustment completed')
         print('After DayAhead market adjustment completed:', self.name)
@@ -164,12 +163,12 @@ class DemAgent(BasicAgent):
 
         # Step 8: retrain forecast methods and learning algorithm
         # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
+        start_time = time.time()
 
         # No Price Forecast  used actually
         self.week_price_list.put_price()
 
-        self.performance['nextDay'] = np.round(tme.time() - start_time, 3)
+        self.performance['nextDay'] = np.round(time.time() - start_time, 3)
 
         df = pd.DataFrame(data=self.performance, index=[self.date])
         self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))

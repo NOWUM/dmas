@@ -35,7 +35,7 @@ class RenewablePortfolio(PortfolioModel):
 
         if response is None:
             self.lock_generation = False
-            self.generation['total'] = np.zeros_like(self.t)
+            self.generation['total'] = np.zeros((self.T,))
         else:
             self.lock_generation = True
             self.generation['total'] = np.asarray(response, np.float).reshape((-1,))
@@ -79,5 +79,3 @@ class RenewablePortfolio(PortfolioModel):
         self.power = np.asarray(power, np.float).reshape((-1,))
 
         return self.power
-
-

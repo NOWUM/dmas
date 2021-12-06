@@ -76,7 +76,7 @@ class StrAgent(BasicAgent):
         # -------------------------------------------------------------------------------------------------------------
 
         prices = self.price_forecast(self.date)                        # price forecast dayAhead
-        self.portfolio.set_parameter(self.date, dict(), prices)
+        self.portfolio.set_parameter(self.date, pd.DataFrame(), prices)
         self.portfolio.build_model()
         self.portfolio.optimize()                                      # optimize portfolio
 

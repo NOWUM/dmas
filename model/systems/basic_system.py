@@ -8,22 +8,20 @@ class EnergySystem:
 
     def __init__(self, T=24):
         self.T = T
-        self.t = np.arange(T)
+        self.demand = dict(power=np.zeros((self.T,)),     # elect. power
+                           heat=np.zeros((self.T,)))      # heat demand
 
-        self.demand = dict(power=np.zeros_like(self.t),     # elect. power
-                           heat=np.zeros_like(self.t))      # heat demand
+        self.generation = dict(total=np.zeros((self.T,), dtype=float),       # total generation
+                               solar=np.zeros((self.T,), dtype=float),       # solar generation
+                               wind=np.zeros((self.T,), dtype=float),        # wind generation
+                               water=np.zeros((self.T,), dtype=float),       # run river or storage generation
+                               bio=np.zeros((self.T,), dtype=float),         # biomass generation
+                               lignite=np.zeros((self.T,), dtype=float),     # lignite generation
+                               coal=np.zeros((self.T,), dtype=float),        # hard coal generation
+                               gas=np.zeros((self.T,), dtype=float),         # gas generation
+                               nuclear=np.zeros((self.T,), dtype=float))         # nuclear generation
 
-        self.generation = dict(total=np.zeros_like(self.t, dtype=float),       # total generation
-                               solar=np.zeros_like(self.t, dtype=float),       # solar generation
-                               wind=np.zeros_like(self.t, dtype=float),        # wind generation
-                               water=np.zeros_like(self.t, dtype=float),       # run river or storage generation
-                               bio=np.zeros_like(self.t, dtype=float),         # biomass generation
-                               lignite=np.zeros_like(self.t, dtype=float),     # lignite generation
-                               coal=np.zeros_like(self.t, dtype=float),        # hard coal generation
-                               gas=np.zeros_like(self.t, dtype=float),         # gas generation
-                               nuclear=np.zeros_like(self.t, dtype=float))         # nuclear generation
-
-        self.power = np.zeros_like(self.t)
+        self.power = np.zeros((self.T,))
 
         self.date = date(2018,1,1)
 
