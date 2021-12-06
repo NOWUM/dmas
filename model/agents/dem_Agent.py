@@ -84,7 +84,8 @@ class DemAgent(BasicAgent):
         wind = np.random.uniform(low=2, high=5, size=24)
         radiation_dir = np.random.uniform(low=500, high=800, size=24)
         radiation_dif = np.random.uniform(low=500, high=800, size=24)
-        weather = dict(temperature=temperature, wind=wind, dir=radiation_dir, dif=radiation_dif)
+        weather = pd.DataFrame.from_dict(dict(temperature=temperature, wind=wind, dir=radiation_dir, dif=radiation_dif))
+
         self.portfolio.set_parameter(self.date, weather, dict())
         self.portfolio.build_model()
         self.logger.info(f'bla in {time.time() - start_time}')
