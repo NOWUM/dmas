@@ -23,13 +23,15 @@ class DemAgent(BasicAgent):
         # Construction of the prosumer with photovoltaic and battery
         bats = self.infrastructure_interface.get_solar_storage_systems_in_area(area=plz)
         bats['type'] = 'battery'
+        how_many = 1000000
         c = 0
         for system in bats.to_dict(orient='records'):
             self.portfolio.add_energy_system(system)
             demand += system['demandP'] / 10**9
-            if c > 10000:
-                break
             c += 1
+            if c > how_many:
+                break
+
         self.logger.info('Prosumer Photovoltaic and Battery added')
 
         # Construction consumer with photovoltaic
@@ -39,9 +41,10 @@ class DemAgent(BasicAgent):
         for system in pvs.to_dict(orient='records'):
             self.portfolio.add_energy_system(system)
             demand += system['demandP'] / 10**9
-            if c > 10000:
-                break
             c += 1
+            if c > how_many:
+                break
+
         self.logger.info('Prosumer Photovoltaic added')
 
         total_demand, household, industry_business = self.infrastructure_interface.get_demand_in_area(area=plz)
@@ -88,7 +91,7 @@ class DemAgent(BasicAgent):
 
         self.portfolio.set_parameter(self.date, weather, dict())
         self.portfolio.build_model()
-        self.logger.info(f'bla in {time.time() - start_time}')
+        self.logger.info(f'built model in {time.time() - start_time}')
         start_time = time.time()
         # Step 2: standard optimization --> returns power series in [kW]
         power_da = self.portfolio.optimize()

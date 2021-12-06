@@ -12,7 +12,7 @@ import pandas as pd
 
 import logging
 import time
-log = logging.getLogger()
+log = logging.getLogger('demPortfolio')
 log.setLevel('INFO')
 
 def do_work(in_queue, out_queue):
@@ -24,7 +24,7 @@ def do_work(in_queue, out_queue):
         out_queue.put(item)
         #log.info(f'New {i}, {in_queue.qsize()}')
         #i +=1
-    log.info('finished')
+    log.info('finished work')
 
 class DemandPortfolio(PortfolioModel):
 
@@ -49,16 +49,12 @@ class DemandPortfolio(PortfolioModel):
         self.energy_systems.append(energy_system)
 
     def build_model(self, response=None):
-        t = time.time()
-        log.info('start time')
         self.weather['ghi'] = self.weather['dir'] + self.weather['dif']
         self.weather.columns = ['wind_speed', 'dni', 'dhi', 'temp_air', 'ghi']
         self.weather.index = pd.date_range(start=self.date, periods=len(self.weather), freq='60min')
 
         for data in self.energy_systems:
             data['model'].set_parameter(weather=self.weather, date=self.date)
-        log.info(time.time() - t)
-
 
     def f(self, item):
         item['model'].optimize()
@@ -66,9 +62,28 @@ class DemandPortfolio(PortfolioModel):
         return item
 
     def optimize(self):
+        '''
+        this function takes a lot of time.
+        The bottleneck lays in the radiation calculation with pvlib.
+        This is the case even though PVLIB_USE_NUMBA is set accordingly.
+        Therefore a lot of time was invested to optimize and parallize
+        the function.
+        The result is to use a Queue or ProcessPool, while both have drawbacks.
+
+        ProcessPool: Kernel must be restarted for every single change to the
+        Portfolio class, as the class must be compatible with pickle
+
+        Queue: somehow the processes won't stop execution despite having finished.
+        The workaround is to forcefully join them when the queue is empty.
+        '''
         t = time.time()
-        pool = False
-        if pool:
+        run = 'queue'
+
+        if run =='serial':
+            for model in self.energy_systems:
+                pass
+                #self.f(model)
+        elif run =='pool':
             with mp.Pool(6) as p:
                 v = p.map(self.f, self.energy_systems)
             self.energy_systems = v
@@ -90,13 +105,13 @@ class DemandPortfolio(PortfolioModel):
                     time.sleep(0.2)
             for proc in processes:
                 proc.join(0)
-            log.info(in_q.empty())
+            log.info(f'queue empty: {in_q.empty()}')
             es = []
             while not out_q.empty():
                 es.append(out_q.get())
             self.energy_systems = es
 
-        log.info(time.time() - t)
+        log.info(f'optimize took {time.time() - t}')
         t = time.time()
         power, solar, demand = [], [], []
         for value in self.energy_systems:
@@ -111,8 +126,7 @@ class DemandPortfolio(PortfolioModel):
         self.generation['total'] = self.generation['solar']
 
         self.power = self.generation['total'] - self.demand['power']
-        log.info(time.time() - t)
-        t = time.time()
+        log.info(f'append took {time.time() - t}')
         return self.power
 
 
