@@ -2,10 +2,6 @@
 import numpy as np
 import pandas as pd
 from pvlib.pvsystem import PVSystem
-from pvlib.location import Location
-from pvlib.modelchain import ModelChain
-from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
-
 
 # model modules
 from systems.basic_system import EnergySystem as es
@@ -21,16 +17,11 @@ class PvBatModel(es):
         # initialize weather for generation calculation
         self.demand_system = StandardLoadProfile(type='household', demandP=demandP)
 
-        pv_system = PVSystem(module_parameters=dict(pdc0=1000 * maxPower, gamma_pdc=-0.004),
-                             inverter_parameters=dict(pdc0=1000 * maxPower),
-                             surface_tilt=tilt, surface_azimuth=azimuth, albedo=0.25,
-                             temperature_model_parameters=TEMPERATURE_MODEL_PARAMETERS['pvsyst']['insulated'],
-                             losses_parameters=dict(availability=0, lid=0, shading=1, soiling=1))
-        # aggregate in model chain
-        self.pv_system = ModelChain(pv_system, Location(lat, lon), aoi_model='physical', spectral_model='no_loss',
-                                    temperature_model='pvsyst', losses_model='pvwatts', ac_model='pvwatts')
+        self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower),
+                                  surface_tilt=tilt, surface_azimuth=azimuth)
         # add battery storage
         self.battery = dict(v0=V0, v_max=VMax, efficiency=eta, maxPower=batPower, vt=np.zeros((self.T,)))
+
 
     def set_parameter(self, date, weather=None, prices=None):
         self.date = date
@@ -39,9 +30,14 @@ class PvBatModel(es):
         self.prices = prices
 
     def optimize(self):
-        self.pv_system.run_model(self.weather)
+        irradiance = self.pv_system.get_irradiance(solar_zenith=self.weather['zenith'],
+                                                   solar_azimuth=self.weather['azimuth'],
+                                                   dni=self.weather['dni'],
+                                                   ghi=self.weather['ghi'],
+                                                   dhi=self.weather['dhi'])
         # get generation in [kW]
-        self.generation['solar'] = self.pv_system.results.ac.to_numpy()/1000
+        solar_power = irradiance['poa_global'] * 0.14 * self.pv_system.arrays[0].module_parameters['pdc0'] * 7
+        self.generation['solar'] = solar_power.to_numpy()/1000
         # get demand in [kW]
         self.demand['power'] = self.demand_system.run_model(self.date)
         # get grid usage in [kW]

@@ -155,6 +155,7 @@ class InfrastructureInterface:
             df['fuel'] = fuel_typ                                   # current fuel typ
             df['maxPower'] = df['maxPower'] / 10**3                 # Rated Power [kW] --> [MW]
             df['minPower'] = df['maxPower'] * 0.5                   # MinPower = 1/2 MaxPower
+            df['P0'] = df['minPower']
             df['gradP'] = 0.1 * df['maxPower']                      # 10% Change per hour
             df['gradM'] = 0.1 * df['maxPower']                      # 10% Change per hour
             df['stopTime'] = 5                                      # default stop time 5h
@@ -220,8 +221,8 @@ class InfrastructureInterface:
                         df.at[line, 'fuel'] = 'gas_combined'
 
             # Set technical parameter corresponding to the type (0, 2000, 2018)
-            technical_parameter = pd.read_csv(fr'./data/technical_parameter_{fuel_typ}.csv', sep=';', decimal=',',
-                                              index_col=0)
+            technical_parameter = pd.read_csv(fr'./interfaces/data/technical_parameter_{fuel_typ}.csv',
+                                              sep=';', decimal=',', index_col=0)
             for line, row in df.iterrows():
                 df.at[line, 'minPower'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'minPower'] / 100
                 df.at[line, 'gradP'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradP'] * 60 / 100
@@ -231,7 +232,8 @@ class InfrastructureInterface:
                 df.at[line, 'stopTime'] = technical_parameter.at[row['type'], 'stopTime']
                 df.at[line, 'runTime'] = technical_parameter.at[row['type'], 'runTime']
                 df.at[line, 'startCost'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'startCost']
-
+            # TODO Check why eta maybe zero
+            df['eta'] = df['eta'].replace(0,30)
             return df
 
         return None
@@ -305,7 +307,7 @@ class InfrastructureInterface:
             eeg = [all([missing_values[i], deadline[i], power_cap[i]]) for i in range(len(missing_values))]
             df.loc[eeg, 'eeg'] = 0
             # rest nans are eeg assets and are managed by the tso
-            df['eeg'] = df['eeg'].fillna(1)
+            df['eeg'] = df['eeg'].replace(np.nan, 0)
             # set max Power to [MW]
             df['maxPower'] = df['maxPower'] / 10**3
 

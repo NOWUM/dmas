@@ -11,15 +11,14 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class PowerPlant(EnergySystem):
 
-    def __init__(self, T, name='default', power_plant=None):
+    def __init__(self, T, unitID, fuel, maxPower, minPower, eta, P0, chi, stopTime, runTime, gradP, gradM, on, off,
+                 startCost, *args, **kwargs):
         super().__init__(T)
 
         # initialize default power plant
-        if power_plant is None:
-            power_plant = dict(fuel='lignite', maxPower=10, minPower=5, eta=0.4, P0=5, chi=0.407,
-                               stopTime=7, runTime=6, gradP=1, gradM=1, on=1, off=0)
-        self.power_plant = power_plant
-        self.name = name  # power plant block name
+        self.power_plant =dict(fuel=fuel, maxPower=maxPower, minPower=minPower, eta=eta/100, P0=P0, chi=chi,
+                               stopTime=stopTime, runTime=runTime, gradP=gradP, gradM=gradM, on=on, off=off)
+        self.name = unitID  # power plant block name
 
         # initialize gurobi model for optimization
         self.m = gby.Model('power_plant')
@@ -28,37 +27,20 @@ class PowerPlant(EnergySystem):
         self.m.Params.MIPGap = 0.05
         self.m.__len__ = 1
 
-        # determine start up cost
-        # (Konventionelle Kraftwerke Technologiesteckbrief zur Analyse
-        # „Flexibilitätskonzepte für die Stromversorgung 2050“)
-        self.start_cost = 0
-        if power_plant['fuel'] == 'gas':
-            self.start_cost = 60 * power_plant['maxPower']
-        if power_plant['fuel'] == 'lignite':
-            if power_plant['maxPower'] > 500:
-                self.start_cost = 60 * power_plant['maxPower']
-            else:
-                self.start_cost = 50 * power_plant['maxPower']
-        if power_plant['fuel'] == 'coal':
-            if power_plant['maxPower'] > 500:
-                self.start_cost = 60 * power_plant['maxPower']
-            else:
-                self.start_cost = 50 * power_plant['maxPower']
-        if power_plant['fuel'] == 'nuc':
-            self.start_cost = 250 * power_plant['maxPower']
+        self.start_cost = startCost
 
         self.power, self. emission, self.fuel, self.start = np.zeros((self.T,), np.float), \
                                                             np.zeros((self.T,), np.float), \
                                                             np.zeros((self.T,), np.float), \
                                                             np.zeros((self.T,), np.float)
 
-    def initialize_model(self, model, name):
+    def initialize_model(self, model):
 
         delta = self.power_plant['maxPower'] - self.power_plant['minPower']
         su = self.power_plant['minPower']
         sd = self.power_plant['minPower']
 
-        p_out = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P_' + name, lb=0, ub=self.power_plant['maxPower'])
+        p_out = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P_' + self.name, lb=0, ub=self.power_plant['maxPower'])
         # power at each time t
         model.addConstr(p_out[0] <= self.power_plant['P0'] + self.power_plant['gradP'])
         model.addConstr(p_out[0] >= self.power_plant['P0'] - self.power_plant['gradM'])
@@ -66,9 +48,9 @@ class PowerPlant(EnergySystem):
         p_opt = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='opt_', lb=0, ub=delta)
 
         # states (on, ramp up, ramp down)
-        z = model.addVars(self.t, vtype=gby.GRB.BINARY, name='z_' + name)
-        v = model.addVars(self.t, vtype=gby.GRB.BINARY, name='v_' + name)
-        w = model.addVars(self.t, vtype=gby.GRB.BINARY, name='w_' + name)
+        z = model.addVars(self.t, vtype=gby.GRB.BINARY, name='z_' + self.name)
+        v = model.addVars(self.t, vtype=gby.GRB.BINARY, name='v_' + self.name)
+        w = model.addVars(self.t, vtype=gby.GRB.BINARY, name='w_' + self.name)
         model.addConstrs(p_out[i] == p_opt[i] + z[i] * self.power_plant['minPower'] for i in self.t)
 
         # power limits
@@ -96,7 +78,7 @@ class PowerPlant(EnergySystem):
             model.addConstrs(z[i] == 0 for i in range(0, self.power_plant['stopTime']
                                                       - self.power_plant['off']))
         # fuel cost
-        fuel = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='F_' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        fuel = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='F_' + self.name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
         if self.power_plant['fuel'] == 'lignite':
             model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['lignite'] for i in self.t)
         if self.power_plant['fuel'] == 'coal':
@@ -107,15 +89,15 @@ class PowerPlant(EnergySystem):
             model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['nuc'] for i in self.t)
 
         # emission cost
-        emission = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='E_' + name, lb=0, ub=gby.GRB.INFINITY)
+        emission = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='E_' + self.name, lb=0, ub=gby.GRB.INFINITY)
         model.addConstrs(emission[i] == p_out[i] * self.power_plant['chi'] / self.power_plant['eta']
                          * self.prices['co'][i] for i in self.t)
 
         # start cost
-        start_up = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='S_' + name, lb=0, ub=gby.GRB.INFINITY)
+        start_up = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='S_' + self.name, lb=0, ub=gby.GRB.INFINITY)
         model.addConstrs(start_up[i] == v[i] * self.start_cost for i in self.t)
 
-        profit = model.addVar(vtype=gby.GRB.CONTINUOUS, name='Profit' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        profit = model.addVar(vtype=gby.GRB.CONTINUOUS, name='Profit' + self.name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
         model.addConstr(profit == gby.quicksum(p_out[i] * self.prices['power'][i] for i in self.t))
         model.setObjective(profit - gby.quicksum(fuel[i] + emission[i] + start_up[i] for i in self.t),
                            gby.GRB.MAXIMIZE)
@@ -124,7 +106,7 @@ class PowerPlant(EnergySystem):
 
     def optimize(self):
 
-        self.initialize_model(self.m, self.name)
+        self.initialize_model(self.m)
 
         self.m.optimize()
 

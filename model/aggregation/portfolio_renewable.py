@@ -79,3 +79,6 @@ class RenewablePortfolio(PortfolioModel):
         self.power = np.asarray(power, np.float).reshape((-1,))
 
         return self.power
+
+if __name__ == "__main__":
+    p = RenewablePortfolio()

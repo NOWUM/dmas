@@ -9,6 +9,8 @@ from sqlalchemy import create_engine
 
 from interfaces.infrastructure import InfrastructureInterface
 
+geo_info =  pd.read_csv(r'./data/Ref_GeoInfo.csv', sep=';', decimal=',', index_col=0)
+
 
 class BasicAgent:
 
@@ -20,7 +22,8 @@ class BasicAgent:
         self.name = f'{self.typ}_{self.plz}'                        # name
         self.date = pd.to_datetime(date)                            # current day
         self.exchange_name = 'dMas'
-
+        self.latitude = geo_info[geo_info['PLZ'] == plz]['Latitude'].to_numpy()[0]
+        self.longitude = geo_info[geo_info['PLZ'] == plz]['Longitude'].to_numpy()[0]
 
         # declare logging options
         self.logger = logging.getLogger(self.name)

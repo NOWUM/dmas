@@ -4,7 +4,7 @@ from agents.dem_Agent import DemAgent
 from agents.res_Agent import ResAgent
 from agents.pwp_Agent import PwpAgent
 from agents.str_Agent import StrAgent
-from agents.net_Agent import NetAgent
+#from agents.net_Agent import NetAgent
 from agents.mrk_Agent import MarketAgent
 from agents.wtr_Agent import WtrAgent
 from agents.ctl_Agent import CtlAgent
@@ -18,7 +18,7 @@ if __name__ == "__main__":
         'date': os.getenv('SIMULATION_START_DATE', '2020-01-01'),
         'plz': int(os.getenv('PLZ_CODE', 52)),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
-        'agent_type': os.getenv('AGENT_TYPE', 'DEM'),
+        'agent_type': os.getenv('AGENT_TYPE', 'PWP'),
         'connect': bool(os.getenv('CONNECT', False)),
         'infrastructure_source': os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432'),
         'infrastructure_login': os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
@@ -34,8 +34,8 @@ if __name__ == "__main__":
             agent = PwpAgent(**init_dict)
         elif init_dict['agent_type'] == 'STR':
             agent = StrAgent(**init_dict)
-        elif init_dict['agent_type'] == 'NET':
-            agent = NetAgent(**init_dict)
+        #elif init_dict['agent_type'] == 'NET':
+        #    agent = NetAgent(**init_dict)
         elif init_dict['agent_type'] == 'MRK':
             agent = MarketAgent(**init_dict)
         elif init_dict['agent_type'] == 'WTR':

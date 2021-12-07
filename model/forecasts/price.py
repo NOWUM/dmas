@@ -14,9 +14,9 @@ from forecasts.weather import WeatherForecast
 with open(r'./forecasts/data/default_price.pkl', 'rb') as file:
     default_power_price = np.load(file).reshape((24,))                  # hourly mean values 2015-2018
 with open(r'./forecasts/data/default_gas.pkl', 'rb') as file:
-    default_gas = np.load(file).reshape((24,))                          # month mean values year 2018
+    default_gas = np.load(file).reshape((12,))                          # month mean values year 2018
 with open(r'./forecasts/data/default_emission.pkl', 'rb') as file:
-    default_emission = np.load(file).reshape((24,))                     # month mean values year 2018
+    default_emission = np.load(file).reshape((12,))                     # month mean values year 2018
 
 default_coal = 65.18 / 8.141                                            # €/ske --> €/MWh
 default_lignite = 1.5                                                   # agora Deutsche "Braunkohlewirtschaft"

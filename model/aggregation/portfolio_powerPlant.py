@@ -11,7 +11,7 @@ from aggregation.portfolio import PortfolioModel
 
 class PwpPort(PortfolioModel):
 
-    def __int__(self, T=24, date='2020-01-01'):
+    def __init__(self, T=24, date='2020-01-01'):
         super().__init__(T, date)
 
         self.m = gby.Model('aggregation')
@@ -28,21 +28,18 @@ class PwpPort(PortfolioModel):
         self.lock_generation = True
 
     def add_energy_system(self, energy_system):
-        data = copy.deepcopy(energy_system)
-        # build power plants
-        data.update(dict(model=PowerPlant(name=energy_system['unitID'], power_plant=copy.deepcopy(data),
-                                          T=self.T)))
-        key = str(data['fuel'].to_numpy()[0]).replace('_combined', '')
-        self.capacities[key] += data['maxPower']
-        self.energy_systems.update({energy_system['unitID']: data})
+        model=PowerPlant(T=self.T, **energy_system)
+        key = str(energy_system['fuel']).replace('_combined', '')
+        self.capacities[key] += energy_system['maxPower']
+        self.energy_systems.append(model)
 
     def build_model(self, response=None, max_power=False):
         self.m.remove(self.m.getVars())
         self.m.remove(self.m.getConstrs())
 
-        for key, value in self.energy_systems.items():
-            value['model'].set_parameter(date=self.date, weather=self.weather, prices=self.prices)
-            value['model'].initialize_model(self.m, key)
+        for model in self.energy_systems:
+            model.set_parameter(date=self.date, weather=self.weather, prices=self.prices)
+            model.initialize_model(self.m)
         self.m.update()
 
         # total power in portfolio
@@ -116,38 +113,44 @@ class PwpPort(PortfolioModel):
             start = np.asarray([self.m.getVarByName('S[%i]' % i).x for i in self.t], np.float).reshape((-1,))
             self.start = np.round(start, 2)
 
-            for key, value in self.energy_systems.items():
+            for model in self.energy_systems:
+                print(model.name)
+                print('power', np.asarray([self.m.getVarByName(f'P_{model.name}[{i}]').x for i in self.t]))
+                print('emissions', np.asarray([self.m.getVarByName(f'E_{model.name}[{i}]').x for i in self.t]))
+                print('start', np.asarray([self.m.getVarByName(f'S_{model.name}[{i}]').x for i in self.t]))
+                print('fuel', np.asarray([self.m.getVarByName(f'F_{model.name}[{i}]').x for i in self.t]))
                 # set output power for each energy system (power plant)
-                value['model'].power = np.asarray([self.m.getVarByName('P_%s[%i]' % (key, i)).x
-                                                   for i in self.t], np.float).reshape((-1,))
-                value['model'].emission = np.asarray([self.m.getVarByName('E_%s[%i]' % (key, i)).x
-                                                      for i in self.t], np.float).reshape((-1,))
-                value['model'].fuel = np.asarray([self.m.getVarByName('F_%s[%i]' % (key, i)).x
-                                                  for i in self.t], np.float).reshape((-1,))
-                value['model'].start = np.asarray([self.m.getVarByName('S_%s[%i]' % (key, i)).x
-                                                  for i in self.t], np.float).reshape((-1,))
+                # model.power = np.asarray([self.m.getVarByName('P_%s[%i]' % (model.name, i)).x
+                #                                    for i in self.t], np.float).reshape((-1,))
+                # model.emission = np.asarray([self.m.getVarByName('E_%s[%i]' % (model, i)).x
+                #                                       for i in self.t], np.float).reshape((-1,))
+                # model.fuel = np.asarray([self.m.getVarByName('F_%s[%i]' % (model, i)).x
+                #                                   for i in self.t], np.float).reshape((-1,))
+                # model.start = np.asarray([self.m.getVarByName('S_%s[%i]' % (model, i)).x
+                #                                   for i in self.t], np.float).reshape((-1,))
 
-                self.generation['power%s' % value['fuel'].capitalize()] += value['model'].power
+                # self.generation['power%s' % model.power_plant[fuel].capitalize()] += model.power
 
                 if self.lock_generation:
-                    value['model'].power_plant['P0'] = self.m.getVarByName('P_%s[%i]' % (key, 23)).x
-                    z = np.asanyarray([self.m.getVarByName('z_%s[%i]' % (key, i)).x for i in self.t[:24]], np.float)
+                    model.power_plant['P0'] = self.m.getVarByName('P_%s[%i]' % (model.name, 23)).x
+                    z = np.asanyarray([self.m.getVarByName('z_%s[%i]' % (model.name, i)).x for i in self.t[:24]], np.float)
                     if z[-1] > 0:
-                        index = -1 * value['model'].power_plant['runTime']
-                        value['model'].power_plant['on'] = np.count_nonzero(z[index:])
-                        value['model'].power_plant['off'] = 0
+                        index = -1 * model.power_plant['runTime']
+                        model.power_plant['on'] = np.count_nonzero(z[index:])
+                        model.power_plant['off'] = 0
                     else:
-                        index = -1 * value['model'].power_plant['stopTime']
-                        value['model'].power_plant['off'] = np.count_nonzero(1 - z[index:])
-                        value['model'].power_plant['on'] = 0
+                        index = -1 * model.power_plant['stopTime']
+                        model.power_plant['off'] = np.count_nonzero(1 - z[index:])
+                        model.power_plant['on'] = 0
 
             self.generation['powerTotal'] = power
 
         except Exception as e:
-            print(e)
+            print(repr(e))
 
         return self.power, self.emission, self.fuel, self.start
 
 
 if __name__ == "__main__":
+    port = PwpPort()
     pass

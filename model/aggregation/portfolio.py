@@ -12,6 +12,7 @@ class PortfolioModel:
 
         # calculation and optimization parameters
         self.T = T                                              # number of steps
+        self.t = np.arange(T)
         self.dt = T/24                                          # step length [h]
 
         self.weather = {}                                       # weather data (forecast)

@@ -8,6 +8,8 @@ class EnergySystem:
 
     def __init__(self, T=24):
         self.T = T
+        self.t = np.arange(T)
+
         self.demand = dict(power=np.zeros((self.T,)),     # elect. power
                            heat=np.zeros((self.T,)))      # heat demand
 

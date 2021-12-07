@@ -2,6 +2,7 @@
 import time as time
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 # model modules
 from forecasts.weather import WeatherForecast
@@ -15,7 +16,7 @@ class DemAgent(BasicAgent):
         # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = time.time()
-        self.portfolio = DemandPortfolio()
+        self.portfolio = DemandPortfolio(position=dict(lat=self.latitude, lon=self.longitude))
 
         self.weather_model = WeatherForecast()
 
@@ -23,28 +24,18 @@ class DemAgent(BasicAgent):
         # Construction of the prosumer with photovoltaic and battery
         bats = self.infrastructure_interface.get_solar_storage_systems_in_area(area=plz)
         bats['type'] = 'battery'
-        how_many = 1000000
-        c = 0
-        for system in bats.to_dict(orient='records'):
+        for system in tqdm(bats.to_dict(orient='records')):
             self.portfolio.add_energy_system(system)
             demand += system['demandP'] / 10**9
-            c += 1
-            if c > how_many:
-                break
-
         self.logger.info('Prosumer Photovoltaic and Battery added')
 
         # Construction consumer with photovoltaic
         pvs = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
+        pvs = pvs[pvs['eeg']==0]
         pvs['type'] = 'solar'
-        c = 0
-        for system in pvs.to_dict(orient='records'):
+        for system in tqdm(pvs.to_dict(orient='records')):
             self.portfolio.add_energy_system(system)
             demand += system['demandP'] / 10**9
-            c += 1
-            if c > how_many:
-                break
-
         self.logger.info('Prosumer Photovoltaic added')
 
         total_demand, household, industry_business = self.infrastructure_interface.get_demand_in_area(area=plz)
@@ -64,7 +55,11 @@ class DemAgent(BasicAgent):
         self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
-        self.logger.info('setup of the agent completed in %s' % (time.time() - start_time))
+        #df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        #df['agent'] = self.name
+        #df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
+
+        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
@@ -91,11 +86,11 @@ class DemAgent(BasicAgent):
 
         self.portfolio.set_parameter(self.date, weather, dict())
         self.portfolio.build_model()
-        self.logger.info(f'built model in {time.time() - start_time}')
+        self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
         start_time = time.time()
         # Step 2: standard optimization --> returns power series in [kW]
         power_da = self.portfolio.optimize()
-        self.logger.info(f'Finished day ahead optimization in {time.time() - start_time}')
+        self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
         # Step 3: save optimization results in influxDB
 
         # df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
