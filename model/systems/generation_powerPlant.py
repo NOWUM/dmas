@@ -11,7 +11,7 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class PowerPlant(EnergySystem):
 
-    def __init__(self, T, unitID, fuel, maxPower, minPower, eta, P0, chi, stopTime, runTime, gradP, gradM, on, off,
+    def __init__(self, T, steps, unitID, fuel, maxPower, minPower, eta, P0, chi, stopTime, runTime, gradP, gradM, on, off,
                  startCost, *args, **kwargs):
         super().__init__(T)
 
@@ -29,80 +29,86 @@ class PowerPlant(EnergySystem):
 
         self.start_cost = startCost
 
-        self.power, self. emission, self.fuel, self.start = np.zeros((self.T,), np.float), \
-                                                            np.zeros((self.T,), np.float), \
-                                                            np.zeros((self.T,), np.float), \
-                                                            np.zeros((self.T,), np.float)
+        self.power, self. emission, self.fuel, self.start = np.zeros((self.T,), float), \
+                                                            np.zeros((self.T,), float), \
+                                                            np.zeros((self.T,), float), \
+                                                            np.zeros((self.T,), float)
 
-    def initialize_model(self, model):
+        self.data_storage = {offset: dict(power=np.zeros(min(self.T*2,48), float),
+                                          emission=np.zeros(min(self.T*2,48), float),
+                                          fuel=np.zeros(min(self.T*2,48), float),
+                                          start=np.zeros(min(self.T*2,48), float),
+                                          obj=0) for offset in steps}
+
+    def initialize_model(self, m):
 
         delta = self.power_plant['maxPower'] - self.power_plant['minPower']
         su = self.power_plant['minPower']
         sd = self.power_plant['minPower']
 
-        p_out = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P_' + self.name, lb=0, ub=self.power_plant['maxPower'])
+        p_out = m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P_' + self.name, lb=0, ub=self.power_plant['maxPower'])
         # power at each time t
-        model.addConstr(p_out[0] <= self.power_plant['P0'] + self.power_plant['gradP'])
-        model.addConstr(p_out[0] >= self.power_plant['P0'] - self.power_plant['gradM'])
+        m.addConstr(p_out[0] <= self.power_plant['P0'] + self.power_plant['gradP'])
+        m.addConstr(p_out[0] >= self.power_plant['P0'] - self.power_plant['gradM'])
         # power corresponding to the optimization
-        p_opt = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='opt_', lb=0, ub=delta)
+        p_opt = m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='opt_', lb=0, ub=delta)
 
         # states (on, ramp up, ramp down)
-        z = model.addVars(self.t, vtype=gby.GRB.BINARY, name='z_' + self.name)
-        v = model.addVars(self.t, vtype=gby.GRB.BINARY, name='v_' + self.name)
-        w = model.addVars(self.t, vtype=gby.GRB.BINARY, name='w_' + self.name)
-        model.addConstrs(p_out[i] == p_opt[i] + z[i] * self.power_plant['minPower'] for i in self.t)
+        z = m.addVars(self.t, vtype=gby.GRB.BINARY, name='z_' + self.name)
+        v = m.addVars(self.t, vtype=gby.GRB.BINARY, name='v_' + self.name)
+        w = m.addVars(self.t, vtype=gby.GRB.BINARY, name='w_' + self.name)
+        m.addConstrs(p_out[i] == p_opt[i] + z[i] * self.power_plant['minPower'] for i in self.t)
 
         # power limits
-        model.addConstrs(0 <= p_opt[i] for i in self.t)
-        model.addConstrs(p_opt[i] <= delta * z[i] for i in self.t)
-        model.addConstrs(p_opt[i] <= delta * z[i] - (self.power_plant['maxPower'] - su) * v[i]
-                         - (self.power_plant['maxPower'] - sd) * w[i + 1] for i in self.t[:-1])
+        m.addConstrs(0 <= p_opt[i] for i in self.t)
+        m.addConstrs(p_opt[i] <= delta * z[i] for i in self.t)
+        m.addConstrs(p_opt[i] <= delta * z[i] - (self.power_plant['maxPower'] - su) * v[i]
+                     - (self.power_plant['maxPower'] - sd) * w[i + 1] for i in self.t[:-1])
 
         # power gradients
-        model.addConstrs(p_opt[i] - p_opt[i-1] <= self.power_plant['gradP'] * z[i-1] for i in self.t[1:])
-        model.addConstrs(p_opt[i-1] - p_opt[i] <= self.power_plant['gradM'] * z[i] for i in self.t[1:])
+        m.addConstrs(p_opt[i] - p_opt[i - 1] <= self.power_plant['gradP'] * z[i - 1] for i in self.t[1:])
+        m.addConstrs(p_opt[i - 1] - p_opt[i] <= self.power_plant['gradM'] * z[i] for i in self.t[1:])
 
         # run- & stop-times
-        model.addConstrs(1-z[i] >= gby.quicksum(w[k] for k in range(max(0, i+1 - self.power_plant['stopTime']), i))
-                         for i in self.t)
-        model.addConstrs(z[i] >= gby.quicksum(v[k] for k in range(max(0, i+1 - self.power_plant['runTime']), i))
-                         for i in self.t)
-        model.addConstrs(z[i - 1] - z[i] + v[i] - w[i] == 0 for i in self.t[1:])
+        m.addConstrs(1 - z[i] >= gby.quicksum(w[k] for k in range(max(0, i + 1 - self.power_plant['stopTime']), i))
+                     for i in self.t)
+        m.addConstrs(z[i] >= gby.quicksum(v[k] for k in range(max(0, i + 1 - self.power_plant['runTime']), i))
+                     for i in self.t)
+        m.addConstrs(z[i - 1] - z[i] + v[i] - w[i] == 0 for i in self.t[1:])
 
         # initialize stat
         if self.power_plant['on'] > 0:
-            model.addConstrs(z[i] == 1 for i in range(0, self.power_plant['runTime']
-                                                      - self.power_plant['on']))
+            m.addConstrs(z[i] == 1 for i in range(0, self.power_plant['runTime']
+                                                  - self.power_plant['on']))
         else:
-            model.addConstrs(z[i] == 0 for i in range(0, self.power_plant['stopTime']
-                                                      - self.power_plant['off']))
+            m.addConstrs(z[i] == 0 for i in range(0, self.power_plant['stopTime']
+                                                  - self.power_plant['off']))
         # fuel cost
-        fuel = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='F_' + self.name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        fuel = m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='F_' + self.name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
         if self.power_plant['fuel'] == 'lignite':
-            model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['lignite'] for i in self.t)
+            m.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['lignite'] for i in self.t)
         if self.power_plant['fuel'] == 'coal':
-            model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['coal'] for i in self.t)
+            m.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['coal'] for i in self.t)
         if self.power_plant['fuel'] == 'gas':
-            model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['gas'][i] for i in self.t)
+            m.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['gas'][i] for i in self.t)
         if self.power_plant['fuel'] == 'nuc':
-            model.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['nuc'] for i in self.t)
+            m.addConstrs(fuel[i] == p_out[i] / self.power_plant['eta'] * self.prices['nuc'] for i in self.t)
 
         # emission cost
-        emission = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='E_' + self.name, lb=0, ub=gby.GRB.INFINITY)
-        model.addConstrs(emission[i] == p_out[i] * self.power_plant['chi'] / self.power_plant['eta']
-                         * self.prices['co'][i] for i in self.t)
+        emission = m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='E_' + self.name, lb=0, ub=gby.GRB.INFINITY)
+        m.addConstrs(emission[i] == p_out[i] * self.power_plant['chi'] / self.power_plant['eta']
+                     * self.prices['co'][i] for i in self.t)
 
         # start cost
-        start_up = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='S_' + self.name, lb=0, ub=gby.GRB.INFINITY)
-        model.addConstrs(start_up[i] == v[i] * self.start_cost for i in self.t)
+        start_up = m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='S_' + self.name, lb=0, ub=gby.GRB.INFINITY)
+        m.addConstrs(start_up[i] == v[i] * self.start_cost for i in self.t)
 
-        profit = model.addVar(vtype=gby.GRB.CONTINUOUS, name='Profit' + self.name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
-        model.addConstr(profit == gby.quicksum(p_out[i] * self.prices['power'][i] for i in self.t))
-        model.setObjective(profit - gby.quicksum(fuel[i] + emission[i] + start_up[i] for i in self.t),
-                           gby.GRB.MAXIMIZE)
+        profit = m.addVar(vtype=gby.GRB.CONTINUOUS, name='Profit' + self.name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        m.addConstr(profit == gby.quicksum(p_out[i] * self.prices['power'][i] for i in self.t))
+        m.setObjective(profit - gby.quicksum(fuel[i] + emission[i] + start_up[i] for i in self.t),
+                       gby.GRB.MAXIMIZE)
 
-        model.update()
+        m.update()
 
     def optimize(self):
 
@@ -120,10 +126,23 @@ class PowerPlant(EnergySystem):
 
 
 if __name__ == "__main__":
+    plant = {'unitID':'x',
+             'fuel':'lignite',
+             'maxPower':300,
+             'minPower':100,
+             'eta':0.4,
+             'P0':120,
+             'chi': 0.407,
+             'stopTime':5,
+             'runTime':5,
+             'gradP':300,
+             'gradM':300,
+             'on':1,
+             'off':0,
+             'startCost':10*10**3}
+    pw = PowerPlant(T=24, **plant)
 
-    pw = PowerPlant(t=np.arange(24), T=24, dt=1)
-
-    power_price = 300 * np.ones(24)
+    power_price = 4000 * np.ones(24)
     co = np.ones(24) * 23.8 * np.random.uniform(0.95, 1.05, 24)     # -- Emission Price     [€/t]
     gas = np.ones(24) * 24.8 * np.random.uniform(0.95, 1.05, 24)    # -- Gas Price          [€/MWh]
     lignite = 1.5 * np.random.uniform(0.95, 1.05)                   # -- Lignite Price      [€/MWh]
@@ -136,3 +155,4 @@ if __name__ == "__main__":
                      prices=prices)
 
     x = pw.optimize()
+    print(x)

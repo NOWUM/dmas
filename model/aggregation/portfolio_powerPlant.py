@@ -1,7 +1,6 @@
 # third party modules
 import numpy as np
 import gurobipy as gby
-import copy
 
 
 # model modules
@@ -11,7 +10,7 @@ from aggregation.portfolio import PortfolioModel
 
 class PwpPort(PortfolioModel):
 
-    def __init__(self, T=24, date='2020-01-01'):
+    def __init__(self, steps, T=24, date='2020-01-01'):
         super().__init__(T, date)
 
         self.m = gby.Model('aggregation')
@@ -20,15 +19,17 @@ class PwpPort(PortfolioModel):
         self.m.Params.MIPGap = 0.05
         self.m.__len__ = 1
 
-        self.power = np.zeros((self.T,), np.float)
-        self.fuel = np.zeros((self.T,), np.float)
-        self.start = np.zeros((self.T,), np.float)
-        self.emission = np.zeros((self.T,), np.float)
+        self.power = np.zeros((self.T,), float)
+        self.fuel = np.zeros((self.T,), float)
+        self.start = np.zeros((self.T,), float)
+        self.emission = np.zeros((self.T,), float)
+
+        self.steps = steps
 
         self.lock_generation = True
 
     def add_energy_system(self, energy_system):
-        model=PowerPlant(T=self.T, **energy_system)
+        model=PowerPlant(T=self.T, steps=self.steps, **energy_system)
         key = str(energy_system['fuel']).replace('_combined', '')
         self.capacities[key] += energy_system['maxPower']
         self.energy_systems.append(model)
@@ -47,15 +48,15 @@ class PwpPort(PortfolioModel):
         self.m.addConstrs(power[i] == gby.quicksum(p for p in [x for x in self.m.getVars() if 'P_' in x.VarName]
                                                if '[%i]' % i in p.VarName) for i in self.t)
         # total fuel cost in portfolio
-        fuel = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='F', lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        fuel = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='F', lb=0, ub=gby.GRB.INFINITY)
         self.m.addConstrs(fuel[i] == gby.quicksum(f for f in [x for x in self.m.getVars() if 'F_' in x.VarName]
                                               if '[%i]' % i in f.VarName) for i in self.t)
         # total emission cost in portfolio
-        emission = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='E', lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        emission = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='E', lb=0, ub=gby.GRB.INFINITY)
         self.m.addConstrs(emission[i] == gby.quicksum(e for e in [x for x in self.m.getVars() if 'E_' in x.VarName]
                                                   if '[%i]' % i in e.VarName) for i in self.t)
         # total start cost in portfolio
-        start = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='S', lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
+        start = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='S', lb=0, ub=gby.GRB.INFINITY)
         self.m.addConstrs(start[i] == gby.quicksum(s for s in [x for x in self.m.getVars() if 'S_' in x.VarName]
                                                if '[%i]' % i in s.VarName) for i in self.t)
         # total profit in portfolio
@@ -68,7 +69,7 @@ class PwpPort(PortfolioModel):
                 self.m.setObjective(gby.quicksum(power[i] for i in self.t), gby.GRB.MAXIMIZE)
             else:
                 # objective function (max cash_flow)
-                self.m.setObjective(profit - gby.quicksum(fuel[i] + emission[i] + start[i] for i in self.t),
+                self.m.setObjective(profit - gby.quicksum(start[i] + emission[i] + fuel[i] for i in self.t),
                                     gby.GRB.MAXIMIZE)
             self.lock_generation = False
         else:
@@ -77,7 +78,7 @@ class PwpPort(PortfolioModel):
             minus = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='minus', lb=0, ub=gby.GRB.INFINITY)
             plus = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='plus', lb=0, ub=gby.GRB.INFINITY)
             self.m.addConstrs(minus[i] + plus[i] == delta_power[i] for i in self.t)
-            self.m.addConstrs((response[i] - power[i] == -minus[i] + plus[i]) for i in self.t)
+            self.m.addConstrs(response[i] - power[i] == -minus[i] + plus[i] for i in self.t)
 
             delta_costs = self.m.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='delta_costs', lb=0, ub=gby.GRB.INFINITY)
             self.m.addConstrs(delta_costs[i] == delta_power[i] * np.abs(self.prices['power'][i]) for i in self.t)
@@ -85,12 +86,15 @@ class PwpPort(PortfolioModel):
                                 gby.GRB.MAXIMIZE)
         self.m.update()
 
+    def f(self, item):
+        item.optimize()
+        return item
     def optimize(self):
-
-        self.power = np.zeros((self.T,), np.float)
-        self.emission = np.zeros((self.T,), np.float)
-        self.fuel = np.zeros((self.T,), np.float)
-        self.start = np.zeros((self.T,), np.float)
+        # clear arrays
+        self.power = np.zeros((self.T,), float)
+        self.emission = np.zeros((self.T,), float)
+        self.fuel = np.zeros((self.T,), float)
+        self.start = np.zeros((self.T,), float)
 
         # initialize dict for fuel sum calculation
         self.generation = dict(powerLignite=np.zeros((self.T,), np.float),     # total generation lignite   [MW]
@@ -114,26 +118,15 @@ class PwpPort(PortfolioModel):
             self.start = np.round(start, 2)
 
             for model in self.energy_systems:
-                print(model.name)
-                print('power', np.asarray([self.m.getVarByName(f'P_{model.name}[{i}]').x for i in self.t]))
-                print('emissions', np.asarray([self.m.getVarByName(f'E_{model.name}[{i}]').x for i in self.t]))
-                print('start', np.asarray([self.m.getVarByName(f'S_{model.name}[{i}]').x for i in self.t]))
-                print('fuel', np.asarray([self.m.getVarByName(f'F_{model.name}[{i}]').x for i in self.t]))
-                # set output power for each energy system (power plant)
-                # model.power = np.asarray([self.m.getVarByName('P_%s[%i]' % (model.name, i)).x
-                #                                    for i in self.t], np.float).reshape((-1,))
-                # model.emission = np.asarray([self.m.getVarByName('E_%s[%i]' % (model, i)).x
-                #                                       for i in self.t], np.float).reshape((-1,))
-                # model.fuel = np.asarray([self.m.getVarByName('F_%s[%i]' % (model, i)).x
-                #                                   for i in self.t], np.float).reshape((-1,))
-                # model.start = np.asarray([self.m.getVarByName('S_%s[%i]' % (model, i)).x
-                #                                   for i in self.t], np.float).reshape((-1,))
-
-                # self.generation['power%s' % model.power_plant[fuel].capitalize()] += model.power
+                model.power = np.asarray([self.m.getVarByName(f'P_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+                model.emission = np.asarray([self.m.getVarByName(f'E_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+                model.start = np.asarray([self.m.getVarByName(f'S_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+                model.fuel = np.asarray([self.m.getVarByName(f'F_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+                self.generation[f'power{model.power_plant["fuel"].replace("_combined","").capitalize()}'] += model.power
 
                 if self.lock_generation:
-                    model.power_plant['P0'] = self.m.getVarByName('P_%s[%i]' % (model.name, 23)).x
-                    z = np.asanyarray([self.m.getVarByName('z_%s[%i]' % (model.name, i)).x for i in self.t[:24]], np.float)
+                    model.power_plant['P0'] = self.m.getVarByName(f'P_{model.name}[{23}]').x
+                    z = np.asarray([self.m.getVarByName(f'z_{model.name}[{i}]').x for i in self.t[:24]]).reshape((-1,))
                     if z[-1] > 0:
                         index = -1 * model.power_plant['runTime']
                         model.power_plant['on'] = np.count_nonzero(z[index:])

@@ -155,7 +155,7 @@ class InfrastructureInterface:
             df['fuel'] = fuel_typ                                   # current fuel typ
             df['maxPower'] = df['maxPower'] / 10**3                 # Rated Power [kW] --> [MW]
             df['minPower'] = df['maxPower'] * 0.5                   # MinPower = 1/2 MaxPower
-            df['P0'] = df['minPower']
+            df['P0'] = df['minPower'] + 0.1
             df['gradP'] = 0.1 * df['maxPower']                      # 10% Change per hour
             df['gradM'] = 0.1 * df['maxPower']                      # 10% Change per hour
             df['stopTime'] = 5                                      # default stop time 5h
@@ -225,8 +225,9 @@ class InfrastructureInterface:
                                               sep=';', decimal=',', index_col=0)
             for line, row in df.iterrows():
                 df.at[line, 'minPower'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'minPower'] / 100
-                df.at[line, 'gradP'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradP'] * 60 / 100
-                df.at[line, 'gradM'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradM'] * 60 / 100
+                df.at[line, 'P0'] = df.at[line, 'minPower'] + 0.1
+                df.at[line, 'gradP'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradP'] * 60 / 100,2)
+                df.at[line, 'gradM'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradM'] * 60 / 100,2)
                 df.at[line, 'eta'] = technical_parameter.at[row['type'], 'eta']
                 df.at[line, 'chi'] = technical_parameter.at[row['type'], 'chi']
                 df.at[line, 'stopTime'] = technical_parameter.at[row['type'], 'stopTime']
