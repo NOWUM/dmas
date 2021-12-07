@@ -11,13 +11,10 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class RunRiverModel(EnergySystem):
 
-    def __init__(self, T, run_river=None):
+    def __init__(self, T, maxPower):
         super().__init__(T)
 
-        # initialize default run river power plant
-        if run_river is None:
-            run_river = dict(maxPower=50)
-        self.run_river = run_river
+        self.run_river = dict(maxPower=maxPower)
 
     def optimize(self):
         random = np.random.uniform(low=0.95, high=0.99, size=self.T)

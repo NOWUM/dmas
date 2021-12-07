@@ -3,6 +3,8 @@ import numpy as np
 from tqdm import tqdm
 from pvlib.location import Location
 import multiprocessing as mp
+import logging
+import time
 
 # model modules
 from systems.demand_pv_bat import PvBatModel
@@ -11,11 +13,8 @@ from systems.demand import HouseholdModel, BusinessModel, IndustryModel
 from aggregation.portfolio import PortfolioModel
 import pandas as pd
 
-import logging
-import time
-log = logging.getLogger('demPortfolio')
+log = logging.getLogger('demand_portfolio')
 log.setLevel('INFO')
-
 
 class DemandPortfolio(PortfolioModel):
 
@@ -59,13 +58,16 @@ class DemandPortfolio(PortfolioModel):
         return item
 
     def optimize(self):
-        t = time.time()
 
+        self.reset_data()
+
+        t = time.time()
         with mp.Pool(4) as p:
             v = p.map(self.f, tqdm(self.energy_systems))
         self.energy_systems = v
 
         log.info(f'optimize took {time.time() - t}')
+
         t = time.time()
         power, solar, demand = [], [], []
         for model in self.energy_systems:
@@ -79,6 +81,7 @@ class DemandPortfolio(PortfolioModel):
 
         self.power = self.generation['total'] - self.demand['power']
         log.info(f'append took {time.time() - t}')
+
         return self.power
 
 

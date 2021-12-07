@@ -10,7 +10,7 @@ from demandlib.electric_profile import StandardLoadProfile
 
 class HouseholdPvModel(EnergySystem):
 
-    def __init__(self, T, demandP, maxPower, azimuth, tilt, lat, lon, *args, **kwargs):
+    def __init__(self, T, demandP, maxPower, azimuth, tilt, *args, **kwargs):
         super().__init__(T)
 
         # initialize weather for generation calculation

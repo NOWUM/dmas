@@ -10,13 +10,10 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class BioMassModel(EnergySystem):
 
-    def __init__(self, T, bio_mass=None):
+    def __init__(self, T, maxPower):
         super().__init__(T)
 
-        # initialize default biomass power plant
-        if bio_mass is None:
-            bio_mass = dict(Power=50)
-        self.bio_mass = bio_mass
+        self.bio_mass = dict(Power=maxPower)
 
     def optimize(self):
         random = np.random.uniform(low=0.95, high=0.99, size=self.T)

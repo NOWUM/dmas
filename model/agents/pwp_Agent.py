@@ -90,7 +90,7 @@ class PwpAgent(BasicAgent):
             # start first day
             self.portfolio_1d.set_parameter(date=self.date, weather=pd.DataFrame(), prices=pr1)
             self.portfolio_1d.build_model()
-            power, _, _, _ = self.portfolio_1d.optimize()
+            power = self.portfolio_1d.optimize()
             self.portfolio_1d = set_result(portfolio=self.portfolio_1d, offset=offset, delta_t=0)
             self.portfolio_1d.build_model(response=power)
             self.portfolio_1d.optimize()

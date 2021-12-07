@@ -15,8 +15,8 @@ class ResAgent(BasicAgent):
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = tme.time()
-        self.eeg_portfolio = RenewablePortfolio()
-        self.mrk_portfolio = RenewablePortfolio()
+        self.portfolio_eeg = RenewablePortfolio()
+        self.portfolio_mrk = RenewablePortfolio()
 
         # Construction Wind energy
         wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=plz, wind_type='on_shore')
@@ -24,10 +24,10 @@ class ResAgent(BasicAgent):
         for wind_farm in wind_data['windFarm'].unique():
             if wind_farm != 'x':
                 turbines = [row.to_dict() for _, row in wind_data[wind_data['windFarm'] == wind_farm].iterrows()]
-                self.mrk_portfolio.add_energy_system({'unitID': wind_farm, 'turbines': turbines, 'type': 'wind'})
+                self.portfolio_mrk.add_energy_system({'unitID': wind_farm, 'turbines': turbines, 'type': 'wind'})
             else:
                 for _, turbine in wind_data[wind_data['windFarm'] == wind_farm].iterrows():
-                    self.mrk_portfolio.add_energy_system({'unitID': turbine['unitID'], 'turbines': turbine.to_dict(),
+                    self.portfolio_mrk.add_energy_system({'unitID': turbine['unitID'], 'turbines': turbine.to_dict(),
                                                           'type': 'wind'})
         self.logger.info('Wind Power Plants added')
 
@@ -38,9 +38,9 @@ class ResAgent(BasicAgent):
         pv_data['type'] = 'solar'
         pv_data['open_space'] = True
         for _, system_ in pv_data[pv_data['eeg'] == 1].iterrows():
-            self.eeg_portfolio.add_energy_system(system_.to_dict())
+            self.portfolio_eeg.add_energy_system(system_.to_dict())
         for _, system_ in pv_data[pv_data['eeg'] == 0].iterrows():
-            self.mrk_portfolio.add_energy_system(system_.to_dict())
+            self.portfolio_mrk.add_energy_system(system_.to_dict())
         self.logger.info('Free Area PV added')
 
         # Construction of the pv systems (h0)
@@ -48,7 +48,7 @@ class ResAgent(BasicAgent):
         pv_data['type'] = 'solar'
         pv_data['open_space'] = False
         for _, system_ in pv_data[pv_data['eeg'] == 1].iterrows():
-            self.eeg_portfolio.add_energy_system(system_.to_dict())
+            self.portfolio_eeg.add_energy_system(system_.to_dict())
         self.logger.info('Household PV added')
         self.pv_data = pv_data
 
@@ -56,17 +56,17 @@ class ResAgent(BasicAgent):
         run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(area=plz)
         run_river_data['type'] = 'water'
         for _, system_ in run_river_data.iterrows():
-            self.eeg_portfolio.add_energy_system(system_.to_dict())
+            self.portfolio_eeg.add_energy_system(system_.to_dict())
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
         bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(area=plz)
         bio_mass_data['type'] = 'bio'
         for _, system_ in bio_mass_data.iterrows():
-            self.eeg_portfolio.add_energy_system(system_.to_dict())
+            self.portfolio_eeg.add_energy_system(system_.to_dict())
         self.logger.info('Biomass Power Plants added')
 
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.mrk_portfolio.capacities)
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_mrk.capacities)
         df['agent'] = self.name
         df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
 
@@ -77,23 +77,14 @@ class ResAgent(BasicAgent):
 
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-        # Call DayAhead Optimization
-        # -----------------------------------------------------------------------------------------------------------
+
         if 'opt_dayAhead' in message:
-            try:
-                self.optimize_dayAhead()
-            except:
-                self.logger.exception('Error during day Ahead optimization')
-
-        # Call DayAhead Result
-        # -----------------------------------------------------------------------------------------------------------
+                self.optimize_day_ahead()
         if 'result_dayAhead' in message:
-            try:
                 self.post_dayAhead()
-            except:
-                self.logger.exception('Error in After day Ahead process')
 
-    def optimize_dayAhead(self):
+
+    def optimize_day_ahead(self):
         """Scheduling before DayAhead Market"""
         self.logger.info('DayAhead market scheduling started')
 

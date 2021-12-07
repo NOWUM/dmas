@@ -19,17 +19,16 @@ class RenewablePortfolio(PortfolioModel):
             self.energy_systems.update({energy_system['unitID']: energy_system})
             self.capacities['wind'] += energy_system['maxPower']
         if energy_system['type'] == 'solar':
-            energy_system.update({'model': PvModel( self.T, energy_system)})
-            self.energy_systems.update({energy_system['unitID']: energy_system})
+            model = PvModel( self.T, **energy_system)
             self.capacities['solar'] += energy_system['maxPower']
         if energy_system['type'] == 'water':
-            energy_system.update({'model': RunRiverModel(self.T, energy_system)})
-            self.energy_systems.update({energy_system['unitID']: energy_system})
+            model = RunRiverModel(self.T, **energy_system)
             self.capacities['water'] += energy_system['maxPower']
         if energy_system['type'] == 'bio':
-            energy_system.update({'model': BioMassModel(self.T, energy_system)})
-            self.energy_systems.update({energy_system['unitID']: energy_system})
+            model = BioMassModel(self.T, **energy_system)
             self.capacities['bio'] += energy_system['maxPower']
+
+        self.energy_systems.append(model)
 
     def build_model(self, response=None):
 

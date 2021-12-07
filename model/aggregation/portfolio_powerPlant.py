@@ -1,12 +1,15 @@
 # third party modules
 import numpy as np
 import gurobipy as gby
-
+import logging
+import time
 
 # model modules
 from systems.generation_powerPlant import PowerPlant
 from aggregation.portfolio import PortfolioModel
 
+log = logging.getLogger('power_plant_portfolio')
+log.setLevel('INFO')
 
 class PwpPort(PortfolioModel):
 
@@ -86,64 +89,47 @@ class PwpPort(PortfolioModel):
                                 gby.GRB.MAXIMIZE)
         self.m.update()
 
-    def f(self, item):
-        item.optimize()
-        return item
     def optimize(self):
-        # clear arrays
-        self.power = np.zeros((self.T,), float)
-        self.emission = np.zeros((self.T,), float)
-        self.fuel = np.zeros((self.T,), float)
-        self.start = np.zeros((self.T,), float)
 
-        # initialize dict for fuel sum calculation
-        self.generation = dict(powerLignite=np.zeros((self.T,), np.float),     # total generation lignite   [MW]
-                               powerCoal=np.zeros((self.T,), np.float),        # total generation caol      [MW]
-                               powerGas=np.zeros((self.T,), np.float),         # total generation gas       [MW]
-                               powerNuc=np.zeros((self.T,), np.float))         # total generation nuc       [MW])
+        self.reset_data()
 
+        t = time.time()
         self.m.optimize()
+        log.info(f'optimize took {time.time() - t}')
 
-        try:
-            power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
-            self.power = np.round(power, 2)
-            # total emissions costs [€] for each hour
-            emission = np.asarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float).reshape((-1,))
-            self.emission = np.round(emission, 2)
-            # total fuel costs [€] for each hour
-            fuel = np.asarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float).reshape((-1,))
-            self.fuel = np.round(fuel, 2)
-            # total start costs [€] for each hour
-            start = np.asarray([self.m.getVarByName('S[%i]' % i).x for i in self.t], np.float).reshape((-1,))
-            self.start = np.round(start, 2)
+        t = time.time()
+        power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+        self.power = np.round(power, 2)
+        # total emissions costs [€] for each hour
+        emission = np.asarray([self.m.getVarByName('E[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+        self.emission = np.round(emission, 2)
+        # total fuel costs [€] for each hour
+        fuel = np.asarray([self.m.getVarByName('F[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+        self.fuel = np.round(fuel, 2)
+        # total start costs [€] for each hour
+        start = np.asarray([self.m.getVarByName('S[%i]' % i).x for i in self.t], np.float).reshape((-1,))
+        self.start = np.round(start, 2)
 
-            for model in self.energy_systems:
-                model.power = np.asarray([self.m.getVarByName(f'P_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
-                model.emission = np.asarray([self.m.getVarByName(f'E_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
-                model.start = np.asarray([self.m.getVarByName(f'S_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
-                model.fuel = np.asarray([self.m.getVarByName(f'F_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
-                self.generation[f'power{model.power_plant["fuel"].replace("_combined","").capitalize()}'] += model.power
+        for model in self.energy_systems:
+            model.power = np.asarray([self.m.getVarByName(f'P_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+            model.emission = np.asarray([self.m.getVarByName(f'E_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+            model.start = np.asarray([self.m.getVarByName(f'S_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+            model.fuel = np.asarray([self.m.getVarByName(f'F_{model.name}[{i}]').x for i in self.t]).reshape((-1,))
+            self.generation[f'{model.power_plant["fuel"].replace("_combined","")}'] += model.power
 
-                if self.lock_generation:
-                    model.power_plant['P0'] = self.m.getVarByName(f'P_{model.name}[{23}]').x
-                    z = np.asarray([self.m.getVarByName(f'z_{model.name}[{i}]').x for i in self.t[:24]]).reshape((-1,))
-                    if z[-1] > 0:
-                        index = -1 * model.power_plant['runTime']
-                        model.power_plant['on'] = np.count_nonzero(z[index:])
-                        model.power_plant['off'] = 0
-                    else:
-                        index = -1 * model.power_plant['stopTime']
-                        model.power_plant['off'] = np.count_nonzero(1 - z[index:])
-                        model.power_plant['on'] = 0
+            if self.lock_generation:
+                model.power_plant['P0'] = self.m.getVarByName(f'P_{model.name}[{23}]').x
+                z = np.asarray([self.m.getVarByName(f'z_{model.name}[{i}]').x for i in self.t[:24]]).reshape((-1,))
+                if z[-1] > 0:
+                    index = -1 * model.power_plant['runTime']
+                    model.power_plant['on'] = np.count_nonzero(z[index:])
+                    model.power_plant['off'] = 0
+                else:
+                    index = -1 * model.power_plant['stopTime']
+                    model.power_plant['off'] = np.count_nonzero(1 - z[index:])
+                    model.power_plant['on'] = 0
 
-            self.generation['powerTotal'] = power
+        self.generation['powerTotal'] = power
+        log.info(f'append took {time.time() - t}')
 
-        except Exception as e:
-            print(repr(e))
-
-        return self.power, self.emission, self.fuel, self.start
-
-
-if __name__ == "__main__":
-    port = PwpPort()
-    pass
+        return self.power
