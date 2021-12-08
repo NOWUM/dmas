@@ -16,3 +16,4 @@ joblib
 requests
 flask
 scipy
+tqdm
