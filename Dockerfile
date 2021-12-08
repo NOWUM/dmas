@@ -20,6 +20,7 @@ COPY ./model/aggregation ./src/aggregation
 COPY ./model/systems ./src/systems
 COPY ./model/demandlib ./src/demandlib
 
+COPY ./model/forecasts ./src/forecasts
 COPY ./model/data ./src/data
 
 COPY ./model/main.py /src/main.py
