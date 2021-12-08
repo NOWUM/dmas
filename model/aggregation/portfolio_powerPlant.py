@@ -1,4 +1,5 @@
 # third party modules
+import os
 import numpy as np
 import gurobipy as gby
 import logging
@@ -16,7 +17,11 @@ class PwpPort(PortfolioModel):
     def __init__(self, steps, T=24, date='2020-01-01'):
         super().__init__(T, date)
 
-        self.m = gby.Model('aggregation')
+        env = gby.Env(empty=True)
+        env.setParam("ComputeServer", os.getenv('COMPUTE_SERVER'))
+        env.start()
+
+        self.m = gby.Model('aggregation', env=env)
         self.m.Params.OutputFlag = 0
         self.m.Params.TimeLimit = 30
         self.m.Params.MIPGap = 0.05

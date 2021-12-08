@@ -1,7 +1,7 @@
 from forecasts.basic_forecast import BasicForecast
 import numpy as np
 
-
+# TODO: https://stackoverflow.com/questions/21484558/how-to-calculate-wind-direction-from-u-and-v-wind-components-in-r
 class WeatherForecast(BasicForecast):
 
     def __init__(self):

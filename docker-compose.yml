@@ -7,5 +7,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-
+    volumes:
+      - ./gurobi_wls.lic:/opt/gurobi/gurobi_wls.lic:ro
 

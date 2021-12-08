@@ -29,6 +29,21 @@ output.append('''
     ports:
         - 9090:80
 ''')
+output.append('''
+  gurobi:
+    image: gurobi/compute:latest
+    container_name: gurobi_compute
+    ports:
+        - 61000:61000
+    volumes:
+      - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic:ro
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+''')
+
 # Build Rabbitmq
 output.append('''
   rabbitmq:
@@ -62,6 +77,7 @@ output.append(f'''
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'MRK'
       CONNECT: 'True'
+      COMPUTE_SERVER: 'gurobi:61000'
 ''')
 # Build one Weather Agent
 output.append(f'''
@@ -87,7 +103,7 @@ output.append(f'''
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
-for agent in agents[520:540]:
+for agent in agents[520:521]:
     output.append(f'''
   dem{agent}:
     container_name: dem{agent}
@@ -100,7 +116,7 @@ for agent in agents[520:540]:
       ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
-for agent in agents[:15]:
+for agent in agents[:1]:
     output.append(f'''
   pwp{agent}:
     container_name: pwp{agent}
@@ -110,10 +126,11 @@ for agent in agents[:15]:
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
+      COMPUTE_SERVER: 'gurobi:61000'
       ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
-for agent in agents[520:540]:
+for agent in agents[520:521]:
     output.append(f'''
   res{agent}:
     container_name: res{agent}

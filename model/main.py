@@ -46,4 +46,4 @@ if __name__ == "__main__":
         agent.run()
 
     except Exception as e:
-        logging.exception(f'Error during Simulation {agent.name}')
+        logging.exception(f'Error during Simulation {init_dict["agent_type"]}_{init_dict["plz"]}')

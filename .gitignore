@@ -3,5 +3,6 @@
 model/.idea
 *.idx
 *.grb
+*.lic
 .spyproject
 model/logs
