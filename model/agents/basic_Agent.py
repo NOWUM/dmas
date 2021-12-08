@@ -45,7 +45,7 @@ class BasicAgent:
 
     def __del__(self):
         for connection, channel in self.channels:
-            if connection and connection.is_closed:
+            if connection and not connection.is_closed:
                 connection.close()
 
     def get_rabbitmq_connection(self):
@@ -69,18 +69,14 @@ class BasicAgent:
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
 
-        # Terminate Agent
-        # -----------------------------------------------------------------------------------------------------------
         if 'kill' in message or self.name in message or self.typ + '_all' in message:
-            if not self.mqtt_connection.is_closed:
-                self.mqtt_connection.close()
+            self.__del__()
 
     def run(self):
-        if self.mqtt_connection:
-            self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
-            print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
-                  % self.name)
-            self.channel.start_consuming()
+        self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
+        print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
+              % self.name)
+        self.channel.start_consuming()
 
 
 if __name__ == '__main__':

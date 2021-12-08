@@ -17,3 +17,4 @@ requests
 flask
 scipy
 tqdm
+geojson
