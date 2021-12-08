@@ -1,3 +1,5 @@
+import numpy as np
+
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 
 output = []
@@ -84,37 +86,40 @@ output.append(f'''
       CONNECT: 'True'
 ''')
 # Build Demand Agents
-for plz in range(50, 56):
+agents = np.load('dem_agents.npy')
+for agent in agents[500:600]:
     output.append(f'''
-  dem{plz}:
-    container_name: dem{plz}
+  dem{agent}:
+    container_name: dem{agent}
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: {plz}
+      PLZ_CODE: {agent}
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       ''')
 # Build Power Plant Agents
-for plz in range(50, 56):
+agents = np.load('pwp_agents.npy')
+for agent in agents[:100]:
     output.append(f'''
-  pwp{plz}:
-    container_name: pwp{plz}
+  pwp{agent}:
+    container_name: pwp{agent}
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: {plz}
+      PLZ_CODE: {agent}
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       ''')
 # Build Renewable Energy Agents
-for plz in range(50, 56):
+agents = np.load('res_agents.npy')
+for agent in agents[500:600]:
     output.append(f'''
-  res{plz}:
-    container_name: res{plz}
+  res{agent}:
+    container_name: res{agent}
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: {plz}
+      PLZ_CODE: {agent}
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
