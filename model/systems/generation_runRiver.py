@@ -11,7 +11,7 @@ os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 class RunRiverModel(EnergySystem):
 
-    def __init__(self, T, maxPower):
+    def __init__(self, T, maxPower, *args, **kwargs):
         super().__init__(T)
 
         self.run_river = dict(maxPower=maxPower)

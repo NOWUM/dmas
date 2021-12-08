@@ -15,8 +15,7 @@ class RenewablePortfolio(PortfolioModel):
     def add_energy_system(self, energy_system):
 
         if energy_system['type'] == 'wind':
-            energy_system.update({'model': WindModel(self.T, energy_system['turbines'])})
-            self.energy_systems.update({energy_system['unitID']: energy_system})
+            model = WindModel(self.T, energy_system['turbines'])
             self.capacities['wind'] += energy_system['maxPower']
         if energy_system['type'] == 'solar':
             model = PvModel( self.T, **energy_system)

@@ -1,12 +1,13 @@
 # third party modules
-import time as tme
+import time as time
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 # model modules
 from aggregation.portfolio_renewable import RenewablePortfolio
 from agents.basic_Agent import BasicAgent
-
+from forecasts.weather import WeatherForecast
 
 class ResAgent(BasicAgent):
 
@@ -14,63 +15,69 @@ class ResAgent(BasicAgent):
         super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
-        start_time = tme.time()
+        start_time = time.time()
         self.portfolio_eeg = RenewablePortfolio()
         self.portfolio_mrk = RenewablePortfolio()
+
+        self.weather_forecast = WeatherForecast()
 
         # Construction Wind energy
         wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=plz, wind_type='on_shore')
         wind_data['type'] = 'wind'
-        for wind_farm in wind_data['windFarm'].unique():
+        for wind_farm in tqdm(wind_data['windFarm'].unique()):
             if wind_farm != 'x':
                 turbines = [row.to_dict() for _, row in wind_data[wind_data['windFarm'] == wind_farm].iterrows()]
-                self.portfolio_mrk.add_energy_system({'unitID': wind_farm, 'turbines': turbines, 'type': 'wind'})
+                max_power = sum([turbine['maxPower'] for turbine in turbines])
+                self.portfolio_mrk.add_energy_system({'unitID': wind_farm, 'turbines': turbines, 'type': 'wind',
+                                                      'maxPower': max_power})
             else:
                 for _, turbine in wind_data[wind_data['windFarm'] == wind_farm].iterrows():
                     self.portfolio_mrk.add_energy_system({'unitID': turbine['unitID'], 'turbines': turbine.to_dict(),
-                                                          'type': 'wind'})
+                                                          'type': 'wind', 'maxPower': turbine['maxPower']})
         self.logger.info('Wind Power Plants added')
 
         # Construction of the pv systems (free area)
         pv_1 = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='free_area')
         pv_2 = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='other')
-        pv_data = pd.concat([pv_1, pv_2])
-        pv_data['type'] = 'solar'
-        pv_data['open_space'] = True
-        for _, system_ in pv_data[pv_data['eeg'] == 1].iterrows():
-            self.portfolio_eeg.add_energy_system(system_.to_dict())
-        for _, system_ in pv_data[pv_data['eeg'] == 0].iterrows():
-            self.portfolio_mrk.add_energy_system(system_.to_dict())
+        pvs = pd.concat([pv_1, pv_2])
+        pvs['type'] = 'solar'
+        for system in tqdm(pvs[pvs['eeg'] == 1].to_dict(orient='records')):
+            self.portfolio_eeg.add_energy_system(system)
+        for system in tqdm(pvs[pvs['eeg'] == 0].to_dict(orient='records')):
+            self.portfolio_mrk.add_energy_system(system)
         self.logger.info('Free Area PV added')
 
         # Construction of the pv systems (h0)
         pv_data = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
         pv_data['type'] = 'solar'
-        pv_data['open_space'] = False
-        for _, system_ in pv_data[pv_data['eeg'] == 1].iterrows():
-            self.portfolio_eeg.add_energy_system(system_.to_dict())
+        for system in tqdm(pvs[pvs['ownConsumption'] == 0].to_dict(orient='records')):
+            self.portfolio_eeg.add_energy_system(system)
+
         self.logger.info('Household PV added')
         self.pv_data = pv_data
 
         # Construction Run River
         run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(area=plz)
         run_river_data['type'] = 'water'
-        for _, system_ in run_river_data.iterrows():
-            self.portfolio_eeg.add_energy_system(system_.to_dict())
+        for system in tqdm(run_river_data.to_dict(orient='records')):
+            self.portfolio_eeg.add_energy_system(system)
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
         bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(area=plz)
         bio_mass_data['type'] = 'bio'
-        for _, system_ in bio_mass_data.iterrows():
-            self.portfolio_eeg.add_energy_system(system_.to_dict())
+        for system in tqdm(bio_mass_data.to_dict(orient='records')):
+            self.portfolio_eeg.add_energy_system(system)
         self.logger.info('Biomass Power Plants added')
 
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_mrk.capacities)
-        df['agent'] = self.name
-        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
+        df_mrk = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_mrk.capacities)
+        df_eeg = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_mrk.capacities)
+        for col in df_mrk.columns:
+            df_mrk[col] += df_eeg[col]
+        df_mrk['agent'] = self.name
+        # df_mrk.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
 
-        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
+        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
@@ -79,17 +86,14 @@ class ResAgent(BasicAgent):
         self.date = pd.to_datetime(message.split(' ')[1])
 
         if 'opt_dayAhead' in message:
-                self.optimize_day_ahead()
+            self.optimize_day_ahead()
         if 'result_dayAhead' in message:
-                self.post_dayAhead()
-
+            self.post_dayAhead()
 
     def optimize_day_ahead(self):
         """Scheduling before DayAhead Market"""
         self.logger.info('DayAhead market scheduling started')
 
-        # Step 1: forecast data data and init the model for the coming day
-        # -------------------------------------------------------------------------------------------------------------
         start_time = tme.time()                                             # performance timestamp
 
         weather = self.weather_forecast(self.date, mean=False)              # local weather forecast dayAhead

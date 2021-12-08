@@ -5,6 +5,7 @@ from pvlib.location import Location
 import multiprocessing as mp
 import logging
 import time
+import sys
 
 # model modules
 from systems.demand_pv_bat import PvBatModel
@@ -23,7 +24,7 @@ class DemandPortfolio(PortfolioModel):
 
         location = Location(longitude=position['lon'], latitude=position['lat'])
         self.solar_positions = location.get_solarposition(pd.date_range(start='1972-01-01 00:00',
-                                                                         end='1972-12-31 23:00', freq='h'))
+                                                                        end='1972-12-31 23:00', freq='h'))
 
     def add_energy_system(self, energy_system):
 
@@ -66,7 +67,7 @@ class DemandPortfolio(PortfolioModel):
             v = p.map(self.f, tqdm(self.energy_systems))
         self.energy_systems = v
 
-        log.info(f'optimize took {time.time() - t}')
+        log.info(f'optimize took {np.round(time.time() - t,2)}')
 
         t = time.time()
         power, solar, demand = [], [], []
@@ -80,7 +81,7 @@ class DemandPortfolio(PortfolioModel):
         self.generation['total'] = self.generation['solar']
 
         self.power = self.generation['total'] - self.demand['power']
-        log.info(f'append took {time.time() - t}')
+        log.info(f'append took {np.round(time.time() - t,2)}')
 
         return self.power
 
@@ -88,3 +89,4 @@ class DemandPortfolio(PortfolioModel):
 if __name__ == "__main__":
 
     portfolio = DemandPortfolio()
+

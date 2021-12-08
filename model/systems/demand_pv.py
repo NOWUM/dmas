@@ -45,3 +45,4 @@ class HouseholdPvModel(EnergySystem):
         self.power = np.asarray(grid_use, np.float).reshape((-1,))
 
         return self.power
+

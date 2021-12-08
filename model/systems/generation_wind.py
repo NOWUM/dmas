@@ -29,12 +29,9 @@ class WindModel(EnergySystem):
                 wind_turbines.update({turbine['unitID']: {'hub_height': turbine['height'],
                                                           'rotor_diameter': turbine['diameter'],
                                                           'power_curve': df}})
-
             wind_turbine_fleet = pd.DataFrame({'wind_turbine': [value for _, value in wind_turbines.items()],
                                                'number_of_turbines': [1 for _, _ in wind_turbines.items()]})
-
             self.wind_turbine = wind_farm.WindFarm(wind_turbine_fleet)
-
         else:
             self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
                                             rotor_diameter=wind_turbine['diameter'],

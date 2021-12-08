@@ -95,7 +95,7 @@ class PwpPort(PortfolioModel):
 
         t = time.time()
         self.m.optimize()
-        log.info(f'optimize took {time.time() - t}')
+        # log.info(f'optimize took {time.time() - t}')
 
         t = time.time()
         power = np.asarray([self.m.getVarByName('P[%i]' % i).x for i in self.t], np.float).reshape((-1,))
@@ -130,6 +130,6 @@ class PwpPort(PortfolioModel):
                     model.power_plant['on'] = 0
 
         self.generation['powerTotal'] = power
-        log.info(f'append took {time.time() - t}')
+        # log.info(f'append took {time.time() - t}')
 
         return self.power

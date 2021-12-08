@@ -31,7 +31,8 @@ class DemAgent(BasicAgent):
 
         # Construction consumer with photovoltaic
         pvs = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
-        pvs = pvs[pvs['eeg']==0]
+        pvs = pvs[pvs['ownConsumption'] == 1]
+        pvs['maxPower'] *= 1000
         pvs['type'] = 'solar'
         for system in tqdm(pvs.to_dict(orient='records')):
             self.portfolio.add_energy_system(system)

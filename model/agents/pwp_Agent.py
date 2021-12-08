@@ -24,19 +24,19 @@ class PwpAgent(BasicAgent):
 
         self.price_forecast = PriceForecast()
 
-        for fuel in ['lignite', 'coal', 'gas', 'nuclear']:
+        for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
             power_plants = self.infrastructure_interface.get_power_plant_in_area(area=plz, fuel_typ=fuel)
             if power_plants is not None:
-                for _, data in power_plants.iterrows():
-                    self.portfolio_1d.add_energy_system(data.to_dict())
-                    self.portfolio_2d.add_energy_system(data.to_dict())
+                for system in power_plants.to_dict(orient='records'):
+                    self.portfolio_1d.add_energy_system(system)
+                    self.portfolio_2d.add_energy_system(system)
 
         # Construction power plants
         self.logger.info('Power Plants added')
 
-        #df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        #df['agent'] = self.name
-        #df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_1d.capacities)
+        df['agent'] = self.name
+        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
