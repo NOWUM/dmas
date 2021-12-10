@@ -41,7 +41,7 @@ class CtlAgent(BasicAgent):
         agent, date = message.split(' ')
         date = pd.to_datetime(date)
         if date == self.date:
-            self.agent_list.remove(agent)
+            self.agent_list.append(agent)
         if agent == 'MRK_1' and date == self.date:
             self.cleared = True
 

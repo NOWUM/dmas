@@ -18,5 +18,3 @@ flask
 scipy
 tqdm
 geojson
-glpk
-pyomo
