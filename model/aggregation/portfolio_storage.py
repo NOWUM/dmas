@@ -4,7 +4,7 @@ import gurobipy as gby
 
 # model modules
 from systems.storage_hydroPlant import Storage
-from aggregation.portfolio import PortfolioModel
+from aggregation.basic_portfolio import PortfolioModel
 
 
 class StrPort(PortfolioModel):

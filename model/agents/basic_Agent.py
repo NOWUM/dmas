@@ -15,10 +15,10 @@ class BasicAgent:
     def __init__(self, date, plz, typ, connect, infrastructure_source, infrastructure_login, *args, **kwargs):
 
         # declare meta data for each agent
-        self.plz = plz                                              # plz code
-        self.typ = typ                                              # agent type
-        self.name = f'{self.typ}_{self.plz}'                        # name
-        self.date = pd.to_datetime(date)                            # current day
+        self.plz = plz
+        self.typ = typ
+        self.name = f'{self.typ}_{self.plz}'
+        self.date = pd.to_datetime(date)
         self.exchange_name = 'dMas'
 
         # declare logging options
@@ -39,6 +39,7 @@ class BasicAgent:
 
         self.channels = []
         if connect:
+            self.publish = self.get_rabbitmq_connection()
             self.channel = self.get_rabbitmq_connection()
             result = self.channel.queue_declare(queue=self.name, exclusive=True)
             self.channel.queue_bind(exchange=self.exchange_name, queue=result.method.queue)
@@ -77,9 +78,3 @@ class BasicAgent:
         print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
               % self.name)
         self.channel.start_consuming()
-
-
-if __name__ == '__main__':
-
-    agent = BasicAgent(plz=3, date=pd.to_datetime(2021-11-19))
-    agent.run()

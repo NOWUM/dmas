@@ -4,10 +4,14 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
+
 # model modules
+from forecasts.weather import WeatherForecast
+from forecasts.price import PriceForecast
 from aggregation.portfolio_renewable import RenewablePortfolio
 from agents.basic_Agent import BasicAgent
-from forecasts.weather import WeatherForecast
+
+
 
 class ResAgent(BasicAgent):
 
@@ -19,7 +23,8 @@ class ResAgent(BasicAgent):
         self.portfolio_eeg = RenewablePortfolio()
         self.portfolio_mrk = RenewablePortfolio()
 
-        self.weather_forecast = WeatherForecast()
+        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude))
+        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
 
         # Construction Wind energy
         wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=plz, wind_type='on_shore')
@@ -75,7 +80,7 @@ class ResAgent(BasicAgent):
         for col in df_mrk.columns:
             df_mrk[col] += df_eeg[col]
         df_mrk['agent'] = self.name
-        # df_mrk.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
+        # df_mrk.to_sql(name='installed capacities', con=self.simulation_database, if_exists='replace')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -93,62 +98,70 @@ class ResAgent(BasicAgent):
     def optimize_day_ahead(self):
         """Scheduling before DayAhead Market"""
         self.logger.info('DayAhead market scheduling started')
+        start_time = time.time()
 
-        start_time = tme.time()                                             # performance timestamp
+        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
 
-        weather = self.weather_forecast(self.date, mean=False)              # local weather forecast dayAhead
-        self.portfolio.set_parameter(self.date, weather, dict())
-        self.portfolio.build_model()
+        self.portfolio_eeg.set_parameter(self.date, weather.copy(), dict())
+        self.portfolio_eeg.build_model()
 
-        self.performance['initModel'] = np.round(tme.time() - start_time, 3)
+        self.portfolio_mrk.set_parameter(self.date, weather.copy(), dict())
+        self.portfolio_mrk.build_model()
 
-        # Step 2: standard optimization --> returns power series in [MW]
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()                                         # performance timestamp
+        power_eeg = self.portfolio_eeg.optimize()
+        power_mrk = self.portfolio_mrk.optimize()
 
-        power_da = self.portfolio.optimize()                            # total portfolio power
-        # split power in eeg and direct marketing part
-        power_direct = self.portfolio.generation['powerSolar'] + self.portfolio.generation['powerWind']
-        power_eeg = power_da - power_direct
+        self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 
-        self.performance['optModel'] = np.round(tme.time() - start_time, 3)
-
-        # Step 3: save optimization results in influxDB
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
-
-        # build dataframe to save results in ifluxdb
-        df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
-                        pd.DataFrame(data=dict(powerDirect=power_direct, powerEEG=power_eeg))],
-                       axis=1)
-        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
-        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
-                                                                 timestamp='optimize_dayAhead'))
-
-        self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
-
-        # Step 4: build orders from optimization results
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
-
-        ask_orders = {}                                                     # all block orders for current day
-        for i in range(self.portfolio.T):
-            var_cost = 0
-            ask_orders.update({str(('gen%s' % i, i, 0, str(self.name))): (var_cost, power_direct[i], 'x')})
-            ask_orders.update({str(('gen%s' % (i+24), i, 0, str(self.name))): (-499, power_eeg[i], 'x')})
-
-        self.performance['buildOrders'] = tme.time() - start_time
-
-        # Step 5: send orders to market resp. to mongodb
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = tme.time()
-
-        self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=ask_orders)
-
-        self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
-
-        self.logger.info('DayAhead market scheduling completed')
-        print('DayAhead market scheduling completed:', self.name)
+        # self.performance['initModel'] = np.round(tme.time() - start_time, 3)
+        #
+        # # Step 2: standard optimization --> returns power series in [MW]
+        # # -------------------------------------------------------------------------------------------------------------
+        # start_time = tme.time()                                         # performance timestamp
+        #
+        # power_da = self.portfolio.optimize()                            # total portfolio power
+        # # split power in eeg and direct marketing part
+        # power_direct = self.portfolio.generation['powerSolar'] + self.portfolio.generation['powerWind']
+        # power_eeg = power_da - power_direct
+        #
+        # self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
+        #
+        # # Step 3: save optimization results in influxDB
+        # # -------------------------------------------------------------------------------------------------------------
+        # start_time = tme.time()
+        #
+        # # build dataframe to save results in ifluxdb
+        # df = pd.concat([pd.DataFrame.from_dict(self.portfolio.generation),
+        #                 pd.DataFrame(data=dict(powerDirect=power_direct, powerEEG=power_eeg))],
+        #                axis=1)
+        # df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
+        # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
+        #                                                          timestamp='optimize_dayAhead'))
+        #
+        # self.performance['saveSchedule'] = np.round(tme.time() - start_time, 3)
+        #
+        # # Step 4: build orders from optimization results
+        # # -------------------------------------------------------------------------------------------------------------
+        # start_time = tme.time()
+        #
+        # ask_orders = {}                                                     # all block orders for current day
+        # for i in range(self.portfolio.T):
+        #     var_cost = 0
+        #     ask_orders.update({str(('gen%s' % i, i, 0, str(self.name))): (var_cost, power_direct[i], 'x')})
+        #     ask_orders.update({str(('gen%s' % (i+24), i, 0, str(self.name))): (-499, power_eeg[i], 'x')})
+        #
+        # self.performance['buildOrders'] = tme.time() - start_time
+        #
+        # # Step 5: send orders to market resp. to mongodb
+        # # -------------------------------------------------------------------------------------------------------------
+        # start_time = tme.time()
+        #
+        # self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=ask_orders)
+        #
+        # self.performance['sendOrders'] = np.round(tme.time() - start_time, 3)
+        #
+        # self.logger.info('DayAhead market scheduling completed')
+        # print('DayAhead market scheduling completed:', self.name)
 
     def post_dayAhead(self):
         """Scheduling after DayAhead Market"""

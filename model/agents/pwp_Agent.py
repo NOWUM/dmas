@@ -6,9 +6,11 @@ import copy
 from tqdm import tqdm
 
 # model modules
-from aggregation.portfolio_powerPlant import PwpPort
-from agents.basic_Agent import BasicAgent
 from forecasts.price import PriceForecast
+from forecasts.weather import WeatherForecast
+from aggregation.portfolio_powerPlant_ import PowerPlantPortfolio
+from agents.basic_Agent import BasicAgent
+
 
 class PwpAgent(BasicAgent):
 
@@ -19,10 +21,11 @@ class PwpAgent(BasicAgent):
         self.model_initiator = None
         self.step_width = [-10, -5, 0, 5, 10, 500]
 
-        self.portfolio_1d = PwpPort(T=24, steps=self.step_width)
-        self.portfolio_2d = PwpPort(T=48, steps=self.step_width)
+        self.portfolio_1d = PowerPlantPortfolio()
+        self.portfolio_2d = PowerPlantPortfolio()
 
-        self.price_forecast = PriceForecast()
+        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude))
+        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
 
         for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
             power_plants = self.infrastructure_interface.get_power_plant_in_area(area=plz, fuel_typ=fuel)
@@ -36,7 +39,7 @@ class PwpAgent(BasicAgent):
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_1d.capacities)
         df['agent'] = self.name
-        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
+        # df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='replace')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -56,59 +59,16 @@ class PwpAgent(BasicAgent):
         self.logger.info('DayAhead market scheduling started')
         start_time = time.time()
 
-        prices = self.price_forecast.forecast(self.date)
-        for key in ['power', 'gas', 'co']:
-            prices[key] = np.repeat(prices[key], 2)
+        # Step 1: forecast data data and init the model for the coming day
+        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
+        prices_1d = self.price_forecast.forecast(self.date)
 
-        self.model_initiator = copy.deepcopy({model.name:model.power_plant for model in self.portfolio_1d.energy_systems})
-        def set_result(portfolio, offset, delta_t):
-            for model in portfolio.energy_systems:
-                for key in ['power', 'emission', 'fuel', 'start', 'obj']:
-                    if key != 'obj':
-                        model.data_storage[offset][key][delta_t:delta_t+portfolio.T] = model.power
-                    else:
-                        model.data_storage[offset][key] += np.round(np.sum(portfolio.prices['power'] * model.power), 2)
-            return portfolio
+        self.portfolio_1d.set_parameter(self.date, weather.copy(), prices_1d.copy())
+        self.portfolio_1d.build_model()
+        self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
 
-        for offset in tqdm(self.step_width):
-            for model in self.portfolio_1d.energy_systems:
-                model.power_plant = self.model_initiator[model.name]
-                model.data_storage[offset]['obj'] = 0
-            for model in self.portfolio_2d.energy_systems:
-                model.data_storage[offset]['obj'] = 0
-
-            # prices and weather first day
-            pr1 = dict(power=prices['power'][:24] + offset, gas=prices['gas'][:24], co=prices['co'][:24],
-                       lignite=prices['lignite'], coal=prices['coal'], nuc=prices['nuc'])
-            # prices and weather second day
-            pr2 = dict(power=prices['power'][24:] + offset, gas=prices['gas'][24:], co=prices['co'][24:],
-                       lignite=prices['lignite'], coal=prices['coal'], nuc=prices['nuc'])
-            # prices and weather both days
-            pr12 = dict(power=prices['power'] + offset, gas=prices['gas'], co=prices['co'],
-                        lignite=prices['lignite'], coal=prices['coal'], nuc=prices['nuc'])
-
-            # start first day
-            self.portfolio_1d.set_parameter(date=self.date, weather=pd.DataFrame(), prices=pr1)
-            self.portfolio_1d.build_model()
-            power = self.portfolio_1d.optimize()
-            self.portfolio_1d = set_result(portfolio=self.portfolio_1d, offset=offset, delta_t=0)
-            self.portfolio_1d.build_model(response=power)
-            self.portfolio_1d.optimize()
-
-            # start second day
-            self.portfolio_1d.set_parameter(date=self.date, weather=dict(), prices=pr2)
-            self.portfolio_1d.build_model()
-            self.portfolio_1d.optimize()
-            self.portfolio_1d = set_result(portfolio=self.portfolio_1d, offset=offset, delta_t=24)
-
-            # start shadow portfolio
-            self.portfolio_2d.set_parameter(date=self.date, weather=dict(), prices=pr12)
-            self.portfolio_2d.build_model()
-            self.portfolio_2d.optimize()
-            self.portfolio_2d = set_result(portfolio=self.portfolio_2d, offset=offset, delta_t=0)
-
-        for model in self.portfolio_1d.energy_systems:
-            model.power_plant = self.model_initiator[model.name]
+        self.portfolio_1d.optimize()
+        start_time = time.time()
 
         self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 

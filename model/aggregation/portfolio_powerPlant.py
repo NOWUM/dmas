@@ -7,7 +7,7 @@ import time
 
 # model modules
 from systems.generation_powerPlant import PowerPlant
-from aggregation.portfolio import PortfolioModel
+from aggregation.basic_portfolio import PortfolioModel
 
 log = logging.getLogger('power_plant_portfolio')
 log.setLevel('INFO')

@@ -35,6 +35,7 @@ output.append('''
     container_name: gurobi_compute
     ports:
         - 61000:61000
+    command: --hostname=localhost
     volumes:
       - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic:ro
     deploy:
@@ -77,7 +78,7 @@ output.append(f'''
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'MRK'
       CONNECT: 'True'
-      COMPUTE_SERVER: 'gurobi:61000'
+      COMPUTE_SERVER: '149.201.195.139:61000'
 ''')
 # Build one Weather Agent
 output.append(f'''
@@ -126,7 +127,7 @@ for agent in agents[:1]:
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
-      COMPUTE_SERVER: 'gurobi:61000'
+      COMPUTE_SERVER: '149.201.195.139:61000'
       ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')

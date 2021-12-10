@@ -24,7 +24,7 @@ class StrAgent(BasicAgent):
         storages = self.infrastructure_interface.get_water_storage_systems(area=plz)
         if storages is not None:
             for _, data in storages.iterrows():
-                    self.portfolio.add_energy_system(data.to_dict())
+                self.portfolio.add_energy_system(data.to_dict())
 
         self.logger.info('Storages added')
 
@@ -43,7 +43,7 @@ class StrAgent(BasicAgent):
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         df['agent'] = self.name
-        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
+        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='replace')
 
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 

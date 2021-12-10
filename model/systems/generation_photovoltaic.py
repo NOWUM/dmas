@@ -14,16 +14,7 @@ class PvModel(es):
     def __init__(self, T, maxPower, azimuth, tilt, *args, **kwargs):
         super().__init__(T)
 
-        self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower),
-                                  surface_tilt=tilt, surface_azimuth=azimuth)
-
-
-    def set_parameter(self, date, weather=None, prices=None):
-        self.date = pd.to_datetime(date)
-        # set weather parameter for calculation
-        self.weather = weather
-        # set prices
-        self.prices = prices
+        self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower), surface_tilt=tilt, surface_azimuth=azimuth)
 
     def optimize(self):
         irradiance = self.pv_system.get_irradiance(solar_zenith=self.weather['zenith'],
@@ -33,7 +24,7 @@ class PvModel(es):
                                                    dhi=self.weather['dhi'])
         # get generation in [kW]
         solar_power = irradiance['poa_global'] * 0.14 * self.pv_system.arrays[0].module_parameters['pdc0'] * 7
-        self.generation['solar'] = solar_power.to_numpy()/10**6
+        self.generation['solar'] = solar_power.to_numpy()/1000  # [MW]
         self.power = self.generation['solar']
 
         return self.power

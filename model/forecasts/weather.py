@@ -1,30 +1,42 @@
-from forecasts.basic_forecast import BasicForecast
+import pandas as pd
 import numpy as np
 
-# TODO: https://stackoverflow.com/questions/21484558/how-to-calculate-wind-direction-from-u-and-v-wind-components-in-r
+from forecasts.basic_forecast import BasicForecast
+
+
 class WeatherForecast(BasicForecast):
 
-    def __init__(self):
-        super().__init__()
-        self.mean_weather = {}
+    def __init__(self, position):
+        super().__init__(position)
+        self.sun_position = self.location.get_solarposition(pd.date_range(start='1972-01-01 00:00', periods=8684,
+                                                                          freq='h'))
 
     def forecast(self, date):
         random_factor = np.random.uniform(low=0.95, high=1.05)
-        temperature = self.weather_database.get_temperature(date) * random_factor
-        wind = self.weather_database.get_wind(date) * random_factor
-        direct_radiation = self.weather_database.get_direct_radiation(date) * random_factor
-        diffuse_radiation = self.weather_database.get_diffuse_radiation(date) * random_factor
-
-        return temperature, wind, direct_radiation + diffuse_radiation
+        temp_air = self.weather_database.get_temperature(date) * random_factor
+        wind_speed = self.weather_database.get_wind(date) * random_factor
+        dhi = self.weather_database.get_direct_radiation(date) * random_factor
+        dni = self.weather_database.get_diffuse_radiation(date) * random_factor
+        df = pd.concat([temp_air, wind_speed, dhi, dni], axis=1)
+        df['ghi'] = df['dhi'] + df['dni']
+        return df
 
     def forecast_for_area(self, date, area):
-        random_factor = np.random.uniform(low=0.95, high=1.05)
-        temperature = self.weather_database.get_temperature_in_area(date, area) * random_factor
-        wind = self.weather_database.get_wind_in_area(date, area) * random_factor
-        direct_radiation = self.weather_database.get_direct_radiation_in_area(date, area) * random_factor
-        diffuse_radiation = self.weather_database.get_diffuse_radiation_in_area(date, area) * random_factor
 
-        return temperature, wind, direct_radiation, diffuse_radiation
+        azimuth = self.sun_position.loc[self.sun_position.index.day_of_year == date.day_of_year, 'azimuth'].to_numpy()
+        zenith = self.sun_position.loc[self.sun_position.index.day_of_year == date.day_of_year, 'zenith'].to_numpy()
+
+        random_factor = np.random.uniform(low=0.95, high=1.05)
+        temp_air = self.weather_database.get_temperature_in_area(area, date) * random_factor
+        wind_speed = self.weather_database.get_wind_in_area(area, date) * random_factor
+        dhi = self.weather_database.get_direct_radiation_in_area(area, date) * random_factor
+        dni = self.weather_database.get_diffuse_radiation_in_area(area, date) * random_factor
+        df = pd.concat([temp_air, wind_speed, dhi, dni], axis=1)
+        df['ghi'] = df['dhi'] + df['dni']
+        df['azimuth'] = azimuth
+        df['zenith'] = zenith
+
+        return df
 
     def collect_data(self, date):
         pass

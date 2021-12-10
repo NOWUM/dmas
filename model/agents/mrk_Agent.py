@@ -15,6 +15,7 @@ class MarketAgent(BasicAgent):
         self.logger.info('starting the agent')
         start_time = tme.time()
         self.market = Market()
+
         self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
 
     def callback(self, ch, method, properties, body):

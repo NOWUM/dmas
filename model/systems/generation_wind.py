@@ -2,8 +2,8 @@
 import os
 import pandas as pd
 import numpy as np
-from windpowerlib import WindTurbine, ModelChain, wind_turbine as wt
-from windpowerlib import wind_farm
+from windpowerlib import WindTurbine, ModelChain
+from windpowerlib.wind_farm import WindFarm
 
 # model modules
 from systems.basic_system import EnergySystem
@@ -23,40 +23,47 @@ class WindModel(EnergySystem):
         df = pd.read_csv(r'./data/default_turbine.csv', sep=';', decimal=',')
 
         if isinstance(wind_turbine, list):
-            wind_turbines = {}
+            wind_turbines, numbers = [], []
+            heights = []
+            for turbine in wind_turbine:
+                w = {'hub_height': turbine['height'],
+                     'rotor_diameter': turbine['diameter'],
+                     'nominal_power': turbine['maxPower']*10**6,
+                     'power_curve': df}
+                heights.append(w['hub_height'])
+                wind_turbines.append(WindTurbine(**w))
+                numbers.append(1)
+            wind_turbine_fleet = pd.DataFrame({'wind_turbine': wind_turbines, 'number_of_turbines': numbers})
 
-            for turbine in wind_turbines:
-                wind_turbines.update({turbine['unitID']: {'hub_height': turbine['height'],
-                                                          'rotor_diameter': turbine['diameter'],
-                                                          'power_curve': df}})
-            wind_turbine_fleet = pd.DataFrame({'wind_turbine': [value for _, value in wind_turbines.items()],
-                                               'number_of_turbines': [1 for _, _ in wind_turbines.items()]})
-            self.wind_turbine = wind_farm.WindFarm(wind_turbine_fleet)
+            efficiency = pd.DataFrame(data=dict(wind_speed=range(30), efficiency=[100 for _ in range(30)]))
+
+            self.wind_turbine = WindFarm(wind_turbine_fleet, efficiency=efficiency)
+            self.wind_turbine.hub_height = np.mean(heights)
+            self.wind_turbine = self.wind_turbine.assign_power_curve()
+
         else:
             self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
                                             rotor_diameter=wind_turbine['diameter'],
+                                            nominal_power=wind_turbine['maxPower']*10**6,
                                             power_curve=df)
 
         self.mc = ModelChain(self.wind_turbine)
 
     def set_parameter(self, date, weather=None, prices=None):
-        self.date = pd.to_datetime(date)
-        # set weather parameter for calculation
-        index = pd.date_range(start=self.date, periods=self.T, freq='H')
-        roughness = 0.2 * np.ones_like(self.t)
-        self.weather = pd.DataFrame(np.asarray([roughness, weather['wind'], weather['temp']]).T,
-                                    index=index,
-                                    columns=[np.asarray(['roughness_length', 'wind_speed', 'temperature']),
-                                             np.asarray([0, 10, 2])])
-        # set prices
+        self.date = date
+
+        index = pd.date_range(start=date, periods=self.T, freq='H')
+        data = [0.2 * np.ones_like(self.t), weather['temp_air'], weather['wind_speed']]
+        names = ['roughness_length', 'temperature', 'wind_speed']
+        heights = [0, 2, 10]
+
+        self.weather = pd.DataFrame(np.asarray(data).T, index=index, columns=[np.asarray(names), np.asarray(heights)])
         self.prices = prices
 
     def optimize(self):
         self.mc.run_model(self.weather)
-
-        power_wind = np.asarray(self.mc.power_output, dtype=np.float64)
-
-        self.generation['wind'] = np.nan_to_num(power_wind)/10**6
-        self.power = np.nan_to_num(power_wind)/10**6
+        self.generation['wind'] = np.asarray(self.mc.power_output, dtype=np.float64)/10**6
+        self.generation['total'] = self.generation['wind']
+        self.power = self.generation['wind']
 
         return self.power

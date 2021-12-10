@@ -6,8 +6,10 @@ from tqdm import tqdm
 
 # model modules
 from forecasts.weather import WeatherForecast
+from forecasts.price import PriceForecast
 from aggregation.portfolio_demand import DemandPortfolio
 from agents.basic_Agent import BasicAgent
+
 
 class DemAgent(BasicAgent):
 
@@ -16,9 +18,9 @@ class DemAgent(BasicAgent):
         # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = time.time()
-        self.portfolio = DemandPortfolio(position=dict(lat=self.latitude, lon=self.longitude))
-
-        self.weather_model = WeatherForecast()
+        self.portfolio = DemandPortfolio()
+        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude))
+        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
 
         demand = 0
         # Construction of the prosumer with photovoltaic and battery
@@ -56,9 +58,9 @@ class DemAgent(BasicAgent):
         self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
-        #df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        #df['agent'] = self.name
-        #df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='append')
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        df['agent'] = self.name
+        # df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='replace')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -77,15 +79,12 @@ class DemAgent(BasicAgent):
         """scheduling for the DayAhead market"""
         self.logger.info('Starting day ahead optimization')
         start_time = time.time()
-        # Step 1: forecast data data and init the model for the coming day
-        # temperature, wind, radiation = self.weather_model.forecast_for_area(self.date, self.plz)
-        temperature = np.random.uniform(low=15, high=25, size=24)
-        wind = np.random.uniform(low=2, high=5, size=24)
-        radiation_dir = np.random.uniform(low=500, high=800, size=24)
-        radiation_dif = np.random.uniform(low=500, high=800, size=24)
-        weather = pd.DataFrame.from_dict(dict(temperature=temperature, wind=wind, dir=radiation_dir, dif=radiation_dif))
 
-        self.portfolio.set_parameter(self.date, weather, dict())
+        # Step 1: forecast data data and init the model for the coming day
+        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
+        prices = self.price_forecast.forecast(self.date)
+
+        self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
         self.portfolio.build_model()
         self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
         start_time = time.time()

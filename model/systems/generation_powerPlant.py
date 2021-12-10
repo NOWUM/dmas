@@ -121,6 +121,7 @@ class PowerPlant(EnergySystem):
         self.emission = np.asarray([p.x for p in [x for x in self.m.getVars() if 'E_' in x.VarName]]).reshape((-1,))
         self.start = np.asarray([p.x for p in [x for x in self.m.getVars() if 'S_' in x.VarName]]).reshape((-1,))
         self.generation['power' + self.power_plant['fuel'].capitalize()] = self.power
+        print(np.asarray([p.x for p in [x for x in self.m.getVars() if 'w_' in x.VarName]]).reshape((-1,)))
 
         return self.power
 
@@ -140,9 +141,9 @@ if __name__ == "__main__":
              'on':1,
              'off':0,
              'startCost':10*10**3}
-    pw = PowerPlant(T=24, **plant)
+    pw = PowerPlant(T=24, steps=[0],  **plant)
 
-    power_price = 4000 * np.ones(24)
+    power_price = -1000 * np.ones(24)
     co = np.ones(24) * 23.8 * np.random.uniform(0.95, 1.05, 24)     # -- Emission Price     [€/t]
     gas = np.ones(24) * 24.8 * np.random.uniform(0.95, 1.05, 24)    # -- Gas Price          [€/MWh]
     lignite = 1.5 * np.random.uniform(0.95, 1.05)                   # -- Lignite Price      [€/MWh]

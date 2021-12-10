@@ -23,13 +23,27 @@ class CtlAgent(BasicAgent):
         self.start_date = '2018-01-01'
         self.stop_date = '2018-02-01'
         self.logger.info('setup of the agent completed in %s' % (time.time() - start_time))
-        self.agent_list = {}
+        self.agent_list = []
+        self.cleared = False
+
+    def get_agents(self):
+        headers = {'content-type': 'application/json', }
+        response = requests.get('http://rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
+        agents = response.json()
+        for agent in agents:
+            name = agent['name']
+            if name[:3] in ['DEM', 'RES', 'STR', 'PWP']:
+                self.agent_list.append(name)
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
         message = body.decode("utf-8")
-        agent, status = message.split(' ')
-        self.agent_list[agent] = status
+        agent, date = message.split(' ')
+        date = pd.to_datetime(date)
+        if date == self.date:
+            self.agent_list.remove(agent)
+        if agent == 'MRK_1' and date == self.date:
+            self.cleared = True
 
     def check_orders(self):
         try:
@@ -42,7 +56,7 @@ class CtlAgent(BasicAgent):
 
     def simulation_routine(self):
         self.logger.info('simulation started')
-        channel = self.get_rabbitmq_connection()
+        self.agent_list = self.get_agents()
         for date in pd.date_range(start=self.start_date, end=self.stop_date, freq='D'):
             if self.sim_stop:
                 self.logger.info('simulation terminated')
@@ -51,21 +65,21 @@ class CtlAgent(BasicAgent):
                 try:
                     start_time = time.time()  # timestamp to measure simulation time
                     # 1.Step: Run optimization for dayAhead Market
-                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'opt_dayAhead {date}')
-                    orders_setting = True
-                    while orders_setting:
-                        time.sleep(0.1)
-                        if all([values for _, values in self.agent_list.items()]):
-                            orders_setting = False
+                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'opt_dayAhead {date}')
+                    while len(self.agent_list) > 0:
+                        time.sleep(1)
                     # 2. Step: Run Market Clearing
-                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'dayAhead_clearing {date}')
+                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'dayAhead_clearing {date}')
                     # 3. Step: Run Power Flow calculation
-                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'grid_calc {date}')
+                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'grid_calc {date}')
+                    while not self.cleared:
+                        time.sleep(1)
                     # 4. Step: Publish Market Results
-                    channel.basic_publish(exchange=self.exchange_name, routing_key='', body=f'result_dayAhead {date}')
-                    # 5. Step: Rest agent list for next day
-                    for key, _ in self.agent_list.items():
-                        self.agent_list[key] = False
+                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'result_dayAhead {date}')
+                    # 5. Step: Rest agent list and cleared flag for next day
+                    self.agent_list = self.get_agents()
+                    self.cleared = False
+
                     # TODO: for first day add primary keys to tables
                     end_time = time.time() - start_time
                     self.logger.info('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
@@ -119,10 +133,6 @@ class CtlAgent(BasicAgent):
             self.stop_date = rf.get('stop', '2018-02-01')
 
             if not self.sim_start:
-                headers = {'content-type': 'application/json',}
-                response = requests.get('http://rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
-                agents = response.json()
-                print(agents)
                 simulation = threading.Thread(target=self.simulation_routine)
                 check_orders = threading.Thread(target=self.check_orders)
                 simulation.start()

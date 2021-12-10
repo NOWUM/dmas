@@ -1,11 +1,13 @@
 # third party modules
 import numpy as np
+import pandas as pd
+
 from forecasts.dummies import create_dummies
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neural_network import MLPRegressor
 from collections import deque
 
-
+# model modules
 from forecasts.basic_forecast import BasicForecast
 from forecasts.demand import DemandForecast
 from forecasts.weather import WeatherForecast
@@ -24,8 +26,8 @@ default_lignite = 1.5                                                   # agora 
 
 class PriceForecast(BasicForecast):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, position):
+        super().__init__(position)
 
         # initialize neural network and corresponding scaler
         self.model = MLPRegressor(hidden_layer_sizes=(15, 15,), activation='identity', early_stopping=True,
@@ -35,8 +37,8 @@ class PriceForecast(BasicForecast):
 
         self.price_register = deque(maxlen=8)
 
-        self.demand_model = DemandForecast()
-        self.weather_model = WeatherForecast()
+        self.demand_model = DemandForecast(self.position)
+        self.weather_model = WeatherForecast(self.position)
 
     def collect_data(self, date):
         self.demand_model.collect_data(date)
@@ -73,15 +75,12 @@ class PriceForecast(BasicForecast):
             x_std = self.scale.transform(x)
             power_price = self.model.predict(x_std).reshape((24,))
 
-        # Emission Price        [€/t]
-        co = np.ones_like(power_price) * default_emission[date.month - 1] * np.random.uniform(0.95, 1.05, 24)
-        # Gas Price             [€/MWh]
-        gas = np.ones_like(power_price) * default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24)
-        # Hard Coal Price       [€/MWh]
-        coal = default_coal * np.random.uniform(0.95, 1.05)
-        # Lignite Price         [€/MWh]
-        lignite = default_lignite * np.random.uniform(0.95, 1.05)
-        # -- Nuclear Price      [€/MWh]
-        nuc = 1.0 * np.random.uniform(0.95, 1.05)
+        prices = dict(
+            power=power_price,
+            co=np.ones_like(power_price) * default_emission[date.month - 1] * np.random.uniform(0.95, 1.05, 24),
+            gas=np.ones_like(power_price) * default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24),
+            coal=np.ones_like(power_price) * default_coal * np.random.uniform(0.95, 1.05),
+            nuclear=np.ones_like(power_price) * np.random.uniform(0.95, 1.05)
+        )
 
-        return dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
+        return pd.DataFrame(index=pd.date_range(start=date, periods=24, freq='h'), data=prices)
