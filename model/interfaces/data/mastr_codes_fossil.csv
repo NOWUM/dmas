@@ -1,0 +1,22 @@
+,description,value
+coal,fossil coal,2407
+lignite,fossil lignite,2408
+oil,fossil oil (not used),2409
+gas,fossil gas and gas_combined,2410
+landfill_gas,gas from waste (not used),2411
+waste,waste (not used),2412
+nuclear,nuclear,2494
+542,,Combustion engine
+543,,Fuel Cell
+544,,Combustion engine
+545,,Steam engine
+546,,Organic Rankine Cycle
+833,,Back Pressure Turbine with Heat
+834,,Back Pressure Turbine without Heat
+835,,Gas-Turbine with waste heat boiler
+836,,Gas-Turbine without waste heat boiler
+837,,Closed Cycle Heat Power
+838,,Condensing Turbine with Heat
+839,,Condensing Turbine without Heat
+840,,Other
+1444,,Nuclear

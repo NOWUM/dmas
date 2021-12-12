@@ -1,0 +1,27 @@
+,description,value
+free_area,used for pv <= 10kW,852
+roof_top,used for pv > 10 kW,853
+balcony,not used,2961
+other,used such as free area,2484
+695,North,0
+696,North-East,45
+697,East,90
+698,South-East,135
+699,South,180
+700,South-West,225
+701,West,270
+702,North-West,315
+703,tracked,360
+704,East-West,-1
+806,facade,90
+807,>60,75
+808,40-60,50
+809,20-40,30
+810,<20,10
+811,tracked,0
+802,no limitation,100
+803,up to 70%,70
+804,up to 60%,60
+805,up to 50%,50
+1535,no limitation,100
+

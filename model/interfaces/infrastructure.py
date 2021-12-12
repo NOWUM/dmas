@@ -4,13 +4,16 @@ import numpy as np
 import re
 import geojson
 
-
+# select column_name from information_schema.columns where table_name='turbineData'
 class InfrastructureInterface:
 
     def __init__(self, infrastructure_source, infrastructure_login):
+        # TODO: change connection args
         self.database_mastr = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/mastr',
                                             connect_args={"application_name": "myapp"})
         self.database_enet = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/enet',
+                                           connect_args={"application_name": "myapp"})
+        self.database_wind = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/windmodel',
                                            connect_args={"application_name": "myapp"})
         with open(r'./interfaces/data/germany_shape.geojson') as f:
             self.germany_shapes = geojson.load(f)
@@ -19,71 +22,6 @@ class InfrastructureInterface:
         self.centers = {int(element['properties']['plz']): tuple(element['geometry']['coordinates'])
                         for element in self.germany_centroid['features']}
 
-        # MaStR Codes for fuel types used in Power Plant Table
-        self.fuel_codes = {
-            'coal':         2407,
-            'lignite':      2408,
-            'oil':          2409,
-            'gas':          2410,
-            'landfill_gas': 2411,
-            'waste':        2412,
-            'nuclear':      2494
-        }
-        # MaStR Codes for machine types used in Power Plant Table
-        self.machine_codes = {
-            542: 'Combustion engine',
-            543: 'Fuel Cell',
-            544: 'Combustion engine',
-            545: 'Steam engine',
-            546: 'Organic Rankine Cycle',
-            833: 'Back Pressure Turbine with Heat',
-            834: 'Back Pressure Turbine without Heat',
-            835: 'Gas-Turbine with waste heat boiler',
-            836: 'Gas-Turbine without waste heat boiler',
-            837: 'Closed Cycle Heat Power',
-            838: 'Condensing Turbine with Heat',
-            839: 'Condensing Turbine without Heat',
-            840: 'Other',
-            1444: 'Nuclear'
-        }
-        # MaStR Codes for azimuth used in Solar Table
-        self.azimuth_codes = {
-            695: ('North', 0),
-            696: ('North-East', 45),
-            697: ('East', 90),
-            698: ('South-East', 135),
-            699: ('South', 180),
-            700: ('South-West', 225),
-            701: ('West', 270),
-            702: ('North-West', 315),
-            703: ('tracked', 360),
-            704: ('East-West', -1),
-            np.nan: ('South', 180)
-        }
-        # MaStR Codes for tilt used in Solar Table
-        self.tilt_codes = {
-            806: ('facade', 90),
-            807: ('>60', 75),
-            808: ('40-60', 50),
-            809: ('20-40', 30),
-            810: ('<20', 10),
-            811: ('tracked', 0)
-        }
-        # MaStR Codes for typ in Solar Table
-        self.solar_codes = {
-            'free_area': 852,
-            'roof_top': 853,
-            'balcony': 2961,
-            'other': 2484
-        }
-        # MaStR Codes for power limitations in Solar Table
-        self.limit_codes = {
-            802: 100,
-            803: 70,
-            804: 60,
-            805: 50,
-            1535: 100
-        }
         self.wind_codes = {
             'on_shore': 888,
             'off_shore': 889
@@ -94,37 +32,13 @@ class InfrastructureInterface:
         for typ in turbine_typs['turbine_type'].to_numpy():
             self.pattern_wind += str(typ).split('/')[0].replace('-', '') + '|'
         self.pattern_wind += ')'
-        self.wind_manufacturer = pd.read_csv(r'./interfaces/data/manufacturer_wind.csv', index_col=0)
+        self.wind_manufacturer = pd.read_csv(r'./interfaces/data/manufacturer_wind.csv', index_col=0, sep=';')
+        self.wind_types = pd.read_excel(r'./y.xlsx')
+        self.manufacturer = self.wind_types['manu'].unique()
 
-        self.storage_volumes = {
-            'Niederwartha': 591,
-            'Bleiloch': 753,
-            'Hohenwarte 1': 795,
-            'Hohenwarte 2': 2087,
-            'Wendefurth': 532,
-            'Markersbach': 4018,
-            'Geesthacht': 600,
-            'Waldeck 1': 478,
-            'Waldeck 2': 3428,
-            'Bringhausen': 0,
-            'Hemfurth': 0,
-            'illwerke': 0,
-            'Glems': 560,
-            'Schwarzenbach': 198,
-            'Witznau': 220,
-            'Säckingen': 2064,
-            'Häusern': 463,
-            'Waldshut': 402,
-            'Wehr': 6073,
-            'Walchenseekraftwerk': 0,
-            'Happurg': 900,
-            'Schnitzel': 0,
-            'Langenprozelten': 950,
-            'E2307101': 0,
-            'Goldisthal': 8480,
-        }
+    def get_power_plant_in_area(self, area=520, fuel_type='lignite'):
 
-    def get_power_plant_in_area(self, area=520, fuel_typ='lignite'):
+        mastr_codes_fossil = pd.read_csv(r'./interfaces/data/mastr_codes_fossil.csv', index_col=0)
 
         if area in self.centers.keys():
             longitude, latitude = self.centers[area]
@@ -137,7 +51,7 @@ class InfrastructureInterface:
                     f'ev."Nettonennleistung" as "maxPower", ' \
                     f'ev."Technologie" as "turbineTyp", ' \
                     f'ev."GenMastrNummer" as "generatorID"'
-            if fuel_typ != 'nuclear':
+            if fuel_type != 'nuclear':
                 query += f', ' + \
                          f'kwk."ThermischeNutzleistung" as "kwkPowerTherm", ' + \
                          f'kwk."ElektrischeKwkLeistung" as "kwkPowerElec", ' + \
@@ -145,7 +59,7 @@ class InfrastructureInterface:
                          f'FROM "EinheitenVerbrennung" ev ' + \
                          f'LEFT JOIN "AnlagenKwk" kwk ON kwk."KwkMastrNummer" = ev."KwkMastrNummer" ' + \
                          f'WHERE ev."Postleitzahl" >= {area * 100} AND ev."Postleitzahl" < {area * 100 + 100} ' + \
-                         f'AND ev."Energietraeger" = {self.fuel_codes[fuel_typ]} ' + \
+                         f'AND ev."Energietraeger" = {mastr_codes_fossil.loc[fuel_type, "value"]} ' + \
                          f'AND ev."Nettonennleistung" > 5000 AND ev."EinheitBetriebsstatus" = 35 ' + \
                          f'AND ev."ArtDerStilllegung" isnull;'
             else:
@@ -159,30 +73,30 @@ class InfrastructureInterface:
             if not df.empty:
                 type_years = np.asarray([0, 2000, 2018])  # technical setting typ
                 # set default values for technical parameters
-                type_years = np.asarray([0, 2000, 2018])                # technical setting typ
-                df['fuel'] = fuel_typ                                   # current fuel typ
-                df['maxPower'] = df['maxPower'] / 10**3                 # Rated Power [kW] --> [MW]
-                df['minPower'] = df['maxPower'] * 0.5                   # MinPower = 1/2 MaxPower
+                type_years = np.asarray([0, 2000, 2018])                    # technical setting typ
+                df['fuel'] = fuel_type                                      # current fuel typ
+                df['maxPower'] = df['maxPower'] / 10**3                     # Rated Power [kW] --> [MW]
+                df['minPower'] = df['maxPower'] * 0.5                       # MinPower = 1/2 MaxPower
                 df['P0'] = df['minPower'] + 0.1
-                df['gradP'] = 0.1 * df['maxPower']                      # 10% Change per hour
-                df['gradM'] = 0.1 * df['maxPower']                      # 10% Change per hour
-                df['stopTime'] = 5                                      # default stop time 5h
-                df['runTime'] = 5                                       # default run time 5h
-                df['on'] = 1                                            # on counter --> Plant is on till 1 hour
-                df['off'] = 0                                           # off counter --> Plant is on NOT off
-                df['eta'] = 30                                          # efficiency
-                df['chi'] = 1                                           # emission factor [t/MWh therm]
-                df['startCost'] = 100 * df['maxPower']                  # starting cost [€/MW Rated]
-                df['turbineTyp'] = [self.machine_codes[int(x)]          # convert int to string
-                                    if x is not None else None for x in df['turbineTyp'].to_numpy()]
-                df['startDate'] = [pd.to_datetime(x) if x is not None   # convert to timestamp and set default to 2005
+                df['gradP'] = 0.1 * df['maxPower']                          # 10% Change per hour
+                df['gradM'] = 0.1 * df['maxPower']                          # 10% Change per hour
+                df['stopTime'] = 5                                          # default stop time 5h
+                df['runTime'] = 5                                           # default run time 5h
+                df['on'] = 1                                                # on counter --> Plant is on till 1 hour
+                df['off'] = 0                                               # off counter --> Plant is on NOT off
+                df['eta'] = 30                                              # efficiency
+                df['chi'] = 1                                               # emission factor [t/MWh therm]
+                df['startCost'] = 100 * df['maxPower']                      # starting cost [€/MW Rated]
+                df['turbineTyp'] = [mastr_codes_fossil.loc[str(x), 'value'] # convert int to string
+                                    if x is not None else None for x in df['turbineTyp'].to_numpy(int)]
+                df['startDate'] = [pd.to_datetime(x) if x is not None       # convert to timestamp and set default to 2005
                                    else pd.to_datetime('2005-05-05') for x in df['startDate']]
-                if 'combination' in df.columns:                         # if no combination flag is set, set it to 0
+                if 'combination' in df.columns:                             # if no combination flag is set, set it to 0
                     df['combination'] = [0 if x == 0 or x is None else 1 for x in df['combination']]
-                else:                                                   # Add column for nuclear power plants
+                else:                                                       # Add column for nuclear power plants
                     df['combination'] = 0
                 df['type'] = [type_years[type_years < x.year][-1] for x in df['startDate']]
-                df['generatorID'] = [id_ if id_ is not None else 0      # set default generatorID to 0
+                df['generatorID'] = [id_ if id_ is not None else 0          # set default generatorID to 0
                                      for id_ in df['generatorID']]
                 if 'kwkPowerTherm' in df.columns:
                     df['kwkPowerTherm'] = df['kwkPowerTherm'].fillna(0)
@@ -196,7 +110,7 @@ class InfrastructureInterface:
                     df['kwkPowerElec'] = 0
 
                 # for all gas turbines check if they are used in an combination of gas and steam turbine
-                if fuel_typ == 'gas':
+                if fuel_type == 'gas':
                     # CCHP Power Plant with Combination
                     cchps = df[df['combination'] == 1]
                     new_cchps = []
@@ -229,7 +143,7 @@ class InfrastructureInterface:
                             df.at[line, 'fuel'] = 'gas_combined'
 
                 # Set technical parameter corresponding to the type (0, 2000, 2018)
-                technical_parameter = pd.read_csv(fr'./interfaces/data/technical_parameter_{fuel_typ}.csv',
+                technical_parameter = pd.read_csv(fr'./interfaces/data/technical_parameter_{fuel_type}.csv',
                                                   sep=';', decimal=',', index_col=0)
                 for line, row in df.iterrows():
                     df.at[line, 'minPower'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'minPower'] / 100
@@ -248,6 +162,8 @@ class InfrastructureInterface:
 
     def get_solar_systems_in_area(self, area=520, solar_type='roof_top'):
 
+        mastr_codes_solar = pd.read_csv(r'./interfaces/data/mastr_codes_solar.csv', index_col=0)
+
         if area in self.centers.keys():
             longitude, latitude = self.centers[area]
 
@@ -264,7 +180,7 @@ class InfrastructureInterface:
                     f'FROM "EinheitenSolar" ' \
                     f'INNER JOIN "AnlagenEegSolar" ON "EinheitMastrNummer" = "VerknuepfteEinheitenMastrNummern" ' \
                     f'WHERE "Postleitzahl" >= {area * 100} AND "Postleitzahl" < {area * 100 + 100} ' \
-                    f'AND "Lage" = {self.solar_codes[solar_type]} ' \
+                    f'AND "Lage" = {mastr_codes_solar.loc[solar_type, "value"]} ' \
                     f'AND "EinheitBetriebsstatus" = 35;'
 
             # Get Data from Postgres
@@ -274,10 +190,10 @@ class InfrastructureInterface:
                 # all PVs with are implemented in 2018
                 df['startDate'] = pd.to_datetime(df['startDate'], infer_datetime_format=True)
                 # all PVs with nan are south oriented assets
-                df['azimuth'] = [self.azimuth_codes[code][1] for code in df['azimuthCode']]
+                df['azimuth'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['azimuthCode'].to_numpy(int)]
                 del df['azimuthCode']
                 # all PVs with nan have a tilt angle of 30°
-                df['tilt'] = [self.tilt_codes[code][1] for code in df['tiltCode']]
+                df['tilt'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['tiltCode'].to_numpy(int)]
                 del df['tiltCode']
                 if solar_type == 'roof_top':
                     # all PVs with nan and startDate > 2013 have ownConsumption
@@ -303,12 +219,12 @@ class InfrastructureInterface:
                     df.loc[limited, 'limited'] = 803
                     # rest nans have no limitation
                     df['limited'] = df['limited'].fillna(802)
-                    df['limited'] = [self.limit_codes[code] for code in df['limited']]
+                    df['limited'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['limited'].to_numpy(int)]
                 if solar_type == 'free_area' or solar_type == 'other':
                     # TODO: Check restrictions for free area pv
                     # nans have no limitation
                     df['limited'] = df['limited'].fillna(802)
-                    df['limited'] = [self.limit_codes[code] for code in df['limited']]
+                    df['limited'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['limited'].to_numpy(int)]
                 # all PVs with nan and startDate > 2016 and maxPower > 100 have direct marketing
                 missing_values = df['eeg'].isna()
                 power_cap = df['maxPower'] > 100
@@ -333,7 +249,7 @@ class InfrastructureInterface:
                     f'COALESCE("Laengengrad", {longitude}) as "lon", ' \
                     f'COALESCE("Breitengrad", {latitude}) as "lat", ' \
                     f'"Typenbezeichnung" as "typ", ' \
-                    f'COALESCE("Hersteller", 1586) as "manufacturer", ' \
+                    f'COALESCE("Hersteller", -1) as "manufacturer", ' \
                     f'"Nabenhoehe" as "height", ' \
                     f'"Rotordurchmesser" as "diameter", ' \
                     f'"ClusterNordsee" as "nordicSea", ' \
@@ -362,10 +278,10 @@ class InfrastructureInterface:
                 # get name of manufacturer
                 df['manufacturer'] = [self.wind_manufacturer.loc[x].Wert for x in df['manufacturer']]
                 # try to find the correct type TODO: Check Pattern of new turbines
-                df['typ'] = [str(typ).replace(' ', '').replace('-', '').upper() for typ in df['typ']]
-                df['typ'] = [None if re.search(self.pattern_wind, typ) is None else re.search(self.pattern_wind, typ).group()
-                             for typ in df['typ']]
-                df['typ'] = df['typ'].replace('', 'default')
+                #df['typ'] = [str(typ).replace(' ', '').replace('-', '').upper() for typ in df['typ']]
+                #df['typ'] = [None if re.search(self.pattern_wind, typ) is None else re.search(self.pattern_wind, typ).group()
+                #             for typ in df['typ']]
+                # df['typ'] = df['typ'].replace('', 'default')
                 # set tag for wind farms
                 wind_farm_prefix = f'{area * 1000}F'
                 df['windFarm'] = 'x'
@@ -432,6 +348,8 @@ class InfrastructureInterface:
 
     def get_water_storage_systems(self, area=800):
 
+        storage_volumes = pd.read_csv(r'./interfaces/data/technical_parameter_storage.csv', index_col=0)
+
         if area in self.centers.keys():
             longitude, latitude = self.centers[area]
 
@@ -466,9 +384,9 @@ class InfrastructureInterface:
                 df['VMax'] = df['VMax'].fillna(0)
                 df['VMax'] = df['VMax'] / 10**3
                 for index, row in df[df['VMax'] == 0].iterrows():
-                    for key, value in self.storage_volumes.items():
+                    for key, value in storage_volumes.iterrows():
                         if key in row['name']:
-                            df.at[index, 'VMax'] = value
+                            df.at[index, 'VMax'] = value['volume']
 
                 storages = []
                 for id_ in df['storageID'].unique():
@@ -528,6 +446,8 @@ class InfrastructureInterface:
 
     def get_solar_storage_systems_in_area(self, area=521):
 
+        mastr_codes_solar = pd.read_csv(r'./interfaces/data/mastr_codes_solar.csv', index_col=0)
+
         if area in self.centers.keys():
             longitude, latitude = self.centers[area]
 
@@ -555,13 +475,13 @@ class InfrastructureInterface:
                 df['VMax'] = df['VMax'].fillna(10)
                 df['ownConsumption'] = df['ownConsumption'].replace(689, 1)
                 df['ownConsumption'] = df['ownConsumption'].replace(688, 0)
-                df['limited'] = [self.limit_codes[code] for code in df['limited']]
+                df['limited'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['limited'].to_numpy(int)]
 
                 # all PVs with nan are south oriented assets
-                df['azimuth'] = [self.azimuth_codes[code][1] for code in df['azimuthCode']]
+                df['azimuth'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['azimuthCode'].to_numpy(int)]
                 del df['azimuthCode']
                 # all PVs with nan have a tilt angle of 30°
-                df['tilt'] = [self.tilt_codes[code][1] for code in df['tiltCode']]
+                df['tilt'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['tiltCode'].to_numpy(int)]
                 del df['tiltCode']
                 # assumption "regenerative Energiesysteme"
                 df['demandP'] = df['maxPower'] * 10**3
@@ -581,11 +501,15 @@ class InfrastructureInterface:
 if __name__ == "__main__":
     import os
     import numpy as np
+    from tqdm import tqdm
     x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
 
     interface = InfrastructureInterface(infrastructure_source=x, infrastructure_login=y)
-
+    x = interface.get_power_plant_in_area(area=415, fuel_type='gas')
+    y = interface.get_water_storage_systems(area=415)
+    z = interface.get_solar_storage_systems_in_area(area=415)
+    a = interface.get_solar_systems_in_area(area=415)
     # pwp_agents = []
     # for plz in interface.centers.keys():
     #     print(plz)
