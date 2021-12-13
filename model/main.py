@@ -43,8 +43,8 @@ if __name__ == "__main__":
         elif init_dict['agent_type'] == 'CTL':
             agent = CtlAgent(**init_dict)
 
-        # agent.run()
-        x = agent.optimize_day_ahead()
+        agent.run()
+        # x = agent.optimize_day_ahead()
 
     except Exception as e:
         logging.exception(f'Error during Simulation {init_dict["agent_type"]}_{init_dict["plz"]}')

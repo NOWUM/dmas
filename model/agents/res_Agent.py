@@ -29,6 +29,8 @@ class ResAgent(BasicAgent):
         # Construction Wind energy
         wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=plz, wind_type='on_shore')
         wind_data['type'] = 'wind'
+        if 'windFarm' not in wind_data.columns:
+            wind_data['windFarm'] = ''
         for wind_farm in tqdm(wind_data['windFarm'].unique()):
             if wind_farm != 'x':
                 turbines = [row.to_dict() for _, row in wind_data[wind_data['windFarm'] == wind_farm].iterrows()]
@@ -81,7 +83,7 @@ class ResAgent(BasicAgent):
             df_mrk[col] += df_eeg[col]
         df_mrk['agent'] = self.name
         df_mrk.index.name = 'time'
-        df_mrk.to_sql(name='capacities', con=self.simulation_database, if_exists='replace')
+        df_mrk.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 

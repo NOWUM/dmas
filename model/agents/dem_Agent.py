@@ -61,7 +61,7 @@ class DemAgent(BasicAgent):
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         df['agent'] = self.name
         df.index.name = 'time'
-        df.to_sql(name='capacities', con=self.simulation_database, if_exists='replace')
+        df.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
