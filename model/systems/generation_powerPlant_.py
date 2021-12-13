@@ -1,12 +1,31 @@
 # third party modules
 import os
-import gurobipy as gby
 import numpy as np
+import pandas as pd
+from copy import deepcopy
 from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, maximize, value, quicksum
 
 # model modules
 from systems.basic_system import EnergySystem
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
+
+
+#     for offset in self.step_width:
+#         # a start can only prevented if the last power of the current day is zero
+#         starts.update({offset: dict(prevented=False, hours=[] , delta=0)})
+#         if self.portfolio_results[key][offset]['power'][23] == 0:
+#             # if the last power is zero, than one or more hours can be zero
+#             hours = np.argwhere(self.portfolio_results[key][offset]['power'][:24] == 0).reshape((-1,))
+#             # for these hours the power of the shadow portfolio must be greater than zero
+#             # then a start is prevented
+#             prevent_start = all(self.shadow_results[key][offset]['power'][hours] > 0)
+#             obj_portfolio = self.portfolio_results[key][offset]['obj']
+#             obj_shadow = self.shadow_results[key][offset]['obj']
+#             delta = obj_shadow - obj_portfolio
+#             # to implement an offset an additional profit of 5% must be reached
+#             percentage = delta / obj_portfolio if obj_portfolio else 0
+#             if prevent_start and percentage > 0.05:
+#                 starts.update({offset: dict(prevented=True, hours = hours, delta = delta - d_delta)})
 
 
 class PowerPlant(EnergySystem):
@@ -30,13 +49,18 @@ class PowerPlant(EnergySystem):
 
         self.steps = steps
 
-        self.optimization_results = {step: dict(power=np.zeros(min(self.T * 2, 48), float),
-                                                emission=np.zeros(min(self.T*2, 48), float),
-                                                fuel=np.zeros(min(self.T*2, 48), float),
-                                                start=np.zeros(min(self.T*2, 48), float),
+        self.optimization_results = {step: dict(power=np.zeros(self.T, float),
+                                                emission=np.zeros(self.T, float),
+                                                fuel=np.zeros(self.T, float),
+                                                start=np.zeros(self.T, float),
                                                 obj=0) for step in steps}
 
+        self.prevented_start = {step: dict(prevent_start=False,
+                                           hours=np.zeros(self.T, float),
+                                           delta=0) for step in steps}
+
     def build_model(self, power=None):
+
         self.model.clear()
 
         delta = self.power_plant['maxPower'] - self.power_plant['minPower']
@@ -157,12 +181,19 @@ class PowerPlant(EnergySystem):
                                                      for i in self.t), sense=maximize)
 
     def optimize(self):
-        base_price = self.prices['power']
+
+        base_price = self.prices.loc[:, 'power']
+        prices_24h = self.prices.iloc[:24, :]
+        prices_48h = self.prices.iloc[:48, :]
+
         for step in self.steps:
-            self.prices['power'] = base_price + step
+
+            self.prices = prices_24h
+            self.prices.loc[:, 'power'] = base_price.iloc[:24] + step
             self.build_model()
-            # get optimizations results
-            result_obj = self.opt.solve(self.model)
+
+            self.opt.solve(self.model)
+
             for t in self.t:
                 self.optimization_results[step]['power'][t] = self.model.p_out[t].value
                 self.optimization_results[step]['emission'][t] = self.model.emissions[t].value
@@ -170,15 +201,32 @@ class PowerPlant(EnergySystem):
                 self.optimization_results[step]['start'][t] = self.model.start_ups[t].value
                 self.optimization_results[step]['obj'] = value(self.model.obj)
 
+            p_out = np.asarray([self.model.p_out[t].value for t in self.t])
+            objective_value = value(self.model.obj)
+
+            if p_out[-1] == 0:
+                hours = np.argwhere(p_out == 0)
+                self.t = np.arange(48)
+                self.prices = prices_48h
+                self.prices['power'] = base_price + step
+                self.build_model()
+                self.opt.solve(self.model)
+                power_check = np.asarray([self.model.p_out[t].value for t in self.t])
+                prevent_start = all(power_check[hours] > 0)
+                delta = value(self.model.obj) - objective_value
+                percentage = delta / objective_value if objective_value else 0
+                if prevent_start and percentage > 0.05:
+                    self.prevented_start.update({step: dict(prevented=True, hours=hours, delta=delta)})
+                self.t = np.arange(self.T)
+
             if step == 0:
+                self.cash_flow = dict(fuel=self.optimization_results[step]['fuel'],
+                                      emission=self.optimization_results[step]['emission'],
+                                      start_ups=self.optimization_results[step]['start'])
+                self.generation[str(self.power_plant['fuel']).replace('_combined', '')] = self.optimization_results[step]['power']
                 self.power = self.optimization_results[step]['power']
-                self.fuel = self.optimization_results[step]['fuel']
-                self.emission = self.optimization_results[step]['emission']
-                self.start = self.optimization_results[step]['start']
-                self.generation[self.power_plant['fuel']] = self.optimization_results[step]['power']
 
         return self.power
-
 
 if __name__ == "__main__":
     plant = {'unitID':'x',
@@ -194,20 +242,20 @@ if __name__ == "__main__":
              'gradM': 300,
              'on': 1,
              'off': 0,
-             'startCost':10*10**3}
+             'startCost': 10*10**3}
 
-    pw = PowerPlant(T=24, steps=[-100000, 10, 1000], **plant)
+    pw = PowerPlant(T=24, steps=[-100, -10, 0, 10, 1000], **plant)
 
-    power_price = np.ones(24) * 27 * np.random.uniform(0.95, 1.05, 24)
-    co = np.ones(24) * 23.8 * np.random.uniform(0.95, 1.05, 24)     # -- Emission Price     [€/t]
-    gas = np.ones(24) * 24.8 * np.random.uniform(0.95, 1.05, 24)    # -- Gas Price          [€/MWh]
-    lignite = 1.5 * np.random.uniform(0.95, 1.05)                   # -- Lignite Price      [€/MWh]
-    coal = 9.9 * np.random.uniform(0.95, 1.05)                      # -- Hard Coal Price    [€/MWh]
-    nuc = 1.0 * np.random.uniform(0.95, 1.05)                       # -- nuclear Price      [€/MWh]
+    power_price = np.ones(48) * 27 * np.random.uniform(0.95, 1.05, 48)
+    co = np.ones(48) * 23.8 * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
+    gas = np.ones(48) * 24.8 * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/MWh]
+    lignite =np.ones(48) * 1.5 * np.random.uniform(0.95, 1.05)                   # -- Lignite Price      [€/MWh]
+    coal = np.ones(48) * 9.9 * np.random.uniform(0.95, 1.05)                      # -- Hard Coal Price    [€/MWh]
+    nuc = np.ones(48) * 1.0 * np.random.uniform(0.95, 1.05)                       # -- nuclear Price      [€/MWh]
 
     prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
-
+    prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
     pw.set_parameter(date='2018-01-01', weather=None,
                      prices=prices)
 
-    model = pw.optimize()
+    pw.optimize()

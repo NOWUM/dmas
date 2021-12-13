@@ -60,7 +60,8 @@ class DemAgent(BasicAgent):
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         df['agent'] = self.name
-        # df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='replace')
+        df.index.name = 'time'
+        df.to_sql(name='capacities', con=self.simulation_database, if_exists='replace')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -73,7 +74,7 @@ class DemAgent(BasicAgent):
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
-            self.post_dayAhead()
+            self.post_day_ahead()
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
@@ -88,42 +89,36 @@ class DemAgent(BasicAgent):
         self.portfolio.build_model()
         self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
         start_time = time.time()
-        # Step 2: standard optimization --> returns power series in [kW]
-        power_da = self.portfolio.optimize()
+        # Step 2: optimization
+        power = self.portfolio.optimize()
         self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
-        # Step 3: save optimization results in influxDB
 
-        # df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
-        #                             powerSolar=self.portfolio.generation['powerSolar']/10**3),
-        #                   index=pd.date_range(start=self.date, freq='60min', periods=self.portfolio.T))
-        #
-        # self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
-        #                                                          timestamp='optimize_dayAhead'))
-        #
-        # self.performance['saveSchedule'] = np.round(time.time() - start_time, 3)
-        #
-        # # Step 4: build orders from optimization results
-        # # -------------------------------------------------------------------------------------------------------------
-        # start_time = time.time()
-        #
-        # bid_orders = dict()
-        # for i in range(self.portfolio.T):
-        #     bid_orders.update({str(('dem%s' % i, i, 0, str(self.name))): (3000, power_da[i]/10**3, 'x')})
-        #
-        # self.performance['buildOrders'] = np.round(time.time() - start_time, 3)
-        #
-        # # Step 5: send orders to market resp. to mongodb
-        # # -------------------------------------------------------------------------------------------------------------
-        # start_time = time.time()
-        #
-        # self.connections['mongoDB'].set_dayAhead_orders(name=self.name, date=self.date, orders=bid_orders)
-        #
-        # self.performance['sendOrders'] = np.round(time.time() - start_time, 3)
-        #
-        # self.logger.info('DayAhead market scheduling completed')
-        # print('DayAhead market scheduling completed:', self.name)
+        # Step 3: save optimization results
+        df = pd.DataFrame(data=self.portfolio.demand, index=pd.date_range(start=self.date, freq='h', periods=24))
+        df['step'] = 'optimize_day_ahead'
+        df['agent'] = self.name
+        df.index.name = 'time'
+        df.to_sql('demand', con=self.simulation_database, if_exists='append')
 
-    def post_dayAhead(self):
+        df = pd.DataFrame(data=self.portfolio.generation, index=pd.date_range(start=self.date, freq='h', periods=24))
+        df['step'] = 'optimize_day_ahead'
+        df['agent'] = self.name
+        df.index.name = 'time'
+        df.to_sql('generation', con=self.simulation_database, if_exists='append')
+
+        # Step 4: build orders from optimization results
+        start_time = time.time()
+        orders = {t: {'type': 'demand', 'block': t, 'hour': t, 'order': 0, 'name': self.name, 'price': 3000,
+                      'volume': power[t], 'link': -1} for t in self.portfolio.t}
+        df = pd.DataFrame.from_dict(orders, orient='index')
+        df = df.set_index(['block', 'hour', 'order', 'name'])
+        df.to_sql('orders', con=self.simulation_database, if_exists='append')
+
+        self.logger.info(f'Built Orders in {np.round(time.time() - start_time, 2)} seconds')
+
+        self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'grid_calc {self.date}')
+
+    def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('After DayAhead market scheduling started')
 

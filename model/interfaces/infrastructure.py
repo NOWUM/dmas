@@ -27,14 +27,14 @@ class InfrastructureInterface:
             'off_shore': 889
         }
 
-        turbine_typs = pd.read_csv(r'./interfaces/data/technical_parameter_wind.csv')
-        self.pattern_wind = '(?:'
-        for typ in turbine_typs['turbine_type'].to_numpy():
-            self.pattern_wind += str(typ).split('/')[0].replace('-', '') + '|'
-        self.pattern_wind += ')'
-        self.wind_manufacturer = pd.read_csv(r'./interfaces/data/manufacturer_wind.csv', index_col=0, sep=';')
-        self.wind_types = pd.read_excel(r'./y.xlsx')
-        self.manufacturer = self.wind_types['manu'].unique()
+        #turbine_typs = pd.read_csv(r'./interfaces/data/technical_parameter_wind.csv')
+        #self.pattern_wind = '(?:'
+        #for typ in turbine_typs['turbine_type'].to_numpy():
+        #    self.pattern_wind += str(typ).split('/')[0].replace('-', '') + '|'
+        #self.pattern_wind += ')'
+        #self.wind_manufacturer = pd.read_csv(r'./interfaces/data/manufacturer_wind.csv', index_col=0, sep=';')
+        #self.wind_types = pd.read_excel(r'./y.xlsx')
+        #self.manufacturer = self.wind_types['manu'].unique()
 
     def get_power_plant_in_area(self, area=520, fuel_type='lignite'):
 
@@ -85,7 +85,7 @@ class InfrastructureInterface:
                 df['on'] = 1                                                # on counter --> Plant is on till 1 hour
                 df['off'] = 0                                               # off counter --> Plant is on NOT off
                 df['eta'] = 30                                              # efficiency
-                df['chi'] = 1                                               # emission factor [t/MWh therm]
+                df['chi'] = 1.                                              # emission factor [t/MWh therm]
                 df['startCost'] = 100 * df['maxPower']                      # starting cost [€/MW Rated]
                 df['turbineTyp'] = [mastr_codes_fossil.loc[str(x), 'value'] # convert int to string
                                     if x is not None else None for x in df['turbineTyp'].to_numpy(int)]
@@ -145,9 +145,10 @@ class InfrastructureInterface:
                 # Set technical parameter corresponding to the type (0, 2000, 2018)
                 technical_parameter = pd.read_csv(fr'./interfaces/data/technical_parameter_{fuel_type}.csv',
                                                   sep=';', decimal=',', index_col=0)
+
                 for line, row in df.iterrows():
                     df.at[line, 'minPower'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'minPower'] / 100
-                    df.at[line, 'P0'] = df.at[line, 'minPower'] + 0.1
+                    df.at[line, 'P0'] = df.at[line, 'minPower']
                     df.at[line, 'gradP'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradP'] * 60 / 100,2)
                     df.at[line, 'gradM'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradM'] * 60 / 100,2)
                     df.at[line, 'eta'] = technical_parameter.at[row['type'], 'eta']
@@ -241,6 +242,8 @@ class InfrastructureInterface:
 
     def get_wind_turbines_in_area(self, area=520, wind_type='on_shore'):
 
+        mastr_codes_wind = pd.read_csv(r'./interfaces/data/mastr_codes_wind.csv', index_col=0)
+
         if area in self.centers.keys():
             longitude, latitude = self.centers[area]
 
@@ -258,7 +261,7 @@ class InfrastructureInterface:
                     f'COALESCE("Inbetriebnahmedatum", \'2018-01-01\') as "startDate" ' \
                     f'FROM "EinheitenWind" ' \
                     f'WHERE "EinheitBetriebsstatus" = 35 ' \
-                    f'AND "Lage" = {self.wind_codes[wind_type]}'
+                    f'AND "Lage" = {mastr_codes_wind.loc[wind_type, "value"]}'
             if wind_type == 'on_shore':
                 query += f' AND "Postleitzahl" >= {area * 100} AND "Postleitzahl" < {area * 100 + 100};'
 
@@ -276,7 +279,7 @@ class InfrastructureInterface:
                 df['nordicSea'] = df['nordicSea'].fillna(0)
                 df['balticSea'] = df['balticSea'].fillna(0)
                 # get name of manufacturer
-                df['manufacturer'] = [self.wind_manufacturer.loc[x].Wert for x in df['manufacturer']]
+                df['manufacturer'] = [mastr_codes_wind.loc[str(x), 'value'] for x in df['manufacturer'].to_numpy(int)]
                 # try to find the correct type TODO: Check Pattern of new turbines
                 #df['typ'] = [str(typ).replace(' ', '').replace('-', '').upper() for typ in df['typ']]
                 #df['typ'] = [None if re.search(self.pattern_wind, typ) is None else re.search(self.pattern_wind, typ).group()

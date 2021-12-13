@@ -46,7 +46,6 @@ class PowerPlantPortfolio(PortfolioModel):
         t = time.time()
         for model in tqdm(self.energy_systems):
             for key, value in model.generation.items():
-                print(value)
                 self.generation[str(model.power_plant['fuel']).replace('_combined', '')] += value
             for key, value in model.demand.items():
                 self.demand[key] += value
