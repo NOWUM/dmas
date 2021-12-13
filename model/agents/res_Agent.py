@@ -100,7 +100,7 @@ class ResAgent(BasicAgent):
 
     def optimize_day_ahead(self):
         """Scheduling before DayAhead Market"""
-        self.logger.info('DayAhead market scheduling started')
+        self.logger.info(f'DayAhead market scheduling started {self.date}')
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
@@ -128,7 +128,7 @@ class ResAgent(BasicAgent):
         df_mrk['step'] = 'optimize_day_ahead'
         df_mrk['agent'] = self.name
         df_mrk.index.name = 'time'
-        # df_mrk.to_sql('demand', con=self.simulation_database, if_exists='append')
+        df_mrk.to_sql('demand', con=self.simulation_database, if_exists='append')
 
         df_mrk = pd.DataFrame(data=self.portfolio_mrk.generation, index=pd.date_range(start=self.date, freq='h', periods=24))
         df_eeg = pd.DataFrame(data=self.portfolio_eeg.generation, index=pd.date_range(start=self.date, freq='h', periods=24))
@@ -139,7 +139,7 @@ class ResAgent(BasicAgent):
         df_mrk['step'] = 'optimize_day_ahead'
         df_mrk['agent'] = self.name
         df_mrk.index.name = 'time'
-        # df_mrk.to_sql('generation', con=self.simulation_database, if_exists='append')
+        df_mrk.to_sql('generation', con=self.simulation_database, if_exists='append')
 
         # Step 4: build orders from optimization results
         start_time = time.time()

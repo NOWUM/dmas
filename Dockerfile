@@ -2,6 +2,11 @@ FROM python:3.9-slim
 
 ENV TZ="Europe/Berlin"
 
+# Switch to root for install
+USER root
+
+RUN apt-get update && apt-get install --no-install-recommends -y gcc g++ libglpk-dev glpk-utils
+
 COPY ./requirements.txt .
 RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt

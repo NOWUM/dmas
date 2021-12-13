@@ -26,7 +26,7 @@ class CtlAgent(BasicAgent):
         self.agent_list = []
         self.cleared = False
 
-    def get_agents(self):
+    def set_agents(self):
         headers = {'content-type': 'application/json', }
         response = requests.get('http://rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
         agents = response.json()
@@ -34,6 +34,7 @@ class CtlAgent(BasicAgent):
             name = agent['name']
             if name[:3] in ['DEM', 'RES', 'STR', 'PWP']:
                 self.agent_list.append(name)
+        self.logger.info(f'{len(self.agent_list)} agent are running')
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
@@ -56,7 +57,7 @@ class CtlAgent(BasicAgent):
 
     def simulation_routine(self):
         self.logger.info('simulation started')
-        self.agent_list = self.get_agents()
+        self.set_agents()
         for date in pd.date_range(start=self.start_date, end=self.stop_date, freq='D'):
             if self.sim_stop:
                 self.logger.info('simulation terminated')
@@ -77,7 +78,7 @@ class CtlAgent(BasicAgent):
                     # 4. Step: Publish Market Results
                     self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'result_dayAhead {date}')
                     # 5. Step: Rest agent list and cleared flag for next day
-                    self.agent_list = self.get_agents()
+                    self.set_agents()
                     self.cleared = False
 
                     # TODO: for first day add primary keys to tables
@@ -98,18 +99,18 @@ class CtlAgent(BasicAgent):
                 <form method="POST" action="/start" style="display: flex;flex-direction: column;">
                     <span style="margin-bottom: 20px;">
                         <label for="start_date">Start Date</label><br>
-                        <data type="date" id="start_date" name="start_date" value="1995-01-01" />
+                        <input type="date" id="start_date" name="start_date" value="1995-01-01" />
                     </span>
                     <span style="margin-bottom: 20px;">
                         <label for="end_date">End Date</label><br>
-                        <data type="date" id="end_date" name="end_date" value="1995-02-01" />
+                        <input type="date" id="end_date" name="end_date" value="1995-02-01" />
                     </span>
-                    <data type="submit" value="Start Simulation">
+                    <input type="submit" value="Start Simulation">
                 </form>'''
             else:
                 content = '''
                 <form method="POST" action="/stop" style="display: flex;flex-direction: column;">
-                    <data type="submit" value="Stop Simulation">
+                    <input type="submit" value="Stop Simulation">
                 </form>'''
             return f'''
                 <div center style="width: 60%; margin: auto; height: 80%" >
@@ -129,8 +130,8 @@ class CtlAgent(BasicAgent):
         @app.route('/start', methods=['POST'])
         def run_simulation():
             rf = request.form
-            self.start_date = rf.get('start', '2018-01-01')
-            self.stop_date = rf.get('stop', '2018-02-01')
+            self.start_date = rf.get('start', '1995-01-01')
+            self.stop_date = rf.get('stop', '1995-02-01')
 
             if not self.sim_start:
                 simulation = threading.Thread(target=self.simulation_routine)

@@ -22,20 +22,6 @@ services:
     ports:
         - 9090:80
 
-  gurobi:
-    image: gurobi/compute:latest
-    container_name: gurobi_compute
-    ports:
-        - 61000:61000
-    command: --hostname=149.201.195.139
-    volumes:
-      - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic:ro
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
-
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management

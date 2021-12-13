@@ -36,6 +36,7 @@ class PwpAgent(BasicAgent):
 
         df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
         df['agent'] = self.name
+        df.index.name = 'time'
         df.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
@@ -186,8 +187,7 @@ class PwpAgent(BasicAgent):
                             # check if delta > 0
                             if delta[hour] > 0:
                                 # calculate variable cost for the hour and set it as requested price
-                                price = np.round(
-                                    (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
+                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
                                 power = np.round(0.2 * delta[hour], 2)
                                 # split volume in five orders and add them to order_book
                                 for order in range(5):
@@ -225,6 +225,9 @@ class PwpAgent(BasicAgent):
                     last_power = result['power']  # set last_power to current power
 
         df = pd.DataFrame.from_dict(order_book, orient='index')
+        df['type'] = 'generation'
+        df.columns = ['price', 'volume', 'link', 'type']
+        df.index = pd.MultiIndex.from_tuples(df.index, names=["block", "hour", "order", "name"])
         df.to_sql('orders', con=self.simulation_database, if_exists='append')
 
         self.logger.info(f'Built Orders in {np.round(time.time() - start_time, 2)} seconds')
