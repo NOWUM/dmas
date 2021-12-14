@@ -2,6 +2,7 @@ import gurobipy as gby
 import numpy as np
 import pandas as pd
 
+
 class Market:
 
     def __init__(self):

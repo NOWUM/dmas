@@ -2,30 +2,11 @@
 import os
 import numpy as np
 import pandas as pd
-from copy import deepcopy
 from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, maximize, value, quicksum
 
 # model modules
 from systems.basic_system import EnergySystem
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
-
-
-#     for offset in self.step_width:
-#         # a start can only prevented if the last power of the current day is zero
-#         starts.update({offset: dict(prevented=False, hours=[] , delta=0)})
-#         if self.portfolio_results[key][offset]['power'][23] == 0:
-#             # if the last power is zero, than one or more hours can be zero
-#             hours = np.argwhere(self.portfolio_results[key][offset]['power'][:24] == 0).reshape((-1,))
-#             # for these hours the power of the shadow portfolio must be greater than zero
-#             # then a start is prevented
-#             prevent_start = all(self.shadow_results[key][offset]['power'][hours] > 0)
-#             obj_portfolio = self.portfolio_results[key][offset]['obj']
-#             obj_shadow = self.shadow_results[key][offset]['obj']
-#             delta = obj_shadow - obj_portfolio
-#             # to implement an offset an additional profit of 5% must be reached
-#             percentage = delta / obj_portfolio if obj_portfolio else 0
-#             if prevent_start and percentage > 0.05:
-#                 starts.update({offset: dict(prevented=True, hours = hours, delta = delta - d_delta)})
 
 
 class PowerPlant(EnergySystem):

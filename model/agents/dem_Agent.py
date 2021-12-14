@@ -58,10 +58,7 @@ class DemAgent(BasicAgent):
         self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        df['agent'] = self.name
-        df.index.name = 'time'
-        df.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
+
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -71,14 +68,22 @@ class DemAgent(BasicAgent):
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
 
+        if 'set_capacities' in message:
+            self.set_capacities()
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
             self.post_day_ahead()
 
+    def set_capacities(self):
+        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
+        df['agent'] = self.name
+        df.index.name = 'time'
+        df.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
+
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
-        self.logger.info('Starting day ahead optimization')
+        self.logger.info('starting day ahead optimization')
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
@@ -91,9 +96,9 @@ class DemAgent(BasicAgent):
         start_time = time.time()
         # Step 2: optimization
         power = self.portfolio.optimize()
-        self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
 
-        # Step 3: save optimization results
+        # save optimization results
         df = pd.DataFrame(data=self.portfolio.demand, index=pd.date_range(start=self.date, freq='h', periods=24))
         df['step'] = 'optimize_day_ahead'
         df['agent'] = self.name
@@ -106,65 +111,33 @@ class DemAgent(BasicAgent):
         df.index.name = 'time'
         df.to_sql('generation', con=self.simulation_database, if_exists='append')
 
-        # Step 4: build orders from optimization results
+        # Step 3: build orders
         start_time = time.time()
-        orders = {t: {'type': 'demand', 'block': t, 'hour': t, 'order': 0, 'name': self.name, 'price': 3000,
+        orders = {t: {'type': 'demand', 'block_id': t, 'hour': t, 'order_id': 0, 'name': self.name, 'price': 3000,
                       'volume': power[t], 'link': -1} for t in self.portfolio.t}
         df = pd.DataFrame.from_dict(orders, orient='index')
-        df = df.set_index(['block', 'hour', 'order', 'name'])
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
         df.to_sql('orders', con=self.simulation_database, if_exists='append')
+        self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')
 
-        self.logger.info(f'Built Orders in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
 
-        self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'grid_calc {self.date}')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
-        self.logger.info('After DayAhead market scheduling started')
+        self.logger.info('starting day ahead adjustments')
 
-        # Step 6: get market results and adjust generation an strategy
-        # -------------------------------------------------------------------------------------------------------------
+        # Step 1: get market results
         start_time = time.time()
 
         # query the DayAhead results
-        ask = self.connections['influxDB'].get_ask_da(self.date, self.name)            # volume to buy
-        bid = self.connections['influxDB'].get_bid_da(self.date, self.name)            # volume to sell
-        prc = self.connections['influxDB'].get_prc_da(self.date)                       # market clearing price
-        profit = (ask - bid) * prc
+        agent_volume = pd.read_sql(f"Select hour, sum(volume) from orders where name = '{self.name}' group by hour",
+                                   self.simulation_database)
 
-        self.week_price_list.remember_price(prcToday=prc)
+        print(agent_volume)
 
-        power_da = np.asarray(self.portfolio.optimize(), np.float)                     # [kW]
-
-        self.performance['adjustResult'] = time.time() - start_time
-
-        # Step 7: save adjusted results in influxdb
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = time.time()
-
-        df = pd.DataFrame(data=dict(powerTotal=power_da/10**3, heatTotal=self.portfolio.demand['heat']/10**3,
-                                    powerSolar=self.portfolio.generation['powerSolar']/10**3,
-                                    profit=profit))
-        df.index = pd.date_range(start=self.date, freq='60min', periods=len(df))
-        self.connections['influxDB'].save_data(df, 'Areas', dict(typ=self.typ, agent=self.name, area=self.plz,
-                                                                 timestamp='post_dayAhead'))
-
-        self.performance['saveResult'] = np.round(time.time() - start_time, 3)
-
-        self.logger.info('After DayAhead market adjustment completed')
-        print('After DayAhead market adjustment completed:', self.name)
-        self.logger.info('Next day scheduling started')
-
-        # Step 8: retrain forecast methods and learning algorithm
-        # -------------------------------------------------------------------------------------------------------------
-        start_time = time.time()
-
-        # No Price Forecast  used actually
-        self.week_price_list.put_price()
-
-        self.performance['nextDay'] = np.round(time.time() - start_time, 3)
-
-        df = pd.DataFrame(data=self.performance, index=[self.date])
-        self.connections['influxDB'].save_data(df, 'Performance', dict(typ=self.typ, agent=self.name, area=self.plz))
-
-        self.logger.info('Next day scheduling completed')
+        start_date = self.date.date()
+        end_date = (self.date + pd.DateOffset(days=1)).date()
+        prices = pd.read_sql(f"Select time, price from market where time >= '{start_date}' and time < '{end_date}'",
+                                   self.simulation_database)
+        print(prices)

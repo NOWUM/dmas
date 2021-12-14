@@ -69,9 +69,7 @@ class BasicAgent:
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-
-        if 'kill' in message or self.name in message or self.typ + '_all' in message:
-            self.__del__()
+        print(message)
 
     def run(self):
         self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)

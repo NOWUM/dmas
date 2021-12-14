@@ -28,6 +28,9 @@ class DemandPortfolio(PortfolioModel):
         super().__init__(T, date)
         self.worker = mp.Pool(4)
 
+    def __del__(self):
+        self.worker.close()
+
     def add_energy_system(self, energy_system):
 
         if energy_system['type'] == 'battery':

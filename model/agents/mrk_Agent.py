@@ -1,10 +1,10 @@
 # third party modules
-import time as tme
+import time as time
 import pandas as pd
 import numpy as np
 
 # model modules
-from systems.market import Market
+from systems.market_ import DayAheadMarket
 from agents.basic_Agent import BasicAgent
 
 
@@ -13,97 +13,43 @@ class MarketAgent(BasicAgent):
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
         super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
         self.logger.info('starting the agent')
-        start_time = tme.time()
-        self.market = Market()
+        start_time = time.time()
+        self.market = DayAheadMarket()
 
-        self.logger.info('setup of the agent completed in %s' % (tme.time() - start_time))
+        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
 
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-        # Call for Market Clearing
-        # -----------------------------------------------------------------------------------------------------------
+
         if 'dayAhead_clearing' in message:
-            try:
-                self.clearing()
-            except:
-                self.logger.exception('Error while caluctating market clearing')
+            self.market_clearing()
 
-    def get_orders(self, name, date):
-        ask_orders = {}                                                     # all orders (ask)
-        bid_orders = {}                                                     # all orders (bid)
-        wait = True                                                         # check if orders from agent are delivered
-        start = tme.time()                                                  # start waiting and collect orders
-        while wait:
-            x = self.connections['mongoDB'].orderDB[date].find_one({"_id": name})
-            if x is not None:
-                if 'DayAhead' in x.keys():
-                    for key, value in x['DayAhead'].items():
-                        key = eval(key)
-                        if 'dem' in key[0]:
-                            key = (int(key[0].replace('dem', '')), key[1], key[2], key[3])
-                            bid_orders.update({key: (value[0], np.abs(value[1]), value[2])})
-                        elif 'gen' in key[0]:
-                            key = (int(key[0].replace('gen', '')), key[1], key[2], key[3])
-                            ask_orders.update({key: (value[0], np.abs(value[1]), value[2])})
-                    wait = False
-                else:
-                    pass
-            else:
-                print('waiting for %s' % name)
-                tme.sleep(1)                                                # wait a second and ask mongodb again
-            end = tme.time()                                                # current timestamp
-            if end - start >= 120:                                          # wait maximal 120 seconds
-                print('get no orders of Agent %s' % name)
-                wait = False
+    def market_clearing(self):
+        df = pd.read_sql("Select * from orders", self.simulation_database)
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
-        orders = (ask_orders, bid_orders)
-        return orders
+        ask = df.loc[df['type'] == 'generation']
+        ask_orders = {}
+        for key, value in ask.to_dict(orient='index').items():
+            ask_orders.update({key: (value['price'], value['volume'], value['link'])})
 
-    def clearing(self):
+        bid_orders = {}
+        bid = df.loc[df['type'] == 'demand']
+        for key, value in bid.to_dict(orient='index').items():
+            bid_orders.update({key: (value['price'], value['volume'], value['link'])})
 
-        agent_ids = self.connections['mongoDB'].get_agents(sorted=False)
-        total_orders = [self.get_orders(agent, str(self.date.date())) for agent in agent_ids
-                        if 'MRK' not in agent and 'NET' not in agent]
+        market = DayAheadMarket()
 
-        for order in total_orders:
-            self.market.set_parameter(ask=order[0], bid=order[1])
+        market.set_parameter(bid_orders, ask_orders)
+        market_result, orders = market.optimize()
 
-        result = self.market.optimize()
+        market_result.index = pd.date_range(start=self.date, periods=24, freq='h')
+        market_result.index.name = 'time'
 
-        # save result in influxdb
-        time = self.date
-        for element in result:
-            # save all asks
-            ask = pd.DataFrame.from_dict(element[0])
-            ask.columns = ['power']
-            ask['names'] = [name.split('-')[0] for name in ask.index]
-            ask = ask.groupby('names').sum()
-            ask['order'] = ['ask' for _ in range(len(ask))]
-            ask['typ'] = [name.split('_')[0] for name in ask.index]
-            ask['names'] = [name for name in ask.index]
-            ask['area'] = [name.split('_')[1] for name in ask.index]
-            ask.index = [time for _ in range(len(ask))]
-            self.connections['influxDB'].influx.write_points(dataframe=ask, measurement='DayAhead', tag_columns=['names', 'order',
-                                                                                               'typ', 'area'])
-            # save all bids
-            bid = pd.DataFrame.from_dict(element[1])
-            bid.columns = ['power']
-            bid['names'] = [name for name in bid.index]
-            bid['order'] = ['bid' for _ in range(len(bid))]
-            bid['typ'] = [name.split('_')[0] for name in bid['names'].to_numpy()]
-            bid['area'] = [name.split('_')[1] for name in bid.index]
-            bid.index = [time for _ in range(len(bid))]
-            self.connections['influxDB'].influx.write_points(dataframe=bid, measurement='DayAhead', tag_columns=['names', 'order',
-                                                                                               'typ', 'area'])
-            # save mcp
-            mcp = pd.DataFrame(data=[np.asarray(element[2], dtype=float)], index=[time], columns=['price'])
-            self.connections['influxDB'].influx.write_points(dataframe=mcp, measurement='DayAhead')
-            # next hour
-            time += pd.DateOffset(hours=1)
+        orders.to_sql('orders', self.simulation_database, if_exists='replace')
+        market_result.to_sql('market', self.simulation_database, if_exists='append')
 
-        self.connections['mongoDB'].set_market_status(name='market', date=self.date)
-
-        self.market.reset_parameter()
+        self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')
