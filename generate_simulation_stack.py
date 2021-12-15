@@ -10,6 +10,7 @@ output.append(f'''
   simulationdb:
     container_name: simulationdb
     image: timescale/timescaledb:latest-pg12
+    command: postgres -c 'max_connections=300' -B 4096MB
     restart: always
     environment:
       - POSTGRES_USER=dMAS
