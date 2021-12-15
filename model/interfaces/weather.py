@@ -90,8 +90,8 @@ class WeatherInterface:
             query = f"SELECT avg(radiation_dif) FROM cosmo WHERE timestamp = '{timestamp.isoformat()}';"
             res = self.engine.execute(query)
             value = res.fetchall()[0][0]
-            data_avg.append({'time': timestamp, 'data': value})
-        return pd.DataFrame(data_avg).set_index('dni', drop=True)
+            data_avg.append({'time': timestamp, 'dni': value})
+        return pd.DataFrame(data_avg).set_index('time', drop=True)
 
     def get_temperature(self, date=pd.to_datetime('1995-1-1')):
         data_avg = []

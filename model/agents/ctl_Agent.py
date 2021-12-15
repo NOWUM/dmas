@@ -5,6 +5,7 @@ from flask import Flask, request, redirect
 import threading
 import requests
 import numpy as np
+from tqdm import tqdm
 
 # model modules
 from agents.basic_Agent import BasicAgent
@@ -24,7 +25,7 @@ class CtlAgent(BasicAgent):
         self.start_date = pd.to_datetime('2018-01-01')
         self.stop_date = pd.to_datetime('2018-02-01')
         self.logger.info('setup of the agent completed in %s' % (time.time() - start_time))
-        self.agent_list = []
+        self.waiting_list = []
         self.cleared = False
 
     def set_agents(self):
@@ -34,8 +35,8 @@ class CtlAgent(BasicAgent):
         for agent in agents:
             name = agent['name']
             if name[:3] in ['DEM', 'RES', 'STR', 'PWP']:
-                self.agent_list.append(name)
-        self.logger.info(f'{len(self.agent_list)} agent(s) are running')
+                self.waiting_list.append(name)
+        self.logger.info(f'{len(self.waiting_list)} agent(s) are running')
 
     def get_agents(self):
         headers = {'content-type': 'application/json', }
@@ -46,18 +47,27 @@ class CtlAgent(BasicAgent):
 
     def wait_for_agents(self):
         t = time.time()
-        while len(self.agent_list) > 0:
-            time.sleep(5)
-            if len(self.agent_list) > 0:
-                self.logger.info(f'still waiting for: {self.agent_list}')
-            if time.time() - t > 120:
-                current_agents = self.get_agents()
-                for agent in self.agent_list:
-                    if agent not in current_agents:
-                        self.agent_list.remove(agent)
+        total = len(self.waiting_list)
+        still_waiting = len(self.waiting_list)
+        with tqdm(total=total) as pbar:
+            while len(self.waiting_list) > 0:
+                if time.time() - t > 30:
+                    current_agents = self.get_agents()
+                    for agent in self.waiting_list:
+                        if agent not in current_agents:
+                            self.waiting_list.remove(agent)
+                            self.logger.info(f'{agent} left the simulation stack')
+                            self.logger.info(f'removed agent {agent} from current list')
+                        else:
+                            self.logger.info(f'still waiting for {agent}')
+                if time.time() - t > 120:
+                    for agent in self.waiting_list:
+                        self.waiting_list.remove(agent)
                         self.logger.info(f'get no response of {agent}')
-                        self.logger.info(f'removed agent {agent} from waiting list')
-
+                        self.logger.info(f'removed agent {agent} from current list')
+                pbar.update(still_waiting - len(self.waiting_list))
+                still_waiting = len(self.waiting_list)
+                time.sleep(1)
 
     def wait_for_market(self):
         while not self.cleared:
@@ -70,9 +80,9 @@ class CtlAgent(BasicAgent):
         message = body.decode("utf-8")
         agent, date = message.split(' ')
         date = pd.to_datetime(date)
-        if date == self.date and agent in self.agent_list:
-            self.logger.info(f'Agent {agent} set orders')
-            self.agent_list.remove(agent)
+        if date == self.date and agent in self.waiting_list:
+            # self.logger.info(f'Agent {agent} set orders')
+            self.waiting_list.remove(agent)
         if agent == 'MRK_1' and date == self.date:
             self.cleared = True
 
@@ -87,7 +97,7 @@ class CtlAgent(BasicAgent):
     def simulation_routine(self):
         self.logger.info('simulation started')
 
-        for date in pd.date_range(start=self.start_date, end=self.stop_date, freq='D'):
+        for date in tqdm(pd.date_range(start=self.start_date, end=self.stop_date, freq='D')):
             if self.sim_stop:
                 self.logger.info('simulation terminated')
                 break
@@ -159,10 +169,10 @@ class CtlAgent(BasicAgent):
         self.simulation_database.execute(query)
         self.simulation_database.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')
 
-        query = '''CREATE TABLE auction_result ("time" timestamp without time zone, price double precision,
-                                                volume double precision)'''
+        query = '''CREATE TABLE auction_results ("time" timestamp without time zone, price double precision,
+                                                 volume double precision)'''
         self.simulation_database.execute(query)
-        self.simulation_database.execute(f'ALTER TABLE "auction_result" ADD PRIMARY KEY ("time");')
+        self.simulation_database.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
 
         query = '''CREATE TABLE market_results (block_id bigint, hour bigint, order_id bigint, name text, price double precision, 
                                                 volume double precision, link bigint, type text)'''

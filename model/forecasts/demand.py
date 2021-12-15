@@ -15,10 +15,10 @@ class DemandForecast(BasicForecast):
 
     def collect_data(self, date):
         demand = self.market.get_auction_results(date)
-        demand = demand['volume'].to_numpy()
+        values = demand['volume'].to_numpy()
         for i in range(24):
             self.input.append(demand.index[i])
-            self.output.append(demand[i])
+            self.output.append(values[i])
 
     def fit_model(self):
         df = pd.DataFrame(index=self.input, data={'demand': self.output})

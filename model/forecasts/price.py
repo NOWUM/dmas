@@ -36,6 +36,9 @@ class PriceForecast(BasicForecast):
         self.score = 0.
 
         self.price_register = deque(maxlen=8)
+        for _ in range(8):
+            self.price_register.append(default_power_price)
+
 
         self.demand_model = DemandForecast(self.position)
         self.weather_model = WeatherForecast(self.position)
@@ -52,24 +55,26 @@ class PriceForecast(BasicForecast):
         input.append(self.weather.get_diffuse_radiation(date))
         input.append(self.weather.get_direct_radiation(date))
         input.append(self.weather.get_temperature(date))
-        input.append(self.price_register[-1])
+        price_last_week = pd.DataFrame(data=dict(price7d=self.price_register[-1]),
+                                       index=pd.date_range(start=date, freq='h', periods=24))
+        input.append(price_last_week)
         input.append(create_dummies(date))
-        input = pd.concat(input, axis=1).to_numpy().reshape((-1,))
+        input = pd.concat(input, axis=1).to_numpy()
 
-        output = market_result['price'].to_numpy().reshape((-1,))
+        output = market_result['price'].to_numpy()
 
         self.input.append(input)
         self.output.append(output)
 
-        self.price_register.append(market_result['price'])
+        self.price_register.append(output)
 
     def fit_model(self):
-
-        self.scale.fit(np.asarray(self.input))
-        x_std = self.scale.transform(self.input)
-        self.model.fit(x_std, self.output)
+        self.scale.fit(np.asarray(self.input).reshape(-1, 55))
+        x_std = self.scale.transform(np.asarray(self.input).reshape(-1, 55))
+        self.model.fit(x_std, np.asarray(self.output).reshape(-1, ))
         self.fitted = True
-        self.score = self.model.score(x_std, self.output)
+        self.score = self.model.score(x_std, np.asarray(self.output).reshape(-1, ))
+
 
     def forecast(self, date):
         if not self.fitted:
@@ -79,14 +84,17 @@ class PriceForecast(BasicForecast):
             input.append(self.demand_model.forecast(date))
             weather = self.weather_model.forecast(date)
             input.append(weather['wind_speed'])
+            input.append(weather['direction'])
             input.append(weather['dni'])
             input.append(weather['dhi'])
             input.append(weather['temp_air'])
-            input.append(self.price_register[-1])
+            price_last_week = pd.DataFrame(data=dict(price7d=self.price_register[-1]),
+                                           index= pd.date_range(start=date, freq='h', periods=24))
+            input.append(price_last_week)
             input.append(create_dummies(date))
-            x = pd.concat(input, axis=1).to_numpy().reshape((-1,))
-            self.scale.partial_fit(x)
-            x_std = self.scale.transform(x)
+            x = pd.concat(input, axis=1).to_numpy()
+            self.scale.partial_fit(x.reshape(-1, 55))
+            x_std = self.scale.transform(x.reshape(-1, 55))
             power_price = self.model.predict(x_std).reshape((24,))
 
         prices = dict(

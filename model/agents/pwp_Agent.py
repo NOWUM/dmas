@@ -23,6 +23,7 @@ class PwpAgent(ParticipantAgent):
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude))
         self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
+        self.forecast_counter = 10
 
         for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
             power_plants = self.infrastructure_interface.get_power_plant_in_area(area=plz, fuel_type=fuel)
@@ -34,6 +35,8 @@ class PwpAgent(ParticipantAgent):
         self.logger.info('Power Plants added')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+
+
 
     def get_order_book(self):
         order_book = {}
@@ -262,5 +265,14 @@ class PwpAgent(ParticipantAgent):
         # save optimization results
         self.set_generation(self.portfolio, 'post_dayAhead')
         self.set_demand(self.portfolio, 'post_dayAhead')
+
+        self.weather_forecast.collect_data(self.date)
+        self.price_forecast.collect_data(self.date)
+        self.forecast_counter -= 1
+
+        if self.forecast_counter == 0:
+            self.price_forecast.fit_model()
+            self.forecast_counter = 10
+            self.logger.info(f'fitted price forecast with R²: {self.price_forecast.score}')
 
         self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

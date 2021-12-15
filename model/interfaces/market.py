@@ -19,7 +19,7 @@ class MarketInterface():
     def get_auction_results(self, date):
         start_date, end_date = self.get_interval(date)
 
-        query = f"select price, volume from auction_result where time >= '{start_date}'" \
+        query = f"select price, volume from auction_results where time >= '{start_date}'" \
                 f"and time < '{end_date}'"
 
         df = pd.read_sql(query, self.engine)
