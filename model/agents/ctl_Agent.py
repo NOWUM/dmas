@@ -43,6 +43,28 @@ class CtlAgent(BasicAgent):
         agents = response.json()
         return [agent['name'] for agent in agents if agent['name'][:3] in ['DEM', 'RES', 'STR', 'PWP']]
 
+
+    def wait_for_agents(self):
+        t = time.time()
+        while len(self.agent_list) > 0:
+            time.sleep(5)
+            if len(self.agent_list) > 0:
+                self.logger.info(f'still waiting for: {self.agent_list}')
+            if time.time() - t > 30:
+                current_agents = self.get_agents()
+                for agent in self.agent_list:
+                    if agent not in current_agents:
+                        self.agent_list.remove(agent)
+                        self.logger.info(f'get no response of {agent}')
+                        self.logger.info(f'removed agent {agent} from waiting list')
+
+
+    def wait_for_market(self):
+        while not self.cleared:
+            self.logger.info(f'still waiting for market clearing')
+            time.sleep(1)
+        self.cleared = False
+
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
         message = body.decode("utf-8")
@@ -64,46 +86,48 @@ class CtlAgent(BasicAgent):
 
     def simulation_routine(self):
         self.logger.info('simulation started')
-        self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
-                                   body=f'set_capacities {self.start_date.date()}')
-        self.set_agents()
+
         for date in pd.date_range(start=self.start_date, end=self.stop_date, freq='D'):
             if self.sim_stop:
                 self.logger.info('simulation terminated')
                 break
             else:
                 try:
-                    start_time = time.time()  # timestamp to measure simulation time
+                    start_time = time.time()
+
                     self.date = date.date()
-                    # 1.Step: Run optimization for dayAhead Market
+
+                    # 1.Step: optimization for dayAhead Market
+                    self.set_agents()
                     self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
                                                body=f'opt_dayAhead {date.date()}')
-                    t = time.time()
-                    while len(self.agent_list) > 0:
-                        time.sleep(1)
-                        if time.time() - t > 30:
-                            current_agents = self.get_agents()
-                            for agent in self.agent_list:
-                                if agent not in current_agents:
-                                    self.agent_list.remove(agent)
 
-                    # 2. Step: Run Market Clearing
+                    self.wait_for_agents()
+                    self.logger.info(f'{len(self.get_agents())} agents set their order books')
+
+                    # 2. Step: run market clearing
                     self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
                                                body=f'dayAhead_clearing {date.date()}')
+
+                    self.wait_for_market()
+                    self.logger.info(f'day ahead clearing finished')
+
+                    # 3. Step: agents have to adjust their demand and generation
+                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
+                                               body=f'result_dayAhead {date.date()}')
+
+                    # 4. Step: reset the order_book table for the next day
+                    self.simulation_database.execute("DELETE FROM order_book")
+
+                    self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
+
+                    #self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
+                    #                           body=f'set_capacities {self.start_date.date()}')
+
                     # 3. Step: Run Power Flow calculation
                     #self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
                     #                           body=f'grid_calc {date.date()}')
-                    while not self.cleared:
-                        print('Waiting for clearing')
-                        time.sleep(1)
-                    # 4. Step: Publish Market Results
-                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
-                                               body=f'result_dayAhead {date.date()}')
-                    # 5. Step: Rest agent list and cleared flag for next day
-                    self.set_agents()
-                    self.simulation_database.execute("DELETE FROM order_book")
-                    self.cleared = False
-                    self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
+
                 except Exception as e:
                     print(repr(e))
                     self.logger.exception('Error in Simulation')

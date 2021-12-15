@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
-    minimize, value, quicksum, Set, ConstraintList
+from pyomo.environ import  Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
+    minimize, quicksum, ConstraintList
 
 
 class DayAheadMarket:

@@ -14,23 +14,27 @@ class DemandForecast(BasicForecast):
         self.model = {i: [] for i in range(7)}
 
     def collect_data(self, date):
-        t = pd.date_range(start=date, periods=24, freq='h')
-        demand = self.simulation_database.get_demand(date)
+        demand = self.market.get_auction_results(date)
+        demand = demand['volume'].to_numpy()
         for i in range(24):
-            self.input.append(t[i])
+            self.input.append(demand.index[i])
             self.output.append(demand[i])
 
     def fit_model(self):
-        df = pd.DataFrame.from_dict({self.input[i]: self.output[i] for i in range(len(self.input))}, orient='index')
+        df = pd.DataFrame(index=self.input, data={'demand': self.output})
         for i in range(7):
-            day = df.loc[df.index.dayofweek == i, :]
-            self.model[i] = day.groupby(day.index.hour).mean().to_numpy()
+            day = df.loc[[d.dayofweek == i for d in df.index], :]
+            self.model[i] = day.groupby(day.index.hour).mean()
 
     def forecast(self, date):
         if self.fitted:
-            demand = self.model[int(pd.to_datetime(date)).dayofweek].reshape((-1,))
+            demand = self.model[int(pd.to_datetime(date).dayofweek)]
+            demand.index = pd.date_range(start=date, freq='h', periods=len(demand))
+            demand.index.name = 'time'
         else:
-            demand = default_demand
+            demand = pd.DataFrame(index=pd.date_range(start=date, freq='h', periods=len(default_demand)),
+                                  data={'demand': default_demand})
+            demand.index.name = 'time'
 
-        return pd.DataFrame(index=pd.date_range(start=date, periods=24, freq='h'), data=dict(demand=demand))
+        return demand
 

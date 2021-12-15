@@ -1,11 +1,10 @@
 # third party modules
 from collections import deque
-import pandas as pd
 from pvlib.location import Location
 
 
-from interfaces.simulation import SimulationInterface
-from interfaces.weather import Weather
+from interfaces.market import MarketInterface
+from interfaces.weather import WeatherInterface
 
 
 class BasicForecast:
@@ -15,8 +14,8 @@ class BasicForecast:
         self.output = deque(maxlen=1000)
         self.counter = 0
         self.fitted = False
-        self.simulation_database = SimulationInterface()
-        self.weather_database = Weather()
+        self.market = MarketInterface()
+        self.weather = WeatherInterface()
         self.position = position
         self.location = Location(longitude=position['lon'], latitude=position['lat'])
 

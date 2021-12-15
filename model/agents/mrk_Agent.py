@@ -50,5 +50,6 @@ class MarketAgent(BasicAgent):
 
         market_results.to_sql('market_results', self.simulation_database, if_exists='replace')
         auction_results.to_sql('auction_results', self.simulation_database, if_exists='append')
+        self.logger.info('cleared market and saved result in database')
 
         self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')

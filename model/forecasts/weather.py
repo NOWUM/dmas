@@ -13,10 +13,10 @@ class WeatherForecast(BasicForecast):
 
     def forecast(self, date):
         random_factor = np.random.uniform(low=0.95, high=1.05)
-        temp_air = self.weather_database.get_temperature(date) * random_factor
-        wind_speed = self.weather_database.get_wind(date) * random_factor
-        dhi = self.weather_database.get_direct_radiation(date) * random_factor
-        dni = self.weather_database.get_diffuse_radiation(date) * random_factor
+        temp_air = self.weather.get_temperature(date) * random_factor
+        wind_speed = self.weather.get_wind(date) * random_factor
+        dhi = self.weather.get_direct_radiation(date) * random_factor
+        dni = self.weather.get_diffuse_radiation(date) * random_factor
         df = pd.concat([temp_air, wind_speed, dhi, dni], axis=1)
         df['ghi'] = df['dhi'] + df['dni']
         return df
@@ -27,10 +27,10 @@ class WeatherForecast(BasicForecast):
         zenith = self.sun_position.loc[self.sun_position.index.day_of_year == date.day_of_year, 'zenith'].to_numpy()
 
         random_factor = np.random.uniform(low=0.95, high=1.05)
-        temp_air = self.weather_database.get_temperature_in_area(area, date) * random_factor
-        wind_speed = self.weather_database.get_wind_in_area(area, date) * random_factor
-        dhi = self.weather_database.get_direct_radiation_in_area(area, date) * random_factor
-        dni = self.weather_database.get_diffuse_radiation_in_area(area, date) * random_factor
+        temp_air = self.weather.get_temperature_in_area(area, date) * random_factor
+        wind_speed = self.weather.get_wind_in_area(area, date) * random_factor
+        dhi = self.weather.get_direct_radiation_in_area(area, date) * random_factor
+        dni = self.weather.get_diffuse_radiation_in_area(area, date) * random_factor
         df = pd.concat([temp_air, wind_speed, dhi, dni], axis=1)
         df['ghi'] = df['dhi'] + df['dni']
         df['azimuth'] = azimuth

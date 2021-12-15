@@ -64,5 +64,8 @@ def create_dummies(d):
 
     dummies = pd.concat([get_dummies(x) for x in pd.date_range(start=d, periods=366)])
     dummies = pd.get_dummies(dummies).replace(False, 0)
+    dummies = dummies.iloc[:24, :]
+    dummies.index = pd.date_range(start=d, freq='h', periods=24)
+    dummies.index.name = 'time'
 
-    return dummies.to_numpy()[:24,:]
+    return dummies

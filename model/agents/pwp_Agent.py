@@ -246,15 +246,21 @@ class PwpAgent(ParticipantAgent):
 
         # query the DayAhead results
         for model in self.portfolio.energy_systems:
+            power = np.zeros(24)
             committed_power = pd.read_sql(f"Select hour, sum(volume) as volume from market_results "
                                           f"where name = '{model.name}' group by hour",
                                           self.simulation_database)
-            committed_power = committed_power['volume'].to_numpy()
-            model.committed_power = committed_power
+
+            for index, row in committed_power.iterrows():
+                power[int(row.hour)] = float(row.volume)
+
+            model.committed_power = power
             model.build_model()
 
         self.portfolio.optimize()
 
         # save optimization results
-        self.set_generation(self.portfolio, 'optimization_dayAhead')
-        self.set_demand(self.portfolio, 'optimization_dayAhead')
+        self.set_generation(self.portfolio, 'post_dayAhead')
+        self.set_demand(self.portfolio, 'post_dayAhead')
+
+        self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

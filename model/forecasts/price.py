@@ -44,33 +44,47 @@ class PriceForecast(BasicForecast):
         self.demand_model.collect_data(date)
         self.weather_model.collect_data(date)
 
-        demand = self.simulation_database.get_demand(date)
-        wind = self.weather_database.get_wind(date)
-        radiation = self.weather_database.get_direct_radiation(date) + self.weather_database.get_diffuse_radiation(date)
-        temperature = self.weather_database.get_temperature(date)
-        price = self.simulation_database.get_power_price(date)
+        input = []
 
-        self.input.append(np.hstack((demand, wind, radiation, temperature, self.price_register[-1],
-                                     self.price_register[0], create_dummies(date))))
-        self.output.append(price)
-        self.price_register.append(price)
+        market_result = self.market.get_auction_results(date)
+        input.append(market_result['volume'])
+        input.append(self.weather.get_wind(date))
+        input.append(self.weather.get_diffuse_radiation(date))
+        input.append(self.weather.get_direct_radiation(date))
+        input.append(self.weather.get_temperature(date))
+        input.append(self.price_register[-1])
+        input.append(create_dummies(date))
+        input = pd.concat(input, axis=1).to_numpy().reshape((-1,))
+
+        output = market_result['price'].to_numpy().reshape((-1,))
+
+        self.input.append(input)
+        self.output.append(output)
+
+        self.price_register.append(market_result['price'])
 
     def fit_model(self):
 
-        self.scale.fit(np.asarray(self.input))              # Step 1: scale data
-        x_std = self.scale.transform(self.output)
-        self.model.fit(x_std, self.output)                  # Step 2: fit model
-        self.fitted = True                                  # Step 3: set fitted-flag to true
+        self.scale.fit(np.asarray(self.input))
+        x_std = self.scale.transform(self.input)
+        self.model.fit(x_std, self.output)
+        self.fitted = True
         self.score = self.model.score(x_std, self.output)
 
     def forecast(self, date):
         if not self.fitted:
             power_price = default_power_price
         else:
-            demand = self.demand_model.forecast(date)
-            temperature, wind, radiation = self.weather_model.forecast(date)
-            x = np.concatenate((demand, radiation, wind, temperature, self.price_register[-1], self.price_register[0],
-                                create_dummies(date)), axis=1)
+            input = []
+            input.append(self.demand_model.forecast(date))
+            weather = self.weather_model.forecast(date)
+            input.append(weather['wind_speed'])
+            input.append(weather['dni'])
+            input.append(weather['dhi'])
+            input.append(weather['temp_air'])
+            input.append(self.price_register[-1])
+            input.append(create_dummies(date))
+            x = pd.concat(input, axis=1).to_numpy().reshape((-1,))
             self.scale.partial_fit(x)
             x_std = self.scale.transform(x)
             power_price = self.model.predict(x_std).reshape((24,))
@@ -80,7 +94,11 @@ class PriceForecast(BasicForecast):
             co=np.ones_like(power_price) * default_emission[date.month - 1] * np.random.uniform(0.95, 1.05, 24),
             gas=np.ones_like(power_price) * default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24),
             coal=np.ones_like(power_price) * default_coal * np.random.uniform(0.95, 1.05),
+            lignite = np.ones_like(power_price) * default_lignite * np.random.uniform(0.95, 1.05),
             nuclear=np.ones_like(power_price) * np.random.uniform(0.95, 1.05)
         )
 
-        return pd.DataFrame(index=pd.date_range(start=date, periods=24, freq='h'), data=prices)
+        df = pd.DataFrame(index=pd.date_range(start=date, periods=24, freq='h'), data=prices)
+        df.index.name = 'time'
+
+        return df

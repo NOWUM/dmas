@@ -6,7 +6,7 @@ from datetime import date as dt
 
 # model modules
 from agents.basic_Agent import BasicAgent
-from interfaces.weather import Weather
+from interfaces.weather import WeatherInterface
 
 
 class WtrAgent(BasicAgent):

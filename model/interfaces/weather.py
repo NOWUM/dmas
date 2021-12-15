@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 
-class Weather:
+class WeatherInterface:
 
     def __init__(self, user='opendata', password='opendata', database='weather', host='10.13.10.41', port=5432,
                  table='cosmo'):
@@ -105,7 +105,7 @@ class Weather:
 
 if __name__ == "__main__":
 
-    interface_weather = Weather()
+    interface_weather = WeatherInterface()
 
     temp = interface_weather.get_temperature_in_area(area=3)
     mean_temp = interface_weather.get_temperature()

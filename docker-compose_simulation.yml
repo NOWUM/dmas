@@ -68,272 +68,452 @@ services:
       AGENT_TYPE: 'NET'
       CONNECT: 'True'
 
-  dem747:
-    container_name: dem747
+  dem10:
+    container_name: dem10
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 747
+      PLZ_CODE: 10
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem748:
-    container_name: dem748
+  dem11:
+    container_name: dem11
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 748
+      PLZ_CODE: 11
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem749:
-    container_name: dem749
+  dem12:
+    container_name: dem12
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 749
+      PLZ_CODE: 12
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem750:
-    container_name: dem750
+  dem13:
+    container_name: dem13
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 750
+      PLZ_CODE: 13
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem751:
-    container_name: dem751
+  dem14:
+    container_name: dem14
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 751
+      PLZ_CODE: 14
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem752:
-    container_name: dem752
+  dem15:
+    container_name: dem15
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 752
+      PLZ_CODE: 15
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem753:
-    container_name: dem753
+  dem16:
+    container_name: dem16
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 753
+      PLZ_CODE: 16
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem754:
-    container_name: dem754
+  dem17:
+    container_name: dem17
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 754
+      PLZ_CODE: 17
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem761:
-    container_name: dem761
+  dem18:
+    container_name: dem18
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 761
+      PLZ_CODE: 18
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem762:
-    container_name: dem762
+  dem19:
+    container_name: dem19
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 762
+      PLZ_CODE: 19
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem763:
-    container_name: dem763
+  dem26:
+    container_name: dem26
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 763
+      PLZ_CODE: 26
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem764:
-    container_name: dem764
+  dem27:
+    container_name: dem27
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 764
+      PLZ_CODE: 27
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem765:
-    container_name: dem765
+  dem28:
+    container_name: dem28
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 765
+      PLZ_CODE: 28
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem766:
-    container_name: dem766
+  dem29:
+    container_name: dem29
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 766
+      PLZ_CODE: 29
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem767:
-    container_name: dem767
+  dem30:
+    container_name: dem30
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 767
+      PLZ_CODE: 30
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem768:
-    container_name: dem768
+  dem31:
+    container_name: dem31
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 768
+      PLZ_CODE: 31
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem776:
-    container_name: dem776
+  dem32:
+    container_name: dem32
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 776
+      PLZ_CODE: 32
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem777:
-    container_name: dem777
+  dem41:
+    container_name: dem41
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 777
+      PLZ_CODE: 41
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem778:
-    container_name: dem778
+  dem42:
+    container_name: dem42
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 778
+      PLZ_CODE: 42
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem779:
-    container_name: dem779
+  dem43:
+    container_name: dem43
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 779
+      PLZ_CODE: 43
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem780:
-    container_name: dem780
+  dem44:
+    container_name: dem44
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 780
+      PLZ_CODE: 44
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem781:
-    container_name: dem781
+  dem45:
+    container_name: dem45
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 781
+      PLZ_CODE: 45
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem782:
-    container_name: dem782
+  dem46:
+    container_name: dem46
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 782
+      PLZ_CODE: 46
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem783:
-    container_name: dem783
+  dem47:
+    container_name: dem47
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 783
+      PLZ_CODE: 47
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem784:
-    container_name: dem784
+  dem48:
+    container_name: dem48
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 784
+      PLZ_CODE: 48
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem785:
-    container_name: dem785
+  dem49:
+    container_name: dem49
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 785
+      PLZ_CODE: 49
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem786:
-    container_name: dem786
+  dem61:
+    container_name: dem61
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 786
+      PLZ_CODE: 61
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem787:
-    container_name: dem787
+  dem62:
+    container_name: dem62
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 787
+      PLZ_CODE: 62
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem790:
-    container_name: dem790
+  dem63:
+    container_name: dem63
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 790
+      PLZ_CODE: 63
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
       
-  dem791:
-    container_name: dem791
+  dem64:
+    container_name: dem64
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 791
+      PLZ_CODE: 64
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem65:
+    container_name: dem65
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 65
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem66:
+    container_name: dem66
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 66
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem67:
+    container_name: dem67
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 67
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem68:
+    container_name: dem68
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 68
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem69:
+    container_name: dem69
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 69
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem73:
+    container_name: dem73
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 73
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem74:
+    container_name: dem74
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 74
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem75:
+    container_name: dem75
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 75
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem76:
+    container_name: dem76
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 76
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem77:
+    container_name: dem77
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 77
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem78:
+    container_name: dem78
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 78
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem79:
+    container_name: dem79
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 79
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem80:
+    container_name: dem80
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 80
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem81:
+    container_name: dem81
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 81
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem82:
+    container_name: dem82
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 82
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem83:
+    container_name: dem83
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 83
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem84:
+    container_name: dem84
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 84
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem85:
+    container_name: dem85
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 85
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem86:
+    container_name: dem86
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 86
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'DEM'
+      CONNECT: 'True'
+      
+  dem91:
+    container_name: dem91
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 91
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'DEM'
       CONNECT: 'True'
@@ -608,272 +788,632 @@ services:
       AGENT_TYPE: 'PWP'
       CONNECT: 'True'
       
-  res765:
-    container_name: res765
+  pwp126:
+    container_name: pwp126
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 765
+      PLZ_CODE: 126
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp131:
+    container_name: pwp131
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 131
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp133:
+    container_name: pwp133
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 133
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp135:
+    container_name: pwp135
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 135
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp144:
+    container_name: pwp144
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 144
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp147:
+    container_name: pwp147
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 147
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp152:
+    container_name: pwp152
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 152
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp153:
+    container_name: pwp153
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 153
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp158:
+    container_name: pwp158
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 158
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp170:
+    container_name: pwp170
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 170
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp173:
+    container_name: pwp173
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 173
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp175:
+    container_name: pwp175
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 175
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp180:
+    container_name: pwp180
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 180
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp181:
+    container_name: pwp181
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 181
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp190:
+    container_name: pwp190
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 190
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp204:
+    container_name: pwp204
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 204
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp210:
+    container_name: pwp210
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 210
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp211:
+    container_name: pwp211
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 211
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp216:
+    container_name: pwp216
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 216
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  pwp221:
+    container_name: pwp221
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 221
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'PWP'
+      CONNECT: 'True'
+      
+  res10:
+    container_name: res10
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 10
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res766:
-    container_name: res766
+  res11:
+    container_name: res11
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 766
+      PLZ_CODE: 11
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res767:
-    container_name: res767
+  res12:
+    container_name: res12
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 767
+      PLZ_CODE: 12
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res768:
-    container_name: res768
+  res13:
+    container_name: res13
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 768
+      PLZ_CODE: 13
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res776:
-    container_name: res776
+  res14:
+    container_name: res14
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 776
+      PLZ_CODE: 14
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res777:
-    container_name: res777
+  res15:
+    container_name: res15
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 777
+      PLZ_CODE: 15
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res778:
-    container_name: res778
+  res16:
+    container_name: res16
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 778
+      PLZ_CODE: 16
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res779:
-    container_name: res779
+  res17:
+    container_name: res17
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 779
+      PLZ_CODE: 17
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res780:
-    container_name: res780
+  res18:
+    container_name: res18
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 780
+      PLZ_CODE: 18
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res781:
-    container_name: res781
+  res19:
+    container_name: res19
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 781
+      PLZ_CODE: 19
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res782:
-    container_name: res782
+  res26:
+    container_name: res26
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 782
+      PLZ_CODE: 26
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res783:
-    container_name: res783
+  res27:
+    container_name: res27
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 783
+      PLZ_CODE: 27
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res784:
-    container_name: res784
+  res28:
+    container_name: res28
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 784
+      PLZ_CODE: 28
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res785:
-    container_name: res785
+  res29:
+    container_name: res29
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 785
+      PLZ_CODE: 29
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res786:
-    container_name: res786
+  res30:
+    container_name: res30
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 786
+      PLZ_CODE: 30
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res787:
-    container_name: res787
+  res31:
+    container_name: res31
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 787
+      PLZ_CODE: 31
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res790:
-    container_name: res790
+  res32:
+    container_name: res32
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 790
+      PLZ_CODE: 32
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res791:
-    container_name: res791
+  res41:
+    container_name: res41
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 791
+      PLZ_CODE: 41
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res792:
-    container_name: res792
+  res42:
+    container_name: res42
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 792
+      PLZ_CODE: 42
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res793:
-    container_name: res793
+  res43:
+    container_name: res43
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 793
+      PLZ_CODE: 43
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res794:
-    container_name: res794
+  res44:
+    container_name: res44
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 794
+      PLZ_CODE: 44
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res795:
-    container_name: res795
+  res45:
+    container_name: res45
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 795
+      PLZ_CODE: 45
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res796:
-    container_name: res796
+  res46:
+    container_name: res46
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 796
+      PLZ_CODE: 46
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res797:
-    container_name: res797
+  res47:
+    container_name: res47
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 797
+      PLZ_CODE: 47
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res798:
-    container_name: res798
+  res48:
+    container_name: res48
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 798
+      PLZ_CODE: 48
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res803:
-    container_name: res803
+  res49:
+    container_name: res49
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 803
+      PLZ_CODE: 49
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res804:
-    container_name: res804
+  res61:
+    container_name: res61
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 804
+      PLZ_CODE: 61
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res805:
-    container_name: res805
+  res62:
+    container_name: res62
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 805
+      PLZ_CODE: 62
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res806:
-    container_name: res806
+  res63:
+    container_name: res63
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 806
+      PLZ_CODE: 63
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'
       
-  res808:
-    container_name: res808
+  res64:
+    container_name: res64
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 808
+      PLZ_CODE: 64
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res65:
+    container_name: res65
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 65
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res66:
+    container_name: res66
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 66
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res67:
+    container_name: res67
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 67
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res68:
+    container_name: res68
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 68
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res69:
+    container_name: res69
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 69
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res73:
+    container_name: res73
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 73
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res74:
+    container_name: res74
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 74
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res75:
+    container_name: res75
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 75
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res76:
+    container_name: res76
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 76
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res77:
+    container_name: res77
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 77
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res78:
+    container_name: res78
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 78
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res79:
+    container_name: res79
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 79
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res80:
+    container_name: res80
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 80
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res81:
+    container_name: res81
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 81
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res82:
+    container_name: res82
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 82
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res83:
+    container_name: res83
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 83
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res84:
+    container_name: res84
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 84
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res85:
+    container_name: res85
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 85
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res86:
+    container_name: res86
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 86
+      MQTT_EXCHANGE: 'dMAS'
+      AGENT_TYPE: 'RES'
+      CONNECT: 'True'
+      
+  res91:
+    container_name: res91
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      PLZ_CODE: 91
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'RES'
       CONNECT: 'True'

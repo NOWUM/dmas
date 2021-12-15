@@ -161,3 +161,9 @@ class ResAgent(ParticipantAgent):
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
+        start_time = time.time()
+        # save optimization results
+        self.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
+        self.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
+
+        self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')
