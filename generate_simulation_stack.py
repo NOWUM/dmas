@@ -88,7 +88,7 @@ output.append(f'''
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
-for agent in agents[:50]:
+for agent in agents[:30]:
     output.append(f'''
   dem{agent}:
     container_name: dem{agent}
@@ -101,7 +101,7 @@ for agent in agents[:50]:
       ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
-for agent in agents[:50]:
+for agent in agents[:30]:
     output.append(f'''
   pwp{agent}:
     container_name: pwp{agent}
@@ -114,7 +114,7 @@ for agent in agents[:50]:
       ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
-for agent in agents[:50]:
+for agent in agents[:30]:
     output.append(f'''
   res{agent}:
     container_name: res{agent}

@@ -50,7 +50,7 @@ class BasicAgent:
                 connection.close()
 
     def get_rabbitmq_connection(self):
-        for i in range(5):
+        for i in range(10):
             try:
                 mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
                 channel = mqtt_connection.channel()
