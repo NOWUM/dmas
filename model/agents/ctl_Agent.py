@@ -50,7 +50,7 @@ class CtlAgent(BasicAgent):
             time.sleep(5)
             if len(self.agent_list) > 0:
                 self.logger.info(f'still waiting for: {self.agent_list}')
-            if time.time() - t > 30:
+            if time.time() - t > 120:
                 current_agents = self.get_agents()
                 for agent in self.agent_list:
                     if agent not in current_agents:
