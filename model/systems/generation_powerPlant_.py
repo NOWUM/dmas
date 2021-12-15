@@ -40,7 +40,9 @@ class PowerPlant(EnergySystem):
                                            hours=np.zeros(self.T, float),
                                            delta=0) for step in steps}
 
-    def build_model(self, power=None):
+        self.committed_power = None
+
+    def build_model(self):
 
         self.model.clear()
 
@@ -135,7 +137,7 @@ class PowerPlant(EnergySystem):
             return m.profit[t] == m.p_out[t] * self.prices['power'][t]
         self.model.profit_func = Constraint(self.t, rule=profit_func)
 
-        if power is None:
+        if self.committed_power is None:
             self.model.obj = Objective(expr=quicksum(self.model.profit[i] - self.model.fuel[i] - self.model.emissions[i]
                                                      - self.model.start_ups[i] for i in self.t), sense=maximize)
         else:
@@ -148,7 +150,7 @@ class PowerPlant(EnergySystem):
             self.model.delta_power_constraint = Constraint(self.t, rule=delta_power)
 
             def minus_plus(m, t):
-                return power[t] - m.p_out[t] == -m.minus[t] + m.plus[t]
+                return self.committed_power[t] - m.p_out[t] == -m.minus[t] + m.plus[t]
             self.model.minus_plus = Constraint(self.t, rule=minus_plus)
 
             self.model.delta_cost = Var(self.t, bounds=(0, None), within=Reals)

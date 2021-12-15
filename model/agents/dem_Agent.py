@@ -8,13 +8,13 @@ from tqdm import tqdm
 from forecasts.weather import WeatherForecast
 from forecasts.price import PriceForecast
 from aggregation.portfolio_demand import DemandPortfolio
-from agents.basic_Agent import BasicAgent
+from agents.participant_agent import ParticipantAgent
 
 
-class DemAgent(BasicAgent):
+class DemAgent(ParticipantAgent):
 
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
-        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
+        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login, *args, **kwargs)
         # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = time.time()
@@ -58,9 +58,25 @@ class DemAgent(BasicAgent):
         self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
-
-
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+
+
+    def get_order_book(self, power):
+        order_book = {}
+        for t in self.portfolio.t:
+            if power[t] < 0:
+                order_book[t] = dict(type = 'demand',
+                                     block_id = t,
+                                     hour = t,
+                                     order_id = 0,
+                                     name = self.name,
+                                     price = 3000,
+                                     volume = power[t],
+                                     link = -1)
+
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        return df.set_index(['block_id', 'hour', 'order_id', 'name'])
+
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
@@ -69,17 +85,11 @@ class DemAgent(BasicAgent):
         self.date = pd.to_datetime(message.split(' ')[1])
 
         if 'set_capacities' in message:
-            self.set_capacities()
+            self.set_capacities(self.portfolio)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
             self.post_day_ahead()
-
-    def set_capacities(self):
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        df['agent'] = self.name
-        df.index.name = 'time'
-        df.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
@@ -99,25 +109,13 @@ class DemAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
 
         # save optimization results
-        df = pd.DataFrame(data=self.portfolio.demand, index=pd.date_range(start=self.date, freq='h', periods=24))
-        df['step'] = 'optimize_day_ahead'
-        df['agent'] = self.name
-        df.index.name = 'time'
-        df.to_sql('demand', con=self.simulation_database, if_exists='append')
-
-        df = pd.DataFrame(data=self.portfolio.generation, index=pd.date_range(start=self.date, freq='h', periods=24))
-        df['step'] = 'optimize_day_ahead'
-        df['agent'] = self.name
-        df.index.name = 'time'
-        df.to_sql('generation', con=self.simulation_database, if_exists='append')
+        self.set_demand(self.portfolio, 'optimize_dayAhead')
+        self.set_generation(self.portfolio, 'optimize_dayAhead')
 
         # Step 3: build orders
         start_time = time.time()
-        orders = {t: {'type': 'demand', 'block_id': t, 'hour': t, 'order_id': 0, 'name': self.name, 'price': 3000,
-                      'volume': power[t], 'link': -1} for t in self.portfolio.t}
-        df = pd.DataFrame.from_dict(orders, orient='index')
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
-        df.to_sql('orders', con=self.simulation_database, if_exists='append')
+        order_book = self.get_order_book(power)
+        self.set_order_book(order_book)
         self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
@@ -126,18 +124,5 @@ class DemAgent(BasicAgent):
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
-
-        # Step 1: get market results
         start_time = time.time()
-
-        # query the DayAhead results
-        agent_volume = pd.read_sql(f"Select hour, sum(volume) from orders where name = '{self.name}' group by hour",
-                                   self.simulation_database)
-
-        print(agent_volume)
-
-        start_date = self.date.date()
-        end_date = (self.date + pd.DateOffset(days=1)).date()
-        prices = pd.read_sql(f"Select time, price from market where time >= '{start_date}' and time < '{end_date}'",
-                                   self.simulation_database)
-        print(prices)
+        self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

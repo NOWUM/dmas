@@ -56,6 +56,8 @@ class DayAheadMarket:
 
     def optimize(self):
 
+        self.model.clear()
+
         # Step 1 initialize binary variables for ask block per agent
         self.model.use_ask_block = Var(self.get_unique([(block, agent) for block, _, _, agent in self.ask_orders_total.keys()]),
                                        within=Binary)
@@ -79,7 +81,7 @@ class DayAheadMarket:
         for data in self.get_unique([(block, agent) for block, _, _, agent in self.ask_orders_total.keys()]):
             block, agent = data
             parent_id = self.parent_blocks[block, agent]
-            if parent_id != -1 and parent_id != 0:
+            if parent_id != -1:
                 self.model.enable_child_block.add(self.model.use_ask_block[block, agent]
                                                   <= self.model.use_ask_block[parent_id, agent])
 

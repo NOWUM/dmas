@@ -9,16 +9,15 @@ from tqdm import tqdm
 from forecasts.price import PriceForecast
 from forecasts.weather import WeatherForecast
 from aggregation.portfolio_powerPlant_ import PowerPlantPortfolio
-from agents.basic_Agent import BasicAgent
+from agents.participant_agent import ParticipantAgent
 
 
-class PwpAgent(BasicAgent):
+class PwpAgent(ParticipantAgent):
 
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
-        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
+        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login, *args, **kwargs)
         self.logger.info('starting the agent')
         start_time = time.time()
-        self.model_initiator = None
 
         self.portfolio = PowerPlantPortfolio()
 
@@ -33,49 +32,10 @@ class PwpAgent(BasicAgent):
 
         # Construction power plants
         self.logger.info('Power Plants added')
+
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
-    def callback(self, ch, method, properties, body):
-        super().callback(ch, method, properties, body)
-
-        message = body.decode("utf-8")
-        self.date = pd.to_datetime(message.split(' ')[1])
-
-        if 'set_capacities' in message:
-            self.set_capacities()
-        if 'opt_dayAhead' in message:
-            self.optimize_day_ahead()
-        if 'result_dayAhead' in message:
-            self.post_day_ahead()
-
-    def set_capacities(self):
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        df['agent'] = self.name
-        df.index.name = 'time'
-        df.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
-
-    def optimize_day_ahead(self):
-        """scheduling for the DayAhead market"""
-        self.logger.info('DayAhead market scheduling started')
-        start_time = time.time()
-
-        # Step 1: forecast data data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
-        prices = self.price_forecast.forecast(self.date)
-        prices = pd.concat([prices, prices.copy()])
-        prices.index = pd.date_range(start=self.date, freq='h', periods=48)
-
-        self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
-        self.portfolio.build_model()
-        self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
-
-        self.portfolio.optimize()
-        start_time = time.time()
-
-        self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
-
-        # Step 4: build orders from optimization results
-        start_time = time.time()
+    def get_order_book(self):
         order_book = {}
 
         for model in self.portfolio.energy_systems:
@@ -105,9 +65,9 @@ class PwpAgent(BasicAgent):
                         order_book.update({(0, hour, 0, name): (price, power, 0)})
                         links.update({hour: block_number})
 
-                    block_number += 1                # increment block number
-                    last_power = result['power']     # set last_power to current power
-                    continue                         # do next offset
+                    block_number += 1  # increment block number
+                    last_power = result['power']  # set last_power to current power
+                    continue  # do next offset
 
                 # check if a start is prevented
                 if starts['prevent_start']:
@@ -138,8 +98,8 @@ class PwpAgent(BasicAgent):
                                                               order[2])}
 
                                     order_to_book = {id_: (np.round(order[0] - factor, 2),
-                                                                np.round(result['power'][hour], 2),
-                                                                order[2])}
+                                                           np.round(result['power'][hour], 2),
+                                                           order[2])}
 
                                     prevent_orders.update(order_to_prevent)
                                     order_book.update(order_to_book)
@@ -189,11 +149,12 @@ class PwpAgent(BasicAgent):
                             # check if delta > 0
                             if delta[hour] > 0:
                                 # calculate variable cost for the hour and set it as requested price
-                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
+                                price = np.round(
+                                    (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
                                 power = np.round(0.2 * delta[hour], 2)
                                 # split volume in five orders and add them to order_book
                                 for order in range(5):
-                                    order_book.update({(block_number, hour, order, name): (price,power, link)})
+                                    order_book.update({(block_number, hour, order, name): (price, power, link)})
                                 link = block_number
                                 links.update({hour: block_number})  # update last known block for hour
                                 block_number += 1  # increment block number
@@ -218,8 +179,8 @@ class PwpAgent(BasicAgent):
                                 # split volume in five orders and add them to order_boo
                                 for order in range(5):
                                     order_book.update({(block_number, hour, order, name): (price,
-                                                                                                          power,
-                                                                                                          link)})
+                                                                                           power,
+                                                                                           link)})
                                 link = block_number
                                 links.update({hour: block_number})  # update last known block for hour
                                 block_number += 1  # increment block number
@@ -230,11 +191,51 @@ class PwpAgent(BasicAgent):
         df['type'] = 'generation'
         df.columns = ['price', 'volume', 'link', 'type']
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'order_id', 'name'])
-        df.to_sql('orders', con=self.simulation_database, if_exists='append')
 
-        self.logger.info(f'Built Orders in {np.round(time.time() - start_time, 2)} seconds')
+        return df
 
+    def callback(self, ch, method, properties, body):
+        super().callback(ch, method, properties, body)
+
+        message = body.decode("utf-8")
+        self.date = pd.to_datetime(message.split(' ')[1])
+
+        if 'set_capacities' in message:
+            self.set_capacities(self.portfolio)
+        if 'opt_dayAhead' in message:
+            self.optimize_day_ahead()
+        if 'result_dayAhead' in message:
+            self.post_day_ahead()
+
+    def optimize_day_ahead(self):
+        """scheduling for the DayAhead market"""
+        self.logger.info('dayAhead market scheduling started')
+        start_time = time.time()
+
+        # Step 1: forecast data data and init the model for the coming day
+        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
+        prices = self.price_forecast.forecast(self.date)
+        prices = pd.concat([prices, prices.copy()])
+        prices.index = pd.date_range(start=self.date, freq='h', periods=48)
+
+        self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
+        self.portfolio.build_model()
+        self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
+        # Step 2: optimization
+        self.portfolio.optimize()
+        self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
+
+        # save optimization results
+        self.set_generation(self.portfolio, 'optimize_dayAhead')
+        self.set_demand(self.portfolio, 'optimize_dayAhead')
+
+        # Step 3: build orders from optimization results
+        start_time = time.time()
+        order_book = self.get_order_book()
+        self.set_order_book(order_book)
         self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')
+
+        self.logger.info(f'built Orders in {np.round(time.time() - start_time, 2)} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
@@ -244,13 +245,16 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
 
         # query the DayAhead results
-        agent_volume = pd.read_sql(f"Select hour, sum(volume) from orders where name = '{self.name}' group by hour",
-                                   self.simulation_database)
+        for model in self.portfolio.energy_systems:
+            committed_power = pd.read_sql(f"Select hour, sum(volume) as volume from market_results "
+                                          f"where name = '{model.name}' group by hour",
+                                          self.simulation_database)
+            committed_power = committed_power['volume'].to_numpy()
+            model.committed_power = committed_power
+            model.build_model()
 
-        print(agent_volume)
+        self.portfolio.optimize()
 
-        start_date = self.date.date()
-        end_date = (self.date + pd.DateOffset(days=1)).date()
-        prices = pd.read_sql(f"Select time, price from market where time >= '{start_date}' and time < '{end_date}'",
-                             self.simulation_database)
-        print(prices)
+        # save optimization results
+        self.set_generation(self.portfolio, 'optimization_dayAhead')
+        self.set_demand(self.portfolio, 'optimization_dayAhead')

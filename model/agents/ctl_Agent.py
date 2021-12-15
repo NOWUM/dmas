@@ -4,6 +4,7 @@ import pandas as pd
 from flask import Flask, request, redirect
 import threading
 import requests
+import numpy as np
 
 # model modules
 from agents.basic_Agent import BasicAgent
@@ -35,6 +36,12 @@ class CtlAgent(BasicAgent):
             if name[:3] in ['DEM', 'RES', 'STR', 'PWP']:
                 self.agent_list.append(name)
         self.logger.info(f'{len(self.agent_list)} agent(s) are running')
+
+    def get_agents(self):
+        headers = {'content-type': 'application/json', }
+        response = requests.get('http://rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
+        agents = response.json()
+        return [agent['name'] for agent in agents if agent['name'][:3] in ['DEM', 'RES', 'STR', 'PWP']]
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
@@ -71,15 +78,21 @@ class CtlAgent(BasicAgent):
                     # 1.Step: Run optimization for dayAhead Market
                     self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
                                                body=f'opt_dayAhead {date.date()}')
+                    t = time.time()
                     while len(self.agent_list) > 0:
-                        print(self.date, self.agent_list)
                         time.sleep(1)
+                        if time.time() - t > 30:
+                            current_agents = self.get_agents()
+                            for agent in self.agent_list:
+                                if agent not in current_agents:
+                                    self.agent_list.remove(agent)
+
                     # 2. Step: Run Market Clearing
                     self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
                                                body=f'dayAhead_clearing {date.date()}')
                     # 3. Step: Run Power Flow calculation
-                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
-                                               body=f'grid_calc {date.date()}')
+                    #self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
+                    #                           body=f'grid_calc {date.date()}')
                     while not self.cleared:
                         print('Waiting for clearing')
                         time.sleep(1)
@@ -88,12 +101,9 @@ class CtlAgent(BasicAgent):
                                                body=f'result_dayAhead {date.date()}')
                     # 5. Step: Rest agent list and cleared flag for next day
                     self.set_agents()
-                    self.simulation_database.execute("DELETE FROM orders")
+                    self.simulation_database.execute("DELETE FROM order_book")
                     self.cleared = False
-
-                    # TODO: for first day add primary keys to tables
-                    end_time = time.time() - start_time
-                    self.logger.info('Day %s complete in: %s seconds ' % (str(date.date()), end_time))
+                    self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
                 except Exception as e:
                     print(repr(e))
                     self.logger.exception('Error in Simulation')
@@ -103,10 +113,10 @@ class CtlAgent(BasicAgent):
 
     def run(self):
 
-        query = '''CREATE TABLE orders (block_id bigint, hour bigint, order_id bigint, name text, price double precision, 
-                                        volume double precision, link bigint, type text)'''
+        query = '''CREATE TABLE order_book (block_id bigint, hour bigint, order_id bigint, name text, price double precision, 
+                                            volume double precision, link bigint, type text)'''
         self.simulation_database.execute(query)
-        self.simulation_database.execute('ALTER TABLE "orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+        self.simulation_database.execute('ALTER TABLE "order_book" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
         query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision, 
                                             coal double precision, gas double precision, lignite double precision,
                                             nuclear double precision, solar double precision, water double precision,
@@ -125,10 +135,15 @@ class CtlAgent(BasicAgent):
         self.simulation_database.execute(query)
         self.simulation_database.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')
 
-        query = '''CREATE TABLE market ("time" timestamp without time zone, price double precision,
-                                            volume double precision)'''
+        query = '''CREATE TABLE auction_result ("time" timestamp without time zone, price double precision,
+                                                volume double precision)'''
         self.simulation_database.execute(query)
-        self.simulation_database.execute(f'ALTER TABLE "market" ADD PRIMARY KEY ("time");')
+        self.simulation_database.execute(f'ALTER TABLE "auction_result" ADD PRIMARY KEY ("time");')
+
+        query = '''CREATE TABLE market_results (block_id bigint, hour bigint, order_id bigint, name text, price double precision, 
+                                                volume double precision, link bigint, type text)'''
+        self.simulation_database.execute(query)
+        self.simulation_database.execute('ALTER TABLE "market_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
 
         @app.route('/')
         def main_page():

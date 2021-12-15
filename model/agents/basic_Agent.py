@@ -69,10 +69,11 @@ class BasicAgent:
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-        print(message)
+        # print(message)
 
     def run(self):
         self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
         print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
               % self.name)
         self.channel.start_consuming()
+

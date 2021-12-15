@@ -9,14 +9,14 @@ from tqdm import tqdm
 from forecasts.weather import WeatherForecast
 from forecasts.price import PriceForecast
 from aggregation.portfolio_renewable import RenewablePortfolio
-from agents.basic_Agent import BasicAgent
+from agents.participant_agent import ParticipantAgent
 
 
 
-class ResAgent(BasicAgent):
+class ResAgent(ParticipantAgent):
 
     def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
-        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
+        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login, *args, **kwargs)
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = time.time()
@@ -79,6 +79,36 @@ class ResAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
+    def get_order_book(self, power, type='eeg'):
+        order_book = {}
+        for t in np.arange(len(power)):
+            if type == 'eeg' and power[t] > 0.5:
+                order_book[t] = dict(type='generation',
+                                     block_id=t,
+                                     hour=t,
+                                     order_id=0,
+                                     name=self.name + '_eeg',
+                                     price=-500,
+                                     volume=power[t],
+                                     link=-1)
+            if type == 'mrk' and power[t] > 0.5:
+                order_book[t] = dict(type='generation',
+                                     block_id=t,
+                                     hour=t,
+                                     order_id=0,
+                                     name=self.name + '_mrk',
+                                     price=0,
+                                     volume=power[t],
+                                     link=-1)
+
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        if df.empty:
+            df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'order_id', 'name', 'price', 'volume', 'link'])
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+
+        return  df
+
+
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
 
@@ -86,24 +116,15 @@ class ResAgent(BasicAgent):
         self.date = pd.to_datetime(message.split(' ')[1])
 
         if 'set_capacities' in message:
-            self.set_capacities()
+            self.set_capacities([self.portfolio_mrk, self.portfolio_eeg])
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
             self.post_day_ahead()
 
-    def set_capacities(self):
-        df_mrk = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_mrk.capacities)
-        df_eeg = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio_mrk.capacities)
-        for col in df_mrk.columns:
-            df_mrk[col] += df_eeg[col]
-        df_mrk['agent'] = self.name
-        df_mrk.index.name = 'time'
-        df_mrk.to_sql(name='capacities', con=self.simulation_database, if_exists='append')
-
     def optimize_day_ahead(self):
         """Scheduling before DayAhead Market"""
-        self.logger.info(f'DayAhead market scheduling started {self.date}')
+        self.logger.info(f'dayAhead market scheduling started {self.date}')
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
@@ -120,64 +141,23 @@ class ResAgent(BasicAgent):
         # Step 2: optimization
         power_eeg = self.portfolio_eeg.optimize()
         power_mrk = self.portfolio_mrk.optimize()
-        self.logger.info(f'Finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
-        # Step 3: save optimization results
-        df_mrk = pd.DataFrame(data=self.portfolio_mrk.demand, index=pd.date_range(start=self.date, freq='h', periods=24))
-        df_eeg = pd.DataFrame(data=self.portfolio_eeg.demand, index=pd.date_range(start=self.date, freq='h', periods=24))
+        self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 
-        for col in df_mrk.columns:
-            df_mrk[col] += df_eeg[col]
+        # save optimization results
+        self.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
+        self.set_demand([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
 
-        df_mrk['step'] = 'optimize_day_ahead'
-        df_mrk['agent'] = self.name
-        df_mrk.index.name = 'time'
-        df_mrk.to_sql('demand', con=self.simulation_database, if_exists='append')
 
-        df_mrk = pd.DataFrame(data=self.portfolio_mrk.generation, index=pd.date_range(start=self.date, freq='h', periods=24))
-        df_eeg = pd.DataFrame(data=self.portfolio_eeg.generation, index=pd.date_range(start=self.date, freq='h', periods=24))
-
-        for col in df_mrk.columns:
-            df_mrk[col] += df_eeg[col]
-
-        df_mrk['step'] = 'optimize_day_ahead'
-        df_mrk['agent'] = self.name
-        df_mrk.index.name = 'time'
-        df_mrk.to_sql('generation', con=self.simulation_database, if_exists='append')
-
-        # Step 4: build orders from optimization results
+        # Step 3: build orders from optimization results
         start_time = time.time()
-        orders_mrk = {t: {'type': 'generation', 'block_id': t, 'hour': t, 'order_id': 0, 'name': self.name, 'price': 0,
-                          'volume': power_mrk[t], 'link': -1} for t in self.portfolio_mrk.t}
-        orders_eeg = {t: {'type': 'generation', 'block_id': t+24, 'hour': t, 'order_id': 0, 'name': self.name, 'price': -500,
-                          'volume': power_eeg[t], 'link': -1} for t in self.portfolio_mrk.t}
-
-        df_mrk = pd.DataFrame.from_dict(orders_mrk, orient='index')
-        df_mrk = df_mrk.set_index(['block_id', 'hour', 'order_id', 'name'])
-
-        df_eeg = pd.DataFrame.from_dict(orders_eeg, orient='index')
-        df_eeg = df_eeg.set_index(['block_id', 'hour', 'order_id', 'name'])
-        df = pd.concat([df_mrk, df_eeg])
-        df.to_sql('orders', con=self.simulation_database, if_exists='append')
-
-        self.logger.info(f'Built Orders in {np.round(time.time() - start_time, 2)} seconds')
-
+        order_book = self.get_order_book(power_eeg, type='eeg')
+        self.set_order_book(order_book)
+        order_book = self.get_order_book(power_mrk, type='mrk')
+        self.set_order_book(order_book)
         self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')
+
+        self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
-
-        # Step 1: get market results
-        start_time = time.time()
-
-        # query the DayAhead results
-        agent_volume = pd.read_sql(f"Select hour, sum(volume) from orders where name = '{self.name}' group by hour",
-                                   self.simulation_database)
-
-        print(agent_volume)
-
-        start_date = self.date.date()
-        end_date = (self.date + pd.DateOffset(days=1)).date()
-        prices = pd.read_sql(f"Select time, price from market where time >= '{start_date}' and time < '{end_date}'",
-                             self.simulation_database)
-        print(prices)

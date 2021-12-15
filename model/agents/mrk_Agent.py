@@ -28,7 +28,7 @@ class MarketAgent(BasicAgent):
             self.market_clearing()
 
     def market_clearing(self):
-        df = pd.read_sql("Select * from orders", self.simulation_database)
+        df = pd.read_sql("Select * from order_book", self.simulation_database)
         df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
         ask = df.loc[df['type'] == 'generation']
@@ -41,15 +41,14 @@ class MarketAgent(BasicAgent):
         for key, value in bid.to_dict(orient='index').items():
             bid_orders.update({key: (value['price'], value['volume'], value['link'])})
 
-        market = DayAheadMarket()
 
-        market.set_parameter(bid_orders, ask_orders)
-        market_result, orders = market.optimize()
+        self.market.set_parameter(bid_orders, ask_orders)
+        auction_results , market_results = self.market.optimize()
 
-        market_result.index = pd.date_range(start=self.date, periods=24, freq='h')
-        market_result.index.name = 'time'
+        auction_results.index = pd.date_range(start=self.date, periods=24, freq='h')
+        auction_results.index.name = 'time'
 
-        orders.to_sql('orders', self.simulation_database, if_exists='replace')
-        market_result.to_sql('market', self.simulation_database, if_exists='append')
+        market_results.to_sql('market_results', self.simulation_database, if_exists='replace')
+        auction_results.to_sql('auction_results', self.simulation_database, if_exists='append')
 
         self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')
