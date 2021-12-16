@@ -18,7 +18,7 @@ if __name__ == "__main__":
         'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
         'plz': int(os.getenv('PLZ_CODE', 415)),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
-        'agent_type': os.getenv('AGENT_TYPE', 'PWP'),
+        'agent_type': os.getenv('AGENT_TYPE', 'CTL'),
         'connect': bool(os.getenv('CONNECT', False)),
         'infrastructure_source': os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432'),
         'infrastructure_login': os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')

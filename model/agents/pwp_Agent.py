@@ -36,7 +36,7 @@ class PwpAgent(ParticipantAgent):
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
-
+        # self.info_thread.start()
 
     def get_order_book(self):
         order_book = {}

@@ -1,6 +1,5 @@
 # third party modules
 import time
-
 import pandas as pd
 import pika
 import logging
@@ -76,4 +75,3 @@ class BasicAgent:
         print(' --> Agent %s has connected to the marketplace, waiting for instructions (to exit press CTRL+C)'
               % self.name)
         self.channel.start_consuming()
-

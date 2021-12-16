@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, \
-    Reals, Binary, maximize, value, quicksum
+    Reals, Binary, maximize, value, quicksum, ConstraintList
 
 # model modules
 from systems.basic_system import EnergySystem
@@ -50,116 +50,114 @@ class PowerPlant(EnergySystem):
         delta = self.power_plant['maxPower'] - self.power_plant['minPower']
 
         self.model.p_out = Var(self.t, bounds=(None, self.power_plant['maxPower']), within=Reals)
-        self.model.gradient_0P = Constraint(expr=self.model.p_out[0] <= self.power_plant['P0']
-                                                 + self.power_plant['gradP'])
-        self.model.gradient_0M = Constraint(expr=self.model.p_out[0] >= self.power_plant['P0']
-                                                 - self.power_plant['gradM'])
-
-        self.model.p_opt = Var(self.t, bounds=(0, delta), within=Reals)
+        self.model.p_model = Var(self.t, bounds=(0, delta), within=Reals)
 
         # states (on, ramp up, ramp down)
         self.model.z = Var(self.t, within=Binary)
         self.model.v = Var(self.t, within=Binary)
         self.model.w = Var(self.t, within=Binary)
 
-        def output_power(m, t):
-            return m.p_out[t] == m.p_opt[t] + m.z[t] * self.power_plant['minPower']
-        self.model.output_power = Constraint(self.t, rule=output_power)
-
-        def opt_power_limit_zero(m, t):
-            return 0 <= m.p_opt[t]
-        self.model.opt_power_limit_zero = Constraint(self.t, rule=opt_power_limit_zero)
-
-        def opt_power_limit_on(m, t):
-            return m.p_opt[t] <= delta * m.z[t]
-        self.model.opt_power_limit_on = Constraint(self.t, rule=opt_power_limit_on)
-
-        def opt_power_limit(m, t):
-            return m.p_out[t] <= self.power_plant['minPower'] * (m.z[t] + m.v[t+1] + m.p_opt[t])
-        self.model.opt_power_limit = Constraint(self.t[:-1], rule=opt_power_limit)
-
-        def ramping_up(m, t):
-            return m.p_opt[t] - m.p_opt[t-1] <= self.power_plant['gradP'] * m.z[t-1]
-        self.model.ramping_up = Constraint(self.t[1:], rule=ramping_up)
-
-        def ramping_down(m, t):
-            return m.p_opt[t-1] - m.p_opt[t] <= self.power_plant['gradM'] * m.z[t-1]
-        self.model.ramping_down = Constraint(self.t[1:], rule=ramping_down)
-
-        def stop_time(m, t):
-            return 1 - m.z[t] >= quicksum(m.w[k] for k in range(t - self.power_plant['stopTime'], t))
-        self.model.min_stop_time = Constraint(self.t[self.power_plant['stopTime']:], rule=stop_time)
-
-        def run_time(m, t):
-            return m.z[t] >= quicksum(m.v[k] for k in range(t - self.power_plant['runTime'], t))
-        self.model.min_run_time = Constraint(self.t[self.power_plant['runTime']:], rule=run_time)
-
-        def states(m, t):
-            return m.z[t-1] - m.z[t] + m.v[t] - m.w[t] == 0
-        self.model.states = Constraint(self.t[1:], rule=states)
-
-        def init_state_off(m, t):
-            return m.z[t] == 0
-
-        def init_state_on(m, t):
-            return m.z[t] == 1
-
-        if self.power_plant['on'] > 0:
-            self.model.on_state = Constraint(range(0, self.power_plant['runTime'] - self.power_plant['on']),
-                                             rule=init_state_on)
-        else:
-            self.model.off_state = Constraint(range(0, self.power_plant['stopTime'] - self.power_plant['off']),
-                                              rule=init_state_off)
-
+        # cash flow variables
         self.model.fuel = Var(self.t, bounds=(0, None), within=Reals)
-
-        def fuel_cost(m, t):
-            return m.fuel[t] == m.p_out[t] / self.power_plant['eta'] * self.prices[str(self.power_plant['fuel']).replace('_combined', '')][t]
-
-        self.model.fuel_cost = Constraint(self.t, rule=fuel_cost)
-
         self.model.emissions = Var(self.t, bounds=(0, None), within=Reals)
-
-        def emission_cost(m, t):
-            return m.emissions[t] == m.p_out[t] * self.power_plant['chi'] * self.prices['co'][t] / self.power_plant['eta']
-
-        self.model.emission_cost = Constraint(self.t, rule=emission_cost)
-
         self.model.start_ups = Var(self.t, bounds=(0, None), within=Reals)
-
-        def start_cost(m, t):
-            return m.start_ups[t] == m.v[t] * self.start_cost
-
-        self.model.start_cost = Constraint(self.t, rule=start_cost)
-
         self.model.profit = Var(self.t, within=Reals)
 
-        def profit_func(m, t):
-            return m.profit[t] == m.p_out[t] * self.prices['power'][t]
-        self.model.profit_func = Constraint(self.t, rule=profit_func)
+        # define constraint for output power
+        self.model.real_power = ConstraintList()
+        self.model.real_max = ConstraintList()
+        # define constraint for model power
+        self.model.model_min= ConstraintList()
+        self.model.model_max = ConstraintList()
+        # define constraint ramping
+        self.model.ramping_up = ConstraintList()
+        self.model.ramping_down = ConstraintList()
+        # define constraint for run- and stop-time
+        self.model.stop_time = ConstraintList()
+        self.model.run_time = ConstraintList()
+        self.model.states = ConstraintList()
+        self.model.initial_on = ConstraintList()
+        self.model.initial_off =ConstraintList()
+        # define constraint for cash-flow aspects
+        self.model.fuel_cost = ConstraintList()
+        self.model.emission_cost = ConstraintList()
+        self.model.start_cost = ConstraintList()
+        self.model.profit_function = ConstraintList()
 
+        for t in self.t:
+            # output power of the plant
+            self.model.real_power.add(self.model.p_out[t] == self.model.p_model[t] + self.model.z[t]
+                                      * self.power_plant['minPower'])
+            if t < 23:
+                self.model.real_max.add(self.model.p_out[t] <= self.power_plant['minPower']
+                                        * (self.model.z[t] + self.model.v[t+1] + self.model.p_model[t]))
+            # model power for optimization
+            self.model.model_min.add(0 <= self.model.p_model[t])
+            self.model.model_max.add(self.model.z[t] * delta >= self.model.p_model[t])
+            # ramping (gradients)
+            if t == 0:
+                self.model.ramping_up_0 = Constraint(expr=self.model.p_out[0] <= self.power_plant['P0']
+                                                          + self.power_plant['gradP'])
+                self.model.ramping_down_0 = Constraint(expr=self.model.p_out[0] >= self.power_plant['P0']
+                                                            - self.power_plant['gradM'])
+            else:
+                self.model.ramping_up.add(self.model.p_model[t] - self.model.p_model[t - 1]
+                                          <= self.power_plant['gradP'] * self.model.z[t - 1])
+                self.model.ramping_down.add(self.model.p_model[t-1] - self.model.p_model[t]
+                                            <= self.power_plant['gradM'] * self.model.z[t-1])
+            # minimal run and stop time
+            if t > self.power_plant['stopTime']:
+                self.model.stop_time.add(1 - self.model.z[t]
+                                         >= quicksum(self.model.w[k] for k in range(t - self.power_plant['stopTime'], t)))
+            if t > self.power_plant['runTime']:
+                self.model.run_time.add(self.model.z[t]
+                                        >= quicksum(self.model.v[k] for k in range(t - self.power_plant['runTime'], t)))
+            if t > 0:
+                self.model.states.add(self.model.z[t-1] - self.model.z[t] + self.model.v[t] - self.model.w[t] == 0)
+
+            if t < self.power_plant['runTime'] - self.power_plant['on']:
+                self.model.initial_on.add(self.model.z[t] == 1)
+            elif t < self.power_plant['stopTime'] - self.power_plant['off']:
+                self.model.initial_off.add(self.model.z[t] == 0)
+
+            self.model.fuel_cost.add(self.model.fuel[t]
+                                     == self.model.p_out[t] / self.power_plant['eta']
+                                     * self.prices[str(self.power_plant['fuel']).replace('_combined', '')][t])
+
+            self.model.emission_cost.add(self.model.emissions[t]
+                                         == self.model.p_out[t] / self.power_plant['eta']
+                                         * self.power_plant['chi'] * self.prices['co'][t])
+
+            self.model.start_cost.add(self.model.start_ups[t] == self.model.v[t] * self.start_cost)
+
+            self.model.profit_function.add(self.model.profit[t] == self.model.p_out[t] * self.prices['power'][t])
+
+        # if no day ahead power known run standard optimization
         if self.committed_power is None:
             self.model.obj = Objective(expr=quicksum(self.model.profit[i] - self.model.fuel[i] - self.model.emissions[i]
                                                      - self.model.start_ups[i] for i in self.t), sense=maximize)
+        # if day ahead power is known minimize the difference
         else:
-            self.model.delta_power = Var(self.t, bounds=(0, None), within=Reals)
+            self.model.power_difference = Var(self.t, bounds=(0, None), within=Reals)
+            self.model.delta_cost = Var(self.t, bounds=(0, None), within=Reals)
             self.model.minus = Var(self.t, bounds=(0, None), within=Reals)
             self.model.plus = Var(self.t, bounds=(0, None), within=Reals)
 
-            def delta_power(m, t):
-                return m.minus[t] + m.plus[t] == m.delta_power[t]
-            self.model.delta_power_constraint = Constraint(self.t, rule=delta_power)
+            self.model.difference = ConstraintList()
+            self.model.day_ahead_difference = ConstraintList()
+            self.model.difference_cost = ConstraintList()
 
-            def minus_plus(m, t):
-                return self.committed_power[t] - m.p_out[t] == -m.minus[t] + m.plus[t]
-            self.model.minus_plus = Constraint(self.t, rule=minus_plus)
 
-            self.model.delta_cost = Var(self.t, bounds=(0, None), within=Reals)
+            for t in self.t:
+                self.model.difference.add(self.model.minus[t] + self.model.plus[t]
+                                          == self.model.power_difference[t])
 
-            def delta_cost(m, t):
-                return m.delta_cost[t] == m.delta_power[t] * np.abs(self.prices['power'][t] * 2)
-            self.model.delta_cost_constraint = Constraint(self.t, rule=delta_cost)
+                self.model.day_ahead_difference.add(self.committed_power[t] - self.model.p_out[t]
+                                                    == -self.model.minus[t] + self.model.plus[t])
+                self.model.difference_cost.add(self.model.delta_cost[t]
+                                               == self.model.power_difference[t] * np.abs(self.prices['power'][t] * 2))
 
+            # set new objective
             self.model.obj = Objective(expr=quicksum(self.model.profit[i] - self.model.fuel[i] - self.model.emissions[i]
                                                      - self.model.start_ups[i] - self.model.delta_cost[i]
                                                      for i in self.t), sense=maximize)
@@ -178,7 +176,8 @@ class PowerPlant(EnergySystem):
                 self.prices.loc[:, 'power'] = base_price.iloc[:24] + step
                 self.build_model()
 
-                self.opt.solve(self.model)
+                results = self.opt.solve(self.model)
+                # print(results)
 
                 for t in self.t:
                     self.optimization_results[step]['power'][t] = self.model.p_out[t].value
@@ -214,7 +213,7 @@ class PowerPlant(EnergySystem):
 
         else:
             results = self.opt.solve(self.model)
-            print(results)
+            # print(results)
 
             for t in self.t:
                 self.cash_flow['fuel'][t] = float(self.model.fuel[t].value)

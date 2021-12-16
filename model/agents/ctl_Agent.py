@@ -7,11 +7,17 @@ import requests
 import numpy as np
 from tqdm import tqdm
 
+import dash
+from dash import dcc
+from dash import html
+import plotly.express as px
+from dash.dependencies import Input, Output
+
 # model modules
 from agents.basic_Agent import BasicAgent
 
-app = Flask('dMAS_controller')
-
+# app = Flask('dMAS_controller')
+app = dash.Dash('dMAS_controller')
 
 class CtlAgent(BasicAgent):
 
@@ -24,9 +30,10 @@ class CtlAgent(BasicAgent):
 
         self.start_date = pd.to_datetime('2018-01-01')
         self.stop_date = pd.to_datetime('2018-02-01')
-        self.logger.info('setup of the agent completed in %s' % (time.time() - start_time))
         self.waiting_list = []
         self.cleared = False
+
+        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def set_agents(self):
         headers = {'content-type': 'application/json', }
@@ -147,11 +154,11 @@ class CtlAgent(BasicAgent):
 
     def run(self):
 
-        query = '''CREATE TABLE order_book (block_id bigint, hour bigint, order_id bigint, name text, price double precision, 
+        query = '''CREATE TABLE order_book (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
                                             volume double precision, link bigint, type text)'''
         self.simulation_database.execute(query)
         self.simulation_database.execute('ALTER TABLE "order_book" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
-        query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision, 
+        query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision,
                                             coal double precision, gas double precision, lignite double precision,
                                             nuclear double precision, solar double precision, water double precision,
                                             wind double precision, storage double precision, agent text)'''
@@ -174,47 +181,44 @@ class CtlAgent(BasicAgent):
         self.simulation_database.execute(query)
         self.simulation_database.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
 
-        query = '''CREATE TABLE market_results (block_id bigint, hour bigint, order_id bigint, name text, price double precision, 
+        query = '''CREATE TABLE market_results (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
                                                 volume double precision, link bigint, type text)'''
         self.simulation_database.execute(query)
         self.simulation_database.execute('ALTER TABLE "market_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
 
-        @app.route('/')
-        def main_page():
-            if not self.sim_start:
-                content = '''
-                <form method="POST" action="/start" style="display: flex;flex-direction: column;">
-                    <span style="margin-bottom: 20px;">
-                        <label for="start_date">Start Date</label><br>
-                        <input type="date" id="start_date" name="start_date" value="1995-01-01" />
-                    </span>
-                    <span style="margin-bottom: 20px;">
-                        <label for="end_date">End Date</label><br>
-                        <input type="date" id="end_date" name="end_date" value="1995-02-01" />
-                    </span>
-                    <input type="submit" value="Start Simulation">
-                </form>'''
-            else:
-                content = '''
-                <form method="POST" action="/stop" style="display: flex;flex-direction: column;">
-                    <input type="submit" value="Stop Simulation">
-                </form>'''
-            return f'''
-                <div center style="width: 60%; margin: auto; height: 80%" >
-                <h1>Docker Agent-based Simulation</h1>
-                Simulation running: {self.sim_start}
-                {content}
+        if not self.sim_start:
+            content = html.Form(children=[
+                                    html.Span(children=[
+                                        html.Label('Start Date', htmlFor="start_date"),
+                                        html.Br(),
+                                        dcc.Input(type="date", id="start_date", name="start_date", value="1995-01-01",
+                                                  style={'display': 'flex', 'flex-direction': 'column'})
+                                    ], style={'margin-bottom': '20px'}),
+                                    html.Span(children=[
+                                        html.Label('End Date', htmlFor="end_date"),
+                                        html.Br(),
+                                        dcc.Input(type="date", id="end_date", name="end_date", value="1995-02-01",
+                                                  style={'display': 'flex', 'flex-direction': 'column'})
+                                    ], style={'margin-bottom': '20px'}),
+                                    dcc.Input(type="submit", value="Start Simulation", id='start_button')
+                                ], method="POST", action="/start")
+        else:
+            content = html.Form(children=[
+                                    dcc.Input(type="submit", value="Start Simulation")
+                                ], method="POST", action="/start")
 
-                </div>
-                '''
+        app.layout = html.Div(children=[html.H1('Docker Agent-based Simulation'),
+                                        html.P(f'Simulation running: {self.sim_start}'),
+                                        content
+                               ], style={'width': '60%', 'margin': 'auto', 'height': '80%'})
 
-        @app.route('/stop')
+        @app.server.route('/stop')
         def stop_simulation():
             self.sim_stop = True
             self.logger.info('stopping simulation')
             return redirect('/')
 
-        @app.route('/start', methods=['POST'])
+        @app.server.route('/start', methods=['POST'])
         def run_simulation():
             rf = request.form
             self.start_date = pd.to_datetime(rf.get('start', '1995-01-01'))
@@ -229,4 +233,5 @@ class CtlAgent(BasicAgent):
 
             return redirect('/')
 
-        app.run(debug=False, host="0.0.0.0", port=5000)
+        app.run_server(debug=False, port=5000, host='0.0.0.0')
+

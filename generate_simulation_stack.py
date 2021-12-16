@@ -64,6 +64,13 @@ output.append(f'''
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'MRK'
       CONNECT: 'True'
+    volumes:
+    - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
 ''')
 # Build one Weather Agent
 output.append(f'''
