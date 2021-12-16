@@ -30,9 +30,15 @@ class BasicAgent:
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
         # self.logger.disabled = True
+        for i in range(15):
+            try:
+                self.simulation_database = create_engine(f'postgresql://dMAS:dMAS@simulationdb/dMAS',
+                                                         connect_args={"application_name": self.name})
+                break
+            except Exception as e:
+                self.logger.exception(f'could not connect to simulation database - try: {i}')
+                time.sleep(i ** 2)
 
-        self.simulation_database = create_engine(f'postgresql://dMAS:dMAS@simulationdb/dMAS',
-                                                 connect_args={"application_name": self.name})
         self.infrastructure_interface = InfrastructureInterface(infrastructure_source, infrastructure_login)
         self.longitude, self.latitude = self.infrastructure_interface.get_position(plz)
 
@@ -49,7 +55,7 @@ class BasicAgent:
                 connection.close()
 
     def get_rabbitmq_connection(self):
-        for i in range(10):
+        for i in range(15):
             try:
                 mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
                 channel = mqtt_connection.channel()

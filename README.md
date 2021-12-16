@@ -4,3 +4,4 @@ docker-compose -f docker-compose_simulation.yml down --remove-orphans && docker-
 
 
 
+docker stack deploy --with-registry-auth --compose-file docker-compose_simulation.yml dmas
