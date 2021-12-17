@@ -23,7 +23,6 @@ class CtlAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        plz = kwargs['plz']
         self.logger.info('starting the agent')
         start_time = time.time()
         self.sim_start = False
@@ -38,7 +37,7 @@ class CtlAgent(BasicAgent):
 
     def set_agents(self):
         headers = {'content-type': 'application/json', }
-        response = requests.get('http://rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
+        response = requests.get(f'http://{self.mqtt_host}:15672/api/queues', headers=headers, auth=('guest', 'guest'))
         agents = response.json()
         for agent in agents:
             name = agent['name']
@@ -48,7 +47,7 @@ class CtlAgent(BasicAgent):
 
     def get_agents(self):
         headers = {'content-type': 'application/json', }
-        response = requests.get('http://rabbitmq:15672/api/queues', headers=headers, auth=('guest', 'guest'))
+        response = requests.get(f'http://{self.mqtt_host}:15672/api/queues', headers=headers, auth=('guest', 'guest'))
         agents = response.json()
         return [agent['name'] for agent in agents if agent['name'][:3] in ['DEM', 'RES', 'STR', 'PWP']]
 
