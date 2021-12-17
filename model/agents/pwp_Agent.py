@@ -7,7 +7,7 @@ from tqdm import tqdm
 # model modules
 from forecasts.price import PriceForecast
 from forecasts.weather import WeatherForecast
-from aggregation.portfolio_powerPlant_ import PowerPlantPortfolio
+from aggregation.portfolio_powerPlant import PowerPlantPortfolio
 from agents.basic_Agent import BasicAgent
 
 
@@ -249,7 +249,6 @@ class PwpAgent(BasicAgent):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
 
-        # Step 1: get market results
         start_time = time.time()
 
         # query the DayAhead results

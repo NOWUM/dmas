@@ -22,6 +22,8 @@ class PortfolioModel:
 
         self.power = None
 
+        self.volume = None
+
         self.reset_data()
 
     def set_parameter(self, date, weather, prices):
@@ -57,9 +59,11 @@ class PortfolioModel:
         self.demand = dict(power=np.zeros((self.T,), float),
                            heat=np.zeros((self.T,), float))
 
-        self.cash_flow = dict(fuel=np.zeros((self.T,), float),
+        self.cash_flow = dict(profit=np.zeros((self.T,), float),
+                              fuel=np.zeros((self.T,), float),
                               emission=np.zeros((self.T,), float),
                               start_ups=np.zeros((self.T,), float))
 
         self.power = np.zeros(self.T, float)
+        self.volume = np.zeros(self.T, float)
 

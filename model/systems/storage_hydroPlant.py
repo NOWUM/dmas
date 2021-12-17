@@ -1,95 +1,106 @@
 # third party modules
-import os
-import gurobipy as gby
 import numpy as np
-
+import pandas as pd
+from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, \
+    Reals, Binary, maximize, value, quicksum, ConstraintList
 
 # model modules
 from systems.basic_system import EnergySystem
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 
 class Storage(EnergySystem):
 
-    def __init__(self, T, name='default', storage=None):
+    def __init__(self, T, unitID, eta_plus, eta_minus, fuel, V0, VMin, VMax, PPlusMax, PMinusMax, PPlusMin, PMinusMin):
         super().__init__(T)
 
-        # initialize default power plant
-        if storage is None:
-            storage = {"eta+": 0.85, "eta-": 0.8, "fuel": "water", "V0": 4230, "VMin": 0, "VMax": 8460,
-                       "P+_Max": 1060, "P-_Max": 1060,"P+_Min": 0, "P-_Min": 0}
-        self.storage = storage
-        self.name = name  # storage name
+        self.name = unitID
 
-        # initialize gurobi model for optimization
-        self.m = gby.Model('storage')
-        self.m.Params.OutputFlag = 0
-        self.m.Params.TimeLimit = 30
-        self.m.Params.MIPGap = 0.05
-        self.m.__len__ = 1
+        storage = {"eta+": eta_plus, "eta-": eta_minus, "fuel": "water", "V0": V0, "VMin": VMin, "VMax": VMax,
+                   "P+_Max": PPlusMax, "P-_Max": PMinusMax,"P+_Min": PPlusMin, "P-_Min": PMinusMin}
+        self.storage = storage
+
+        self.model = ConcreteModel()
+        self.opt = SolverFactory('glpk')
 
         self.volume = np.zeros((self.T,), np.float)
 
-    def initialize_model(self, model, name):
+        self.committed_power = None
 
-        # power and volume
-        power = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P_' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
-        volume = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='V_' + name, lb=self.storage['VMin'],
-                               ub=self.storage['VMax'])
+    def build_model(self):
 
-        pP = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P+_' + name, lb=0, ub=self.storage['P+_Max'])
-        pM = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='P-_' + name, lb=0, ub=self.storage['P-_Max'])
-        on = model.addVars(self.t, vtype=gby.GRB.BINARY, name='On_' + name)
+        self.model.clear()
 
-        # profit
-        profit = model.addVars(self.t, vtype=gby.GRB.CONTINUOUS, name='Profit_' + name, lb=-gby.GRB.INFINITY, ub=gby.GRB.INFINITY)
-        model.addConstrs(profit[i] == power[i] * self.prices['power'][i] for i in self.t)
+        self.model.p_out = Var(self.t, within=Reals)
+        self.model.p_plus = Var(self.t, bounds=(self.storage['P+_Min'], self.storage['P+_Max']), within=Reals)
+        self.model.p_minus = Var(self.t, bounds=(self.storage['P-_Min'], self.storage['P-_Max']), within=Reals)
+        self.model.volume = Var(self.t, within=Reals, bounds=(self.storage['VMin'], self.storage['VMax']))
+        self.model.switch = Var(self.t, within=Binary)
 
-        # power = charge + discharge
-        model.addConstrs(power[i] == -pP[i] + pM[i] for i in self.t)
-        # power limits
-        model.addConstrs(pP[i] <= on[i] * self.storage['P+_Max'] for i in self.t)
-        model.addConstrs(pP[i] >= on[i] * self.storage['P+_Min'] for i in self.t)
-        model.addConstrs(pM[i] <= (1 - on[i]) * self.storage['P-_Max'] for i in self.t)
-        model.addConstrs(pM[i] >= (1 - on[i]) * self.storage['P-_Min'] for i in self.t)
+        self.model.profit = Var(self.t, within=Reals)
 
-        # volume restriction
-        model.addConstr(volume[0] == self.storage['V0'] +
-                        (self.storage['eta+'] * pP[0] - pM[0] / self.storage['eta-']))
-        model.addConstrs(volume[i] == volume[i-1] +
-                         (self.storage['eta+'] * pP[i] - pM[i] / self.storage['eta-']) for i in self.t[1:])
+        self.model.plus_limit = ConstraintList()
+        self.model.minus_limit = ConstraintList()
+        self.model.output_power = ConstraintList()
+        self.model.volume_limit = ConstraintList()
+        self.model.profit_function = ConstraintList()
 
-        model.setObjective(gby.quicksum(profit[i] for i in self.t), gby.GRB.MAXIMIZE)
+        for t in self.t:
+            self.model.plus_limit.add(self.model.p_plus[t] <= self.model.switch[t] * self.storage['P+_Max'])
+            self.model.plus_limit.add(self.model.p_plus[t] >= self.model.switch[t] * self.storage['P+_Min'])
+            self.model.minus_limit.add(self.model.p_minus[t] <= (1-self.model.switch[t]) * self.storage['P-_Max'])
+            self.model.minus_limit.add(self.model.p_minus[t] >= (1- self.model.switch[t]) * self.storage['P-_Min'])
 
-        model.update()
+            self.model.output_power.add(self.model.p_out[t] == -self.model.p_plus[t] + self.model.p_minus[t])
 
+            if t == 0:
+                self.model.volume_0 = Constraint(self.model.volume[0] == self.storage['V0']
+                                                 + self.storage['eta+'] * self.model.p_plus[0]
+                                                 - self.model.p_minus[0] / self.storage['eta-'])
+            else:
+                self.model.volume_limit.add(self.model.volume[t] == self.model[t-1]
+                                                 + self.storage['eta+'] * self.model.p_plus[0]
+                                                 - self.model.p_minus[0] / self.storage['eta-'])
+
+            self.model.profit_function.add(self.model.profit[t] == self.model.p_out[t] * self.prices['power'][t])
+
+
+        # if no day ahead power known run standard optimization
+        if self.committed_power is None:
+            self.model.obj = Objective(expr=quicksum(self.model.profit[i] for i in self.t), sense=maximize)
+        else:
+            self.model.power_difference = Var(self.t, bounds=(0, None), within=Reals)
+            self.model.delta_cost = Var(self.t, bounds=(0, None), within=Reals)
+            self.model.minus = Var(self.t, bounds=(0, None), within=Reals)
+            self.model.plus = Var(self.t, bounds=(0, None), within=Reals)
+
+            self.model.difference = ConstraintList()
+            self.model.day_ahead_difference = ConstraintList()
+            self.model.difference_cost = ConstraintList()
+
+
+            for t in self.t:
+                self.model.difference.add(self.model.minus[t] + self.model.plus[t]
+                                          == self.model.power_difference[t])
+
+                self.model.day_ahead_difference.add(self.committed_power[t] - self.model.p_out[t]
+                                                    == -self.model.minus[t] + self.model.plus[t])
+                self.model.difference_cost.add(self.model.delta_cost[t]
+                                               == self.model.power_difference[t] * np.abs(self.prices['power'][t] * 2))
+            # set new objective
+            self.model.obj = Objective(expr=quicksum(self.model.profit[i] - self.model.delta_cost[i]
+                                                     for i in self.t), sense=maximize)
     def optimize(self):
 
-        self.initialize_model(self.m, self.name)
+        if self.committed_power is None:
+            self.build_model()
+            self.opt.solve(self.model)
 
-        self.m.optimize()
-
-        self.power = np.asarray([p.x for p in [x for x in self.m.getVars() if 'P_' in x.VarName]]).reshape((-1,))
-        self.volume = np.asarray([p.x for p in [x for x in self.m.getVars() if 'V_' in x.VarName]]).reshape((-1,))
-        self.generation['power' + self.storage['fuel'].capitalize()] = self.power
+            for t in self.t:
+                self.generation['total'][t] = self.model.p_out[t].value
+                self.generation['water'][t] = self.model.p_out[t].value
+                self.volume = self.model.volume[t].value
 
         return self.power
 
 
-if __name__ == "__main__":
-    st = Storage()
 
-    power_price = 300 * np.ones(24)
-    power_price[:12] = power_price[12:] - 150
-    co = np.ones(24) * 23.8 * np.random.uniform(0.95, 1.05, 24)  # -- Emission Price     [€/t]
-    gas = np.ones(24) * 24.8 * np.random.uniform(0.95, 1.05, 24)  # -- Gas Price          [€/MWh]
-    lignite = 1.5 * np.random.uniform(0.95, 1.05)  # -- Lignite Price      [€/MWh]
-    coal = 9.9 * np.random.uniform(0.95, 1.05)  # -- Hard Coal Price    [€/MWh]
-    nuc = 1.0 * np.random.uniform(0.95, 1.05)  # -- nuclear Price      [€/MWh]
-
-    prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
-
-    st.set_parameter(date='2018-01-01', weather=None,
-                     prices=prices)
-
-    x = st.optimize()

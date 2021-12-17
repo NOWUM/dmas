@@ -71,17 +71,14 @@ class DemAgent(BasicAgent):
         for t in self.portfolio.t:
             if power[t] < 0:
                 order_book[t] = dict(type = 'demand',
-                                     block_id = t,
                                      hour = t,
                                      order_id = 0,
                                      name = self.name,
                                      price = 3000,
-                                     volume = power[t],
-                                     link = -1)
+                                     volume = power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')
         return df.set_index(['block_id', 'hour', 'order_id', 'name'])
-
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)

@@ -17,22 +17,17 @@ class InfrastructureInterface:
                                            connect_args={"application_name": name})
         self.database_wind = create_engine(f'postgresql://{structure_data_credential}@{structure_data_server}/{structure_databases[2]}',
                                            connect_args={"application_name": name})
+
         with open(r'./interfaces/data/germany_shape.geojson') as f:
             self.germany_shapes = geojson.load(f)
         with open(r'./interfaces/data/germany_centroid.geojson') as f:
             self.germany_centroid = geojson.load(f)
         self.centers = {int(element['properties']['plz']): tuple(element['geometry']['coordinates'])
                         for element in self.germany_centroid['features']}
+        plz_nuts = pd.read_csv(r'./interfaces/data/plz_to_nuts.csv', sep=';')
+        plz_nuts['CODE'] = [int(x.replace("'","")) for x in plz_nuts['CODE']]
+        plz_nuts['NUTS3'] = [x.replace("'","") for x in plz_nuts['NUTS3']]
 
-
-        #turbine_typs = pd.read_csv(r'./interfaces/data/technical_parameter_wind.csv')
-        #self.pattern_wind = '(?:'
-        #for typ in turbine_typs['turbine_type'].to_numpy():
-        #    self.pattern_wind += str(typ).split('/')[0].replace('-', '') + '|'
-        #self.pattern_wind += ')'
-        #self.wind_manufacturer = pd.read_csv(r'./interfaces/data/manufacturer_wind.csv', index_col=0, sep=';')
-        #self.wind_types = pd.read_excel(r'./y.xlsx')
-        #self.manufacturer = self.wind_types['manu'].unique()
 
     def get_power_plant_in_area(self, area=520, fuel_type='lignite'):
 

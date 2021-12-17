@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 # model modules
-from systems.market_ import DayAheadMarket
+from systems.market import DayAheadMarket
 from agents.basic_Agent import BasicAgent
 
 
@@ -27,21 +27,30 @@ class MarketAgent(BasicAgent):
             self.market_clearing()
 
     def market_clearing(self):
-        df = pd.read_sql("Select * from order_book", self.simulation_database)
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
+        df = self.simulation_interface.get_hourly_orders()
         ask = df.loc[df['type'] == 'generation']
-        ask_orders = {}
+        hourly_ask = {}
         for key, value in ask.to_dict(orient='index').items():
-            ask_orders.update({key: (value['price'], value['volume'], value['link'])})
+            hourly_ask.update({key: (value['price'], value['volume'])})
 
-        bid_orders = {}
+        hourly_bid = {}
         bid = df.loc[df['type'] == 'demand']
         for key, value in bid.to_dict(orient='index').items():
-            bid_orders.update({key: (value['price'], value['volume'], value['link'])})
+            hourly_bid.update({key: (value['price'], value['volume'])})
 
+        df = self.simulation_interface.get_linked_orders()
+        linked_orders = {}
+        for key, value in df.to_dict(orient='index').items():
+            linked_orders.update({key: (value['price'], value['volume'], value['link'])})
 
-        self.market.set_parameter(bid_orders, ask_orders)
+        df = self.simulation_interface.get_exclusive_orders()
+        exclusive_orders = {}
+        for key, value in df.to_dict(orient='index').items():
+            exclusive_orders.update({key: (value['price'], value['volume'])})
+
+        self.market.set_parameter(hourly_ask, hourly_bid, linked_orders, exclusive_orders)
+
         auction_results , market_results = self.market.optimize()
 
         auction_results.index = pd.date_range(start=self.date, periods=24, freq='h')

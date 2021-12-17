@@ -13,20 +13,37 @@ class SimulationInterface:
 
     def initial_tables(self):
 
-        query = '''CREATE TABLE order_book (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
-                                            volume double precision, link bigint, type text)'''
+        # initialize tables for orders and market
+        # hourly orders
+        query = '''CREATE TABLE hourly_orders (hour bigint, order_id bigint, name text, price double precision,
+                                               volume double precision, type text)'''
         self.database.execute(query)
-        self.database.execute('ALTER TABLE "order_book" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+        self.database.execute('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("hour", "order_id", "name");')
+        # linked block orders
+        query = '''CREATE TABLE linked_orders (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
+                                               volume double precision, link bigint, type text)'''
+        self.database.execute(query)
+        self.database.execute('ALTER TABLE "linked_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+        # exclusive block orders
+        query = '''CREATE TABLE exclusive_orders (block_id bigint, hour bigint, name text, price double precision,
+                                                  volume double precision)'''
+        self.database.execute(query)
+        self.database.execute('ALTER TABLE "exclusive_orders" ADD PRIMARY KEY ("block_id", "hour", "name");')
+
+        # Generation and Demand Data
+        # installed capacities
         query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision,
                                             coal double precision, gas double precision, lignite double precision,
                                             nuclear double precision, solar double precision, water double precision,
                                             wind double precision, storage double precision, agent text)'''
         self.database.execute(query)
         self.database.execute('ALTER TABLE "capacities" ADD PRIMARY KEY ("time", "agent");')
+        # total demand of each agent
         query = '''CREATE TABLE demand ("time" timestamp without time zone, power double precision,
                                         heat double precision, step text, agent text)'''
         self.database.execute(query)
         self.database.execute('ALTER TABLE "demand" ADD PRIMARY KEY ("time", "step", "agent");')
+        # total generation of each agent
         query = '''CREATE TABLE generation ("time" timestamp without time zone, total double precision,
                                             solar double precision, wind double precision, water double precision,
                                             bio double precision, lignite double precision, coal double precision,
@@ -45,9 +62,10 @@ class SimulationInterface:
         self.database.execute(query)
         self.database.execute('ALTER TABLE "market_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
 
-
     def reset_order_book(self):
-        self.database.execute("DELETE FROM order_book")
+        self.database.execute("DELETE FROM hourly_orders")
+        self.database.execute("DELETE FROM linked_orders")
+        self.database.execute("DELETE FROM exclusive_orders")
 
     def set_capacities(self, portfolio):
         if isinstance(portfolio, list):
@@ -137,4 +155,19 @@ class SimulationInterface:
         df.index = pd.date_range(start=start_date, freq='h', periods=len(df))
         df.index.name = 'time'
 
+        return df
+
+    def get_hourly_orders(self):
+        df = pd.read_sql("Select * from hourly_orders", self.database)
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+        return df
+
+    def get_linked_orders(self):
+        df = pd.read_sql("Select * from linked_orders", self.database)
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+        return df
+
+    def get_exclusive_orders(self):
+        df = pd.read_sql("Select * from exclusive_orders", self.database)
+        df = df.set_index(['block_id', 'hour', 'name'])
         return df
