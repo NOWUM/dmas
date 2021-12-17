@@ -84,7 +84,8 @@ class DemAgent(ParticipantAgent):
 
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-
+        if 'get_sim_engine' in message:
+            self.simulation_engine = self.get_simulation_data_connection()
         if 'set_capacities' in message:
             self.set_capacities(self.portfolio)
         if 'opt_dayAhead' in message:
@@ -117,7 +118,7 @@ class DemAgent(ParticipantAgent):
         start_time = time.time()
         order_book = self.get_order_book(power)
         self.set_order_book(order_book)
-        self.publish.basic_publish(exchange=self.exchange_name, routing_key='', body=f'{self.name} {self.date.date()}')
+        self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
 

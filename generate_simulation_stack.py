@@ -13,9 +13,7 @@ output.append(f'''
     image: {image_repo}agent:latest
     environment:
       PLZ_CODE: 1
-      MQTT_EXCHANGE: 'dMAS'
-      AGENT_TYPE: 'CTL'
-      CONNECT: 'True'
+      TYPE: 'CTL'
     ports:
       - 5000:5000
 ''')
@@ -44,9 +42,7 @@ output.append(f'''
     image: {image_repo}agent:latest
     environment:
       PLZ_CODE: 1
-      MQTT_EXCHANGE: 'dMAS'
-      AGENT_TYPE: 'WTR'
-      CONNECT: 'True'
+      TYPE: 'WTR'
 ''')
 # Build one TSO
 output.append(f'''
@@ -55,48 +51,40 @@ output.append(f'''
     image: {image_repo}agent:latest
     environment:
       PLZ_CODE: 1
-      MQTT_EXCHANGE: 'dMAS'
-      AGENT_TYPE: 'NET'
-      CONNECT: 'True'
+      TYPE: 'NET'
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
-for agent in agents[:10]:
+for agent in agents[:5]:
     output.append(f'''
   dem{agent}:
     container_name: dem{agent}
     image: {image_repo}agent:latest
     environment:
       PLZ_CODE: {agent}
-      MQTT_EXCHANGE: 'dMAS'
-      AGENT_TYPE: 'DEM'
-      CONNECT: 'True'
+      TYPE: 'DEM'
       ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
-for agent in agents[:10]:
+for agent in agents[:5]:
     output.append(f'''
   pwp{agent}:
     container_name: pwp{agent}
     image: {image_repo}agent:latest
     environment:
       PLZ_CODE: {agent}
-      MQTT_EXCHANGE: 'dMAS'
-      AGENT_TYPE: 'PWP'
-      CONNECT: 'True'
+      TYPE: 'PWP'
       ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
-for agent in agents[:10]:
+for agent in agents[:5]:
     output.append(f'''
   res{agent}:
     container_name: res{agent}
     image: {image_repo}agent:latest
     environment:
       PLZ_CODE: {agent}
-      MQTT_EXCHANGE: 'dMAS'
-      AGENT_TYPE: 'RES'
-      CONNECT: 'True'
+      TYPE: 'RES'
       ''')
 
 with open('docker-compose_simulation.yml', 'w') as f:
