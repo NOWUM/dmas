@@ -11,14 +11,14 @@ from interfaces.weather import WeatherInterface
 
 class WtrAgent(BasicAgent):
 
-    def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
-        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
+    def __init__(self, plz, *args, **kwargs):
+        super().__init__(plz, *args, **kwargs)
 
         self.sim_date = dt(1995, 1, 1)
         self.year = self.date.year
         self.leap_years = set([i for i in range(1996, 2016, 4)])
         self.norm_years = set([i for i in range(1995, 2016)]).difference(self.leap_years)
-        if calendar.isleap(pd.to_datetime(date).year):
+        if calendar.isleap(pd.to_datetime('1995-01-01').year):
             self.sim_year = np.random.choice(list(self.leap_years))
         else:
             self.sim_year = np.random.choice(list(self.norm_years))

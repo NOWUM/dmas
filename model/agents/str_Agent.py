@@ -12,8 +12,8 @@ from agents.basic_Agent import BasicAgent
 
 class StrAgent(BasicAgent):
 
-    def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
-        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login)
+    def __init__(self, plz, *args, **kwargs):
+        super().__init__(plz, *args, **kwargs)
         # Development of the portfolio with the corresponding power plants and storages
         self.logger.info('starting the agent')
         start_time = tme.time()

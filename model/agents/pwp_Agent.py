@@ -14,8 +14,8 @@ from agents.participant_agent import ParticipantAgent
 
 class PwpAgent(ParticipantAgent):
 
-    def __init__(self, date, plz, agent_type, connect,  infrastructure_source, infrastructure_login, *args, **kwargs):
-        super().__init__(date, plz, agent_type, connect, infrastructure_source, infrastructure_login, *args, **kwargs)
+    def __init__(self, plz, *args, **kwargs):
+        super().__init__(plz, *args, **kwargs)
         self.logger.info('starting the agent')
         start_time = time.time()
 
