@@ -11,14 +11,14 @@ from interfaces.infrastructure import InfrastructureInterface
 
 class BasicAgent:
 
-    def __init__(self, date, plz, typ, connect, infrastructure_source, infrastructure_login, *args, **kwargs):
+    def __init__(self, date, plz, typ, connect, infrastructure_source, infrastructure_login,
+                 mqtt_host, mqtt_exchange, simulation_database, simulation_login, *args, **kwargs):
 
         # declare meta data for each agent
         self.plz = plz
         self.typ = typ
         self.name = f'{self.typ}_{self.plz}'
         self.date = pd.to_datetime(date)
-        self.exchange_name = 'dMas'
 
         # declare logging options
         self.logger = logging.getLogger(self.name)
@@ -30,16 +30,11 @@ class BasicAgent:
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
         # self.logger.disabled = True
-        for i in range(15):
-            try:
-                self.simulation_database = create_engine(f'postgresql://dMAS:dMAS@simulationdb/dMAS',
-                                                         connect_args={"application_name": self.name})
-                break
-            except Exception as e:
-                self.logger.exception(f'could not connect to simulation database - try: {i}')
-                time.sleep(i ** 2)
-
+        self.simulation_database = create_engine(f'postgresql://{simulation_login}@{simulation_database}/dMAS',
+                                                   connect_args={"application_name": self.name})
         self.infrastructure_interface = InfrastructureInterface(infrastructure_source, infrastructure_login)
+        self.mqtt_host = mqtt_host
+        self.exchange_name = mqtt_exchange
         self.longitude, self.latitude = self.infrastructure_interface.get_position(plz)
 
         self.channels = []
@@ -55,21 +50,28 @@ class BasicAgent:
                 connection.close()
 
     def get_rabbitmq_connection(self):
-        for i in range(15):
-            try:
-                mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
-                channel = mqtt_connection.channel()
-                channel.exchange_declare(exchange=self.exchange_name, exchange_type='fanout')
-                self.logger.info(f'connected to rabbitmq')
-                self.channels.append((mqtt_connection, channel))
-                return channel
-            except pika.exceptions.AMQPConnectionError:
-                    self.logger.info(f'could not connect - try: {i}')
-                    time.sleep(i ** 2)
-            except Exception as e:
-                    self.mqtt_connection = False
-                    self.logger.exception(f'could not connect - try: {i}')
-        return False, None
+        mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.mqtt_host, heartbeat=0))
+        channel = mqtt_connection.channel()
+        channel.exchange_declare(exchange=self.exchange_name, exchange_type='fanout')
+        self.logger.info(f'connected to rabbitmq')
+        self.channels.append((mqtt_connection, channel))
+        return channel
+
+        # for i in range(15):
+        #     try:
+        #         mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=0))
+        #         channel = mqtt_connection.channel()
+        #         channel.exchange_declare(exchange=self.exchange_name, exchange_type='fanout')
+        #         self.logger.info(f'connected to rabbitmq')
+        #         self.channels.append((mqtt_connection, channel))
+        #         return channel
+        #     except pika.exceptions.AMQPConnectionError:
+        #             self.logger.info(f'could not connect - try: {i}')
+        #             time.sleep(i ** 2)
+        #     except Exception as e:
+        #             self.mqtt_connection = False
+        #             self.logger.exception(f'could not connect - try: {i}')
+        # return False, None
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")

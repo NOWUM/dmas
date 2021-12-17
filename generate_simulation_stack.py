@@ -5,42 +5,7 @@ image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 output = []
 output.append('version: "3"\n')
 output.append('services:\n')
-# Build TimescaleDB
-output.append(f'''
-  simulationdb:
-    container_name: simulationdb
-    image: timescale/timescaledb:latest-pg12
-    command: postgres -c 'max_connections=300' -B 4096MB
-    restart: always
-    environment:
-      - POSTGRES_USER=dMAS
-      - POSTGRES_PASSWORD=dMAS
-      - POSTGRES_DB=dMAS
-    ports:
-      - 5432:5432
-''')
-output.append('''
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin4
-    environment:
-        PGADMIN_DEFAULT_EMAIL: nowum-energy@fh-aachen.de
-        PGADMIN_DEFAULT_PASSWORD: nowum
-        PGADMIN_LISTEN_PORT: 80
-    ports:
-        - 9090:80
-''')
 
-# Build Rabbitmq
-output.append('''
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3-management
-    restart: always
-    ports:
-      - 15672:15672
-      - 5672:5672
-''')
 # Build one Control Agent
 output.append(f'''
   controller:
@@ -96,7 +61,7 @@ output.append(f'''
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
-for agent in agents[:90]:
+for agent in agents[:10]:
     output.append(f'''
   dem{agent}:
     container_name: dem{agent}
@@ -109,7 +74,7 @@ for agent in agents[:90]:
       ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
-for agent in agents[:90]:
+for agent in agents[:10]:
     output.append(f'''
   pwp{agent}:
     container_name: pwp{agent}
@@ -122,7 +87,7 @@ for agent in agents[:90]:
       ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
-for agent in agents[:90]:
+for agent in agents[:10]:
     output.append(f'''
   res{agent}:
     container_name: res{agent}

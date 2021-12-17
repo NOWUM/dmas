@@ -18,10 +18,13 @@ if __name__ == "__main__":
         'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
         'plz': int(os.getenv('PLZ_CODE', 415)),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
+        'mqtt_host': os.getenv('MQTT_HOST', '10.13.10.54'),
         'agent_type': os.getenv('AGENT_TYPE', 'CTL'),
         'connect': bool(os.getenv('CONNECT', False)),
         'infrastructure_source': os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432'),
-        'infrastructure_login': os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
+        'infrastructure_login': os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata'),
+        'simulation_database': os.getenv('SIMULATION_DATABASE', '10.13.10.54:5432'),
+        'simulation_login': os.getenv('SIMULATION_DATABASE', 'dMAS:dMAS'),
     }
 
     try:
