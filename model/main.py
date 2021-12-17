@@ -54,7 +54,7 @@ if __name__ == "__main__":
             init_dict.update({'type': 'CTL'})
             agent = CtlAgent(**init_dict)
 
-        # agent.run()
+        agent.run()
         #agent.optimize_day_ahead()
 
     except Exception as e:
