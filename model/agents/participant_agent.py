@@ -4,8 +4,8 @@ import pandas as pd
 
 class ParticipantAgent(BasicAgent):
 
-    def __init__(self, date, plz, typ, connect, infrastructure_source, infrastructure_login, *args, **kwargs):
-        super().__init__(date, plz, typ, connect, infrastructure_source, infrastructure_login, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def set_capacities(self, portfolio):
         if isinstance(portfolio, list):

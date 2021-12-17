@@ -11,13 +11,13 @@ from interfaces.infrastructure import InfrastructureInterface
 
 class BasicAgent:
 
-    def __init__(self, date, plz, typ, connect, infrastructure_source, infrastructure_login,
+    def __init__(self, date, plz, type, connect, infrastructure_source, infrastructure_login,
                  mqtt_host, mqtt_exchange, simulation_database, simulation_login, *args, **kwargs):
 
         # declare meta data for each agent
         self.plz = plz
-        self.typ = typ
-        self.name = f'{self.typ}_{self.plz}'
+        self.typ = type
+        self.name = f'dmas_{self.typ}{self.plz}'.lower()
         self.date = pd.to_datetime(date)
 
         # declare logging options

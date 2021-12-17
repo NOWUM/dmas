@@ -15,8 +15,9 @@ from agents.participant_agent import ParticipantAgent
 
 class ResAgent(ParticipantAgent):
 
-    def __init__(self, plz, *args, **kwargs):
-        super().__init__(plz, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        plz = kwargs['plz']
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = time.time()

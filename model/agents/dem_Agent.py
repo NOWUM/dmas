@@ -13,8 +13,9 @@ from agents.participant_agent import ParticipantAgent
 
 class DemAgent(ParticipantAgent):
 
-    def __init__(self, plz, *args, **kwargs):
-        super().__init__(plz, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        plz = kwargs['plz']
         # Portfolio with the corresponding households, trade and industry
         self.logger.info('starting the agent')
         start_time = time.time()

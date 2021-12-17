@@ -30,23 +30,31 @@ if __name__ == "__main__":
     try:
 
         if init_dict['agent_type'] == 'DEM':
+            init_dict.update({'type': 'DEM'})
             agent = DemAgent(**init_dict)
         elif init_dict['agent_type'] == 'RES':
+            init_dict.update({'type': 'RES'})
             agent = ResAgent(**init_dict)
         elif init_dict['agent_type'] == 'PWP':
+            init_dict.update({'type': 'PWP'})
             agent = PwpAgent(**init_dict)
         elif init_dict['agent_type'] == 'STR':
+            init_dict.update({'type': 'STR'})
             agent = StrAgent(**init_dict)
         elif init_dict['agent_type'] == 'NET':
+            init_dict.update({'type': 'NET'})
             agent = NetAgent(**init_dict)
-        elif init_dict['agent_type'] == 'MRK':
+        elif init_dict['agent_type'] == 'MRK':#
+            init_dict.update({'type': 'MRK'})
             agent = MarketAgent(**init_dict)
         elif init_dict['agent_type'] == 'WTR':
+            init_dict.update({'type': 'WTR'})
             agent = WtrAgent(**init_dict)
-        elif init_dict['agent_type'] == 'CTL':
+        elif init_dict['agent_type'] == 'CTL':#
+            init_dict.update({'type': 'CTL'})
             agent = CtlAgent(**init_dict)
 
-        agent.run()
+        # agent.run()
         #agent.optimize_day_ahead()
 
     except Exception as e:

@@ -12,6 +12,7 @@ class NetAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        plz = kwargs['plz']
         self.logger.info('starting the agent')
         # create pypsa instance for powerflow
         self.network = pypsa.Network()
