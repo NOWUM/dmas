@@ -7,14 +7,16 @@ import geojson
 # select column_name from information_schema.columns where table_name='turbineData'
 class InfrastructureInterface:
 
-    def __init__(self, infrastructure_source, infrastructure_login):
+    def __init__(self, name, structure_data_server, structure_data_credential,
+                 structure_databases = ('mastr','enet','windmodel')):
         # TODO: change connection args
-        self.database_mastr = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/mastr',
-                                            connect_args={"application_name": "myapp"})
-        self.database_enet = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/enet',
-                                           connect_args={"application_name": "myapp"})
-        self.database_wind = create_engine(f'postgresql://{infrastructure_login}@{infrastructure_source}/windmodel',
-                                           connect_args={"application_name": "myapp"})
+
+        self.database_mastr = create_engine(f'postgresql://{structure_data_credential}@{structure_data_server}/{structure_databases[0]}',
+                                            connect_args={"application_name": name})
+        self.database_enet = create_engine(f'postgresql://{structure_data_credential}@{structure_data_server}/{structure_databases[1]}',
+                                           connect_args={"application_name": name})
+        self.database_wind = create_engine(f'postgresql://{structure_data_credential}@{structure_data_server}/{structure_databases[2]}',
+                                           connect_args={"application_name": name})
         with open(r'./interfaces/data/germany_shape.geojson') as f:
             self.germany_shapes = geojson.load(f)
         with open(r'./interfaces/data/germany_centroid.geojson') as f:
@@ -22,10 +24,6 @@ class InfrastructureInterface:
         self.centers = {int(element['properties']['plz']): tuple(element['geometry']['coordinates'])
                         for element in self.germany_centroid['features']}
 
-        self.wind_codes = {
-            'on_shore': 888,
-            'off_shore': 889
-        }
 
         #turbine_typs = pd.read_csv(r'./interfaces/data/technical_parameter_wind.csv')
         #self.pattern_wind = '(?:'

@@ -6,8 +6,8 @@ from forecasts.basic_forecast import BasicForecast
 
 class WeatherForecast(BasicForecast):
 
-    def __init__(self, position):
-        super().__init__(position)
+    def __init__(self, position, simulation_interface, weather_interface):
+        super().__init__(position, simulation_interface, weather_interface)
         self.sun_position = self.location.get_solarposition(pd.date_range(start='1972-01-01 00:00', periods=8684,
                                                                           freq='h'))
 

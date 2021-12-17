@@ -6,6 +6,32 @@ output = []
 output.append('version: "3"\n')
 output.append('services:\n')
 
+output.append(f'''
+  simulationdb:
+    container_name: simulationdb
+    image: timescale/timescaledb:latest-pg12
+    command: postgres -c 'max_connections=500' -B 4096MB
+    restart: always
+    environment:
+      - POSTGRES_USER=dMAS
+      - POSTGRES_PASSWORD=dMAS
+      - POSTGRES_DB=dmas
+    ports:
+      - 5432:5432
+''')
+
+# Build Rabbitmq
+output.append('''
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - 15672:15672
+      - 5672:5672
+''')
+
+
 # Build one Control Agent
 output.append(f'''
   controller:

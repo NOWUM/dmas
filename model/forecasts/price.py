@@ -26,8 +26,8 @@ default_lignite = 1.5                                                   # agora 
 
 class PriceForecast(BasicForecast):
 
-    def __init__(self, position):
-        super().__init__(position)
+    def __init__(self, position, simulation_interface, weather_interface):
+        super().__init__(position, simulation_interface, weather_interface)
 
         # initialize neural network and corresponding scaler
         self.model = MLPRegressor(hidden_layer_sizes=(15, 15,), activation='identity', early_stopping=True,
@@ -39,9 +39,8 @@ class PriceForecast(BasicForecast):
         for _ in range(8):
             self.price_register.append(default_power_price)
 
-
-        self.demand_model = DemandForecast(self.position)
-        self.weather_model = WeatherForecast(self.position)
+        self.demand_model = DemandForecast(self.position, simulation_interface, weather_interface)
+        self.weather_model = WeatherForecast(self.position, simulation_interface, weather_interface)
 
     def collect_data(self, date):
         self.demand_model.collect_data(date)

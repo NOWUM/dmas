@@ -18,12 +18,20 @@ if __name__ == "__main__":
         'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
         'plz': int(os.getenv('PLZ_CODE', 1)),
         'type': os.getenv('TYPE', 'CTL'),
-        'mqtt_server': os.getenv('MQTT_HOST', '10.13.10.54'),
-        'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dMAS'),
-        'simulation_server': os.getenv('SIMULATION_SOURCE', '10.13.10.54:5432'),
+        # mqtt default parameter
+        'mqtt_server': os.getenv('MQTT_HOST', 'rabbitmq'),
+        'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dmas'),
+        # simulation data server default parameter
+        'simulation_server': os.getenv('SIMULATION_SOURCE', 'simulationdb:5432'),
+        'simulation_credential': os.getenv('SIMULATION_DATABASE', 'dMAS:dMAS'),
         'simulation_database': os.getenv('SIMULATION_DATABASE', 'dmas'),
+        # structure data server default parameter
         'structure_server': os.getenv('STRUCTURE_SERVER', '10.13.10.41:5432'),
         'structure_credential': os.getenv('STRUCTURE_CREDENTIAL', 'opendata:opendata'),
+        # weather data server default parameter
+        'weather_server': os.getenv('WEATHER_SERVER', '10.13.10.41:5432'),
+        'weather_credential': os.getenv('WEATHER_CREDENTIAL', 'opendata:opendata'),
+        'weather_database': os.getenv('WEATHER_DATABASE', 'weather')
     }
 
     try:

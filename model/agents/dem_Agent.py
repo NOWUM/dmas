@@ -8,10 +8,10 @@ from tqdm import tqdm
 from forecasts.weather import WeatherForecast
 from forecasts.price import PriceForecast
 from aggregation.portfolio_demand import DemandPortfolio
-from agents.participant_agent import ParticipantAgent
+from agents.basic_Agent import BasicAgent
 
 
-class DemAgent(ParticipantAgent):
+class DemAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,8 +20,12 @@ class DemAgent(ParticipantAgent):
         self.logger.info('starting the agent')
         start_time = time.time()
         self.portfolio = DemandPortfolio()
-        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude))
-        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
+        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                                simulation_interface=self.simulation_interface,
+                                                weather_interface=self.weather_interface)
+        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                            simulation_interface=self.simulation_interface,
+                                            weather_interface=self.weather_interface)
 
         demand = 0
         # Construction of the prosumer with photovoltaic and battery
@@ -83,11 +87,12 @@ class DemAgent(ParticipantAgent):
         super().callback(ch, method, properties, body)
 
         message = body.decode("utf-8")
+
         self.date = pd.to_datetime(message.split(' ')[1])
-        if 'get_sim_engine' in message:
-            self.simulation_engine = self.get_simulation_data_connection()
+        self.simulation_interface.date = self.date
+
         if 'set_capacities' in message:
-            self.set_capacities(self.portfolio)
+            self.simulation_interface .set_capacities(self.portfolio)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -111,13 +116,13 @@ class DemAgent(ParticipantAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
 
         # save optimization results
-        self.set_demand(self.portfolio, 'optimize_dayAhead')
-        self.set_generation(self.portfolio, 'optimize_dayAhead')
+        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead')
+        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead')
 
         # Step 3: build orders
         start_time = time.time()
         order_book = self.get_order_book(power)
-        self.set_order_book(order_book)
+        self.simulation_interface.set_order_book(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
@@ -128,7 +133,7 @@ class DemAgent(ParticipantAgent):
         self.logger.info('starting day ahead adjustments')
         start_time = time.time()
         # save optimization results
-        self.set_generation(self.portfolio, 'post_dayAhead')
-        self.set_demand(self.portfolio, 'post_dayAhead')
+        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead')
+        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead')
 
         self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

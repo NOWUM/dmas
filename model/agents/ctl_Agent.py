@@ -6,7 +6,6 @@ import threading
 import requests
 import numpy as np
 from tqdm import tqdm
-from sqlalchemy import create_engine
 import dash
 from dash import dcc
 from dash import html
@@ -32,8 +31,6 @@ class CtlAgent(BasicAgent):
         self.stop_date = pd.to_datetime('2018-02-01')
         self.waiting_list = []
         self.cleared = False
-
-        # self.simulation_engine = self.get_simulation_data_connection()
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -89,6 +86,7 @@ class CtlAgent(BasicAgent):
         message = body.decode("utf-8")
         agent, date = message.split(' ')
         date = pd.to_datetime(date)
+        # print(message)
         if date == self.date and agent in self.waiting_list:
             # self.logger.info(f'Agent {agent} set orders')
             self.waiting_list.remove(agent)
@@ -105,8 +103,6 @@ class CtlAgent(BasicAgent):
 
     def simulation_routine(self):
         self.logger.info('simulation started')
-
-        self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'get_sim_engine {self.start_date}')
 
         for date in tqdm(pd.date_range(start=self.start_date, end=self.stop_date, freq='D')):
             if self.sim_stop:
@@ -138,8 +134,7 @@ class CtlAgent(BasicAgent):
                                                body=f'result_dayAhead {date.date()}')
 
                     # 4. Step: reset the order_book table for the next day
-                    self.simulation_engine.execute("DELETE FROM order_book")
-
+                    self.simulation_interface.reset_order_book()
                     self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
 
                     #self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
@@ -158,45 +153,7 @@ class CtlAgent(BasicAgent):
 
     def run(self):
 
-        engine = create_engine(f'postgresql://dMAS:dMAS@{self.simulation_data_server}', connect_args={"application_name": self.name})
-        print(f"DROP DATABASE IF EXISTS {self.simulation_database}")
-        engine.execution_options(isolation_level="AUTOCOMMIT").execute(f"DROP DATABASE IF EXISTS {self.simulation_database}")
-        engine.execution_options(isolation_level="AUTOCOMMIT").execute(f"CREATE DATABASE {self.simulation_database}")
-
-        self.simulation_engine = self.get_simulation_data_connection()
-
-        query = '''CREATE TABLE order_book (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
-                                            volume double precision, link bigint, type text)'''
-        self.simulation_engine.execute(query)
-        self.simulation_engine.execute('ALTER TABLE "order_book" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
-        query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision,
-                                            coal double precision, gas double precision, lignite double precision,
-                                            nuclear double precision, solar double precision, water double precision,
-                                            wind double precision, storage double precision, agent text)'''
-        self.simulation_engine.execute(query)
-        self.simulation_engine.execute('ALTER TABLE "capacities" ADD PRIMARY KEY ("time", "agent");')
-        query = '''CREATE TABLE demand ("time" timestamp without time zone, power double precision,
-                                        heat double precision, step text, agent text)'''
-        self.simulation_engine.execute(query)
-        self.simulation_engine.execute('ALTER TABLE "demand" ADD PRIMARY KEY ("time", "step", "agent");')
-        query = '''CREATE TABLE generation ("time" timestamp without time zone, total double precision,
-                                            solar double precision, wind double precision, water double precision,
-                                            bio double precision, lignite double precision, coal double precision,
-                                            gas double precision, nuclear double precision, step text,
-                                            agent text)'''
-        self.simulation_engine.execute(query)
-        self.simulation_engine.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')
-
-        query = '''CREATE TABLE auction_results ("time" timestamp without time zone, price double precision,
-                                                 volume double precision)'''
-        self.simulation_engine.execute(query)
-        self.simulation_engine.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
-
-        query = '''CREATE TABLE market_results (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
-                                                volume double precision, link bigint, type text)'''
-        self.simulation_engine.execute(query)
-        self.simulation_engine.execute('ALTER TABLE "market_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
-
+        self.simulation_interface.initial_tables()
         self.logger.info('initialize database for simulation')
 
         if not self.sim_start:

@@ -9,11 +9,10 @@ from tqdm import tqdm
 from forecasts.weather import WeatherForecast
 from forecasts.price import PriceForecast
 from aggregation.portfolio_renewable import RenewablePortfolio
-from agents.participant_agent import ParticipantAgent
+from agents.basic_Agent import BasicAgent
 
 
-
-class ResAgent(ParticipantAgent):
+class ResAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -114,11 +113,12 @@ class ResAgent(ParticipantAgent):
         super().callback(ch, method, properties, body)
 
         message = body.decode("utf-8")
+
         self.date = pd.to_datetime(message.split(' ')[1])
-        if 'get_sim_engine' in message:
-            self.simulation_engine = self.get_simulation_data_connection()
+        self.simulation_interface.date = self.date
+
         if 'set_capacities' in message:
-            self.set_capacities([self.portfolio_mrk, self.portfolio_eeg])
+            self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg])
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -146,16 +146,16 @@ class ResAgent(ParticipantAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 
         # save optimization results
-        self.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
-        self.set_demand([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
+        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
+        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
 
 
         # Step 3: build orders from optimization results
         start_time = time.time()
         order_book = self.get_order_book(power_eeg, type='eeg')
-        self.set_order_book(order_book)
+        self.simulation_interface.set_order_book(order_book)
         order_book = self.get_order_book(power_mrk, type='mrk')
-        self.set_order_book(order_book)
+        self.simulation_interface.set_order_book(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
@@ -165,7 +165,7 @@ class ResAgent(ParticipantAgent):
         self.logger.info('starting day ahead adjustments')
         start_time = time.time()
         # save optimization results
-        self.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
-        self.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
+        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
+        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
 
         self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

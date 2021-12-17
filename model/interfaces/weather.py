@@ -1,15 +1,15 @@
 import numpy as np
 from sqlalchemy import create_engine
 import pandas as pd
-import time
 
 
 class WeatherInterface:
 
-    def __init__(self, user='opendata', password='opendata', database='weather', host='10.13.10.41', port=5432,
-                 table='cosmo'):
+    def __init__(self, name, weather_data_server, weather_data_credential,
+                 weather_database):
 
-        self.engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
+        self.engine = create_engine(f'postgresql://{weather_data_credential}@{weather_data_server}/{weather_database}',
+                                    connect_args={"application_name": name})
         self.year_offset = 0
 
     def set_year_offset(self):

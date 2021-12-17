@@ -2,9 +2,11 @@
 import pandas as pd
 import pika
 import logging
-from sqlalchemy import create_engine
+import time
 
-from interfaces.infrastructure import InfrastructureInterface
+from interfaces.weather import WeatherInterface
+from interfaces.structure import InfrastructureInterface
+from interfaces.simulation import SimulationInterface
 
 
 class BasicAgent:
@@ -13,25 +15,38 @@ class BasicAgent:
 
         # declare meta data
         self.plz = kwargs['plz']
-        self.typ = kwargs['type']
-        self.name = f'{self.typ}{self.plz}'.lower()
+        self.type = kwargs['type']
+        self.name = f'{self.type}{self.plz}'.lower()
         self.date = pd.to_datetime(kwargs['date'])
-        # declare mqtt parameter
-        self.mqtt_server = kwargs['mqtt_server']
-        self.mqtt_exchange = kwargs['mqtt_exchange']
-        # declare simulation data server
-        self.simulation_engine = None
-        self.simulation_data_server = kwargs['simulation_server']
-        self.simulation_database = kwargs['simulation_database']
-        # declare structure data sever
-        self.structure_data_server = kwargs['structure_server']
-        self.structure_data_credential= kwargs['structure_credential']
-        self.infrastructure_interface = InfrastructureInterface(self.structure_data_server,
-                                                                self.structure_data_credential)
-        self.longitude, self.latitude = self.infrastructure_interface.get_position(self.plz)
+
         # declare logging options
         self.logger = logging.getLogger(self.name)
         self.logger.setLevel(logging.INFO)
+
+        # declare mqtt parameter
+        self.mqtt_server = kwargs['mqtt_server']
+        self.mqtt_exchange = kwargs['mqtt_exchange']
+
+        # declare simulation data server
+        self.simulation_data_server = kwargs['simulation_server']
+        self.simulation_data_credential = kwargs['simulation_credential']
+        self.simulation_database = kwargs['simulation_database']
+        self.simulation_interface = SimulationInterface(self.name, self.simulation_data_server,
+                                                        self.simulation_data_credential,
+                                                        self.simulation_database)
+        # declare structure data sever
+        self.structure_data_server = kwargs['structure_server']
+        self.structure_data_credential= kwargs['structure_credential']
+        self.infrastructure_interface = InfrastructureInterface(self.name, self.structure_data_server,
+                                                                self.structure_data_credential)
+        self.longitude, self.latitude = self.infrastructure_interface.get_position(self.plz)
+
+        # declare weather data server
+        self.weather_data_server = kwargs['weather_server']
+        self.weather_data_credential= kwargs['weather_credential']
+        self.weather_data_database = kwargs['weather_database']
+        self.weather_interface = WeatherInterface(self.name, self.weather_data_server, self.weather_data_credential,
+                                                  self.weather_data_database)
 
         # declare mqtt options
         self.channels = []
@@ -45,19 +60,23 @@ class BasicAgent:
             if connection and not connection.is_closed:
                 connection.close()
 
-    def get_simulation_data_connection(self):
-        simulation_engine = create_engine(f'postgresql://dMAS:dMAS@{self.simulation_data_server}/'
-                                          f'{self.simulation_database}', connect_args={"application_name": self.name})
-        self.logger.info(f'connected to simulation database')
-        return simulation_engine
-
     def get_rabbitmq_connection(self):
-        mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.mqtt_server, heartbeat=0))
-        channel = mqtt_connection.channel()
-        channel.exchange_declare(exchange=self.mqtt_exchange, exchange_type='fanout')
-        self.logger.info(f'connected to rabbitmq')
-        self.channels.append((mqtt_connection, channel))
-        return channel
+        for i in range(5):
+            try:
+                mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.mqtt_server, heartbeat=0))
+                channel = mqtt_connection.channel()
+                channel.exchange_declare(exchange=self.mqtt_exchange, exchange_type='fanout')
+                self.logger.info(f'connected to rabbitmq')
+                self.channels.append((mqtt_connection, channel))
+                return channel
+            except pika.exceptions.AMQPConnectionError:
+                self.logger.info(f'could not connect - try: {i}')
+                time.sleep(i ** 2)
+            except Exception as e:
+                self.mqtt_connection = False
+                self.logger.exception(f'could not connect - try: {i}')
+                time.sleep(i ** 2)
+        return False, None
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")

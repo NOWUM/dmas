@@ -9,8 +9,8 @@ with open(r'./forecasts/data/default_demand.pkl', 'rb') as file:
 
 class DemandForecast(BasicForecast):
 
-    def __init__(self, position):
-        super().__init__(position)
+    def __init__(self, position, simulation_interface, weather_interface):
+        super().__init__(position, simulation_interface, weather_interface)
         self.model = {i: [] for i in range(7)}
 
     def collect_data(self, date):

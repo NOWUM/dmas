@@ -2,17 +2,16 @@
 import time
 import pandas as pd
 import numpy as np
-import copy
 from tqdm import tqdm
 
 # model modules
 from forecasts.price import PriceForecast
 from forecasts.weather import WeatherForecast
 from aggregation.portfolio_powerPlant_ import PowerPlantPortfolio
-from agents.participant_agent import ParticipantAgent
+from agents.basic_Agent import BasicAgent
 
 
-class PwpAgent(ParticipantAgent):
+class PwpAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,8 +21,12 @@ class PwpAgent(ParticipantAgent):
 
         self.portfolio = PowerPlantPortfolio()
 
-        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude))
-        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
+        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                                simulation_interface=self.simulation_interface,
+                                                weather_interface=self.weather_interface)
+        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                            simulation_interface=self.simulation_interface,
+                                            weather_interface=self.weather_interface)
         self.forecast_counter = 10
 
         for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
@@ -37,7 +40,21 @@ class PwpAgent(ParticipantAgent):
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
-        # self.info_thread.start()
+
+    def callback(self, ch, method, properties, body):
+        super().callback(ch, method, properties, body)
+
+        message = body.decode("utf-8")
+
+        self.date = pd.to_datetime(message.split(' ')[1])
+        self.simulation_interface.date = self.date
+
+        if 'set_capacities' in message:
+            self.simulation_interface.set_capacities(self.portfolio)
+        if 'opt_dayAhead' in message:
+            self.optimize_day_ahead()
+        if 'result_dayAhead' in message:
+            self.post_day_ahead()
 
     def get_order_book(self):
         order_book = {}
@@ -198,20 +215,6 @@ class PwpAgent(ParticipantAgent):
 
         return df
 
-    def callback(self, ch, method, properties, body):
-        super().callback(ch, method, properties, body)
-
-        message = body.decode("utf-8")
-        self.date = pd.to_datetime(message.split(' ')[1])
-        if 'get_sim_engine' in message:
-            self.simulation_engine = self.get_simulation_data_connection()
-        if 'set_capacities' in message:
-            self.set_capacities(self.portfolio)
-        if 'opt_dayAhead' in message:
-            self.optimize_day_ahead()
-        if 'result_dayAhead' in message:
-            self.post_day_ahead()
-
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('dayAhead market scheduling started')
@@ -231,13 +234,13 @@ class PwpAgent(ParticipantAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 
         # save optimization results
-        self.set_generation(self.portfolio, 'optimize_dayAhead')
-        self.set_demand(self.portfolio, 'optimize_dayAhead')
+        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead')
+        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead')
 
         # Step 3: build orders from optimization results
         start_time = time.time()
         order_book = self.get_order_book()
-        self.set_order_book(order_book)
+        self.simulation_interface.set_order_book(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders in {np.round(time.time() - start_time, 2)} seconds')
@@ -265,8 +268,8 @@ class PwpAgent(ParticipantAgent):
         self.portfolio.optimize()
 
         # save optimization results
-        self.set_generation(self.portfolio, 'post_dayAhead')
-        self.set_demand(self.portfolio, 'post_dayAhead')
+        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead')
+        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead')
 
         self.weather_forecast.collect_data(self.date)
         self.price_forecast.collect_data(self.date)

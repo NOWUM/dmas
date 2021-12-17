@@ -23,8 +23,6 @@ class MarketAgent(BasicAgent):
 
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-        if 'get_sim_engine' in message:
-            self.simulation_engine = self.get_simulation_data_connection()
         if 'dayAhead_clearing' in message:
             self.market_clearing()
 
@@ -49,8 +47,9 @@ class MarketAgent(BasicAgent):
         auction_results.index = pd.date_range(start=self.date, periods=24, freq='h')
         auction_results.index.name = 'time'
 
-        market_results.to_sql('market_results', self.simulation_database, if_exists='replace')
-        auction_results.to_sql('auction_results', self.simulation_database, if_exists='append')
+        self.simulation_interface.set_market_results(market_results)
+        self.simulation_interface.set_auction_results(auction_results)
+
         self.logger.info('cleared market and saved result in database')
 
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
