@@ -3,19 +3,14 @@ import time
 import pandas as pd
 from flask import Flask, request, redirect
 import threading
-import requests
 import numpy as np
 from tqdm import tqdm
 import dash
-from dash import dcc
-from dash import html
-import plotly.express as px
-from dash.dependencies import Input, Output
 
 # model modules
 from agents.basic_Agent import BasicAgent
+from dashboard import Dashboard
 
-# app = Flask('dMAS_controller')
 app = dash.Dash('dMAS_controller')
 
 
@@ -32,34 +27,22 @@ class CtlAgent(BasicAgent):
         self.stop_date = pd.to_datetime('2018-02-01')
         self.waiting_list = []
         self.cleared = False
+        self.dashboard = Dashboard(simulation_running=self.sim_start)
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
-    def set_agents(self):
-        headers = {'content-type': 'application/json', }
-        response = requests.get(f'http://{self.mqtt_server}:15672/api/queues', headers=headers, auth=('guest', 'guest'))
-        agents = response.json()
-        for agent in agents:
-            name = agent['name']
-            if name[:3] in ['dem', 'res', 'str', 'pwp']:
-                self.waiting_list.append(name)
+    def set_waiting_list(self):
+        self.waiting_list = self.simulation_interface.get_agents()
         self.logger.info(f'{len(self.waiting_list)} agent(s) are running')
-
-    def get_agents(self):
-        headers = {'content-type': 'application/json', }
-        response = requests.get(f'http://{self.mqtt_server}:15672/api/queues', headers=headers, auth=('guest', 'guest'))
-        agents = response.json()
-        return [agent['name'] for agent in agents if agent['name'][:3]
-                in ['dem', 'res', 'str', 'pwp']]
 
     def wait_for_agents(self):
         t = time.time()
         total = len(self.waiting_list)
         still_waiting = len(self.waiting_list)
-        with tqdm(total=total) as pbar:
+        with tqdm(total=total) as p_bar:
             while len(self.waiting_list) > 0:
                 if time.time() - t > 30:
-                    current_agents = self.get_agents()
+                    current_agents = self.simulation_interface.get_agents()
                     for agent in self.waiting_list:
                         if agent not in current_agents:
                             self.waiting_list.remove(agent)
@@ -72,7 +55,7 @@ class CtlAgent(BasicAgent):
                         self.waiting_list.remove(agent)
                         self.logger.info(f'get no response of {agent}')
                         self.logger.info(f'removed agent {agent} from current list')
-                pbar.update(still_waiting - len(self.waiting_list))
+                p_bar.update(still_waiting - len(self.waiting_list))
                 still_waiting = len(self.waiting_list)
 
                 time.sleep(1)
@@ -91,9 +74,8 @@ class CtlAgent(BasicAgent):
         message = body.decode("utf-8")
         agent, date = message.split(' ')
         date = pd.to_datetime(date)
-        # print(message)
+
         if date == self.date and agent in self.waiting_list:
-            # self.logger.info(f'Agent {agent} set orders')
             self.waiting_list.remove(agent)
         if agent == 'MRK_1' and date == self.date:
             self.cleared = True
@@ -120,7 +102,7 @@ class CtlAgent(BasicAgent):
                     self.date = date.date()
 
                     # 1.Step: optimization for dayAhead Market
-                    self.set_agents()
+                    self.set_waiting_list()
                     self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
                                                body=f'opt_dayAhead {date.date()}')
 
@@ -142,7 +124,7 @@ class CtlAgent(BasicAgent):
                     self.simulation_interface.reset_order_book()
                     self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
 
-                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
+                    self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
                                                body=f'set_capacities {self.start_date.date()}')
 
                 except Exception as e:
@@ -154,34 +136,7 @@ class CtlAgent(BasicAgent):
 
     def run(self):
 
-        self.simulation_interface.initial_tables()
-        self.logger.info('initialize database for simulation')
-
-        if not self.sim_start:
-            content = html.Form(children=[
-                                    html.Span(children=[
-                                        html.Label('Start Date', htmlFor="start_date"),
-                                        html.Br(),
-                                        dcc.Input(type="date", id="start_date", name="start_date", value="1995-01-01",
-                                                  style={'display': 'flex', 'flex-direction': 'column'})
-                                    ], style={'margin-bottom': '20px'}),
-                                    html.Span(children=[
-                                        html.Label('End Date', htmlFor="end_date"),
-                                        html.Br(),
-                                        dcc.Input(type="date", id="end_date", name="end_date", value="1995-02-01",
-                                                  style={'display': 'flex', 'flex-direction': 'column'})
-                                    ], style={'margin-bottom': '20px'}),
-                                    dcc.Input(type="submit", value="Start Simulation", id='start_button')
-                                ], method="POST", action="/start")
-        else:
-            content = html.Form(children=[
-                                    dcc.Input(type="submit", value="Start Simulation")
-                                ], method="POST", action="/start")
-
-        app.layout = html.Div(children=[html.H1('Docker Agent-based Simulation'),
-                                        html.P(f'Simulation running: {self.sim_start}'),
-                                        content
-                               ], style={'width': '60%', 'margin': 'auto', 'height': '80%'})
+        app.layout = self.dashboard.layout
 
         @app.server.route('/stop')
         def stop_simulation():

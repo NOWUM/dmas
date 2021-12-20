@@ -446,8 +446,7 @@ class InfrastructureInterface:
                                    'eta+': 0.85,
                                    'eta-': 0.80}
                         storages.append(storage)
-                df = pd.DataFrame(storages)
-                data_frames.append(df)
+                    data_frames.append(pd.DataFrame(storages))
 
             if len(data_frames):
                 return pd.concat(data_frames)
@@ -534,39 +533,39 @@ if __name__ == "__main__":
     #z = interface.get_solar_storage_systems_in_area(area=415)
     #a = interface.get_solar_systems_in_area(area=415)
     keys = np.unique(interface.plz_nuts['NUTS3'].to_numpy())
-    pwp_agents = []
-    for plz in keys:
-        print(plz)
-        plants = False
-        for fuel in ['lignite', 'gas', 'coal', 'nuclear']:
-            df = interface.get_power_plant_in_area(area=plz, fuel_type=fuel)
-            if not df.empty:
-                plants = True
-                break
-        if plants:
-            pwp_agents.append(plz)
-    pwp_agents = np.asarray(pwp_agents)
-    np.save('pwp_agents', pwp_agents)
-
-    res_agents = []
-    for plz in keys:
-        print(plz)
-        plants = False
-        wind = interface.get_wind_turbines_in_area(area=plz)
-        solar = interface.get_solar_storage_systems_in_area(area=plz)
-        bio = interface.get_biomass_systems_in_area(area=plz)
-        water = interface.get_run_river_systems_in_area(area=plz)
-        if any([not wind.empty,not solar.empty,not bio.empty, not water.empty]):
-            res_agents.append(plz)
-
-    res_agents = np.asarray(res_agents)
-    np.save('res_agents', res_agents)
-
-    dem_agents = []
-    for plz in keys:
-        dem_agents.append(plz)
-    dem_agents = np.asarray(dem_agents)
-    np.save('dem_agents', dem_agents)
+    # pwp_agents = []
+    # for plz in keys:
+    #     print(plz)
+    #     plants = False
+    #     for fuel in ['lignite', 'gas', 'coal', 'nuclear']:
+    #         df = interface.get_power_plant_in_area(area=plz, fuel_type=fuel)
+    #         if not df.empty:
+    #             plants = True
+    #             break
+    #     if plants:
+    #         pwp_agents.append(plz)
+    # pwp_agents = np.asarray(pwp_agents)
+    # np.save('pwp_agents', pwp_agents)
+    #
+    # res_agents = []
+    # for plz in keys:
+    #     print(plz)
+    #     plants = False
+    #     wind = interface.get_wind_turbines_in_area(area=plz)
+    #     solar = interface.get_solar_storage_systems_in_area(area=plz)
+    #     bio = interface.get_biomass_systems_in_area(area=plz)
+    #     water = interface.get_run_river_systems_in_area(area=plz)
+    #     if any([not wind.empty,not solar.empty,not bio.empty, not water.empty]):
+    #         res_agents.append(plz)
+    #
+    # res_agents = np.asarray(res_agents)
+    # np.save('res_agents', res_agents)
+    #
+    # dem_agents = []
+    # for plz in keys:
+    #     dem_agents.append(plz)
+    # dem_agents = np.asarray(dem_agents)
+    # np.save('dem_agents', dem_agents)
 
     str_agents = []
     for plz in keys:

@@ -21,4 +21,4 @@ geojson
 pyomo
 dash
 geopandas
-gplk
+glpk

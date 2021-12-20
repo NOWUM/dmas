@@ -1,15 +1,24 @@
 from sqlalchemy import create_engine
+import requests
 import pandas as pd
+
+
+def get_interval(start):
+    start_date = pd.to_datetime(start).date()
+    end_date = (start_date + pd.DateOffset(days=1)).date()
+    return start_date, end_date
+
 
 class SimulationInterface:
 
     def __init__(self, name, simulation_data_server, simulation_data_credential,
-                 structure_database):
+                 structure_database, mqtt_server):
         self.database = create_engine(f'postgresql://{simulation_data_credential}@{simulation_data_server}/'
                                       f'{structure_database}',
                                       connect_args={"application_name": name})
         self.name = name
         self.date = None
+        self.mqtt_server = mqtt_server
 
     def initial_tables(self):
 
@@ -67,56 +76,53 @@ class SimulationInterface:
         self.database.execute("DELETE FROM linked_orders")
         self.database.execute("DELETE FROM exclusive_orders")
 
-    def set_capacities(self, portfolio):
-        if isinstance(portfolio, list):
-            data_frames = []
-            for prt in portfolio:
+    def merge_portfolio(self, portfolio, type):
+        data_frames = []
+        for prt in portfolio:
+            if type == 'capacities':
                 data_frames.append(pd.DataFrame(index=[pd.to_datetime(self.date)], data=prt.capacities))
-            data_frame = data_frames[0]
-            for df in data_frames[1:]:
-                for col in df.columns:
-                    data_frame[col] += df[col]
+            if type == 'generation':
+                data_frames.append(pd.DataFrame(index=[pd.to_datetime(self.date)], data=prt.generation))
+            if type == 'demand':
+                data_frames.append(pd.DataFrame(index=[pd.to_datetime(self.date)], data=prt.demand))
+
+        data_frame = data_frames[0]
+        for df in data_frames[1:]:
+            for col in df.columns:
+                data_frame[col] += df[col]
+
+        return data_frame
+
+    def set_capacities(self, portfolio, area):
+        if isinstance(portfolio, list):
+            data_frame = self.merge_portfolio(portfolio, type='capacities')
         else:
             data_frame = pd.DataFrame(index=[pd.to_datetime(self.date)], data=portfolio.capacities)
 
         data_frame['agent'] = self.name
+        data_frame['area'] = area
         data_frame.index.name = 'time'
 
         data_frame.to_sql(name='capacities', con=self.database, if_exists='append')
 
-    def set_generation(self, portfolio, step):
-
+    def set_generation(self, portfolio, step, area):
         if isinstance(portfolio, list):
-            data_frames = []
-            for prt in portfolio:
-                data_frames.append(pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24),
-                                                data=prt.generation))
-            data_frame = data_frames[0]
-            for df in data_frames[1:]:
-                for col in df.columns:
-                    data_frame[col] += df[col]
+            data_frame = self.merge_portfolio(portfolio, type='generation')
         else:
             data_frame = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24),
                                       data=portfolio.generation)
 
         data_frame['agent'] = self.name
-        data_frame.index.name = 'time'
+        data_frame['area'] = area
         data_frame['step'] = step
+        data_frame.index.name = 'time'
 
         data_frame.to_sql(name='generation', con=self.database, if_exists='append')
 
-
-    def set_demand(self, portfolio, step):
+    def set_demand(self, portfolio, step, area):
 
         if isinstance(portfolio, list):
-            data_frames = []
-            for prt in portfolio:
-                data_frames.append(pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24),
-                                                data=prt.demand))
-            data_frame = data_frames[0]
-            for df in data_frames[1:]:
-                for col in df.columns:
-                    data_frame[col] += df[col]
+            data_frame = self.merge_portfolio(portfolio, type='demand')
         else:
             data_frame = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24),
                                       data=portfolio.demand)
@@ -136,17 +142,11 @@ class SimulationInterface:
     def set_auction_results(self, auction_results):
         auction_results.to_sql('auction_results', self.database, if_exists='append')
 
-    def get_interval(self, start):
-        start_date = pd.to_datetime(start).date()
-        end_date = (start_date + pd.DateOffset(days=1)).date()
-        return start_date, end_date
-
     def get_orders(self, date):
         return pd.read_sql("Select * from order_book", self.database)
 
-
     def get_auction_results(self):
-        start_date, end_date = self.get_interval(self.date)
+        start_date, end_date = get_interval(self.date)
 
         query = f"select price, volume from auction_results where time >= '{start_date}'" \
                 f"and time < '{end_date}'"
@@ -171,3 +171,10 @@ class SimulationInterface:
         df = pd.read_sql("Select * from exclusive_orders", self.database)
         df = df.set_index(['block_id', 'hour', 'name'])
         return df
+
+    def get_agents(self):
+        headers = {'content-type': 'application/json', }
+        response = requests.get(f'http://{self.mqtt_server}:15672/api/queues', headers=headers, auth=('guest', 'guest'))
+        agents = response.json()
+        return [agent['name'] for agent in agents if agent['name'][:3]
+                in ['dem', 'res', 'str', 'pwp']]

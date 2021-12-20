@@ -1,4 +1,4 @@
-from basic_system import EnergySystem
+from systems.basic_system import EnergySystem
 import pypsa
 
 

@@ -33,7 +33,7 @@ class DemAgent(BasicAgent):
         bats['type'] = 'battery'
         for system in tqdm(bats.to_dict(orient='records')):
             self.portfolio.add_energy_system(system)
-            demand += system['demandP'] / 10**9
+            demand += system['demandP']
         self.logger.info('Prosumer Photovoltaic and Battery added')
 
         # Construction consumer with photovoltaic
@@ -43,13 +43,15 @@ class DemAgent(BasicAgent):
         pvs['type'] = 'solar'
         for system in tqdm(pvs.to_dict(orient='records')):
             self.portfolio.add_energy_system(system)
-            demand += system['demandP'] / 10**9
+            demand += system['demandP']
         self.logger.info('Prosumer Photovoltaic added')
 
-        total_demand, household, industry_business = self.infrastructure_interface.get_demand_in_area(area=plz)
-        household_demand = (total_demand * household - demand) * 10**9
-        business_demand = total_demand * industry_business * 0.5 * 10**9
-        industry_demand = business_demand
+        demands = self.infrastructure_interface.get_demand_in_area(area=plz)
+        household_demand = demands['household'].values[0] * 10**9
+        household_demand -= demand
+        business_demand = demands['business'].values[0] * 10**9
+        industry_demand = demands['industry'].values[0] * 10**9
+        agriculture_demand = demands['agriculture'].values[0] * 10 ** 9
 
         # Construction Standard Consumer H0
         self.portfolio.add_energy_system({'unitID': 'household', 'demandP': household_demand, 'type': 'household'})
@@ -63,18 +65,22 @@ class DemAgent(BasicAgent):
         self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
+        # Construction Standard Consumer agriculture
+        self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
+        self.logger.info('RLM added')
+
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def get_order_book(self, power):
         order_book = {}
         for t in self.portfolio.t:
             if power[t] < 0:
-                order_book[t] = dict(type = 'demand',
-                                     hour = t,
-                                     order_id = 0,
-                                     name = self.name,
-                                     price = 3000,
-                                     volume = power[t])
+                order_book[t] = dict(type='demand',
+                                     hour=t,
+                                     order_id= 0,
+                                     name=self.name,
+                                     price=3000,
+                                     volume=power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')
         return df.set_index(['block_id', 'hour', 'order_id', 'name'])
@@ -100,7 +106,7 @@ class DemAgent(BasicAgent):
         start_time = time.time()
 
         # Step 1: forecast data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
+        weather = self.weather_forecast.forecast_for_area(self.date, int(self.area / 10))
         prices = self.price_forecast.forecast(self.date)
 
         self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
@@ -112,8 +118,8 @@ class DemAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
 
         # save optimization results
-        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead')
-        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead')
+        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area)
+        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area)
 
         # Step 3: build orders
         start_time = time.time()
@@ -128,7 +134,7 @@ class DemAgent(BasicAgent):
         self.logger.info('starting day ahead adjustments')
         start_time = time.time()
         # save optimization results
-        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead')
-        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead')
+        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area)
+        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area)
 
         self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

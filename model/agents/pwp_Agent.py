@@ -221,7 +221,7 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
+        weather = self.weather_forecast.forecast_for_area(self.date, int(self.area / 10))
         prices = self.price_forecast.forecast(self.date)
         prices = pd.concat([prices, prices.copy()])
         prices.index = pd.date_range(start=self.date, freq='h', periods=48)
@@ -234,8 +234,8 @@ class PwpAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 
         # save optimization results
-        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead')
-        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead')
+        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area)
+        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area)
 
         # Step 3: build orders from optimization results
         start_time = time.time()
@@ -267,8 +267,8 @@ class PwpAgent(BasicAgent):
         self.portfolio.optimize()
 
         # save optimization results
-        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead')
-        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead')
+        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area)
+        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area)
 
         self.weather_forecast.collect_data(self.date)
         self.price_forecast.collect_data(self.date)

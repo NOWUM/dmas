@@ -25,7 +25,7 @@ services:
     container_name: ctl
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 1
+      AREA_CODE: 'DE111'
       TYPE: 'CTL'
     ports:
       - 5000:5000
@@ -34,7 +34,7 @@ services:
     container_name: mrk
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 1
+      AREA_CODE: 'DE111'
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'MRK'
       CONNECT: 'True'
@@ -46,122 +46,115 @@ services:
       placement:
         constraints: [node.role == manager]
 
-  weather:
-    container_name: wtr
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      PLZ_CODE: 1
-      TYPE: 'WTR'
-
   tso:
     container_name: net
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 1
+      PLZ_CODE: 'DE111'
       TYPE: 'NET'
 
-  dem10:
-    container_name: dem10
+  dem_de111:
+    container_name: dem_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 10
+      AREA_CODE: DE111
       TYPE: 'DEM'
       
-  dem11:
-    container_name: dem11
+  dem_de112:
+    container_name: dem_de112
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 11
+      AREA_CODE: DE112
       TYPE: 'DEM'
       
-  dem12:
-    container_name: dem12
+  dem_de113:
+    container_name: dem_de113
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 12
+      AREA_CODE: DE113
       TYPE: 'DEM'
       
-  dem13:
-    container_name: dem13
+  dem_de114:
+    container_name: dem_de114
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 13
+      AREA_CODE: DE114
       TYPE: 'DEM'
       
-  dem14:
-    container_name: dem14
+  dem_de115:
+    container_name: dem_de115
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 14
+      AREA_CODE: DE115
       TYPE: 'DEM'
       
-  pwp10:
-    container_name: pwp10
+  pwp_de111:
+    container_name: pwp_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 10
+      AREA_CODE: DE111
       TYPE: 'PWP'
       
-  pwp11:
-    container_name: pwp11
+  pwp_de112:
+    container_name: pwp_de112
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 11
+      AREA_CODE: DE112
       TYPE: 'PWP'
       
-  pwp14:
-    container_name: pwp14
+  pwp_de113:
+    container_name: pwp_de113
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 14
+      AREA_CODE: DE113
       TYPE: 'PWP'
       
-  pwp19:
-    container_name: pwp19
+  pwp_de114:
+    container_name: pwp_de114
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 19
+      AREA_CODE: DE114
       TYPE: 'PWP'
       
-  pwp29:
-    container_name: pwp29
+  pwp_de116:
+    container_name: pwp_de116
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 29
+      AREA_CODE: DE116
       TYPE: 'PWP'
       
-  res10:
-    container_name: res10
+  res_de111:
+    container_name: res_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 10
+      AREA_CODE: DE111
       TYPE: 'RES'
       
-  res11:
-    container_name: res11
+  res_de112:
+    container_name: res_de112
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 11
+      AREA_CODE: DE112
       TYPE: 'RES'
       
-  res12:
-    container_name: res12
+  res_de113:
+    container_name: res_de113
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 12
+      AREA_CODE: DE113
       TYPE: 'RES'
       
-  res13:
-    container_name: res13
+  res_de114:
+    container_name: res_de114
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 13
+      AREA_CODE: DE114
       TYPE: 'RES'
       
-  res14:
-    container_name: res14
+  res_de115:
+    container_name: res_de115
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      PLZ_CODE: 14
+      AREA_CODE: DE115
       TYPE: 'RES'
       

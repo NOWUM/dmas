@@ -19,7 +19,6 @@ output.append(f'''
     ports:
       - 5432:5432
 ''')
-
 # Build Rabbitmq
 output.append('''
   rabbitmq:
@@ -30,15 +29,13 @@ output.append('''
       - 15672:15672
       - 5672:5672
 ''')
-
-
 # Build one Control Agent
 output.append(f'''
   controller:
     container_name: ctl
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: 1
+      AREA_CODE: 'DE111'
       TYPE: 'CTL'
     ports:
       - 5000:5000
@@ -49,7 +46,7 @@ output.append(f'''
     container_name: mrk
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: 1
+      AREA_CODE: 'DE111'
       MQTT_EXCHANGE: 'dMAS'
       AGENT_TYPE: 'MRK'
       CONNECT: 'True'
@@ -61,57 +58,48 @@ output.append(f'''
       placement:
         constraints: [node.role == manager]
 ''')
-# Build one Weather Agent
-output.append(f'''
-  weather:
-    container_name: wtr
-    image: {image_repo}agent:latest
-    environment:
-      PLZ_CODE: 1
-      TYPE: 'WTR'
-''')
 # Build one TSO
 output.append(f'''
   tso:
     container_name: net
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: 1
+      PLZ_CODE: 'DE111'
       TYPE: 'NET'
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
 for agent in agents[:5]:
     output.append(f'''
-  dem{agent}:
-    container_name: dem{agent}
+  dem_{agent.lower()}:
+    container_name: dem_{agent.lower()}
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: {agent}
+      AREA_CODE: {agent}
       TYPE: 'DEM'
       ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
 for agent in agents[:5]:
     output.append(f'''
-  pwp{agent}:
-    container_name: pwp{agent}
+  pwp_{agent.lower()}:
+    container_name: pwp_{agent.lower()}
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: {agent}
+      AREA_CODE: {agent}
       TYPE: 'PWP'
       ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
 for agent in agents[:5]:
     output.append(f'''
-  res{agent}:
-    container_name: res{agent}
+  res_{agent.lower()}:
+    container_name: res_{agent.lower()}
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: {agent}
+      AREA_CODE: {agent}
       TYPE: 'RES'
       ''')
 
 with open('docker-compose_simulation.yml', 'w') as f:
-  f.writelines(output)
+    f.writelines(output)

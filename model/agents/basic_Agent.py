@@ -14,9 +14,9 @@ class BasicAgent:
     def __init__(self, *args, **kwargs):
 
         # declare meta data
-        self.plz = kwargs['plz']
+        self.area = kwargs['area']
         self.type = kwargs['type']
-        self.name = f'{self.type}{self.plz}'.lower()
+        self.name = f'{self.type}{self.area}'.lower()
         self.date = pd.to_datetime(kwargs['date'])
 
         # declare logging options
@@ -33,13 +33,14 @@ class BasicAgent:
         self.simulation_database = kwargs['simulation_database']
         self.simulation_interface = SimulationInterface(self.name, self.simulation_data_server,
                                                         self.simulation_data_credential,
-                                                        self.simulation_database)
+                                                        self.simulation_database,
+                                                        self.mqtt_server)
         # declare structure data sever
         self.structure_data_server = kwargs['structure_server']
         self.structure_data_credential= kwargs['structure_credential']
         self.infrastructure_interface = InfrastructureInterface(self.name, self.structure_data_server,
                                                                 self.structure_data_credential)
-        self.longitude, self.latitude = self.infrastructure_interface.get_position(self.plz)
+        self.longitude, self.latitude = self.infrastructure_interface.get_lon_lat(self.area)
 
         # declare weather data server
         self.weather_data_server = kwargs['weather_server']
@@ -61,7 +62,7 @@ class BasicAgent:
                 connection.close()
 
     def get_rabbitmq_connection(self):
-        for i in range(5):
+        for i in range(1,6):
             try:
                 mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.mqtt_server, heartbeat=0))
                 channel = mqtt_connection.channel()

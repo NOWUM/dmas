@@ -15,8 +15,8 @@ if __name__ == "__main__":
 
     init_dict = {
         'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
-        'plz': int(os.getenv('PLZ_CODE', 1)),
-        'type': os.getenv('TYPE', 'CTL'),
+        'area': os.getenv('AREA_CODE', 'DEA2D'),
+        'type': os.getenv('TYPE', 'DEM'),
         # mqtt default parameter
         'mqtt_server': os.getenv('MQTT_HOST', 'rabbitmq'),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dmas'),

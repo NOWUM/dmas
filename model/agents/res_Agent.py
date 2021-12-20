@@ -106,7 +106,7 @@ class ResAgent(BasicAgent):
             df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'order_id', 'name', 'price', 'volume', 'link'])
         df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
-        return  df
+        return df
 
 
     def callback(self, ch, method, properties, body):
@@ -130,7 +130,7 @@ class ResAgent(BasicAgent):
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
+        weather = self.weather_forecast.forecast_for_area(self.date, int(self.area / 10))
         prices = self.price_forecast.forecast(self.date)
 
         self.portfolio_eeg.set_parameter(self.date, weather.copy(),  prices.copy())
@@ -146,9 +146,10 @@ class ResAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 
         # save optimization results
-        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
-        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead')
-
+        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead',
+                                                 area=self.area)
+        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead',
+                                             area=self.area)
 
         # Step 3: build orders from optimization results
         start_time = time.time()
@@ -165,7 +166,7 @@ class ResAgent(BasicAgent):
         self.logger.info('starting day ahead adjustments')
         start_time = time.time()
         # save optimization results
-        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
-        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead')
+        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area)
+        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area)
 
         self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')
