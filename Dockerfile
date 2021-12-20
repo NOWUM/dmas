@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN useradd -s /bin/bash admin
 
 RUN mkdir /src
-RUN mkdir -p /home/admincd
+RUN mkdir -p /home/admin
 RUN chown -R admin /src
 RUN chown -R admin /home/admin
 
@@ -33,6 +33,8 @@ COPY ./model/systems /src/systems
 COPY ./model/demandlib /src/demandlib
 
 COPY ./model/forecasts /src/forecasts
+
+COPY ./model/dashboard.py /src/dashboard.py
 
 COPY ./model/main.py /src/main.py
 

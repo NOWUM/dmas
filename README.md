@@ -11,8 +11,7 @@ Kumar Shivam; Stephen Bosch*
 
 ## Docker Cheat Sheet
 **start simulation - local:** <br>
-`docker-compose -f docker-compose_simulation.yml down --remove-orphans && docker-compose build && docker-compose -f 
-docker-compose_simulation.yml up -d` <br>
+`docker-compose -f docker-compose_simulation.yml down --remove-orphans && docker-compose build && docker-compose -f docker-compose_simulation.yml up -d` <br>
 **start simulation - docker swarm:** <br> 
 `docker stack deploy --with-registry-auth --compose-file docker-compose_simulation.yml dmas` <br>
 **show logs - local:**<br>

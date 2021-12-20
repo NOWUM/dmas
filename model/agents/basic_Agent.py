@@ -16,7 +16,7 @@ class BasicAgent:
         # declare meta data
         self.area = kwargs['area']
         self.type = kwargs['type']
-        self.name = f'{self.type}{self.area}'.lower()
+        self.name = f'{self.type}_{self.area}'.lower()
         self.date = pd.to_datetime(kwargs['date'])
 
         # declare logging options

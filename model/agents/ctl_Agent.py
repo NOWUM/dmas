@@ -10,8 +10,9 @@ import dash
 # model modules
 from agents.basic_Agent import BasicAgent
 from dashboard import Dashboard
+from dash.dependencies import Input, Output
 
-app = dash.Dash('dMAS_controller')
+app = dash.Dash('dMAS_controller', external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 
 
 class CtlAgent(BasicAgent):
@@ -28,6 +29,7 @@ class CtlAgent(BasicAgent):
         self.waiting_list = []
         self.cleared = False
         self.dashboard = Dashboard(simulation_running=self.sim_start)
+        self.simulation_interface.date = self.start_date
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -158,6 +160,30 @@ class CtlAgent(BasicAgent):
                 self.sim_start = True
 
             return redirect('/')
+
+        @app.callback(Output('information', 'children'),
+                      Input('tab_menue', 'value'))
+        def render_agents(tab):
+            agents = self.simulation_interface.get_agents()
+            if tab == "pwp_Agent":
+                return self.dashboard.information(agents, agent_type='pwp')
+            elif tab == "res_Agent":
+                return self.dashboard.information(agents, agent_type='res')
+            elif tab == "dem_Agent":
+                return self.dashboard.information(agents, agent_type='dem')
+            elif tab == "str_Agent":
+                return self.dashboard.information(agents, agent_type='str')
+            elif tab == "net_Agent":
+                return self.dashboard.information(agents, agent_type='net')
+            elif tab == "mrk_Agent":
+                return self.dashboard.information(agents, agent_type='mrk')
+
+        @app.callback(
+            Output('plots', 'children'),
+            Input('agent_dropdown', 'value'))
+        def render_data(value):
+            generation = self.simulation_interface.get_planed_generation(value)
+            return self.dashboard.plot_data(generation)
 
         app.run_server(debug=False, port=5000, host='0.0.0.0')
 

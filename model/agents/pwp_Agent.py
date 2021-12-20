@@ -15,7 +15,6 @@ class PwpAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        plz = kwargs['plz']
         self.logger.info('starting the agent')
         start_time = time.time()
 
@@ -30,7 +29,7 @@ class PwpAgent(BasicAgent):
         self.forecast_counter = 10
 
         for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
-            power_plants = self.infrastructure_interface.get_power_plant_in_area(area=plz, fuel_type=fuel)
+            power_plants = self.infrastructure_interface.get_power_plant_in_area(area=kwargs['area'], fuel_type=fuel)
             if power_plants is not None:
                 for system in power_plants.to_dict(orient='records'):
                     self.portfolio.add_energy_system(system)
@@ -170,8 +169,7 @@ class PwpAgent(BasicAgent):
                             # check if delta > 0
                             if delta[hour] > 0:
                                 # calculate variable cost for the hour and set it as requested price
-                                price = np.round(
-                                    (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
+                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
                                 power = np.round(0.2 * delta[hour], 2)
                                 # split volume in five orders and add them to order_book
                                 for order in range(5):

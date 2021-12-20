@@ -16,7 +16,6 @@ class ResAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        plz = kwargs['plz']
         # Development of the portfolio with the corresponding ee-systems
         self.logger.info('starting the agent')
         start_time = time.time()
@@ -27,7 +26,7 @@ class ResAgent(BasicAgent):
         self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
 
         # Construction Wind energy
-        wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=plz, wind_type='on_shore')
+        wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=kwargs['area'], wind_type='on_shore')
         wind_data['type'] = 'wind'
         if 'windFarm' not in wind_data.columns:
             wind_data['windFarm'] = ''
@@ -44,8 +43,8 @@ class ResAgent(BasicAgent):
         self.logger.info('Wind Power Plants added')
 
         # Construction of the pv systems (free area)
-        pv_1 = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='free_area')
-        pv_2 = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='other')
+        pv_1 = self.infrastructure_interface.get_solar_systems_in_area(area=kwargs['area'], solar_type='free_area')
+        pv_2 = self.infrastructure_interface.get_solar_systems_in_area(area=kwargs['area'], solar_type='other')
         pvs = pd.concat([pv_1, pv_2])
         pvs['type'] = 'solar'
         for system in tqdm(pvs[pvs['eeg'] == 1].to_dict(orient='records')):
@@ -55,7 +54,7 @@ class ResAgent(BasicAgent):
         self.logger.info('Free Area PV added')
 
         # Construction of the pv systems (h0)
-        pv_data = self.infrastructure_interface.get_solar_systems_in_area(area=plz, solar_type='roof_top')
+        pv_data = self.infrastructure_interface.get_solar_systems_in_area(area=kwargs['area'], solar_type='roof_top')
         pv_data['type'] = 'solar'
         for system in tqdm(pvs[pvs['ownConsumption'] == 0].to_dict(orient='records')):
             self.portfolio_eeg.add_energy_system(system)
@@ -64,14 +63,14 @@ class ResAgent(BasicAgent):
         self.pv_data = pv_data
 
         # Construction Run River
-        run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(area=plz)
+        run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(area=kwargs['area'])
         run_river_data['type'] = 'water'
         for system in tqdm(run_river_data.to_dict(orient='records')):
             self.portfolio_eeg.add_energy_system(system)
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
-        bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(area=plz)
+        bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(area=kwargs['area'])
         bio_mass_data['type'] = 'bio'
         for system in tqdm(bio_mass_data.to_dict(orient='records')):
             self.portfolio_eeg.add_energy_system(system)

@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 import requests
 import pandas as pd
-
+import numpy as np
 
 def get_interval(start):
     start_date = pd.to_datetime(start).date()
@@ -118,6 +118,23 @@ class SimulationInterface:
         data_frame.index.name = 'time'
 
         data_frame.to_sql(name='generation', con=self.database, if_exists='append')
+
+    def get_planed_generation(self, agent):
+        try:
+            df = pd.read_sql(f"select * from generation where step ='optimize_dayAhead "
+                             f"and agent = {agent}'", self.database)
+        except Exception as e:
+            df = pd.DataFrame(data=dict(total=np.zeros(24),
+                                        water=np.zeros(24),
+                                        bio=np.zeros(24),
+                                        wind=np.zeros(24),
+                                        solar=np.zeros(24),
+                                        lignite=np.zeros(24),
+                                        coal=np.zeros(24),
+                                        gas=np.zeros(24),
+                                        nuclear=np.zeros(24)),
+                              index=pd.date_range(start=self.date, freq='h', periods=24))
+        return df
 
     def set_demand(self, portfolio, step, area):
 

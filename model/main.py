@@ -56,4 +56,4 @@ if __name__ == "__main__":
         #agent.optimize_day_ahead()
 
     except Exception as e:
-        logging.exception(f'Error during Simulation {init_dict["type"]}_{init_dict["plz"]}')
+        logging.exception(f'Error during Simulation {init_dict["type"]}_{init_dict["area"]}')
