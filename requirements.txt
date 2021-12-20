@@ -18,6 +18,7 @@ flask
 scipy
 tqdm
 geojson
-glpk
 pyomo
 dash
+geopandas
+gplk

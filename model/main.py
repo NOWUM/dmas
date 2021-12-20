@@ -6,7 +6,6 @@ from agents.pwp_Agent import PwpAgent
 from agents.str_Agent import StrAgent
 from agents.net_Agent import NetAgent
 from agents.mrk_Agent import MarketAgent
-from agents.wtr_Agent import WtrAgent
 from agents.ctl_Agent import CtlAgent
 
 
@@ -50,8 +49,6 @@ if __name__ == "__main__":
             agent = NetAgent(**init_dict)
         elif init_dict['type'] == 'MRK':
             agent = MarketAgent(**init_dict)
-        elif init_dict['type'] == 'WTR':
-            agent = WtrAgent(**init_dict)
         elif init_dict['type'] == 'CTL':
             agent = CtlAgent(**init_dict)
 

@@ -1,0 +1,12 @@
+type,maxPower,minPower,gradP,gradM,eta,chi,stopTime,runTime,startCost,on,off
+biomass,None,None,None,None,None, None, None,None,None,None,None
+fossil_brown_coal/lignite,100,50,2,5,2,5,40,0,407,7,6,60,1,0
+fossil_gas,100,40,4,4,55,0,202,3,3,60,1,0
+fossil_hard_coal,100,33,4,4,40,0,355,7,6,60,1,0
+fossil_oil,100,40,4,4,55,0,264,3,3,60,1,0
+geothermal,None,None,None,None,None,None,None,None,None,None,None
+hydro_run-of-river_and_poundage,None,None,None,None,None,None,None,None,None,None,None
+solar,None,None,None,None,None,None,None,None,None,None,None
+wind_offshore,None,None,None,None,None,None,None,None,None,None,None
+wind_onshore,None,None,None,None,None,None,None,None,None,None,None
+nuclear,100,45,0,5,0,5,35,0,24,15,250,1,0

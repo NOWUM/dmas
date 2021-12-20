@@ -19,7 +19,7 @@ class EnergySystem:
 
         self.power = None
 
-        self.power = None
+        self.volume = None
 
         self.reset_data()
 
@@ -51,4 +51,5 @@ class EnergySystem:
                               emission=np.zeros((self.T,), float),
                               start_ups=np.zeros((self.T,), float))
 
+        self.volume = np.zeros(self.T, float)
         self.power = np.zeros(self.T, float)

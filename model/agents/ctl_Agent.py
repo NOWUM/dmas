@@ -18,6 +18,7 @@ from agents.basic_Agent import BasicAgent
 # app = Flask('dMAS_controller')
 app = dash.Dash('dMAS_controller')
 
+
 class CtlAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
@@ -73,12 +74,16 @@ class CtlAgent(BasicAgent):
                         self.logger.info(f'removed agent {agent} from current list')
                 pbar.update(still_waiting - len(self.waiting_list))
                 still_waiting = len(self.waiting_list)
+
                 time.sleep(1)
 
     def wait_for_market(self):
+        t = time.time()
         while not self.cleared:
             self.logger.info(f'still waiting for market clearing')
             time.sleep(1)
+            if time.time() - t > 120:
+                self.cleared = True
         self.cleared = False
 
     def callback(self, ch, method, properties, body):
@@ -120,7 +125,7 @@ class CtlAgent(BasicAgent):
                                                body=f'opt_dayAhead {date.date()}')
 
                     self.wait_for_agents()
-                    self.logger.info(f'{len(self.get_agents())} agents set their order books')
+                    self.logger.info('agents set their orders')
 
                     # 2. Step: run market clearing
                     self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
@@ -137,12 +142,8 @@ class CtlAgent(BasicAgent):
                     self.simulation_interface.reset_order_book()
                     self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
 
-                    #self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
-                    #                           body=f'set_capacities {self.start_date.date()}')
-
-                    # 3. Step: Run Power Flow calculation
-                    #self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
-                    #                           body=f'grid_calc {date.date()}')
+                    self.publish.basic_publish(exchange=self.exchange_name, routing_key='',
+                                               body=f'set_capacities {self.start_date.date()}')
 
                 except Exception as e:
                     print(repr(e))

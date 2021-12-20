@@ -65,7 +65,6 @@ class DemAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
-
     def get_order_book(self, power):
         order_book = {}
         for t in self.portfolio.t:
@@ -100,7 +99,7 @@ class DemAgent(BasicAgent):
         self.logger.info('starting day ahead optimization')
         start_time = time.time()
 
-        # Step 1: forecast data data and init the model for the coming day
+        # Step 1: forecast data and init the model for the coming day
         weather = self.weather_forecast.forecast_for_area(self.date, int(self.plz/10))
         prices = self.price_forecast.forecast(self.date)
 
@@ -123,7 +122,6 @@ class DemAgent(BasicAgent):
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
-
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
