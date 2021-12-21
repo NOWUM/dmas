@@ -63,6 +63,7 @@ class StandardLoadProfile:
 
         doy = d.dayofyear
         dow = d.dayofweek
+        year = d.year
 
         f = self.demandP / 10 ** 6
         if self.type == 'household':
@@ -71,21 +72,21 @@ class StandardLoadProfile:
         demand = np.zeros(96)
 
         if doy in self.summer:
-            if dow == 6 or doy in get_holidays(doy):
+            if dow == 6 or doy in get_holidays(year):
                 demand = self.profile[:, 4] * f
             elif dow < 5:
                 demand = self.profile[:, 5] * f
             elif dow == 5:
                 demand = self.profile[:, 3] * f
         elif doy in self.winter:
-            if dow == 6 or doy in get_holidays(doy):
-                demand = self.profile[:, 0] * f
+            if dow == 6 or doy in get_holidays(year):
+                demand = self.profile[:, 1] * f
             elif dow < 5:
                 demand = self.profile[:, 2] * f
             elif dow == 5:
-                demand = self.profile[:, 3] * f
+                demand = self.profile[:, 0] * f
         else:
-            if dow == 6 or doy in get_holidays(doy):
+            if dow == 6 or doy in get_holidays(year):
                 demand = self.profile[:, 7] * f
             elif dow < 5:
                 demand = self.profile[:, 8] * f

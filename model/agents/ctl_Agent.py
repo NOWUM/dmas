@@ -161,27 +161,29 @@ class CtlAgent(BasicAgent):
 
             return redirect('/')
 
-        @app.callback(Output('information', 'children'),
-                      Input('tab_menue', 'value'))
-        def render_agents(tab):
+        @app.callback(Output('information', 'children'), Input('tab_menu', 'value'))
+        def render_information(tab):
             agents = self.simulation_interface.get_agents()
-            if tab == "pwp_Agent":
-                return self.dashboard.information(agents, agent_type='pwp')
-            elif tab == "res_Agent":
-                return self.dashboard.information(agents, agent_type='res')
-            elif tab == "dem_Agent":
-                return self.dashboard.information(agents, agent_type='dem')
-            elif tab == "str_Agent":
-                return self.dashboard.information(agents, agent_type='str')
-            elif tab == "net_Agent":
-                return self.dashboard.information(agents, agent_type='net')
-            elif tab == "mrk_Agent":
-                return self.dashboard.information(agents, agent_type='mrk')
+            if tab == 'simulation':
+                if self.sim_start:
+                    return self.dashboard.get_simulation_info(agents=agents, date=self.date, running=self.sim_start)
+                else:
+                    return self.dashboard.get_simulation_info(agents=agents, running=self.sim_start)
+            if tab == 'pwp_Agent':
+                return self.dashboard.get_agent_info(agents=agents, agent_type='pwp')
+            if tab == 'res_Agent':
+                return self.dashboard.get_agent_info(agents=agents, agent_type='res')
+            if tab == 'str_Agent':
+                return self.dashboard.get_agent_info(agents=agents, agent_type='str')
+            if tab == 'dem_Agent':
+                return self.dashboard.get_agent_info(agents=agents, agent_type='dem')
+            if tab == 'mrk_Agent':
+                return None
+            if tab == 'tso_Agent':
+                return None
 
-        @app.callback(
-            Output('plots', 'children'),
-            Input('agent_dropdown', 'value'))
-        def render_data(value):
+        @app.callback(Output('plots', 'children'), Input('agent_dropdown', 'value'))
+        def render_plots(value):
             generation = self.simulation_interface.get_planed_generation(value)
             return self.dashboard.plot_data(generation)
 

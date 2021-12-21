@@ -47,9 +47,7 @@ output.append(f'''
     image: {image_repo}agent:latest
     environment:
       AREA_CODE: 'DE111'
-      MQTT_EXCHANGE: 'dMAS'
-      AGENT_TYPE: 'MRK'
-      CONNECT: 'True'
+      TYPE: 'MRK'
     volumes:
     - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic
     deploy:
@@ -64,7 +62,7 @@ output.append(f'''
     container_name: net
     image: {image_repo}agent:latest
     environment:
-      PLZ_CODE: 'DE111'
+      AREA_CODE: 'DE111'
       TYPE: 'NET'
 ''')
 # Build Demand Agents

@@ -187,7 +187,7 @@ class InfrastructureInterface:
                         f'"InanspruchnahmeZahlungNachEeg" as "eeg" ' \
                         f'FROM "EinheitenSolar" ' \
                         f'INNER JOIN "AnlagenEegSolar" ON "EinheitMastrNummer" = "VerknuepfteEinheitenMastrNummern" ' \
-                        f'WHERE "Postleitzahl" = {plz_code} AND' \
+                        f'WHERE "Postleitzahl" = {plz_code} ' \
                         f'AND "Lage" = {mastr_codes_solar.loc[solar_type, "value"]} ' \
                         f'AND "EinheitBetriebsstatus" = 35;'
 
@@ -456,8 +456,8 @@ class InfrastructureInterface:
 
     def get_demand_in_area(self, area=520):
         query = f'select sum(sector_consumption_residential) as household, sum(sector_consumption_retail) as business,' \
-                f'sum(sector_consumption_industrial) as industry, sum(sector_consumption_agricultural) as agriculture' \
-                f'from demand where version="v0.4.5" and nuts = {area} group by nuts'
+                f'sum(sector_consumption_industrial) as industry, sum(sector_consumption_agricultural) as agriculture ' \
+                f'from demand where version=\'v0.4.5\' and nuts = \'{area}\' group by nuts'
         df = pd.read_sql(query, self.database_oep)
         return df
 

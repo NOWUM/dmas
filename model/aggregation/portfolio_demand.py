@@ -9,7 +9,7 @@ import time
 # model modules
 from systems.demand_pv_bat import PvBatModel
 from systems.demand_pv import HouseholdPvModel
-from systems.demand import HouseholdModel, BusinessModel, IndustryModel
+from systems.demand import HouseholdModel, BusinessModel, IndustryModel, AgricultureModel
 from aggregation.basic_portfolio import PortfolioModel
 
 
@@ -45,6 +45,8 @@ class DemandPortfolio(PortfolioModel):
             model = BusinessModel(T=self.T, **energy_system)
         elif energy_system['type'] == 'industry':
             model=IndustryModel(T=self.T, **energy_system)
+        elif energy_system['type'] == 'agriculture':
+            model=AgricultureModel(self.T, **energy_system)
 
         self.energy_systems.append(model)
 

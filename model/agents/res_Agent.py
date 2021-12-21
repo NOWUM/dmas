@@ -22,8 +22,12 @@ class ResAgent(BasicAgent):
         self.portfolio_eeg = RenewablePortfolio()
         self.portfolio_mrk = RenewablePortfolio()
 
-        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude))
-        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude))
+        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                                simulation_interface=self.simulation_interface,
+                                                weather_interface=self.weather_interface)
+        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                            simulation_interface=self.simulation_interface,
+                                            weather_interface=self.weather_interface)
 
         # Construction Wind energy
         wind_data = self.infrastructure_interface.get_wind_turbines_in_area(area=kwargs['area'], wind_type='on_shore')
