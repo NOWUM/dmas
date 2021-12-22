@@ -110,6 +110,7 @@ if __name__ == "__main__":
             profile = np.mean(x, axis=0)
             new_profiles.append(profile)
 
+    x = np.asarray(new_profiles)
     new_profiles = np.asarray(new_profiles).T
 
     np.save('industry', new_profiles)

@@ -49,7 +49,7 @@ class PwpAgent(BasicAgent):
         self.simulation_interface.date = self.date
 
         if 'set_capacities' in message:
-            self.simulation_interface.set_capacities(self.portfolio)
+            self.simulation_interface.set_capacities(self.portfolio,self.area)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -219,7 +219,7 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, int(self.area / 10))
+        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
         prices = pd.concat([prices, prices.copy()])
         prices.index = pd.date_range(start=self.date, freq='h', periods=48)
@@ -238,7 +238,7 @@ class PwpAgent(BasicAgent):
         # Step 3: build orders from optimization results
         start_time = time.time()
         order_book = self.get_order_book()
-        self.simulation_interface.set_order_book(order_book)
+        self.simulation_interface.set_linked_orders(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders in {np.round(time.time() - start_time, 2)} seconds')
@@ -252,10 +252,7 @@ class PwpAgent(BasicAgent):
         # query the DayAhead results
         for model in self.portfolio.energy_systems:
             power = np.zeros(24)
-            committed_power = pd.read_sql(f"Select hour, sum(volume) as volume from market_results "
-                                          f"where name = '{model.name}' group by hour",
-                                          self.simulation_database)
-
+            committed_power = self.simulation_interface.get_linked_result(model.name)
             for index, row in committed_power.iterrows():
                 power[int(row.hour)] = float(row.volume)
 

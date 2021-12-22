@@ -51,13 +51,19 @@ class MarketAgent(BasicAgent):
 
         self.market.set_parameter(hourly_ask, hourly_bid, linked_orders, exclusive_orders)
 
-        auction_results , market_results = self.market.optimize()
+        auction_results, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = self.market.optimize()
+        market_results = dict(
+            hourly_results=used_ask_orders,
+            linked_results=used_linked_orders,
+            exclusive_results=used_exclusive_orders,
+            bid_results=used_bid_orders
+        )
 
         auction_results.index = pd.date_range(start=self.date, periods=24, freq='h')
         auction_results.index.name = 'time'
 
-        self.simulation_interface.set_market_results(market_results)
         self.simulation_interface.set_auction_results(auction_results)
+        self.simulation_interface.set_market_results(market_results)
 
         self.logger.info('cleared market and saved result in database')
 

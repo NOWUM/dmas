@@ -48,25 +48,25 @@ class DemAgent(BasicAgent):
         demands = self.infrastructure_interface.get_demand_in_area(area=kwargs['area'])
         household_demand = demands['household'].values[0] * 10**9
         household_demand -= demand
-        business_demand = demands['business'].values[0] * 10**9
-        industry_demand = demands['industry'].values[0] * 10**9
-        agriculture_demand = demands['agriculture'].values[0] * 10 ** 9
+
+        rlm_demand = demands['business'].values[0] + demands['industry'].values[0] + demands['agriculture'].values[0]
+        rlm_demand *= 10**9
 
         # Construction Standard Consumer H0
         self.portfolio.add_energy_system({'unitID': 'household', 'demandP': household_demand, 'type': 'household'})
         self.logger.info('H0 added')
 
         # Construction Standard Consumer G0
-        self.portfolio.add_energy_system({'unitID': 'business', 'demandP': business_demand, 'type': 'business'})
+        #self.portfolio.add_energy_system({'unitID': 'business', 'demandP': business_demand, 'type': 'business'})
         self.logger.info('G0 added')
 
         # Construction Standard Consumer RLM
-        self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': industry_demand, 'type': 'industry'})
+        self.portfolio.add_energy_system({'unitID': 'industry', 'demandP': rlm_demand, 'type': 'industry'})
         self.logger.info('RLM added')
 
         # Construction Standard Consumer agriculture
-        self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
-        self.logger.info('RLM added')
+        #self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
+        self.logger.info('Agriculture added')
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
@@ -76,7 +76,8 @@ class DemAgent(BasicAgent):
             if power[t] < 0:
                 order_book[t] = dict(type='demand',
                                      hour=t,
-                                     order_id= 0,
+                                     order_id=0,
+                                     block_id=t,
                                      name=self.name,
                                      price=3000,
                                      volume=power[t])
@@ -93,7 +94,7 @@ class DemAgent(BasicAgent):
         self.simulation_interface.date = self.date
 
         if 'set_capacities' in message:
-            self.simulation_interface .set_capacities(self.portfolio)
+            self.simulation_interface .set_capacities(self.portfolio, self.area)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -105,7 +106,7 @@ class DemAgent(BasicAgent):
         start_time = time.time()
 
         # Step 1: forecast data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, int(self.area / 10))
+        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
 
         self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
@@ -123,7 +124,7 @@ class DemAgent(BasicAgent):
         # Step 3: build orders
         start_time = time.time()
         order_book = self.get_order_book(power)
-        self.simulation_interface.set_order_book(order_book)
+        self.simulation_interface.set_hourly_orders(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')

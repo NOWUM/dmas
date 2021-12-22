@@ -60,8 +60,6 @@ class Dashboard:
                         style=self.tab_menu_style['style'], selected_style=self.tab_menu_style['select']),
                 dcc.Tab(label='TSO Agent', value='tso_Agent',
                         style=self.tab_menu_style['style'], selected_style=self.tab_menu_style['select']),
-                dcc.Tab(label='MQTT', value='mqtt',
-                        style=self.tab_menu_style['style'], selected_style=self.tab_menu_style['select']),
             ], style=self.tab_menu_style['height']),
             html.Div(id='information')
         ])
@@ -88,7 +86,7 @@ class Dashboard:
                 ], method='POST', action='/start')
             )
         else:
-            content.append(html.B(f'current date: {date}'))
+            content.append(html.B(f'current date: {date.date()}'))
             content.append(
                 html.Form(children=[
                     html.Div(children=[

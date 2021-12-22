@@ -42,8 +42,9 @@ class CtlAgent(BasicAgent):
         total = len(self.waiting_list)
         still_waiting = len(self.waiting_list)
         with tqdm(total=total) as p_bar:
+            display = True
             while len(self.waiting_list) > 0:
-                if time.time() - t > 30:
+                if time.time() - t > 30 and display:
                     current_agents = self.simulation_interface.get_agents()
                     for agent in self.waiting_list:
                         if agent not in current_agents:
@@ -52,6 +53,7 @@ class CtlAgent(BasicAgent):
                             self.logger.info(f'removed agent {agent} from current list')
                         else:
                             self.logger.info(f'still waiting for {agent}')
+                        display = False
                 if time.time() - t > 120:
                     for agent in self.waiting_list:
                         self.waiting_list.remove(agent)
@@ -69,6 +71,7 @@ class CtlAgent(BasicAgent):
             time.sleep(1)
             if time.time() - t > 120:
                 self.cleared = True
+                pass
         self.cleared = False
 
     def callback(self, ch, method, properties, body):
@@ -79,7 +82,7 @@ class CtlAgent(BasicAgent):
 
         if date == self.date and agent in self.waiting_list:
             self.waiting_list.remove(agent)
-        if agent == 'MRK_1' and date == self.date:
+        if agent == 'mrk_de111' and date == self.date:
             self.cleared = True
 
     def check_orders(self):
@@ -92,6 +95,8 @@ class CtlAgent(BasicAgent):
 
     def simulation_routine(self):
         self.logger.info('simulation started')
+
+        self.simulation_interface.initial_tables()
 
         for date in tqdm(pd.date_range(start=self.start_date, end=self.stop_date, freq='D')):
             if self.sim_stop:
@@ -126,8 +131,8 @@ class CtlAgent(BasicAgent):
                     self.simulation_interface.reset_order_book()
                     self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
 
-                    self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
-                                               body=f'set_capacities {self.start_date.date()}')
+                    #self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
+                    #                           body=f'set_capacities {self.start_date.date()}')
 
                 except Exception as e:
                     print(repr(e))

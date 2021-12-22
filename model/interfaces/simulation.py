@@ -24,10 +24,10 @@ class SimulationInterface:
 
         # initialize tables for orders and market
         # hourly orders
-        query = '''CREATE TABLE hourly_orders (hour bigint, order_id bigint, name text, price double precision,
-                                               volume double precision, type text)'''
+        query = '''CREATE TABLE hourly_orders (hour bigint, block_id bigint , order_id bigint, name text, 
+                                               price double precision, volume double precision, type text)'''
         self.database.execute(query)
-        self.database.execute('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("hour", "order_id", "name");')
+        self.database.execute('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
         # linked block orders
         query = '''CREATE TABLE linked_orders (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
                                                volume double precision, link bigint, type text)'''
@@ -44,12 +44,13 @@ class SimulationInterface:
         query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision,
                                             coal double precision, gas double precision, lignite double precision,
                                             nuclear double precision, solar double precision, water double precision,
-                                            wind double precision, storage double precision, agent text)'''
+                                            wind double precision, storage double precision, agent text,
+                                            area text)'''
         self.database.execute(query)
         self.database.execute('ALTER TABLE "capacities" ADD PRIMARY KEY ("time", "agent");')
         # total demand of each agent
         query = '''CREATE TABLE demand ("time" timestamp without time zone, power double precision,
-                                        heat double precision, step text, agent text)'''
+                                        heat double precision, step text, agent text, area text)'''
         self.database.execute(query)
         self.database.execute('ALTER TABLE "demand" ADD PRIMARY KEY ("time", "step", "agent");')
         # total generation of each agent
@@ -57,7 +58,7 @@ class SimulationInterface:
                                             solar double precision, wind double precision, water double precision,
                                             bio double precision, lignite double precision, coal double precision,
                                             gas double precision, nuclear double precision, step text,
-                                            agent text)'''
+                                            agent text, area text)'''
         self.database.execute(query)
         self.database.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')
 
@@ -66,10 +67,22 @@ class SimulationInterface:
         self.database.execute(query)
         self.database.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
 
-        query = '''CREATE TABLE market_results (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
-                                                volume double precision, link bigint, type text)'''
+        # hourly orders
+        query = '''CREATE TABLE hourly_results (hour bigint, block_id bigint , order_id bigint, name text, 
+                                                 price double precision, volume double precision, type text)'''
         self.database.execute(query)
-        self.database.execute('ALTER TABLE "market_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+        self.database.execute('ALTER TABLE "hourly_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
+        # linked block orders
+        query = '''CREATE TABLE linked_results(block_id bigint, hour bigint, order_id bigint, name text, price double precision,
+                                                 volume double precision, link bigint, type text)'''
+        self.database.execute(query)
+        self.database.execute('ALTER TABLE "linked_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+        # exclusive block orders
+        query = '''CREATE TABLE exclusive_results (block_id bigint, hour bigint, name text, price double precision,
+                                                    volume double precision)'''
+        self.database.execute(query)
+        self.database.execute('ALTER TABLE "exclusive_results" ADD PRIMARY KEY ("block_id", "hour", "name");')
+
 
     def reset_order_book(self):
         self.database.execute("DELETE FROM hourly_orders")
@@ -82,10 +95,13 @@ class SimulationInterface:
             if type == 'capacities':
                 data_frames.append(pd.DataFrame(index=[pd.to_datetime(self.date)], data=prt.capacities))
             if type == 'generation':
-                data_frames.append(pd.DataFrame(index=[pd.to_datetime(self.date)], data=prt.generation))
+                data_frames.append(pd.DataFrame(index=pd.date_range(start=self.date, freq='h',
+                                                                    periods=len(prt.generation['total'])),
+                                                data=prt.generation))
             if type == 'demand':
-                data_frames.append(pd.DataFrame(index=[pd.to_datetime(self.date)], data=prt.demand))
-
+                data_frames.append(pd.DataFrame(index=pd.date_range(start=self.date, freq='h',
+                                                                    periods=len(prt.demand['power'])),
+                                                data=prt.demand))
         data_frame = data_frames[0]
         for df in data_frames[1:]:
             for col in df.columns:
@@ -150,17 +166,60 @@ class SimulationInterface:
 
         data_frame.to_sql(name='demand', con=self.database, if_exists='append')
 
-    def set_order_book(self, order_book):
-        order_book.to_sql('order_book', con=self.database, if_exists='append')
+    # hourly orders
+    def set_hourly_orders(self, order_book):
+        order_book.to_sql('hourly_orders', con=self.database, if_exists='append')
 
-    def set_market_results(self, market_results):
-        market_results.to_sql('market_results', self.database, if_exists='replace')
+    def get_hourly_orders(self):
+        df = pd.read_sql("Select * from hourly_orders", self.database)
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+        return df
+
+    def get_hourly_result(self, name):
+        df = pd.read_sql(f"Select hour, sum(volume) as volume from hourly_results "
+                         f"where name = '{name}' group by hour",
+                                          self.database)
+        return df
+
+    def get_bid_result(self, name):
+        df = pd.read_sql(f"Select hour, sum(volume) as volume from bid_results "
+                         f"where name = '{name}' group by hour",
+                         self.database)
+        return df
+
+    # linked orders
+    def set_linked_orders(self, order_book):
+        order_book.to_sql('linked_orders', con=self.database, if_exists='append')
+
+    def get_linked_orders(self):
+        df = pd.read_sql("Select * from linked_orders", self.database)
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+        return df
+
+    def get_linked_result(self, name):
+        df = pd.read_sql(f"Select hour, sum(volume) as volume from linked_results "
+                         f"where name = '{name}' group by hour",
+                         self.database)
+    # exclusive orders
+    def set_exclusive_orders(self, order_book):
+        order_book.to_sql('exclusive_orders', con=self.database, if_exists='append')
+
+    def get_exclusive_orders(self):
+        df = pd.read_sql("Select * from exclusive_orders", self.database)
+        df = df.set_index(['block_id', 'hour', 'name'])
+        return df
+
+    def get_exclusive_result(self, name):
+        df = pd.read_sql(f"Select hour, sum(volume) as volume from exclusive_results "
+                         f"where name = '{name}' group by hour",
+                         self.database)
+    # market result
+    def set_market_results(self, results):
+        for key, value in results.items():
+            value.to_sql(key, self.database, if_exists='replace')
 
     def set_auction_results(self, auction_results):
         auction_results.to_sql('auction_results', self.database, if_exists='append')
-
-    def get_orders(self, date):
-        return pd.read_sql("Select * from order_book", self.database)
 
     def get_auction_results(self):
         start_date, end_date = get_interval(self.date)
@@ -174,20 +233,11 @@ class SimulationInterface:
 
         return df
 
-    def get_hourly_orders(self):
-        df = pd.read_sql("Select * from hourly_orders", self.database)
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
-        return df
 
-    def get_linked_orders(self):
-        df = pd.read_sql("Select * from linked_orders", self.database)
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
-        return df
 
-    def get_exclusive_orders(self):
-        df = pd.read_sql("Select * from exclusive_orders", self.database)
-        df = df.set_index(['block_id', 'hour', 'name'])
-        return df
+
+
+
 
     def get_agents(self):
         headers = {'content-type': 'application/json', }

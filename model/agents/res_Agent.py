@@ -87,13 +87,12 @@ class ResAgent(BasicAgent):
         for t in np.arange(len(power)):
             if type == 'eeg' and power[t] > 0.5:
                 order_book[t] = dict(type='generation',
-                                     block_id=t,
                                      hour=t,
+                                     block_id=t,
                                      order_id=0,
                                      name=self.name + '_eeg',
                                      price=-500,
-                                     volume=power[t],
-                                     link=-1)
+                                     volume=power[t])
             if type == 'mrk' and power[t] > 0.5:
                 order_book[t] = dict(type='generation',
                                      block_id=t,
@@ -101,12 +100,11 @@ class ResAgent(BasicAgent):
                                      order_id=0,
                                      name=self.name + '_mrk',
                                      price=0,
-                                     volume=power[t],
-                                     link=-1)
+                                     volume=power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')
         if df.empty:
-            df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'order_id', 'name', 'price', 'volume', 'link'])
+            df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'order_id', 'name', 'price', 'volume'])
         df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
         return df
@@ -121,7 +119,7 @@ class ResAgent(BasicAgent):
         self.simulation_interface.date = self.date
 
         if 'set_capacities' in message:
-            self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg])
+            self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -133,7 +131,7 @@ class ResAgent(BasicAgent):
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, int(self.area / 10))
+        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
 
         self.portfolio_eeg.set_parameter(self.date, weather.copy(),  prices.copy())
@@ -157,9 +155,9 @@ class ResAgent(BasicAgent):
         # Step 3: build orders from optimization results
         start_time = time.time()
         order_book = self.get_order_book(power_eeg, type='eeg')
-        self.simulation_interface.set_order_book(order_book)
+        self.simulation_interface.set_hourly_orders(order_book)
         order_book = self.get_order_book(power_mrk, type='mrk')
-        self.simulation_interface.set_order_book(order_book)
+        self.simulation_interface.set_hourly_orders(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')

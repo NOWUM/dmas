@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pyomo.environ import  Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
-    minimize, quicksum, ConstraintList
+    minimize, maximize, quicksum, ConstraintList
 
 
 class DayAheadMarket:
@@ -92,7 +92,7 @@ class DayAheadMarket:
         self.model.clear()
 
         # Step 1 initialize binary variables for hourly ask block per agent and id
-        self.model.use_hourly_ask = Var(self.get_unique((block, order_id, agent) for block, hour, order_id, agent
+        self.model.use_hourly_ask = Var(self.get_unique((block, hour, order_id, agent) for block, hour, order_id, agent
                                                          in self.hourly_ask_total.keys()), within=Binary)
         # Step 2 initialize binary variables for linked ask block per agent
         self.model.use_linked_block = Var(self.get_unique([(block, agent) for block, _, _, agent
@@ -113,11 +113,11 @@ class DayAheadMarket:
         for data in self.get_unique([(block, agent) for block, _, _, agent in self.linked_total.keys()]):
             order_counter = 0
             block, agent = data
-            for b, _, _, a in self.hourly_ask_total.keys():
+            for b, _, _, a in self.linked_total.keys():
                 if b == block and a == agent:
                     order_counter += 1
             self.model.all_orders_in_block.add(self.model.use_linked_block[block, agent] * order_counter
-                                               == quicksum(self.model.use_linked_order[block, :, :, agent]))
+                                               >= quicksum(self.model.use_linked_order[block, :, :, agent]))
 
         # Step 6 set constraint: If parent block of an agent is used -> enable usage of child block
         self.model.enable_child_block = ConstraintList()
@@ -158,7 +158,7 @@ class DayAheadMarket:
                                          for block, order, name in self.hourly_bid_orders[t]))
 
         # Step 5 set constraint: Cost for each hour
-        self.model.generation_cost = Var(self.t, within=Reals, bounds=(0, None))
+        self.model.generation_cost = Var(self.t, within=Reals)
         self.model.costs = ConstraintList()
         for t in self.t:
             self.model.costs.add(quicksum(self.linked_total[block, t, order, name][0] *
@@ -174,47 +174,93 @@ class DayAheadMarket:
 
         self.model.obj = Objective(expr=quicksum(self.model.generation_cost[t] for t in self.t), sense=minimize)
 
-        self.opt.solve(self.model)
+        result = self.opt.solve(self.model)
+        print(result)
 
-        # prices = [max([self.ask_orders_total[block, t, order, name][0] * self.model.use_ask_order[block, t, order, name].value
-        #                for block, order, name in self.ask_orders_per_hour[t]]) for t in self.t]
-        # prices = pd.DataFrame(data=dict(price=prices))
-        # #print(prices)
-        #
-        # used_ask_orders = {}
-        # for t in self.t:
-        #     for block, order, name in self.ask_orders_per_hour[t]:
-        #         if self.model.use_ask_order[block, t, order, name].value and '_b' not in name:
-        #             used_ask_orders.update({(block, t, order, name): self.ask_orders_total[block, t, order, name]})
-        #
-        # used_ask_orders = pd.DataFrame.from_dict(used_ask_orders, orient='index', columns=['price', 'volume', 'link'])
-        # used_ask_orders['type'] = 'generation'
-        # #print(used_ask_orders)
-        #
-        # used_bid_orders = {}
-        # volumes = []
-        # for t in self.t:
-        #     volume = 0
-        #     for block, order, name in self.bid_orders_per_hour[t]:
-        #         volume += -1*self.bid_orders_total[block, t, order, name][1]
-        #         used_bid_orders.update({(block, t, order, name): self.bid_orders_total[block, t, order, name]})
-        #     for block, order, name in self.ask_orders_per_hour[t]:
-        #         if self.model.use_ask_order[block, t, order, name].value and '_b' in name:
-        #             volume += -1 * self.ask_orders_total[block, t, order, name][1]
-        #             used_bid_orders.update({(block, t, order, name.replace('_b', '')): self.ask_orders_total[block, t, order, name]})
-        #     volumes.append(volume)
-        # volumes = pd.DataFrame(data=dict(volume=volumes))
-        # used_bid_orders = pd.DataFrame.from_dict(used_bid_orders, orient='index', columns=['price', 'volume', 'link'])
-        # used_bid_orders['type'] = 'demand'
-        # #print(used_bid_orders)
-        #
-        # orders = pd.concat([used_ask_orders, used_bid_orders])
-        # orders.index = pd.MultiIndex.from_tuples(orders.index, names=['block_id', 'hour', 'order_id', 'name'])
-        # result = pd.concat([prices, volumes], axis=1)
-        #
-        # self.reset_parameter()
-        #
-        # return result, orders
+        prices = []
+        for t in self.t:
+            orders = []
+            for block, order, name in self.hourly_ask_orders[t]:
+                price = self.model.use_hourly_ask[block, t, order, name].value \
+                        * self.hourly_ask_total[block, t, order, name][0]
+                orders.append(price)
+            for block, order, name in self.hourly_linked_orders[t]:
+                price = self.model.use_linked_order[block, t, order, name].value \
+                        * self.linked_total[block, t, order, name][0]
+                orders.append(price)
+            for block, order, name in self.hourly_exclusive_orders[t]:
+                price = self.model.use_exclusive_block[block, t, order, name].value \
+                        * self.exclusive_total[block, t, order, name][0]
+                orders.append(price)
+
+            prices.append(max(orders))
+        prices = pd.DataFrame(data=dict(price=prices))
+
+        used_ask_orders = {}
+        for t in self.t:
+            for block, order, name in self.hourly_ask_orders[t]:
+                if self.model.use_hourly_ask[block, t, order, name].value:
+                    used_ask_orders.update({(block, t, order, name): self.hourly_ask_total[block, t, order, name]})
+        used_ask_orders = pd.DataFrame.from_dict(used_ask_orders, orient='index')
+        used_ask_orders.index = pd.MultiIndex.from_tuples(used_ask_orders.index,
+                                                          names=['block_id', 'hour', 'order_id', 'name'])
+        if used_ask_orders.empty:
+            used_ask_orders['price'] = []
+            used_ask_orders['volume'] = []
+        else:
+            used_ask_orders.columns = ['price', 'volume']
+
+        used_linked_orders = {}
+        for t in self.t:
+            for block, order, name in self.hourly_linked_orders[t]:
+                if self.model.use_linked_order[block, t, order, name].value:
+                    used_linked_orders.update({(block, t, order, name): self.linked_total[block, t, order, name]})
+        used_linked_orders = pd.DataFrame.from_dict(used_linked_orders, orient='index')
+        used_linked_orders.index = pd.MultiIndex.from_tuples(used_linked_orders.index,
+                                                             names=['block_id', 'hour', 'order_id', 'name'])
+        if used_linked_orders.empty:
+            used_linked_orders['price'] = []
+            used_linked_orders['volume'] = []
+            used_linked_orders['link'] = []
+        else:
+            used_linked_orders.columns = ['price', 'volume', 'link']
+
+        used_exclusive_orders = {}
+        for t in self.t:
+            for block, order, name in self.hourly_exclusive_orders[t]:
+                if self.model.use_linked_order[block, t, order, name].value:
+                    used_exclusive_orders.update({(block, t, order, name): self.exclusive_total[block, t, order, name]})
+        used_exclusive_orders = pd.DataFrame.from_dict(used_exclusive_orders, orient='index')
+        used_exclusive_orders.index = pd.MultiIndex.from_tuples(used_exclusive_orders.index,
+                                                                names=['block_id', 'hour', 'order_id', 'name'])
+        if used_exclusive_orders.empty:
+            used_exclusive_orders['price'] = []
+            used_exclusive_orders['volume'] = []
+        else:
+            used_exclusive_orders.columns = ['price', 'volume']
+
+        used_bid_orders = self.hourly_bid_total
+        volumes = []
+        for t in self.t:
+            volume = 0
+            for block, order, name in self.hourly_bid_orders[t]:
+                volume += (-1) * self.hourly_bid_total[block, t, order, name][1]
+            volumes.append(volume)
+        used_bid_orders = pd.DataFrame.from_dict(used_bid_orders, orient='index')
+        used_bid_orders.index = pd.MultiIndex.from_tuples(used_bid_orders.index,
+                                                          names=['block_id', 'hour', 'order_id', 'name'])
+        if used_bid_orders.empty:
+            used_bid_orders['price'] = []
+            used_bid_orders['volume'] = []
+        else:
+            used_bid_orders.columns = ['price', 'volume']
+
+        prices['volume'] = volumes
+
+        self.reset_parameter()
+
+        return prices, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders
+
 
 if __name__ == "__main__":
 
