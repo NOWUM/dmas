@@ -200,6 +200,7 @@ class SimulationInterface:
         df = pd.read_sql(f"Select hour, sum(volume) as volume from linked_results "
                          f"where name = '{name}' group by hour",
                          self.database)
+        return df
     # exclusive orders
     def set_exclusive_orders(self, order_book):
         order_book.to_sql('exclusive_orders', con=self.database, if_exists='append')
@@ -213,6 +214,7 @@ class SimulationInterface:
         df = pd.read_sql(f"Select hour, sum(volume) as volume from exclusive_results "
                          f"where name = '{name}' group by hour",
                          self.database)
+        return df
     # market result
     def set_market_results(self, results):
         for key, value in results.items():
@@ -232,12 +234,6 @@ class SimulationInterface:
         df.index.name = 'time'
 
         return df
-
-
-
-
-
-
 
     def get_agents(self):
         headers = {'content-type': 'application/json', }
