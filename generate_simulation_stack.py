@@ -49,7 +49,7 @@ output.append(f'''
       AREA_CODE: 'DE111'
       TYPE: 'MRK'
     volumes:
-    - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic
+    - ./gurobi.lic:/opt/gurobi/gurobi.lic:ro
     deploy:
       mode: replicated
       replicas: 1
