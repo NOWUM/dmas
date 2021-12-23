@@ -37,7 +37,7 @@ services:
       AREA_CODE: 'DE111'
       TYPE: 'MRK'
     volumes:
-    - ./gurobi.lic:/opt/gurobi/gurobi.lic:ro
+    - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic:ro
     deploy:
       mode: replicated
       replicas: 1
