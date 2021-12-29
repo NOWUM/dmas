@@ -55,8 +55,10 @@ class BasicAgent:
         self.channel = self.get_rabbitmq_connection()
         result = self.channel.queue_declare(queue=self.name, exclusive=True)
         self.channel.queue_bind(exchange=self.mqtt_exchange, queue=result.method.queue)
+        self.logger.info('starting the agent')
 
     def __del__(self):
+        self.logger.info('shutting down')
         for connection, channel in self.channels:
             if connection and not connection.is_closed:
                 connection.close()
@@ -70,14 +72,10 @@ class BasicAgent:
                 self.logger.info(f'connected to rabbitmq')
                 self.channels.append((mqtt_connection, channel))
                 return channel
-            except pika.exceptions.AMQPConnectionError:
-                self.logger.info(f'could not connect - try: {i}')
-                time.sleep(i ** 2)
             except Exception as e:
-                self.mqtt_connection = False
-                self.logger.exception(f'could not connect - try: {i}')
+                self.logger.info(f'connection failed - try: {i} - {repr(e)}')
                 time.sleep(i ** 2)
-        return False, None
+        return None
 
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")

@@ -17,7 +17,6 @@ class ResAgent(BasicAgent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Development of the portfolio with the corresponding ee-systems
-        self.logger.info('starting the agent')
         start_time = time.time()
         self.portfolio_eeg = RenewablePortfolio()
         self.portfolio_mrk = RenewablePortfolio()

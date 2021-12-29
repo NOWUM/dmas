@@ -16,7 +16,6 @@ class DemAgent(BasicAgent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Portfolio with the corresponding households, trade and industry
-        self.logger.info('starting the agent')
         start_time = time.time()
         self.portfolio = DemandPortfolio()
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
@@ -94,7 +93,7 @@ class DemAgent(BasicAgent):
         self.simulation_interface.date = self.date
 
         if 'set_capacities' in message:
-            self.simulation_interface .set_capacities(self.portfolio, self.area)
+            self.simulation_interface.set_capacities(self.portfolio,self.area)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:

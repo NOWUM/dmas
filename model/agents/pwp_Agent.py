@@ -15,7 +15,6 @@ class PwpAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.logger.info('starting the agent')
         start_time = time.time()
 
         self.portfolio = PowerPlantPortfolio()
