@@ -4,7 +4,7 @@ image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 
 configs = {}
 output = []
-output.append('version: "3"\n')
+output.append('version: "3.9"\n')
 output.append('services:\n')
 
 output.append(f'''
@@ -22,7 +22,6 @@ output.append(f'''
       replicas: 1
       placement:
         constraints: [node.role == manager]
-    privileged: true
 ''')
 configs[f'compute_config']= f'./gurobi.lic'
 
@@ -86,7 +85,7 @@ output.append(f'''
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
-for agent in agents[:5]:
+for agent in agents[:25]:
     output.append(f'''
   dem_{agent.lower()}:
     container_name: dem_{agent.lower()}
@@ -97,7 +96,7 @@ for agent in agents[:5]:
 ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
-for agent in agents[:5]:
+for agent in agents[:25]:
     output.append(f'''
   pwp_{agent.lower()}:
     container_name: pwp_{agent.lower()}
@@ -108,7 +107,7 @@ for agent in agents[:5]:
 ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
-for agent in agents[:5]:
+for agent in agents[:25]:
     output.append(f'''
   res_{agent.lower()}:
     container_name: res_{agent.lower()}
