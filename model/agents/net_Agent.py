@@ -16,8 +16,8 @@ class NetAgent(BasicAgent):
 
         # TODO: Add nodes and edges
         data = {
-            nodes: self.infrastructure_interface.get_grid_nodes(),
-            edges: self.infrastructure_interface.get_grid_edges()
+            'nodes': self.infrastructure_interface.get_grid_nodes(),
+            'edges': self.infrastructure_interface.get_grid_edges()
         }
         self.transmission_system = TransmissionSystem(**data)
 

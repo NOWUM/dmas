@@ -519,6 +519,11 @@ class InfrastructureInterface:
 
         return pd.DataFrame()
 
+    def get_grid_nodes(self):
+        return {}
+    
+    def get_grid_edges(self):
+        return {}
 
 if __name__ == "__main__":
     import os

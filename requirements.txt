@@ -12,7 +12,7 @@ pypsa
 scikit-learn
 pyproj
 shapely
-joblib
+#joblib
 requests
 flask
 scipy

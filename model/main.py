@@ -9,6 +9,8 @@ from agents.mrk_Agent import MarketAgent
 from agents.ctl_Agent import CtlAgent
 
 
+# don't propagate pika log messages
+logging.getLogger("pika").propagate = False
 logging.basicConfig()
 
 if __name__ == "__main__":

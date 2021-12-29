@@ -4,11 +4,11 @@ import pypsa
 
 class TransmissionSystem(EnergySystem):
 
-    def __init__(self, T, *args, **kwargs):
+    def __init__(self, T=24, *args, **kwargs):
         super().__init__(T)
         self.transmission_model = pypsa.Network()
-        self.edges = kwargs['edges']
-        self.nodes = kwargs['nodes']
+        self.edges = kwargs.get('edges', {})
+        self.nodes = kwargs.get('nodes', {})
 
         for key, node in self.nodes.items():
             self.transmission_model.add('Bus', name=key, **node)
