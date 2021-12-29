@@ -2,14 +2,34 @@ import numpy as np
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 
+configs = {}
 output = []
 output.append('version: "3"\n')
 output.append('services:\n')
 
 output.append(f'''
+  # gurobi-compute with wls-license
+  compute:
+    container_name: gurobi-compute
+    image: gurobi/compute:latest
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    configs:
+      - source: compute_config
+        target: /opt/gurobi/gurobi.lic
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    privileged: true
+''')
+configs[f'compute_config']= f'./gurobi.lic'
+
+output.append(f'''
   simulationdb:
     container_name: simulationdb
-    image: timescale/timescaledb:latest-pg12
+    image: timescale/timescaledb:latest-pg14
     command: postgres -c 'max_connections=500' -B 4096MB
     restart: always
     environment:
@@ -48,14 +68,13 @@ output.append(f'''
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'MRK'
-    volumes:
-    - ./gurobi_wls.lic:/opt/gurobi/gurobi.lic:ro
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
+    configs:
+      - source: market_config
+        target: /opt/gurobi/gurobi.lic
+
 ''')
+configs[f'market_config']= f'./market_gurobi.lic'
+
 # Build one TSO
 output.append(f'''
   tso:
@@ -75,7 +94,7 @@ for agent in agents[:5]:
     environment:
       AREA_CODE: {agent}
       TYPE: 'DEM'
-      ''')
+''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
 for agent in agents[:5]:
@@ -86,7 +105,7 @@ for agent in agents[:5]:
     environment:
       AREA_CODE: {agent}
       TYPE: 'PWP'
-      ''')
+''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
 for agent in agents[:5]:
@@ -97,7 +116,14 @@ for agent in agents[:5]:
     environment:
       AREA_CODE: {agent}
       TYPE: 'RES'
-      ''')
-
-with open('docker-compose_simulation.yml', 'w') as f:
+''')
+output.append('configs:')
+for config, location in configs.items():
+  output.append(f'''
+  {config}:
+    file: {location}
+''')
+with open('docker-compose.yml', 'w') as f:
     f.writelines(output)
+
+

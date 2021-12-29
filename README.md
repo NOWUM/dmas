@@ -16,11 +16,11 @@ Kumar Shivam; Stephen Bosch*
 
 ### start simulation - local:
 
-`docker-compose -f docker-compose_simulation.yml down --remove-orphans && docker-compose build && docker-compose -f docker-compose_simulation.yml up -d` <br>
+`docker-compose down --remove-orphans && docker build -t registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent . && docker-compose up -d`
 
 ### start simulation - docker swarm
 
-`docker stack deploy --with-registry-auth --compose-file docker-compose_simulation.yml dmas`
+`docker stack deploy --with-registry-auth -c docker-compose.yml dmas`
 
 ### show logs - local
 
