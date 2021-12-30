@@ -27,7 +27,7 @@ class CtlAgent(BasicAgent):
         self.stop_date = pd.to_datetime('2018-02-01')
         self.waiting_list = []
         self.cleared = False
-        self.dashboard = Dashboard(simulation_running=self.sim_start)
+        self.dashboard = Dashboard()
         self.simulation_interface.date = self.start_date
 
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')

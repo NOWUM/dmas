@@ -10,7 +10,7 @@ from dash.dependencies import Input, Output
 
 class Dashboard:
 
-    def __init__(self, simulation_running):
+    def __init__(self):
 
         self.tab_menu_style = {
             'height': {'height': '44px'},
@@ -31,8 +31,6 @@ class Dashboard:
                            'height': '95%',
                            'background-color': '#262626',
                            'color': 'white'}
-
-        self.simulation_running = simulation_running
 
         self.header = html.Div(children=[
             html.H3('Distributed Agent-Based Simulation of the German Energy Market'),
@@ -67,12 +65,11 @@ class Dashboard:
         return content
 
     def get_simulation_info(self, agents, running, date=None):
-        self.simulation_running = running
-        content = [html.P(f'simulation is running: {self.simulation_running}'),
+        content = [html.P(f'simulation is running: {running}'),
                    html.Br(),
                    html.P(f'{len(agents)} Agents are running')]
 
-        if not self.simulation_running:
+        if not running:
             content.append(
                 html.Form(children=[
                     html.Div(children=[
