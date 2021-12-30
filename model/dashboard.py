@@ -86,7 +86,7 @@ class Dashboard:
                 ], method='POST', action='/start')
             )
         else:
-            content.append(html.B(f'current date: {date.date()}'))
+            content.append(html.B(f'current date: {date}'))
             content.append(
                 html.Form(children=[
                     html.Div(children=[

@@ -20,10 +20,24 @@ class SimulationInterface:
         self.date = None
         self.mqtt_server = mqtt_server
 
-    def initial_tables(self):
+    def initialize_tables(self):
         with self.database.begin() as connection:
             # initialize tables for orders and market
             # hourly orders
+            query = '''
+              DROP TABLE IF EXISTS hourly_orders;
+              DROP TABLE IF EXISTS linked_orders;
+              DROP TABLE IF EXISTS exclusive_orders;
+              DROP TABLE IF EXISTS capacities;
+              DROP TABLE IF EXISTS demand;
+              DROP TABLE IF EXISTS generation;
+              DROP TABLE IF EXISTS auction_results;
+              DROP TABLE IF EXISTS hourly_results;
+              DROP TABLE IF EXISTS linked_results;
+              DROP TABLE IF EXISTS exclusive_results;
+            '''
+            connection.execute(query)
+            
             query = '''CREATE TABLE hourly_orders (hour bigint, block_id bigint , order_id bigint, name text, 
                                                 price double precision, volume double precision, type text)'''
             connection.execute(query)

@@ -95,7 +95,7 @@ class CtlAgent(BasicAgent):
     def simulation_routine(self):
         self.logger.info('simulation started')
 
-        self.simulation_interface.initial_tables()
+        self.simulation_interface.initialize_tables()
 
         for date in tqdm(pd.date_range(start=self.start_date, end=self.stop_date, freq='D')):
             if self.sim_stop:
