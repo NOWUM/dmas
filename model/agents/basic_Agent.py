@@ -11,13 +11,13 @@ from interfaces.simulation import SimulationInterface
 
 class BasicAgent:
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, area, type, date, *args, **kwargs):
 
         # declare meta data
-        self.area = kwargs['area']
-        self.type = kwargs['type']
+        self.area = area
+        self.type = type
         self.name = f'{self.type}_{self.area}'.lower()
-        self.date = pd.to_datetime(kwargs['date'])
+        self.date = pd.to_datetime(date)
 
         # declare logging options
         self.logger = logging.getLogger(self.name)
@@ -43,11 +43,7 @@ class BasicAgent:
         self.longitude, self.latitude = self.infrastructure_interface.get_lon_lat(self.area)
 
         # declare weather data server
-        self.weather_data_server = kwargs['weather_server']
-        self.weather_data_credential= kwargs['weather_credential']
-        self.weather_data_database = kwargs['weather_database']
-        self.weather_interface = WeatherInterface(self.name, self.weather_data_server, self.weather_data_credential,
-                                                  self.weather_data_database)
+        self.weather_interface = WeatherInterface(self.name, kwargs['weather_database_uri'])
 
         # declare mqtt options
         self.channels = []

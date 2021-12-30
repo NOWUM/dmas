@@ -27,7 +27,7 @@ class DemAgent(BasicAgent):
 
         demand = 0
         # Construction of the prosumer with photovoltaic and battery
-        bats = self.infrastructure_interface.get_solar_storage_systems_in_area(area=kwargs['area'])
+        bats = self.infrastructure_interface.get_solar_storage_systems_in_area(self.area)
         bats['type'] = 'battery'
         for system in tqdm(bats.to_dict(orient='records')):
             self.portfolio.add_energy_system(system)
@@ -35,7 +35,7 @@ class DemAgent(BasicAgent):
         self.logger.info('Prosumer Photovoltaic and Battery added')
 
         # Construction consumer with photovoltaic
-        pvs = self.infrastructure_interface.get_solar_systems_in_area(area=kwargs['area'], solar_type='roof_top')
+        pvs = self.infrastructure_interface.get_solar_systems_in_area(self.area, solar_type='roof_top')
         pvs = pvs[pvs['ownConsumption'] == 1]
         pvs['maxPower'] *= 1000
         pvs['type'] = 'solar'
@@ -44,7 +44,7 @@ class DemAgent(BasicAgent):
             demand += system['demandP']
         self.logger.info('Prosumer Photovoltaic added')
 
-        demands = self.infrastructure_interface.get_demand_in_area(area=kwargs['area'])
+        demands = self.infrastructure_interface.get_demand_in_area(self.area)
         household_demand = demands['household'].values[0] * 10**9
         household_demand -= demand
 

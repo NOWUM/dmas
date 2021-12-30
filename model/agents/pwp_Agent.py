@@ -28,7 +28,7 @@ class PwpAgent(BasicAgent):
         self.forecast_counter = 10
 
         for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
-            power_plants = self.infrastructure_interface.get_power_plant_in_area(area=kwargs['area'], fuel_type=fuel)
+            power_plants = self.infrastructure_interface.get_power_plant_in_area(self.area, fuel_type=fuel)
             if power_plants is not None:
                 for system in power_plants.to_dict(orient='records'):
                     self.portfolio.add_energy_system(system)

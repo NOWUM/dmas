@@ -14,7 +14,10 @@ logging.getLogger("pika").propagate = False
 logging.basicConfig()
 
 if __name__ == "__main__":
-
+    weather_server = os.getenv('WEATHER_SERVER', '10.13.10.41:5432')
+    weather_credential = os.getenv('WEATHER_CREDENTIAL', 'opendata:opendata')
+    weather_database = os.getenv('WEATHER_DATABASE', 'weather')
+    weather_database_uri = f'postgresql://{weather_credential}@{weather_server}/{weather_database}'
     init_dict = {
         'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
         'area': os.getenv('AREA_CODE', 'DEA2D'),
@@ -30,9 +33,7 @@ if __name__ == "__main__":
         'structure_server': os.getenv('STRUCTURE_SERVER', '10.13.10.41:5432'),
         'structure_credential': os.getenv('STRUCTURE_CREDENTIAL', 'opendata:opendata'),
         # weather data server default parameter
-        'weather_server': os.getenv('WEATHER_SERVER', '10.13.10.41:5432'),
-        'weather_credential': os.getenv('WEATHER_CREDENTIAL', 'opendata:opendata'),
-        'weather_database': os.getenv('WEATHER_DATABASE', 'weather')
+        'weather_database_uri' : weather_database_uri
     }
 
     try:

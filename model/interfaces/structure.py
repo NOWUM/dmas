@@ -10,12 +10,11 @@ class InfrastructureInterface:
 
     def __init__(self, name, structure_data_server, structure_data_credential,
                  structure_databases=('mastr', 'oep', 'windmodel')):
-        self.database_mastr = create_engine(f'postgresql://{structure_data_credential}@{structure_data_server}/{structure_databases[0]}',
-                                            connect_args={"application_name": name})
-        self.database_oep = create_engine(f'postgresql://{structure_data_credential}@{structure_data_server}/{structure_databases[1]}',
-                                           connect_args={"application_name": name})
-        self.database_wind = create_engine(f'postgresql://{structure_data_credential}@{structure_data_server}/{structure_databases[2]}',
-                                           connect_args={"application_name": name})
+        server_uri = f'postgresql://{structure_data_credential}@{structure_data_server}'
+        
+        self.database_mastr = create_engine(f'{server_uri}/{structure_databases[0]}', connect_args={"application_name": name})
+        self.database_oep = create_engine(f'{server_uri}/{structure_databases[1]}', connect_args={"application_name": name})
+        self.database_wind = create_engine(f'{server_uri}/{structure_databases[2]}', connect_args={"application_name": name})
 
         self.geo_information = gpd.read_file(r'./interfaces/data/NUTS_EU.shp')
         self.geo_information = self.geo_information.to_crs(4326)

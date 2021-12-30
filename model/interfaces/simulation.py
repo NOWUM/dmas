@@ -21,73 +21,74 @@ class SimulationInterface:
         self.mqtt_server = mqtt_server
 
     def initial_tables(self):
-
-        # initialize tables for orders and market
-        # hourly orders
-        query = '''CREATE TABLE hourly_orders (hour bigint, block_id bigint , order_id bigint, name text, 
-                                               price double precision, volume double precision, type text)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
-        # linked block orders
-        query = '''CREATE TABLE linked_orders (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
-                                               volume double precision, link bigint, type text)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "linked_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
-        # exclusive block orders
-        query = '''CREATE TABLE exclusive_orders (block_id bigint, hour bigint, name text, price double precision,
-                                                  volume double precision)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "exclusive_orders" ADD PRIMARY KEY ("block_id", "hour", "name");')
-
-        # Generation and Demand Data
-        # installed capacities
-        query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision,
-                                            coal double precision, gas double precision, lignite double precision,
-                                            nuclear double precision, solar double precision, water double precision,
-                                            wind double precision, storage double precision, agent text,
-                                            area text)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "capacities" ADD PRIMARY KEY ("time", "agent");')
-        # total demand of each agent
-        query = '''CREATE TABLE demand ("time" timestamp without time zone, power double precision,
-                                        heat double precision, step text, agent text, area text)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "demand" ADD PRIMARY KEY ("time", "step", "agent");')
-        # total generation of each agent
-        query = '''CREATE TABLE generation ("time" timestamp without time zone, total double precision,
-                                            solar double precision, wind double precision, water double precision,
-                                            bio double precision, lignite double precision, coal double precision,
-                                            gas double precision, nuclear double precision, step text,
-                                            agent text, area text)'''
-        self.database.execute(query)
-        self.database.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')
-
-        query = '''CREATE TABLE auction_results ("time" timestamp without time zone, price double precision,
-                                                 volume double precision)'''
-        self.database.execute(query)
-        self.database.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
-
-        # hourly orders
-        query = '''CREATE TABLE hourly_results (hour bigint, block_id bigint , order_id bigint, name text, 
-                                                 price double precision, volume double precision, type text)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "hourly_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
-        # linked block orders
-        query = '''CREATE TABLE linked_results(block_id bigint, hour bigint, order_id bigint, name text, price double precision,
-                                                 volume double precision, link bigint, type text)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "linked_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
-        # exclusive block orders
-        query = '''CREATE TABLE exclusive_results (block_id bigint, hour bigint, name text, price double precision,
+        with self.database.begin() as connection:
+            # initialize tables for orders and market
+            # hourly orders
+            query = '''CREATE TABLE hourly_orders (hour bigint, block_id bigint , order_id bigint, name text, 
+                                                price double precision, volume double precision, type text)'''
+            connection.execute(query)
+            connection.execute('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
+            # linked block orders
+            query = '''CREATE TABLE linked_orders (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
+                                                volume double precision, link bigint, type text)'''
+            connection.execute(query)
+            connection.execute('ALTER TABLE "linked_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+            # exclusive block orders
+            query = '''CREATE TABLE exclusive_orders (block_id bigint, hour bigint, name text, price double precision,
                                                     volume double precision)'''
-        self.database.execute(query)
-        self.database.execute('ALTER TABLE "exclusive_results" ADD PRIMARY KEY ("block_id", "hour", "name");')
+            connection.execute(query)
+            connection.execute('ALTER TABLE "exclusive_orders" ADD PRIMARY KEY ("block_id", "hour", "name");')
+
+            # Generation and Demand Data
+            # installed capacities
+            query = '''CREATE TABLE capacities ("time" timestamp without time zone, bio double precision,
+                                                coal double precision, gas double precision, lignite double precision,
+                                                nuclear double precision, solar double precision, water double precision,
+                                                wind double precision, storage double precision, agent text,
+                                                area text)'''
+            connection.execute(query)
+            connection.execute('ALTER TABLE "capacities" ADD PRIMARY KEY ("time", "agent");')
+            # total demand of each agent
+            query = '''CREATE TABLE demand ("time" timestamp without time zone, power double precision,
+                                            heat double precision, step text, agent text, area text)'''
+            connection.execute(query)
+            connection.execute('ALTER TABLE "demand" ADD PRIMARY KEY ("time", "step", "agent");')
+            # total generation of each agent
+            query = '''CREATE TABLE generation ("time" timestamp without time zone, total double precision,
+                                                solar double precision, wind double precision, water double precision,
+                                                bio double precision, lignite double precision, coal double precision,
+                                                gas double precision, nuclear double precision, step text,
+                                                agent text, area text)'''
+            connection.execute(query)
+            connection.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')
+
+            query = '''CREATE TABLE auction_results ("time" timestamp without time zone, price double precision,
+                                                    volume double precision)'''
+            connection.execute(query)
+            connection.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
+
+            # hourly orders
+            query = '''CREATE TABLE hourly_results (hour bigint, block_id bigint , order_id bigint, name text, 
+                                                    price double precision, volume double precision, type text)'''
+            connection.execute(query)
+            connection.execute('ALTER TABLE "hourly_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
+            # linked block orders
+            query = '''CREATE TABLE linked_results(block_id bigint, hour bigint, order_id bigint, name text, price double precision,
+                                                    volume double precision, link bigint, type text)'''
+            connection.execute(query)
+            connection.execute('ALTER TABLE "linked_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+            # exclusive block orders
+            query = '''CREATE TABLE exclusive_results (block_id bigint, hour bigint, name text, price double precision,
+                                                        volume double precision)'''
+            connection.execute(query)
+            connection.execute('ALTER TABLE "exclusive_results" ADD PRIMARY KEY ("block_id", "hour", "name");')
 
 
     def reset_order_book(self):
-        self.database.execute("DELETE FROM hourly_orders")
-        self.database.execute("DELETE FROM linked_orders")
-        self.database.execute("DELETE FROM exclusive_orders")
+        with self.database.begin() as connection:
+            connection.execute("DELETE FROM hourly_orders")
+            connection.execute("DELETE FROM linked_orders")
+            connection.execute("DELETE FROM exclusive_orders")
 
     def merge_portfolio(self, portfolio, type):
         data_frames = []

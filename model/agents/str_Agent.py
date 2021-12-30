@@ -18,7 +18,7 @@ class StrAgent(BasicAgent):
 
         self.max_volume = 0
         # Construction storages
-        storages = self.infrastructure_interface.get_water_storage_systems(area=kwargs['plz'])
+        storages = self.infrastructure_interface.get_water_storage_systems(self.area)
         if storages is not None:
             for _, data in storages.iterrows():
                 self.portfolio.add_energy_system(data.to_dict())
