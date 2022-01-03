@@ -98,6 +98,2778 @@ services:
       AREA_CODE: DE115
       TYPE: 'DEM'
 
+  dem_de116:
+    container_name: dem_de116
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE116
+      TYPE: 'DEM'
+
+  dem_de117:
+    container_name: dem_de117
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE117
+      TYPE: 'DEM'
+
+  dem_de118:
+    container_name: dem_de118
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE118
+      TYPE: 'DEM'
+
+  dem_de119:
+    container_name: dem_de119
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE119
+      TYPE: 'DEM'
+
+  dem_de11a:
+    container_name: dem_de11a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11A
+      TYPE: 'DEM'
+
+  dem_de11b:
+    container_name: dem_de11b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11B
+      TYPE: 'DEM'
+
+  dem_de11c:
+    container_name: dem_de11c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11C
+      TYPE: 'DEM'
+
+  dem_de11d:
+    container_name: dem_de11d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11D
+      TYPE: 'DEM'
+
+  dem_de121:
+    container_name: dem_de121
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE121
+      TYPE: 'DEM'
+
+  dem_de122:
+    container_name: dem_de122
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE122
+      TYPE: 'DEM'
+
+  dem_de123:
+    container_name: dem_de123
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE123
+      TYPE: 'DEM'
+
+  dem_de124:
+    container_name: dem_de124
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE124
+      TYPE: 'DEM'
+
+  dem_de125:
+    container_name: dem_de125
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE125
+      TYPE: 'DEM'
+
+  dem_de126:
+    container_name: dem_de126
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE126
+      TYPE: 'DEM'
+
+  dem_de127:
+    container_name: dem_de127
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE127
+      TYPE: 'DEM'
+
+  dem_de128:
+    container_name: dem_de128
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE128
+      TYPE: 'DEM'
+
+  dem_de129:
+    container_name: dem_de129
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE129
+      TYPE: 'DEM'
+
+  dem_de12a:
+    container_name: dem_de12a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE12A
+      TYPE: 'DEM'
+
+  dem_de12b:
+    container_name: dem_de12b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE12B
+      TYPE: 'DEM'
+
+  dem_de12c:
+    container_name: dem_de12c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE12C
+      TYPE: 'DEM'
+
+  dem_de131:
+    container_name: dem_de131
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE131
+      TYPE: 'DEM'
+
+  dem_de132:
+    container_name: dem_de132
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE132
+      TYPE: 'DEM'
+
+  dem_de133:
+    container_name: dem_de133
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE133
+      TYPE: 'DEM'
+
+  dem_de134:
+    container_name: dem_de134
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE134
+      TYPE: 'DEM'
+
+  dem_de135:
+    container_name: dem_de135
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE135
+      TYPE: 'DEM'
+
+  dem_de136:
+    container_name: dem_de136
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE136
+      TYPE: 'DEM'
+
+  dem_de137:
+    container_name: dem_de137
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE137
+      TYPE: 'DEM'
+
+  dem_de138:
+    container_name: dem_de138
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE138
+      TYPE: 'DEM'
+
+  dem_de139:
+    container_name: dem_de139
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE139
+      TYPE: 'DEM'
+
+  dem_de13a:
+    container_name: dem_de13a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE13A
+      TYPE: 'DEM'
+
+  dem_de141:
+    container_name: dem_de141
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE141
+      TYPE: 'DEM'
+
+  dem_de142:
+    container_name: dem_de142
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE142
+      TYPE: 'DEM'
+
+  dem_de143:
+    container_name: dem_de143
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE143
+      TYPE: 'DEM'
+
+  dem_de144:
+    container_name: dem_de144
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE144
+      TYPE: 'DEM'
+
+  dem_de145:
+    container_name: dem_de145
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE145
+      TYPE: 'DEM'
+
+  dem_de146:
+    container_name: dem_de146
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE146
+      TYPE: 'DEM'
+
+  dem_de147:
+    container_name: dem_de147
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE147
+      TYPE: 'DEM'
+
+  dem_de148:
+    container_name: dem_de148
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE148
+      TYPE: 'DEM'
+
+  dem_de149:
+    container_name: dem_de149
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE149
+      TYPE: 'DEM'
+
+  dem_de211:
+    container_name: dem_de211
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE211
+      TYPE: 'DEM'
+
+  dem_de212:
+    container_name: dem_de212
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE212
+      TYPE: 'DEM'
+
+  dem_de213:
+    container_name: dem_de213
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE213
+      TYPE: 'DEM'
+
+  dem_de214:
+    container_name: dem_de214
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE214
+      TYPE: 'DEM'
+
+  dem_de215:
+    container_name: dem_de215
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE215
+      TYPE: 'DEM'
+
+  dem_de216:
+    container_name: dem_de216
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE216
+      TYPE: 'DEM'
+
+  dem_de217:
+    container_name: dem_de217
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE217
+      TYPE: 'DEM'
+
+  dem_de218:
+    container_name: dem_de218
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE218
+      TYPE: 'DEM'
+
+  dem_de219:
+    container_name: dem_de219
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE219
+      TYPE: 'DEM'
+
+  dem_de21a:
+    container_name: dem_de21a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21A
+      TYPE: 'DEM'
+
+  dem_de21b:
+    container_name: dem_de21b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21B
+      TYPE: 'DEM'
+
+  dem_de21c:
+    container_name: dem_de21c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21C
+      TYPE: 'DEM'
+
+  dem_de21d:
+    container_name: dem_de21d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21D
+      TYPE: 'DEM'
+
+  dem_de21e:
+    container_name: dem_de21e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21E
+      TYPE: 'DEM'
+
+  dem_de21f:
+    container_name: dem_de21f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21F
+      TYPE: 'DEM'
+
+  dem_de21g:
+    container_name: dem_de21g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21G
+      TYPE: 'DEM'
+
+  dem_de21h:
+    container_name: dem_de21h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21H
+      TYPE: 'DEM'
+
+  dem_de21i:
+    container_name: dem_de21i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21I
+      TYPE: 'DEM'
+
+  dem_de21j:
+    container_name: dem_de21j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21J
+      TYPE: 'DEM'
+
+  dem_de21k:
+    container_name: dem_de21k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21K
+      TYPE: 'DEM'
+
+  dem_de21l:
+    container_name: dem_de21l
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21L
+      TYPE: 'DEM'
+
+  dem_de21m:
+    container_name: dem_de21m
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21M
+      TYPE: 'DEM'
+
+  dem_de21n:
+    container_name: dem_de21n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21N
+      TYPE: 'DEM'
+
+  dem_de221:
+    container_name: dem_de221
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE221
+      TYPE: 'DEM'
+
+  dem_de222:
+    container_name: dem_de222
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE222
+      TYPE: 'DEM'
+
+  dem_de223:
+    container_name: dem_de223
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE223
+      TYPE: 'DEM'
+
+  dem_de224:
+    container_name: dem_de224
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE224
+      TYPE: 'DEM'
+
+  dem_de225:
+    container_name: dem_de225
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE225
+      TYPE: 'DEM'
+
+  dem_de226:
+    container_name: dem_de226
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE226
+      TYPE: 'DEM'
+
+  dem_de227:
+    container_name: dem_de227
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE227
+      TYPE: 'DEM'
+
+  dem_de228:
+    container_name: dem_de228
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE228
+      TYPE: 'DEM'
+
+  dem_de229:
+    container_name: dem_de229
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE229
+      TYPE: 'DEM'
+
+  dem_de22a:
+    container_name: dem_de22a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE22A
+      TYPE: 'DEM'
+
+  dem_de22b:
+    container_name: dem_de22b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE22B
+      TYPE: 'DEM'
+
+  dem_de22c:
+    container_name: dem_de22c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE22C
+      TYPE: 'DEM'
+
+  dem_de231:
+    container_name: dem_de231
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE231
+      TYPE: 'DEM'
+
+  dem_de232:
+    container_name: dem_de232
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE232
+      TYPE: 'DEM'
+
+  dem_de233:
+    container_name: dem_de233
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE233
+      TYPE: 'DEM'
+
+  dem_de234:
+    container_name: dem_de234
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE234
+      TYPE: 'DEM'
+
+  dem_de235:
+    container_name: dem_de235
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE235
+      TYPE: 'DEM'
+
+  dem_de236:
+    container_name: dem_de236
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE236
+      TYPE: 'DEM'
+
+  dem_de237:
+    container_name: dem_de237
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE237
+      TYPE: 'DEM'
+
+  dem_de238:
+    container_name: dem_de238
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE238
+      TYPE: 'DEM'
+
+  dem_de239:
+    container_name: dem_de239
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE239
+      TYPE: 'DEM'
+
+  dem_de23a:
+    container_name: dem_de23a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE23A
+      TYPE: 'DEM'
+
+  dem_de241:
+    container_name: dem_de241
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE241
+      TYPE: 'DEM'
+
+  dem_de242:
+    container_name: dem_de242
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE242
+      TYPE: 'DEM'
+
+  dem_de243:
+    container_name: dem_de243
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE243
+      TYPE: 'DEM'
+
+  dem_de244:
+    container_name: dem_de244
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE244
+      TYPE: 'DEM'
+
+  dem_de245:
+    container_name: dem_de245
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE245
+      TYPE: 'DEM'
+
+  dem_de246:
+    container_name: dem_de246
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE246
+      TYPE: 'DEM'
+
+  dem_de247:
+    container_name: dem_de247
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE247
+      TYPE: 'DEM'
+
+  dem_de248:
+    container_name: dem_de248
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE248
+      TYPE: 'DEM'
+
+  dem_de249:
+    container_name: dem_de249
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE249
+      TYPE: 'DEM'
+
+  dem_de24a:
+    container_name: dem_de24a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24A
+      TYPE: 'DEM'
+
+  dem_de24b:
+    container_name: dem_de24b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24B
+      TYPE: 'DEM'
+
+  dem_de24c:
+    container_name: dem_de24c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24C
+      TYPE: 'DEM'
+
+  dem_de24d:
+    container_name: dem_de24d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24D
+      TYPE: 'DEM'
+
+  dem_de251:
+    container_name: dem_de251
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE251
+      TYPE: 'DEM'
+
+  dem_de252:
+    container_name: dem_de252
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE252
+      TYPE: 'DEM'
+
+  dem_de253:
+    container_name: dem_de253
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE253
+      TYPE: 'DEM'
+
+  dem_de254:
+    container_name: dem_de254
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE254
+      TYPE: 'DEM'
+
+  dem_de255:
+    container_name: dem_de255
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE255
+      TYPE: 'DEM'
+
+  dem_de256:
+    container_name: dem_de256
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE256
+      TYPE: 'DEM'
+
+  dem_de257:
+    container_name: dem_de257
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE257
+      TYPE: 'DEM'
+
+  dem_de258:
+    container_name: dem_de258
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE258
+      TYPE: 'DEM'
+
+  dem_de259:
+    container_name: dem_de259
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE259
+      TYPE: 'DEM'
+
+  dem_de25a:
+    container_name: dem_de25a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE25A
+      TYPE: 'DEM'
+
+  dem_de25b:
+    container_name: dem_de25b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE25B
+      TYPE: 'DEM'
+
+  dem_de25c:
+    container_name: dem_de25c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE25C
+      TYPE: 'DEM'
+
+  dem_de261:
+    container_name: dem_de261
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE261
+      TYPE: 'DEM'
+
+  dem_de262:
+    container_name: dem_de262
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE262
+      TYPE: 'DEM'
+
+  dem_de263:
+    container_name: dem_de263
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE263
+      TYPE: 'DEM'
+
+  dem_de264:
+    container_name: dem_de264
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE264
+      TYPE: 'DEM'
+
+  dem_de265:
+    container_name: dem_de265
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE265
+      TYPE: 'DEM'
+
+  dem_de266:
+    container_name: dem_de266
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE266
+      TYPE: 'DEM'
+
+  dem_de267:
+    container_name: dem_de267
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE267
+      TYPE: 'DEM'
+
+  dem_de268:
+    container_name: dem_de268
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE268
+      TYPE: 'DEM'
+
+  dem_de269:
+    container_name: dem_de269
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE269
+      TYPE: 'DEM'
+
+  dem_de26a:
+    container_name: dem_de26a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE26A
+      TYPE: 'DEM'
+
+  dem_de26b:
+    container_name: dem_de26b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE26B
+      TYPE: 'DEM'
+
+  dem_de26c:
+    container_name: dem_de26c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE26C
+      TYPE: 'DEM'
+
+  dem_de271:
+    container_name: dem_de271
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE271
+      TYPE: 'DEM'
+
+  dem_de272:
+    container_name: dem_de272
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE272
+      TYPE: 'DEM'
+
+  dem_de273:
+    container_name: dem_de273
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE273
+      TYPE: 'DEM'
+
+  dem_de274:
+    container_name: dem_de274
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE274
+      TYPE: 'DEM'
+
+  dem_de275:
+    container_name: dem_de275
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE275
+      TYPE: 'DEM'
+
+  dem_de276:
+    container_name: dem_de276
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE276
+      TYPE: 'DEM'
+
+  dem_de277:
+    container_name: dem_de277
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE277
+      TYPE: 'DEM'
+
+  dem_de278:
+    container_name: dem_de278
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE278
+      TYPE: 'DEM'
+
+  dem_de279:
+    container_name: dem_de279
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE279
+      TYPE: 'DEM'
+
+  dem_de27a:
+    container_name: dem_de27a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27A
+      TYPE: 'DEM'
+
+  dem_de27b:
+    container_name: dem_de27b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27B
+      TYPE: 'DEM'
+
+  dem_de27c:
+    container_name: dem_de27c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27C
+      TYPE: 'DEM'
+
+  dem_de27d:
+    container_name: dem_de27d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27D
+      TYPE: 'DEM'
+
+  dem_de27e:
+    container_name: dem_de27e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27E
+      TYPE: 'DEM'
+
+  dem_de300:
+    container_name: dem_de300
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE300
+      TYPE: 'DEM'
+
+  dem_de401:
+    container_name: dem_de401
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE401
+      TYPE: 'DEM'
+
+  dem_de402:
+    container_name: dem_de402
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE402
+      TYPE: 'DEM'
+
+  dem_de403:
+    container_name: dem_de403
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE403
+      TYPE: 'DEM'
+
+  dem_de404:
+    container_name: dem_de404
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE404
+      TYPE: 'DEM'
+
+  dem_de405:
+    container_name: dem_de405
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE405
+      TYPE: 'DEM'
+
+  dem_de406:
+    container_name: dem_de406
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE406
+      TYPE: 'DEM'
+
+  dem_de407:
+    container_name: dem_de407
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE407
+      TYPE: 'DEM'
+
+  dem_de408:
+    container_name: dem_de408
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE408
+      TYPE: 'DEM'
+
+  dem_de409:
+    container_name: dem_de409
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE409
+      TYPE: 'DEM'
+
+  dem_de40a:
+    container_name: dem_de40a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40A
+      TYPE: 'DEM'
+
+  dem_de40b:
+    container_name: dem_de40b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40B
+      TYPE: 'DEM'
+
+  dem_de40c:
+    container_name: dem_de40c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40C
+      TYPE: 'DEM'
+
+  dem_de40d:
+    container_name: dem_de40d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40D
+      TYPE: 'DEM'
+
+  dem_de40e:
+    container_name: dem_de40e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40E
+      TYPE: 'DEM'
+
+  dem_de40f:
+    container_name: dem_de40f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40F
+      TYPE: 'DEM'
+
+  dem_de40g:
+    container_name: dem_de40g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40G
+      TYPE: 'DEM'
+
+  dem_de40h:
+    container_name: dem_de40h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40H
+      TYPE: 'DEM'
+
+  dem_de40i:
+    container_name: dem_de40i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40I
+      TYPE: 'DEM'
+
+  dem_de501:
+    container_name: dem_de501
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE501
+      TYPE: 'DEM'
+
+  dem_de502:
+    container_name: dem_de502
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE502
+      TYPE: 'DEM'
+
+  dem_de600:
+    container_name: dem_de600
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE600
+      TYPE: 'DEM'
+
+  dem_de711:
+    container_name: dem_de711
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE711
+      TYPE: 'DEM'
+
+  dem_de712:
+    container_name: dem_de712
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE712
+      TYPE: 'DEM'
+
+  dem_de713:
+    container_name: dem_de713
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE713
+      TYPE: 'DEM'
+
+  dem_de714:
+    container_name: dem_de714
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE714
+      TYPE: 'DEM'
+
+  dem_de715:
+    container_name: dem_de715
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE715
+      TYPE: 'DEM'
+
+  dem_de716:
+    container_name: dem_de716
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE716
+      TYPE: 'DEM'
+
+  dem_de717:
+    container_name: dem_de717
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE717
+      TYPE: 'DEM'
+
+  dem_de718:
+    container_name: dem_de718
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE718
+      TYPE: 'DEM'
+
+  dem_de719:
+    container_name: dem_de719
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE719
+      TYPE: 'DEM'
+
+  dem_de71a:
+    container_name: dem_de71a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71A
+      TYPE: 'DEM'
+
+  dem_de71b:
+    container_name: dem_de71b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71B
+      TYPE: 'DEM'
+
+  dem_de71c:
+    container_name: dem_de71c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71C
+      TYPE: 'DEM'
+
+  dem_de71d:
+    container_name: dem_de71d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71D
+      TYPE: 'DEM'
+
+  dem_de71e:
+    container_name: dem_de71e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71E
+      TYPE: 'DEM'
+
+  dem_de721:
+    container_name: dem_de721
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE721
+      TYPE: 'DEM'
+
+  dem_de722:
+    container_name: dem_de722
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE722
+      TYPE: 'DEM'
+
+  dem_de723:
+    container_name: dem_de723
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE723
+      TYPE: 'DEM'
+
+  dem_de724:
+    container_name: dem_de724
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE724
+      TYPE: 'DEM'
+
+  dem_de725:
+    container_name: dem_de725
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE725
+      TYPE: 'DEM'
+
+  dem_de731:
+    container_name: dem_de731
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE731
+      TYPE: 'DEM'
+
+  dem_de732:
+    container_name: dem_de732
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE732
+      TYPE: 'DEM'
+
+  dem_de733:
+    container_name: dem_de733
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE733
+      TYPE: 'DEM'
+
+  dem_de734:
+    container_name: dem_de734
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE734
+      TYPE: 'DEM'
+
+  dem_de735:
+    container_name: dem_de735
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE735
+      TYPE: 'DEM'
+
+  dem_de736:
+    container_name: dem_de736
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE736
+      TYPE: 'DEM'
+
+  dem_de737:
+    container_name: dem_de737
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE737
+      TYPE: 'DEM'
+
+  dem_de803:
+    container_name: dem_de803
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE803
+      TYPE: 'DEM'
+
+  dem_de804:
+    container_name: dem_de804
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE804
+      TYPE: 'DEM'
+
+  dem_de80j:
+    container_name: dem_de80j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80J
+      TYPE: 'DEM'
+
+  dem_de80k:
+    container_name: dem_de80k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80K
+      TYPE: 'DEM'
+
+  dem_de80l:
+    container_name: dem_de80l
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80L
+      TYPE: 'DEM'
+
+  dem_de80m:
+    container_name: dem_de80m
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80M
+      TYPE: 'DEM'
+
+  dem_de80n:
+    container_name: dem_de80n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80N
+      TYPE: 'DEM'
+
+  dem_de80o:
+    container_name: dem_de80o
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80O
+      TYPE: 'DEM'
+
+  dem_de911:
+    container_name: dem_de911
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE911
+      TYPE: 'DEM'
+
+  dem_de912:
+    container_name: dem_de912
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE912
+      TYPE: 'DEM'
+
+  dem_de913:
+    container_name: dem_de913
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE913
+      TYPE: 'DEM'
+
+  dem_de914:
+    container_name: dem_de914
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE914
+      TYPE: 'DEM'
+
+  dem_de916:
+    container_name: dem_de916
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE916
+      TYPE: 'DEM'
+
+  dem_de917:
+    container_name: dem_de917
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE917
+      TYPE: 'DEM'
+
+  dem_de918:
+    container_name: dem_de918
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE918
+      TYPE: 'DEM'
+
+  dem_de91a:
+    container_name: dem_de91a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91A
+      TYPE: 'DEM'
+
+  dem_de91b:
+    container_name: dem_de91b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91B
+      TYPE: 'DEM'
+
+  dem_de91c:
+    container_name: dem_de91c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91C
+      TYPE: 'DEM'
+
+  dem_de922:
+    container_name: dem_de922
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE922
+      TYPE: 'DEM'
+
+  dem_de923:
+    container_name: dem_de923
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE923
+      TYPE: 'DEM'
+
+  dem_de925:
+    container_name: dem_de925
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE925
+      TYPE: 'DEM'
+
+  dem_de926:
+    container_name: dem_de926
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE926
+      TYPE: 'DEM'
+
+  dem_de927:
+    container_name: dem_de927
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE927
+      TYPE: 'DEM'
+
+  dem_de928:
+    container_name: dem_de928
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE928
+      TYPE: 'DEM'
+
+  dem_de929:
+    container_name: dem_de929
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE929
+      TYPE: 'DEM'
+
+  dem_de931:
+    container_name: dem_de931
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE931
+      TYPE: 'DEM'
+
+  dem_de932:
+    container_name: dem_de932
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE932
+      TYPE: 'DEM'
+
+  dem_de933:
+    container_name: dem_de933
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE933
+      TYPE: 'DEM'
+
+  dem_de934:
+    container_name: dem_de934
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE934
+      TYPE: 'DEM'
+
+  dem_de935:
+    container_name: dem_de935
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE935
+      TYPE: 'DEM'
+
+  dem_de936:
+    container_name: dem_de936
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE936
+      TYPE: 'DEM'
+
+  dem_de937:
+    container_name: dem_de937
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE937
+      TYPE: 'DEM'
+
+  dem_de938:
+    container_name: dem_de938
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE938
+      TYPE: 'DEM'
+
+  dem_de939:
+    container_name: dem_de939
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE939
+      TYPE: 'DEM'
+
+  dem_de93a:
+    container_name: dem_de93a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE93A
+      TYPE: 'DEM'
+
+  dem_de93b:
+    container_name: dem_de93b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE93B
+      TYPE: 'DEM'
+
+  dem_de941:
+    container_name: dem_de941
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE941
+      TYPE: 'DEM'
+
+  dem_de942:
+    container_name: dem_de942
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE942
+      TYPE: 'DEM'
+
+  dem_de943:
+    container_name: dem_de943
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE943
+      TYPE: 'DEM'
+
+  dem_de944:
+    container_name: dem_de944
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE944
+      TYPE: 'DEM'
+
+  dem_de945:
+    container_name: dem_de945
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE945
+      TYPE: 'DEM'
+
+  dem_de946:
+    container_name: dem_de946
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE946
+      TYPE: 'DEM'
+
+  dem_de947:
+    container_name: dem_de947
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE947
+      TYPE: 'DEM'
+
+  dem_de948:
+    container_name: dem_de948
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE948
+      TYPE: 'DEM'
+
+  dem_de949:
+    container_name: dem_de949
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE949
+      TYPE: 'DEM'
+
+  dem_de94a:
+    container_name: dem_de94a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94A
+      TYPE: 'DEM'
+
+  dem_de94b:
+    container_name: dem_de94b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94B
+      TYPE: 'DEM'
+
+  dem_de94c:
+    container_name: dem_de94c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94C
+      TYPE: 'DEM'
+
+  dem_de94d:
+    container_name: dem_de94d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94D
+      TYPE: 'DEM'
+
+  dem_de94e:
+    container_name: dem_de94e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94E
+      TYPE: 'DEM'
+
+  dem_de94f:
+    container_name: dem_de94f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94F
+      TYPE: 'DEM'
+
+  dem_de94g:
+    container_name: dem_de94g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94G
+      TYPE: 'DEM'
+
+  dem_de94h:
+    container_name: dem_de94h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94H
+      TYPE: 'DEM'
+
+  dem_dea11:
+    container_name: dem_dea11
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA11
+      TYPE: 'DEM'
+
+  dem_dea12:
+    container_name: dem_dea12
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA12
+      TYPE: 'DEM'
+
+  dem_dea13:
+    container_name: dem_dea13
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA13
+      TYPE: 'DEM'
+
+  dem_dea14:
+    container_name: dem_dea14
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA14
+      TYPE: 'DEM'
+
+  dem_dea15:
+    container_name: dem_dea15
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA15
+      TYPE: 'DEM'
+
+  dem_dea16:
+    container_name: dem_dea16
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA16
+      TYPE: 'DEM'
+
+  dem_dea17:
+    container_name: dem_dea17
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA17
+      TYPE: 'DEM'
+
+  dem_dea18:
+    container_name: dem_dea18
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA18
+      TYPE: 'DEM'
+
+  dem_dea19:
+    container_name: dem_dea19
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA19
+      TYPE: 'DEM'
+
+  dem_dea1a:
+    container_name: dem_dea1a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1A
+      TYPE: 'DEM'
+
+  dem_dea1b:
+    container_name: dem_dea1b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1B
+      TYPE: 'DEM'
+
+  dem_dea1c:
+    container_name: dem_dea1c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1C
+      TYPE: 'DEM'
+
+  dem_dea1d:
+    container_name: dem_dea1d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1D
+      TYPE: 'DEM'
+
+  dem_dea1e:
+    container_name: dem_dea1e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1E
+      TYPE: 'DEM'
+
+  dem_dea1f:
+    container_name: dem_dea1f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1F
+      TYPE: 'DEM'
+
+  dem_dea22:
+    container_name: dem_dea22
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA22
+      TYPE: 'DEM'
+
+  dem_dea23:
+    container_name: dem_dea23
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA23
+      TYPE: 'DEM'
+
+  dem_dea24:
+    container_name: dem_dea24
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA24
+      TYPE: 'DEM'
+
+  dem_dea26:
+    container_name: dem_dea26
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA26
+      TYPE: 'DEM'
+
+  dem_dea27:
+    container_name: dem_dea27
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA27
+      TYPE: 'DEM'
+
+  dem_dea28:
+    container_name: dem_dea28
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA28
+      TYPE: 'DEM'
+
+  dem_dea29:
+    container_name: dem_dea29
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA29
+      TYPE: 'DEM'
+
+  dem_dea2a:
+    container_name: dem_dea2a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2A
+      TYPE: 'DEM'
+
+  dem_dea2b:
+    container_name: dem_dea2b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2B
+      TYPE: 'DEM'
+
+  dem_dea2c:
+    container_name: dem_dea2c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2C
+      TYPE: 'DEM'
+
+  dem_dea2d:
+    container_name: dem_dea2d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2D
+      TYPE: 'DEM'
+
+  dem_dea31:
+    container_name: dem_dea31
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA31
+      TYPE: 'DEM'
+
+  dem_dea32:
+    container_name: dem_dea32
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA32
+      TYPE: 'DEM'
+
+  dem_dea33:
+    container_name: dem_dea33
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA33
+      TYPE: 'DEM'
+
+  dem_dea34:
+    container_name: dem_dea34
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA34
+      TYPE: 'DEM'
+
+  dem_dea35:
+    container_name: dem_dea35
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA35
+      TYPE: 'DEM'
+
+  dem_dea36:
+    container_name: dem_dea36
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA36
+      TYPE: 'DEM'
+
+  dem_dea37:
+    container_name: dem_dea37
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA37
+      TYPE: 'DEM'
+
+  dem_dea38:
+    container_name: dem_dea38
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA38
+      TYPE: 'DEM'
+
+  dem_dea41:
+    container_name: dem_dea41
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA41
+      TYPE: 'DEM'
+
+  dem_dea42:
+    container_name: dem_dea42
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA42
+      TYPE: 'DEM'
+
+  dem_dea43:
+    container_name: dem_dea43
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA43
+      TYPE: 'DEM'
+
+  dem_dea44:
+    container_name: dem_dea44
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA44
+      TYPE: 'DEM'
+
+  dem_dea45:
+    container_name: dem_dea45
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA45
+      TYPE: 'DEM'
+
+  dem_dea46:
+    container_name: dem_dea46
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA46
+      TYPE: 'DEM'
+
+  dem_dea47:
+    container_name: dem_dea47
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA47
+      TYPE: 'DEM'
+
+  dem_dea51:
+    container_name: dem_dea51
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA51
+      TYPE: 'DEM'
+
+  dem_dea52:
+    container_name: dem_dea52
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA52
+      TYPE: 'DEM'
+
+  dem_dea53:
+    container_name: dem_dea53
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA53
+      TYPE: 'DEM'
+
+  dem_dea54:
+    container_name: dem_dea54
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA54
+      TYPE: 'DEM'
+
+  dem_dea55:
+    container_name: dem_dea55
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA55
+      TYPE: 'DEM'
+
+  dem_dea56:
+    container_name: dem_dea56
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA56
+      TYPE: 'DEM'
+
+  dem_dea57:
+    container_name: dem_dea57
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA57
+      TYPE: 'DEM'
+
+  dem_dea58:
+    container_name: dem_dea58
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA58
+      TYPE: 'DEM'
+
+  dem_dea59:
+    container_name: dem_dea59
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA59
+      TYPE: 'DEM'
+
+  dem_dea5a:
+    container_name: dem_dea5a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5A
+      TYPE: 'DEM'
+
+  dem_dea5b:
+    container_name: dem_dea5b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5B
+      TYPE: 'DEM'
+
+  dem_dea5c:
+    container_name: dem_dea5c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5C
+      TYPE: 'DEM'
+
+  dem_deb11:
+    container_name: dem_deb11
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB11
+      TYPE: 'DEM'
+
+  dem_deb12:
+    container_name: dem_deb12
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB12
+      TYPE: 'DEM'
+
+  dem_deb13:
+    container_name: dem_deb13
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB13
+      TYPE: 'DEM'
+
+  dem_deb14:
+    container_name: dem_deb14
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB14
+      TYPE: 'DEM'
+
+  dem_deb15:
+    container_name: dem_deb15
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB15
+      TYPE: 'DEM'
+
+  dem_deb17:
+    container_name: dem_deb17
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB17
+      TYPE: 'DEM'
+
+  dem_deb18:
+    container_name: dem_deb18
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB18
+      TYPE: 'DEM'
+
+  dem_deb1a:
+    container_name: dem_deb1a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1A
+      TYPE: 'DEM'
+
+  dem_deb1b:
+    container_name: dem_deb1b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1B
+      TYPE: 'DEM'
+
+  dem_deb1c:
+    container_name: dem_deb1c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1C
+      TYPE: 'DEM'
+
+  dem_deb1d:
+    container_name: dem_deb1d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1D
+      TYPE: 'DEM'
+
+  dem_deb21:
+    container_name: dem_deb21
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB21
+      TYPE: 'DEM'
+
+  dem_deb22:
+    container_name: dem_deb22
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB22
+      TYPE: 'DEM'
+
+  dem_deb23:
+    container_name: dem_deb23
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB23
+      TYPE: 'DEM'
+
+  dem_deb24:
+    container_name: dem_deb24
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB24
+      TYPE: 'DEM'
+
+  dem_deb25:
+    container_name: dem_deb25
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB25
+      TYPE: 'DEM'
+
+  dem_deb31:
+    container_name: dem_deb31
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB31
+      TYPE: 'DEM'
+
+  dem_deb32:
+    container_name: dem_deb32
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB32
+      TYPE: 'DEM'
+
+  dem_deb33:
+    container_name: dem_deb33
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB33
+      TYPE: 'DEM'
+
+  dem_deb34:
+    container_name: dem_deb34
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB34
+      TYPE: 'DEM'
+
+  dem_deb35:
+    container_name: dem_deb35
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB35
+      TYPE: 'DEM'
+
+  dem_deb36:
+    container_name: dem_deb36
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB36
+      TYPE: 'DEM'
+
+  dem_deb37:
+    container_name: dem_deb37
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB37
+      TYPE: 'DEM'
+
+  dem_deb38:
+    container_name: dem_deb38
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB38
+      TYPE: 'DEM'
+
+  dem_deb39:
+    container_name: dem_deb39
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB39
+      TYPE: 'DEM'
+
+  dem_deb3a:
+    container_name: dem_deb3a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3A
+      TYPE: 'DEM'
+
+  dem_deb3b:
+    container_name: dem_deb3b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3B
+      TYPE: 'DEM'
+
+  dem_deb3c:
+    container_name: dem_deb3c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3C
+      TYPE: 'DEM'
+
+  dem_deb3d:
+    container_name: dem_deb3d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3D
+      TYPE: 'DEM'
+
+  dem_deb3e:
+    container_name: dem_deb3e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3E
+      TYPE: 'DEM'
+
+  dem_deb3f:
+    container_name: dem_deb3f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3F
+      TYPE: 'DEM'
+
+  dem_deb3g:
+    container_name: dem_deb3g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3G
+      TYPE: 'DEM'
+
+  dem_deb3h:
+    container_name: dem_deb3h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3H
+      TYPE: 'DEM'
+
+  dem_deb3i:
+    container_name: dem_deb3i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3I
+      TYPE: 'DEM'
+
+  dem_deb3j:
+    container_name: dem_deb3j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3J
+      TYPE: 'DEM'
+
+  dem_deb3k:
+    container_name: dem_deb3k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3K
+      TYPE: 'DEM'
+
+  dem_dec01:
+    container_name: dem_dec01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC01
+      TYPE: 'DEM'
+
+  dem_dec02:
+    container_name: dem_dec02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC02
+      TYPE: 'DEM'
+
+  dem_dec03:
+    container_name: dem_dec03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC03
+      TYPE: 'DEM'
+
+  dem_dec04:
+    container_name: dem_dec04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC04
+      TYPE: 'DEM'
+
+  dem_dec05:
+    container_name: dem_dec05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC05
+      TYPE: 'DEM'
+
+  dem_dec06:
+    container_name: dem_dec06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC06
+      TYPE: 'DEM'
+
+  dem_ded21:
+    container_name: dem_ded21
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED21
+      TYPE: 'DEM'
+
+  dem_ded2c:
+    container_name: dem_ded2c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2C
+      TYPE: 'DEM'
+
+  dem_ded2d:
+    container_name: dem_ded2d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2D
+      TYPE: 'DEM'
+
+  dem_ded2e:
+    container_name: dem_ded2e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2E
+      TYPE: 'DEM'
+
+  dem_ded2f:
+    container_name: dem_ded2f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2F
+      TYPE: 'DEM'
+
+  dem_ded41:
+    container_name: dem_ded41
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED41
+      TYPE: 'DEM'
+
+  dem_ded42:
+    container_name: dem_ded42
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED42
+      TYPE: 'DEM'
+
+  dem_ded43:
+    container_name: dem_ded43
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED43
+      TYPE: 'DEM'
+
+  dem_ded44:
+    container_name: dem_ded44
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED44
+      TYPE: 'DEM'
+
+  dem_ded45:
+    container_name: dem_ded45
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED45
+      TYPE: 'DEM'
+
+  dem_ded51:
+    container_name: dem_ded51
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED51
+      TYPE: 'DEM'
+
+  dem_ded52:
+    container_name: dem_ded52
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED52
+      TYPE: 'DEM'
+
+  dem_ded53:
+    container_name: dem_ded53
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED53
+      TYPE: 'DEM'
+
+  dem_dee01:
+    container_name: dem_dee01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE01
+      TYPE: 'DEM'
+
+  dem_dee02:
+    container_name: dem_dee02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE02
+      TYPE: 'DEM'
+
+  dem_dee03:
+    container_name: dem_dee03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE03
+      TYPE: 'DEM'
+
+  dem_dee04:
+    container_name: dem_dee04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE04
+      TYPE: 'DEM'
+
+  dem_dee05:
+    container_name: dem_dee05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE05
+      TYPE: 'DEM'
+
+  dem_dee06:
+    container_name: dem_dee06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE06
+      TYPE: 'DEM'
+
+  dem_dee07:
+    container_name: dem_dee07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE07
+      TYPE: 'DEM'
+
+  dem_dee08:
+    container_name: dem_dee08
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE08
+      TYPE: 'DEM'
+
+  dem_dee09:
+    container_name: dem_dee09
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE09
+      TYPE: 'DEM'
+
+  dem_dee0a:
+    container_name: dem_dee0a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0A
+      TYPE: 'DEM'
+
+  dem_dee0b:
+    container_name: dem_dee0b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0B
+      TYPE: 'DEM'
+
+  dem_dee0c:
+    container_name: dem_dee0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0C
+      TYPE: 'DEM'
+
+  dem_dee0d:
+    container_name: dem_dee0d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0D
+      TYPE: 'DEM'
+
+  dem_dee0e:
+    container_name: dem_dee0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0E
+      TYPE: 'DEM'
+
+  dem_def01:
+    container_name: dem_def01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF01
+      TYPE: 'DEM'
+
+  dem_def02:
+    container_name: dem_def02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF02
+      TYPE: 'DEM'
+
+  dem_def03:
+    container_name: dem_def03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF03
+      TYPE: 'DEM'
+
+  dem_def04:
+    container_name: dem_def04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF04
+      TYPE: 'DEM'
+
+  dem_def05:
+    container_name: dem_def05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF05
+      TYPE: 'DEM'
+
+  dem_def06:
+    container_name: dem_def06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF06
+      TYPE: 'DEM'
+
+  dem_def07:
+    container_name: dem_def07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF07
+      TYPE: 'DEM'
+
+  dem_def08:
+    container_name: dem_def08
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF08
+      TYPE: 'DEM'
+
+  dem_def09:
+    container_name: dem_def09
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF09
+      TYPE: 'DEM'
+
+  dem_def0a:
+    container_name: dem_def0a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0A
+      TYPE: 'DEM'
+
+  dem_def0b:
+    container_name: dem_def0b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0B
+      TYPE: 'DEM'
+
+  dem_def0c:
+    container_name: dem_def0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0C
+      TYPE: 'DEM'
+
+  dem_def0d:
+    container_name: dem_def0d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0D
+      TYPE: 'DEM'
+
+  dem_def0e:
+    container_name: dem_def0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0E
+      TYPE: 'DEM'
+
+  dem_def0f:
+    container_name: dem_def0f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0F
+      TYPE: 'DEM'
+
+  dem_deg01:
+    container_name: dem_deg01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG01
+      TYPE: 'DEM'
+
+  dem_deg02:
+    container_name: dem_deg02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG02
+      TYPE: 'DEM'
+
+  dem_deg03:
+    container_name: dem_deg03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG03
+      TYPE: 'DEM'
+
+  dem_deg04:
+    container_name: dem_deg04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG04
+      TYPE: 'DEM'
+
+  dem_deg05:
+    container_name: dem_deg05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG05
+      TYPE: 'DEM'
+
+  dem_deg06:
+    container_name: dem_deg06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG06
+      TYPE: 'DEM'
+
+  dem_deg07:
+    container_name: dem_deg07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG07
+      TYPE: 'DEM'
+
+  dem_deg09:
+    container_name: dem_deg09
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG09
+      TYPE: 'DEM'
+
+  dem_deg0a:
+    container_name: dem_deg0a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0A
+      TYPE: 'DEM'
+
+  dem_deg0b:
+    container_name: dem_deg0b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0B
+      TYPE: 'DEM'
+
+  dem_deg0c:
+    container_name: dem_deg0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0C
+      TYPE: 'DEM'
+
+  dem_deg0d:
+    container_name: dem_deg0d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0D
+      TYPE: 'DEM'
+
+  dem_deg0e:
+    container_name: dem_deg0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0E
+      TYPE: 'DEM'
+
+  dem_deg0f:
+    container_name: dem_deg0f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0F
+      TYPE: 'DEM'
+
+  dem_deg0g:
+    container_name: dem_deg0g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0G
+      TYPE: 'DEM'
+
+  dem_deg0h:
+    container_name: dem_deg0h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0H
+      TYPE: 'DEM'
+
+  dem_deg0i:
+    container_name: dem_deg0i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0I
+      TYPE: 'DEM'
+
+  dem_deg0j:
+    container_name: dem_deg0j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0J
+      TYPE: 'DEM'
+
+  dem_deg0k:
+    container_name: dem_deg0k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0K
+      TYPE: 'DEM'
+
+  dem_deg0l:
+    container_name: dem_deg0l
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0L
+      TYPE: 'DEM'
+
+  dem_deg0m:
+    container_name: dem_deg0m
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0M
+      TYPE: 'DEM'
+
+  dem_deg0n:
+    container_name: dem_deg0n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0N
+      TYPE: 'DEM'
+
+  dem_deg0p:
+    container_name: dem_deg0p
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0P
+      TYPE: 'DEM'
+
   pwp_de111:
     container_name: pwp_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
@@ -133,6 +2905,1315 @@ services:
       AREA_CODE: DE116
       TYPE: 'PWP'
 
+  pwp_de117:
+    container_name: pwp_de117
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE117
+      TYPE: 'PWP'
+
+  pwp_de118:
+    container_name: pwp_de118
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE118
+      TYPE: 'PWP'
+
+  pwp_de11a:
+    container_name: pwp_de11a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11A
+      TYPE: 'PWP'
+
+  pwp_de11d:
+    container_name: pwp_de11d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11D
+      TYPE: 'PWP'
+
+  pwp_de122:
+    container_name: pwp_de122
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE122
+      TYPE: 'PWP'
+
+  pwp_de124:
+    container_name: pwp_de124
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE124
+      TYPE: 'PWP'
+
+  pwp_de125:
+    container_name: pwp_de125
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE125
+      TYPE: 'PWP'
+
+  pwp_de126:
+    container_name: pwp_de126
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE126
+      TYPE: 'PWP'
+
+  pwp_de128:
+    container_name: pwp_de128
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE128
+      TYPE: 'PWP'
+
+  pwp_de129:
+    container_name: pwp_de129
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE129
+      TYPE: 'PWP'
+
+  pwp_de12b:
+    container_name: pwp_de12b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE12B
+      TYPE: 'PWP'
+
+  pwp_de131:
+    container_name: pwp_de131
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE131
+      TYPE: 'PWP'
+
+  pwp_de132:
+    container_name: pwp_de132
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE132
+      TYPE: 'PWP'
+
+  pwp_de134:
+    container_name: pwp_de134
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE134
+      TYPE: 'PWP'
+
+  pwp_de137:
+    container_name: pwp_de137
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE137
+      TYPE: 'PWP'
+
+  pwp_de139:
+    container_name: pwp_de139
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE139
+      TYPE: 'PWP'
+
+  pwp_de144:
+    container_name: pwp_de144
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE144
+      TYPE: 'PWP'
+
+  pwp_de145:
+    container_name: pwp_de145
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE145
+      TYPE: 'PWP'
+
+  pwp_de146:
+    container_name: pwp_de146
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE146
+      TYPE: 'PWP'
+
+  pwp_de148:
+    container_name: pwp_de148
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE148
+      TYPE: 'PWP'
+
+  pwp_de211:
+    container_name: pwp_de211
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE211
+      TYPE: 'PWP'
+
+  pwp_de212:
+    container_name: pwp_de212
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE212
+      TYPE: 'PWP'
+
+  pwp_de213:
+    container_name: pwp_de213
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE213
+      TYPE: 'PWP'
+
+  pwp_de214:
+    container_name: pwp_de214
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE214
+      TYPE: 'PWP'
+
+  pwp_de219:
+    container_name: pwp_de219
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE219
+      TYPE: 'PWP'
+
+  pwp_de21a:
+    container_name: pwp_de21a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21A
+      TYPE: 'PWP'
+
+  pwp_de21b:
+    container_name: pwp_de21b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21B
+      TYPE: 'PWP'
+
+  pwp_de21h:
+    container_name: pwp_de21h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21H
+      TYPE: 'PWP'
+
+  pwp_de21j:
+    container_name: pwp_de21j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21J
+      TYPE: 'PWP'
+
+  pwp_de21k:
+    container_name: pwp_de21k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21K
+      TYPE: 'PWP'
+
+  pwp_de21m:
+    container_name: pwp_de21m
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21M
+      TYPE: 'PWP'
+
+  pwp_de21n:
+    container_name: pwp_de21n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21N
+      TYPE: 'PWP'
+
+  pwp_de224:
+    container_name: pwp_de224
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE224
+      TYPE: 'PWP'
+
+  pwp_de226:
+    container_name: pwp_de226
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE226
+      TYPE: 'PWP'
+
+  pwp_de227:
+    container_name: pwp_de227
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE227
+      TYPE: 'PWP'
+
+  pwp_de252:
+    container_name: pwp_de252
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE252
+      TYPE: 'PWP'
+
+  pwp_de254:
+    container_name: pwp_de254
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE254
+      TYPE: 'PWP'
+
+  pwp_de261:
+    container_name: pwp_de261
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE261
+      TYPE: 'PWP'
+
+  pwp_de262:
+    container_name: pwp_de262
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE262
+      TYPE: 'PWP'
+
+  pwp_de263:
+    container_name: pwp_de263
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE263
+      TYPE: 'PWP'
+
+  pwp_de264:
+    container_name: pwp_de264
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE264
+      TYPE: 'PWP'
+
+  pwp_de267:
+    container_name: pwp_de267
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE267
+      TYPE: 'PWP'
+
+  pwp_de269:
+    container_name: pwp_de269
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE269
+      TYPE: 'PWP'
+
+  pwp_de271:
+    container_name: pwp_de271
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE271
+      TYPE: 'PWP'
+
+  pwp_de272:
+    container_name: pwp_de272
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE272
+      TYPE: 'PWP'
+
+  pwp_de278:
+    container_name: pwp_de278
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE278
+      TYPE: 'PWP'
+
+  pwp_de27c:
+    container_name: pwp_de27c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27C
+      TYPE: 'PWP'
+
+  pwp_de27e:
+    container_name: pwp_de27e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27E
+      TYPE: 'PWP'
+
+  pwp_de300:
+    container_name: pwp_de300
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE300
+      TYPE: 'PWP'
+
+  pwp_de401:
+    container_name: pwp_de401
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE401
+      TYPE: 'PWP'
+
+  pwp_de402:
+    container_name: pwp_de402
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE402
+      TYPE: 'PWP'
+
+  pwp_de404:
+    container_name: pwp_de404
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE404
+      TYPE: 'PWP'
+
+  pwp_de406:
+    container_name: pwp_de406
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE406
+      TYPE: 'PWP'
+
+  pwp_de409:
+    container_name: pwp_de409
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE409
+      TYPE: 'PWP'
+
+  pwp_de40b:
+    container_name: pwp_de40b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40B
+      TYPE: 'PWP'
+
+  pwp_de40c:
+    container_name: pwp_de40c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40C
+      TYPE: 'PWP'
+
+  pwp_de40g:
+    container_name: pwp_de40g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40G
+      TYPE: 'PWP'
+
+  pwp_de501:
+    container_name: pwp_de501
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE501
+      TYPE: 'PWP'
+
+  pwp_de600:
+    container_name: pwp_de600
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE600
+      TYPE: 'PWP'
+
+  pwp_de711:
+    container_name: pwp_de711
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE711
+      TYPE: 'PWP'
+
+  pwp_de712:
+    container_name: pwp_de712
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE712
+      TYPE: 'PWP'
+
+  pwp_de713:
+    container_name: pwp_de713
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE713
+      TYPE: 'PWP'
+
+  pwp_de714:
+    container_name: pwp_de714
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE714
+      TYPE: 'PWP'
+
+  pwp_de715:
+    container_name: pwp_de715
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE715
+      TYPE: 'PWP'
+
+  pwp_de717:
+    container_name: pwp_de717
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE717
+      TYPE: 'PWP'
+
+  pwp_de719:
+    container_name: pwp_de719
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE719
+      TYPE: 'PWP'
+
+  pwp_de71b:
+    container_name: pwp_de71b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71B
+      TYPE: 'PWP'
+
+  pwp_de724:
+    container_name: pwp_de724
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE724
+      TYPE: 'PWP'
+
+  pwp_de731:
+    container_name: pwp_de731
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE731
+      TYPE: 'PWP'
+
+  pwp_de732:
+    container_name: pwp_de732
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE732
+      TYPE: 'PWP'
+
+  pwp_de733:
+    container_name: pwp_de733
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE733
+      TYPE: 'PWP'
+
+  pwp_de734:
+    container_name: pwp_de734
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE734
+      TYPE: 'PWP'
+
+  pwp_de736:
+    container_name: pwp_de736
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE736
+      TYPE: 'PWP'
+
+  pwp_de737:
+    container_name: pwp_de737
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE737
+      TYPE: 'PWP'
+
+  pwp_de803:
+    container_name: pwp_de803
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE803
+      TYPE: 'PWP'
+
+  pwp_de804:
+    container_name: pwp_de804
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE804
+      TYPE: 'PWP'
+
+  pwp_de80j:
+    container_name: pwp_de80j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80J
+      TYPE: 'PWP'
+
+  pwp_de80n:
+    container_name: pwp_de80n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80N
+      TYPE: 'PWP'
+
+  pwp_de911:
+    container_name: pwp_de911
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE911
+      TYPE: 'PWP'
+
+  pwp_de912:
+    container_name: pwp_de912
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE912
+      TYPE: 'PWP'
+
+  pwp_de913:
+    container_name: pwp_de913
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE913
+      TYPE: 'PWP'
+
+  pwp_de918:
+    container_name: pwp_de918
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE918
+      TYPE: 'PWP'
+
+  pwp_de91a:
+    container_name: pwp_de91a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91A
+      TYPE: 'PWP'
+
+  pwp_de91b:
+    container_name: pwp_de91b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91B
+      TYPE: 'PWP'
+
+  pwp_de91c:
+    container_name: pwp_de91c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91C
+      TYPE: 'PWP'
+
+  pwp_de923:
+    container_name: pwp_de923
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE923
+      TYPE: 'PWP'
+
+  pwp_de925:
+    container_name: pwp_de925
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE925
+      TYPE: 'PWP'
+
+  pwp_de926:
+    container_name: pwp_de926
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE926
+      TYPE: 'PWP'
+
+  pwp_de927:
+    container_name: pwp_de927
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE927
+      TYPE: 'PWP'
+
+  pwp_de928:
+    container_name: pwp_de928
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE928
+      TYPE: 'PWP'
+
+  pwp_de929:
+    container_name: pwp_de929
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE929
+      TYPE: 'PWP'
+
+  pwp_de931:
+    container_name: pwp_de931
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE931
+      TYPE: 'PWP'
+
+  pwp_de938:
+    container_name: pwp_de938
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE938
+      TYPE: 'PWP'
+
+  pwp_de939:
+    container_name: pwp_de939
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE939
+      TYPE: 'PWP'
+
+  pwp_de93a:
+    container_name: pwp_de93a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE93A
+      TYPE: 'PWP'
+
+  pwp_de942:
+    container_name: pwp_de942
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE942
+      TYPE: 'PWP'
+
+  pwp_de944:
+    container_name: pwp_de944
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE944
+      TYPE: 'PWP'
+
+  pwp_de945:
+    container_name: pwp_de945
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE945
+      TYPE: 'PWP'
+
+  pwp_de946:
+    container_name: pwp_de946
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE946
+      TYPE: 'PWP'
+
+  pwp_de948:
+    container_name: pwp_de948
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE948
+      TYPE: 'PWP'
+
+  pwp_de949:
+    container_name: pwp_de949
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE949
+      TYPE: 'PWP'
+
+  pwp_de94a:
+    container_name: pwp_de94a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94A
+      TYPE: 'PWP'
+
+  pwp_de94b:
+    container_name: pwp_de94b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94B
+      TYPE: 'PWP'
+
+  pwp_de94d:
+    container_name: pwp_de94d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94D
+      TYPE: 'PWP'
+
+  pwp_de94g:
+    container_name: pwp_de94g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94G
+      TYPE: 'PWP'
+
+  pwp_dea11:
+    container_name: pwp_dea11
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA11
+      TYPE: 'PWP'
+
+  pwp_dea12:
+    container_name: pwp_dea12
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA12
+      TYPE: 'PWP'
+
+  pwp_dea14:
+    container_name: pwp_dea14
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA14
+      TYPE: 'PWP'
+
+  pwp_dea17:
+    container_name: pwp_dea17
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA17
+      TYPE: 'PWP'
+
+  pwp_dea1a:
+    container_name: pwp_dea1a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1A
+      TYPE: 'PWP'
+
+  pwp_dea1b:
+    container_name: pwp_dea1b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1B
+      TYPE: 'PWP'
+
+  pwp_dea1d:
+    container_name: pwp_dea1d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1D
+      TYPE: 'PWP'
+
+  pwp_dea1f:
+    container_name: pwp_dea1f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1F
+      TYPE: 'PWP'
+
+  pwp_dea22:
+    container_name: pwp_dea22
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA22
+      TYPE: 'PWP'
+
+  pwp_dea23:
+    container_name: pwp_dea23
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA23
+      TYPE: 'PWP'
+
+  pwp_dea24:
+    container_name: pwp_dea24
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA24
+      TYPE: 'PWP'
+
+  pwp_dea26:
+    container_name: pwp_dea26
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA26
+      TYPE: 'PWP'
+
+  pwp_dea27:
+    container_name: pwp_dea27
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA27
+      TYPE: 'PWP'
+
+  pwp_dea28:
+    container_name: pwp_dea28
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA28
+      TYPE: 'PWP'
+
+  pwp_dea2b:
+    container_name: pwp_dea2b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2B
+      TYPE: 'PWP'
+
+  pwp_dea2d:
+    container_name: pwp_dea2d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2D
+      TYPE: 'PWP'
+
+  pwp_dea32:
+    container_name: pwp_dea32
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA32
+      TYPE: 'PWP'
+
+  pwp_dea33:
+    container_name: pwp_dea33
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA33
+      TYPE: 'PWP'
+
+  pwp_dea36:
+    container_name: pwp_dea36
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA36
+      TYPE: 'PWP'
+
+  pwp_dea37:
+    container_name: pwp_dea37
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA37
+      TYPE: 'PWP'
+
+  pwp_dea41:
+    container_name: pwp_dea41
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA41
+      TYPE: 'PWP'
+
+  pwp_dea42:
+    container_name: pwp_dea42
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA42
+      TYPE: 'PWP'
+
+  pwp_dea43:
+    container_name: pwp_dea43
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA43
+      TYPE: 'PWP'
+
+  pwp_dea45:
+    container_name: pwp_dea45
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA45
+      TYPE: 'PWP'
+
+  pwp_dea46:
+    container_name: pwp_dea46
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA46
+      TYPE: 'PWP'
+
+  pwp_dea51:
+    container_name: pwp_dea51
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA51
+      TYPE: 'PWP'
+
+  pwp_dea53:
+    container_name: pwp_dea53
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA53
+      TYPE: 'PWP'
+
+  pwp_dea54:
+    container_name: pwp_dea54
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA54
+      TYPE: 'PWP'
+
+  pwp_dea55:
+    container_name: pwp_dea55
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA55
+      TYPE: 'PWP'
+
+  pwp_dea56:
+    container_name: pwp_dea56
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA56
+      TYPE: 'PWP'
+
+  pwp_dea57:
+    container_name: pwp_dea57
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA57
+      TYPE: 'PWP'
+
+  pwp_dea58:
+    container_name: pwp_dea58
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA58
+      TYPE: 'PWP'
+
+  pwp_dea5b:
+    container_name: pwp_dea5b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5B
+      TYPE: 'PWP'
+
+  pwp_dea5c:
+    container_name: pwp_dea5c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5C
+      TYPE: 'PWP'
+
+  pwp_deb14:
+    container_name: pwp_deb14
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB14
+      TYPE: 'PWP'
+
+  pwp_deb17:
+    container_name: pwp_deb17
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB17
+      TYPE: 'PWP'
+
+  pwp_deb32:
+    container_name: pwp_deb32
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB32
+      TYPE: 'PWP'
+
+  pwp_deb34:
+    container_name: pwp_deb34
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB34
+      TYPE: 'PWP'
+
+  pwp_deb35:
+    container_name: pwp_deb35
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB35
+      TYPE: 'PWP'
+
+  pwp_deb37:
+    container_name: pwp_deb37
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB37
+      TYPE: 'PWP'
+
+  pwp_deb39:
+    container_name: pwp_deb39
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB39
+      TYPE: 'PWP'
+
+  pwp_deb3f:
+    container_name: pwp_deb3f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3F
+      TYPE: 'PWP'
+
+  pwp_deb3h:
+    container_name: pwp_deb3h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3H
+      TYPE: 'PWP'
+
+  pwp_deb3j:
+    container_name: pwp_deb3j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3J
+      TYPE: 'PWP'
+
+  pwp_dec01:
+    container_name: pwp_dec01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC01
+      TYPE: 'PWP'
+
+  pwp_dec04:
+    container_name: pwp_dec04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC04
+      TYPE: 'PWP'
+
+  pwp_dec05:
+    container_name: pwp_dec05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC05
+      TYPE: 'PWP'
+
+  pwp_dec06:
+    container_name: pwp_dec06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC06
+      TYPE: 'PWP'
+
+  pwp_ded21:
+    container_name: pwp_ded21
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED21
+      TYPE: 'PWP'
+
+  pwp_ded2c:
+    container_name: pwp_ded2c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2C
+      TYPE: 'PWP'
+
+  pwp_ded2d:
+    container_name: pwp_ded2d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2D
+      TYPE: 'PWP'
+
+  pwp_ded41:
+    container_name: pwp_ded41
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED41
+      TYPE: 'PWP'
+
+  pwp_ded43:
+    container_name: pwp_ded43
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED43
+      TYPE: 'PWP'
+
+  pwp_ded44:
+    container_name: pwp_ded44
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED44
+      TYPE: 'PWP'
+
+  pwp_ded45:
+    container_name: pwp_ded45
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED45
+      TYPE: 'PWP'
+
+  pwp_ded51:
+    container_name: pwp_ded51
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED51
+      TYPE: 'PWP'
+
+  pwp_ded52:
+    container_name: pwp_ded52
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED52
+      TYPE: 'PWP'
+
+  pwp_ded53:
+    container_name: pwp_ded53
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED53
+      TYPE: 'PWP'
+
+  pwp_dee01:
+    container_name: pwp_dee01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE01
+      TYPE: 'PWP'
+
+  pwp_dee02:
+    container_name: pwp_dee02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE02
+      TYPE: 'PWP'
+
+  pwp_dee04:
+    container_name: pwp_dee04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE04
+      TYPE: 'PWP'
+
+  pwp_dee05:
+    container_name: pwp_dee05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE05
+      TYPE: 'PWP'
+
+  pwp_dee07:
+    container_name: pwp_dee07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE07
+      TYPE: 'PWP'
+
+  pwp_dee08:
+    container_name: pwp_dee08
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE08
+      TYPE: 'PWP'
+
+  pwp_dee0a:
+    container_name: pwp_dee0a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0A
+      TYPE: 'PWP'
+
+  pwp_dee0b:
+    container_name: pwp_dee0b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0B
+      TYPE: 'PWP'
+
+  pwp_dee0c:
+    container_name: pwp_dee0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0C
+      TYPE: 'PWP'
+
+  pwp_dee0d:
+    container_name: pwp_dee0d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0D
+      TYPE: 'PWP'
+
+  pwp_dee0e:
+    container_name: pwp_dee0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0E
+      TYPE: 'PWP'
+
+  pwp_def01:
+    container_name: pwp_def01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF01
+      TYPE: 'PWP'
+
+  pwp_def02:
+    container_name: pwp_def02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF02
+      TYPE: 'PWP'
+
+  pwp_def04:
+    container_name: pwp_def04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF04
+      TYPE: 'PWP'
+
+  pwp_def05:
+    container_name: pwp_def05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF05
+      TYPE: 'PWP'
+
+  pwp_def09:
+    container_name: pwp_def09
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF09
+      TYPE: 'PWP'
+
+  pwp_def0e:
+    container_name: pwp_def0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0E
+      TYPE: 'PWP'
+
+  pwp_def0f:
+    container_name: pwp_def0f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0F
+      TYPE: 'PWP'
+
+  pwp_deg01:
+    container_name: pwp_deg01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG01
+      TYPE: 'PWP'
+
+  pwp_deg03:
+    container_name: pwp_deg03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG03
+      TYPE: 'PWP'
+
+  pwp_deg07:
+    container_name: pwp_deg07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG07
+      TYPE: 'PWP'
+
+  pwp_deg0c:
+    container_name: pwp_deg0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0C
+      TYPE: 'PWP'
+
+  pwp_deg0n:
+    container_name: pwp_deg0n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0N
+      TYPE: 'PWP'
+
+  pwp_deg0p:
+    container_name: pwp_deg0p
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0P
+      TYPE: 'PWP'
+
   res_de111:
     container_name: res_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
@@ -166,6 +4247,2778 @@ services:
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       AREA_CODE: DE115
+      TYPE: 'RES'
+
+  res_de116:
+    container_name: res_de116
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE116
+      TYPE: 'RES'
+
+  res_de117:
+    container_name: res_de117
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE117
+      TYPE: 'RES'
+
+  res_de118:
+    container_name: res_de118
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE118
+      TYPE: 'RES'
+
+  res_de119:
+    container_name: res_de119
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE119
+      TYPE: 'RES'
+
+  res_de11a:
+    container_name: res_de11a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11A
+      TYPE: 'RES'
+
+  res_de11b:
+    container_name: res_de11b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11B
+      TYPE: 'RES'
+
+  res_de11c:
+    container_name: res_de11c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11C
+      TYPE: 'RES'
+
+  res_de11d:
+    container_name: res_de11d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE11D
+      TYPE: 'RES'
+
+  res_de121:
+    container_name: res_de121
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE121
+      TYPE: 'RES'
+
+  res_de122:
+    container_name: res_de122
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE122
+      TYPE: 'RES'
+
+  res_de123:
+    container_name: res_de123
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE123
+      TYPE: 'RES'
+
+  res_de124:
+    container_name: res_de124
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE124
+      TYPE: 'RES'
+
+  res_de125:
+    container_name: res_de125
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE125
+      TYPE: 'RES'
+
+  res_de126:
+    container_name: res_de126
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE126
+      TYPE: 'RES'
+
+  res_de127:
+    container_name: res_de127
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE127
+      TYPE: 'RES'
+
+  res_de128:
+    container_name: res_de128
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE128
+      TYPE: 'RES'
+
+  res_de129:
+    container_name: res_de129
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE129
+      TYPE: 'RES'
+
+  res_de12a:
+    container_name: res_de12a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE12A
+      TYPE: 'RES'
+
+  res_de12b:
+    container_name: res_de12b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE12B
+      TYPE: 'RES'
+
+  res_de12c:
+    container_name: res_de12c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE12C
+      TYPE: 'RES'
+
+  res_de131:
+    container_name: res_de131
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE131
+      TYPE: 'RES'
+
+  res_de132:
+    container_name: res_de132
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE132
+      TYPE: 'RES'
+
+  res_de133:
+    container_name: res_de133
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE133
+      TYPE: 'RES'
+
+  res_de134:
+    container_name: res_de134
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE134
+      TYPE: 'RES'
+
+  res_de135:
+    container_name: res_de135
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE135
+      TYPE: 'RES'
+
+  res_de136:
+    container_name: res_de136
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE136
+      TYPE: 'RES'
+
+  res_de137:
+    container_name: res_de137
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE137
+      TYPE: 'RES'
+
+  res_de138:
+    container_name: res_de138
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE138
+      TYPE: 'RES'
+
+  res_de139:
+    container_name: res_de139
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE139
+      TYPE: 'RES'
+
+  res_de13a:
+    container_name: res_de13a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE13A
+      TYPE: 'RES'
+
+  res_de141:
+    container_name: res_de141
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE141
+      TYPE: 'RES'
+
+  res_de142:
+    container_name: res_de142
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE142
+      TYPE: 'RES'
+
+  res_de143:
+    container_name: res_de143
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE143
+      TYPE: 'RES'
+
+  res_de144:
+    container_name: res_de144
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE144
+      TYPE: 'RES'
+
+  res_de145:
+    container_name: res_de145
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE145
+      TYPE: 'RES'
+
+  res_de146:
+    container_name: res_de146
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE146
+      TYPE: 'RES'
+
+  res_de147:
+    container_name: res_de147
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE147
+      TYPE: 'RES'
+
+  res_de148:
+    container_name: res_de148
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE148
+      TYPE: 'RES'
+
+  res_de149:
+    container_name: res_de149
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE149
+      TYPE: 'RES'
+
+  res_de211:
+    container_name: res_de211
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE211
+      TYPE: 'RES'
+
+  res_de212:
+    container_name: res_de212
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE212
+      TYPE: 'RES'
+
+  res_de213:
+    container_name: res_de213
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE213
+      TYPE: 'RES'
+
+  res_de214:
+    container_name: res_de214
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE214
+      TYPE: 'RES'
+
+  res_de215:
+    container_name: res_de215
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE215
+      TYPE: 'RES'
+
+  res_de216:
+    container_name: res_de216
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE216
+      TYPE: 'RES'
+
+  res_de217:
+    container_name: res_de217
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE217
+      TYPE: 'RES'
+
+  res_de218:
+    container_name: res_de218
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE218
+      TYPE: 'RES'
+
+  res_de219:
+    container_name: res_de219
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE219
+      TYPE: 'RES'
+
+  res_de21a:
+    container_name: res_de21a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21A
+      TYPE: 'RES'
+
+  res_de21b:
+    container_name: res_de21b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21B
+      TYPE: 'RES'
+
+  res_de21c:
+    container_name: res_de21c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21C
+      TYPE: 'RES'
+
+  res_de21d:
+    container_name: res_de21d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21D
+      TYPE: 'RES'
+
+  res_de21e:
+    container_name: res_de21e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21E
+      TYPE: 'RES'
+
+  res_de21f:
+    container_name: res_de21f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21F
+      TYPE: 'RES'
+
+  res_de21g:
+    container_name: res_de21g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21G
+      TYPE: 'RES'
+
+  res_de21h:
+    container_name: res_de21h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21H
+      TYPE: 'RES'
+
+  res_de21i:
+    container_name: res_de21i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21I
+      TYPE: 'RES'
+
+  res_de21j:
+    container_name: res_de21j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21J
+      TYPE: 'RES'
+
+  res_de21k:
+    container_name: res_de21k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21K
+      TYPE: 'RES'
+
+  res_de21l:
+    container_name: res_de21l
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21L
+      TYPE: 'RES'
+
+  res_de21m:
+    container_name: res_de21m
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21M
+      TYPE: 'RES'
+
+  res_de21n:
+    container_name: res_de21n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE21N
+      TYPE: 'RES'
+
+  res_de221:
+    container_name: res_de221
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE221
+      TYPE: 'RES'
+
+  res_de222:
+    container_name: res_de222
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE222
+      TYPE: 'RES'
+
+  res_de223:
+    container_name: res_de223
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE223
+      TYPE: 'RES'
+
+  res_de224:
+    container_name: res_de224
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE224
+      TYPE: 'RES'
+
+  res_de225:
+    container_name: res_de225
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE225
+      TYPE: 'RES'
+
+  res_de226:
+    container_name: res_de226
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE226
+      TYPE: 'RES'
+
+  res_de227:
+    container_name: res_de227
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE227
+      TYPE: 'RES'
+
+  res_de228:
+    container_name: res_de228
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE228
+      TYPE: 'RES'
+
+  res_de229:
+    container_name: res_de229
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE229
+      TYPE: 'RES'
+
+  res_de22a:
+    container_name: res_de22a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE22A
+      TYPE: 'RES'
+
+  res_de22b:
+    container_name: res_de22b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE22B
+      TYPE: 'RES'
+
+  res_de22c:
+    container_name: res_de22c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE22C
+      TYPE: 'RES'
+
+  res_de231:
+    container_name: res_de231
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE231
+      TYPE: 'RES'
+
+  res_de232:
+    container_name: res_de232
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE232
+      TYPE: 'RES'
+
+  res_de233:
+    container_name: res_de233
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE233
+      TYPE: 'RES'
+
+  res_de234:
+    container_name: res_de234
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE234
+      TYPE: 'RES'
+
+  res_de235:
+    container_name: res_de235
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE235
+      TYPE: 'RES'
+
+  res_de236:
+    container_name: res_de236
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE236
+      TYPE: 'RES'
+
+  res_de237:
+    container_name: res_de237
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE237
+      TYPE: 'RES'
+
+  res_de238:
+    container_name: res_de238
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE238
+      TYPE: 'RES'
+
+  res_de239:
+    container_name: res_de239
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE239
+      TYPE: 'RES'
+
+  res_de23a:
+    container_name: res_de23a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE23A
+      TYPE: 'RES'
+
+  res_de241:
+    container_name: res_de241
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE241
+      TYPE: 'RES'
+
+  res_de242:
+    container_name: res_de242
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE242
+      TYPE: 'RES'
+
+  res_de243:
+    container_name: res_de243
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE243
+      TYPE: 'RES'
+
+  res_de244:
+    container_name: res_de244
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE244
+      TYPE: 'RES'
+
+  res_de245:
+    container_name: res_de245
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE245
+      TYPE: 'RES'
+
+  res_de246:
+    container_name: res_de246
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE246
+      TYPE: 'RES'
+
+  res_de247:
+    container_name: res_de247
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE247
+      TYPE: 'RES'
+
+  res_de248:
+    container_name: res_de248
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE248
+      TYPE: 'RES'
+
+  res_de249:
+    container_name: res_de249
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE249
+      TYPE: 'RES'
+
+  res_de24a:
+    container_name: res_de24a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24A
+      TYPE: 'RES'
+
+  res_de24b:
+    container_name: res_de24b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24B
+      TYPE: 'RES'
+
+  res_de24c:
+    container_name: res_de24c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24C
+      TYPE: 'RES'
+
+  res_de24d:
+    container_name: res_de24d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE24D
+      TYPE: 'RES'
+
+  res_de251:
+    container_name: res_de251
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE251
+      TYPE: 'RES'
+
+  res_de252:
+    container_name: res_de252
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE252
+      TYPE: 'RES'
+
+  res_de253:
+    container_name: res_de253
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE253
+      TYPE: 'RES'
+
+  res_de254:
+    container_name: res_de254
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE254
+      TYPE: 'RES'
+
+  res_de255:
+    container_name: res_de255
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE255
+      TYPE: 'RES'
+
+  res_de256:
+    container_name: res_de256
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE256
+      TYPE: 'RES'
+
+  res_de257:
+    container_name: res_de257
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE257
+      TYPE: 'RES'
+
+  res_de258:
+    container_name: res_de258
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE258
+      TYPE: 'RES'
+
+  res_de259:
+    container_name: res_de259
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE259
+      TYPE: 'RES'
+
+  res_de25a:
+    container_name: res_de25a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE25A
+      TYPE: 'RES'
+
+  res_de25b:
+    container_name: res_de25b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE25B
+      TYPE: 'RES'
+
+  res_de25c:
+    container_name: res_de25c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE25C
+      TYPE: 'RES'
+
+  res_de261:
+    container_name: res_de261
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE261
+      TYPE: 'RES'
+
+  res_de262:
+    container_name: res_de262
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE262
+      TYPE: 'RES'
+
+  res_de263:
+    container_name: res_de263
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE263
+      TYPE: 'RES'
+
+  res_de264:
+    container_name: res_de264
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE264
+      TYPE: 'RES'
+
+  res_de265:
+    container_name: res_de265
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE265
+      TYPE: 'RES'
+
+  res_de266:
+    container_name: res_de266
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE266
+      TYPE: 'RES'
+
+  res_de267:
+    container_name: res_de267
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE267
+      TYPE: 'RES'
+
+  res_de268:
+    container_name: res_de268
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE268
+      TYPE: 'RES'
+
+  res_de269:
+    container_name: res_de269
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE269
+      TYPE: 'RES'
+
+  res_de26a:
+    container_name: res_de26a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE26A
+      TYPE: 'RES'
+
+  res_de26b:
+    container_name: res_de26b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE26B
+      TYPE: 'RES'
+
+  res_de26c:
+    container_name: res_de26c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE26C
+      TYPE: 'RES'
+
+  res_de271:
+    container_name: res_de271
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE271
+      TYPE: 'RES'
+
+  res_de272:
+    container_name: res_de272
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE272
+      TYPE: 'RES'
+
+  res_de273:
+    container_name: res_de273
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE273
+      TYPE: 'RES'
+
+  res_de274:
+    container_name: res_de274
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE274
+      TYPE: 'RES'
+
+  res_de275:
+    container_name: res_de275
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE275
+      TYPE: 'RES'
+
+  res_de276:
+    container_name: res_de276
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE276
+      TYPE: 'RES'
+
+  res_de277:
+    container_name: res_de277
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE277
+      TYPE: 'RES'
+
+  res_de278:
+    container_name: res_de278
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE278
+      TYPE: 'RES'
+
+  res_de279:
+    container_name: res_de279
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE279
+      TYPE: 'RES'
+
+  res_de27a:
+    container_name: res_de27a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27A
+      TYPE: 'RES'
+
+  res_de27b:
+    container_name: res_de27b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27B
+      TYPE: 'RES'
+
+  res_de27c:
+    container_name: res_de27c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27C
+      TYPE: 'RES'
+
+  res_de27d:
+    container_name: res_de27d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27D
+      TYPE: 'RES'
+
+  res_de27e:
+    container_name: res_de27e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE27E
+      TYPE: 'RES'
+
+  res_de300:
+    container_name: res_de300
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE300
+      TYPE: 'RES'
+
+  res_de401:
+    container_name: res_de401
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE401
+      TYPE: 'RES'
+
+  res_de402:
+    container_name: res_de402
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE402
+      TYPE: 'RES'
+
+  res_de403:
+    container_name: res_de403
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE403
+      TYPE: 'RES'
+
+  res_de404:
+    container_name: res_de404
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE404
+      TYPE: 'RES'
+
+  res_de405:
+    container_name: res_de405
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE405
+      TYPE: 'RES'
+
+  res_de406:
+    container_name: res_de406
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE406
+      TYPE: 'RES'
+
+  res_de407:
+    container_name: res_de407
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE407
+      TYPE: 'RES'
+
+  res_de408:
+    container_name: res_de408
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE408
+      TYPE: 'RES'
+
+  res_de409:
+    container_name: res_de409
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE409
+      TYPE: 'RES'
+
+  res_de40a:
+    container_name: res_de40a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40A
+      TYPE: 'RES'
+
+  res_de40b:
+    container_name: res_de40b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40B
+      TYPE: 'RES'
+
+  res_de40c:
+    container_name: res_de40c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40C
+      TYPE: 'RES'
+
+  res_de40d:
+    container_name: res_de40d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40D
+      TYPE: 'RES'
+
+  res_de40e:
+    container_name: res_de40e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40E
+      TYPE: 'RES'
+
+  res_de40f:
+    container_name: res_de40f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40F
+      TYPE: 'RES'
+
+  res_de40g:
+    container_name: res_de40g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40G
+      TYPE: 'RES'
+
+  res_de40h:
+    container_name: res_de40h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40H
+      TYPE: 'RES'
+
+  res_de40i:
+    container_name: res_de40i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE40I
+      TYPE: 'RES'
+
+  res_de501:
+    container_name: res_de501
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE501
+      TYPE: 'RES'
+
+  res_de502:
+    container_name: res_de502
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE502
+      TYPE: 'RES'
+
+  res_de600:
+    container_name: res_de600
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE600
+      TYPE: 'RES'
+
+  res_de711:
+    container_name: res_de711
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE711
+      TYPE: 'RES'
+
+  res_de712:
+    container_name: res_de712
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE712
+      TYPE: 'RES'
+
+  res_de713:
+    container_name: res_de713
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE713
+      TYPE: 'RES'
+
+  res_de714:
+    container_name: res_de714
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE714
+      TYPE: 'RES'
+
+  res_de715:
+    container_name: res_de715
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE715
+      TYPE: 'RES'
+
+  res_de716:
+    container_name: res_de716
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE716
+      TYPE: 'RES'
+
+  res_de717:
+    container_name: res_de717
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE717
+      TYPE: 'RES'
+
+  res_de718:
+    container_name: res_de718
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE718
+      TYPE: 'RES'
+
+  res_de719:
+    container_name: res_de719
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE719
+      TYPE: 'RES'
+
+  res_de71a:
+    container_name: res_de71a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71A
+      TYPE: 'RES'
+
+  res_de71b:
+    container_name: res_de71b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71B
+      TYPE: 'RES'
+
+  res_de71c:
+    container_name: res_de71c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71C
+      TYPE: 'RES'
+
+  res_de71d:
+    container_name: res_de71d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71D
+      TYPE: 'RES'
+
+  res_de71e:
+    container_name: res_de71e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE71E
+      TYPE: 'RES'
+
+  res_de721:
+    container_name: res_de721
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE721
+      TYPE: 'RES'
+
+  res_de722:
+    container_name: res_de722
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE722
+      TYPE: 'RES'
+
+  res_de723:
+    container_name: res_de723
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE723
+      TYPE: 'RES'
+
+  res_de724:
+    container_name: res_de724
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE724
+      TYPE: 'RES'
+
+  res_de725:
+    container_name: res_de725
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE725
+      TYPE: 'RES'
+
+  res_de731:
+    container_name: res_de731
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE731
+      TYPE: 'RES'
+
+  res_de732:
+    container_name: res_de732
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE732
+      TYPE: 'RES'
+
+  res_de733:
+    container_name: res_de733
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE733
+      TYPE: 'RES'
+
+  res_de734:
+    container_name: res_de734
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE734
+      TYPE: 'RES'
+
+  res_de735:
+    container_name: res_de735
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE735
+      TYPE: 'RES'
+
+  res_de736:
+    container_name: res_de736
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE736
+      TYPE: 'RES'
+
+  res_de737:
+    container_name: res_de737
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE737
+      TYPE: 'RES'
+
+  res_de803:
+    container_name: res_de803
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE803
+      TYPE: 'RES'
+
+  res_de804:
+    container_name: res_de804
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE804
+      TYPE: 'RES'
+
+  res_de80j:
+    container_name: res_de80j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80J
+      TYPE: 'RES'
+
+  res_de80k:
+    container_name: res_de80k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80K
+      TYPE: 'RES'
+
+  res_de80l:
+    container_name: res_de80l
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80L
+      TYPE: 'RES'
+
+  res_de80m:
+    container_name: res_de80m
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80M
+      TYPE: 'RES'
+
+  res_de80n:
+    container_name: res_de80n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80N
+      TYPE: 'RES'
+
+  res_de80o:
+    container_name: res_de80o
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE80O
+      TYPE: 'RES'
+
+  res_de911:
+    container_name: res_de911
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE911
+      TYPE: 'RES'
+
+  res_de912:
+    container_name: res_de912
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE912
+      TYPE: 'RES'
+
+  res_de913:
+    container_name: res_de913
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE913
+      TYPE: 'RES'
+
+  res_de914:
+    container_name: res_de914
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE914
+      TYPE: 'RES'
+
+  res_de916:
+    container_name: res_de916
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE916
+      TYPE: 'RES'
+
+  res_de917:
+    container_name: res_de917
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE917
+      TYPE: 'RES'
+
+  res_de918:
+    container_name: res_de918
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE918
+      TYPE: 'RES'
+
+  res_de91a:
+    container_name: res_de91a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91A
+      TYPE: 'RES'
+
+  res_de91b:
+    container_name: res_de91b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91B
+      TYPE: 'RES'
+
+  res_de91c:
+    container_name: res_de91c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE91C
+      TYPE: 'RES'
+
+  res_de922:
+    container_name: res_de922
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE922
+      TYPE: 'RES'
+
+  res_de923:
+    container_name: res_de923
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE923
+      TYPE: 'RES'
+
+  res_de925:
+    container_name: res_de925
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE925
+      TYPE: 'RES'
+
+  res_de926:
+    container_name: res_de926
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE926
+      TYPE: 'RES'
+
+  res_de927:
+    container_name: res_de927
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE927
+      TYPE: 'RES'
+
+  res_de928:
+    container_name: res_de928
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE928
+      TYPE: 'RES'
+
+  res_de929:
+    container_name: res_de929
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE929
+      TYPE: 'RES'
+
+  res_de931:
+    container_name: res_de931
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE931
+      TYPE: 'RES'
+
+  res_de932:
+    container_name: res_de932
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE932
+      TYPE: 'RES'
+
+  res_de933:
+    container_name: res_de933
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE933
+      TYPE: 'RES'
+
+  res_de934:
+    container_name: res_de934
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE934
+      TYPE: 'RES'
+
+  res_de935:
+    container_name: res_de935
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE935
+      TYPE: 'RES'
+
+  res_de936:
+    container_name: res_de936
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE936
+      TYPE: 'RES'
+
+  res_de937:
+    container_name: res_de937
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE937
+      TYPE: 'RES'
+
+  res_de938:
+    container_name: res_de938
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE938
+      TYPE: 'RES'
+
+  res_de939:
+    container_name: res_de939
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE939
+      TYPE: 'RES'
+
+  res_de93a:
+    container_name: res_de93a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE93A
+      TYPE: 'RES'
+
+  res_de93b:
+    container_name: res_de93b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE93B
+      TYPE: 'RES'
+
+  res_de941:
+    container_name: res_de941
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE941
+      TYPE: 'RES'
+
+  res_de942:
+    container_name: res_de942
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE942
+      TYPE: 'RES'
+
+  res_de943:
+    container_name: res_de943
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE943
+      TYPE: 'RES'
+
+  res_de944:
+    container_name: res_de944
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE944
+      TYPE: 'RES'
+
+  res_de945:
+    container_name: res_de945
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE945
+      TYPE: 'RES'
+
+  res_de946:
+    container_name: res_de946
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE946
+      TYPE: 'RES'
+
+  res_de947:
+    container_name: res_de947
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE947
+      TYPE: 'RES'
+
+  res_de948:
+    container_name: res_de948
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE948
+      TYPE: 'RES'
+
+  res_de949:
+    container_name: res_de949
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE949
+      TYPE: 'RES'
+
+  res_de94a:
+    container_name: res_de94a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94A
+      TYPE: 'RES'
+
+  res_de94b:
+    container_name: res_de94b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94B
+      TYPE: 'RES'
+
+  res_de94c:
+    container_name: res_de94c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94C
+      TYPE: 'RES'
+
+  res_de94d:
+    container_name: res_de94d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94D
+      TYPE: 'RES'
+
+  res_de94e:
+    container_name: res_de94e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94E
+      TYPE: 'RES'
+
+  res_de94f:
+    container_name: res_de94f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94F
+      TYPE: 'RES'
+
+  res_de94g:
+    container_name: res_de94g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94G
+      TYPE: 'RES'
+
+  res_de94h:
+    container_name: res_de94h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE94H
+      TYPE: 'RES'
+
+  res_dea11:
+    container_name: res_dea11
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA11
+      TYPE: 'RES'
+
+  res_dea12:
+    container_name: res_dea12
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA12
+      TYPE: 'RES'
+
+  res_dea13:
+    container_name: res_dea13
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA13
+      TYPE: 'RES'
+
+  res_dea14:
+    container_name: res_dea14
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA14
+      TYPE: 'RES'
+
+  res_dea15:
+    container_name: res_dea15
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA15
+      TYPE: 'RES'
+
+  res_dea16:
+    container_name: res_dea16
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA16
+      TYPE: 'RES'
+
+  res_dea17:
+    container_name: res_dea17
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA17
+      TYPE: 'RES'
+
+  res_dea18:
+    container_name: res_dea18
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA18
+      TYPE: 'RES'
+
+  res_dea19:
+    container_name: res_dea19
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA19
+      TYPE: 'RES'
+
+  res_dea1a:
+    container_name: res_dea1a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1A
+      TYPE: 'RES'
+
+  res_dea1b:
+    container_name: res_dea1b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1B
+      TYPE: 'RES'
+
+  res_dea1c:
+    container_name: res_dea1c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1C
+      TYPE: 'RES'
+
+  res_dea1d:
+    container_name: res_dea1d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1D
+      TYPE: 'RES'
+
+  res_dea1e:
+    container_name: res_dea1e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1E
+      TYPE: 'RES'
+
+  res_dea1f:
+    container_name: res_dea1f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA1F
+      TYPE: 'RES'
+
+  res_dea22:
+    container_name: res_dea22
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA22
+      TYPE: 'RES'
+
+  res_dea23:
+    container_name: res_dea23
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA23
+      TYPE: 'RES'
+
+  res_dea24:
+    container_name: res_dea24
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA24
+      TYPE: 'RES'
+
+  res_dea26:
+    container_name: res_dea26
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA26
+      TYPE: 'RES'
+
+  res_dea27:
+    container_name: res_dea27
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA27
+      TYPE: 'RES'
+
+  res_dea28:
+    container_name: res_dea28
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA28
+      TYPE: 'RES'
+
+  res_dea29:
+    container_name: res_dea29
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA29
+      TYPE: 'RES'
+
+  res_dea2a:
+    container_name: res_dea2a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2A
+      TYPE: 'RES'
+
+  res_dea2b:
+    container_name: res_dea2b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2B
+      TYPE: 'RES'
+
+  res_dea2c:
+    container_name: res_dea2c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2C
+      TYPE: 'RES'
+
+  res_dea2d:
+    container_name: res_dea2d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA2D
+      TYPE: 'RES'
+
+  res_dea31:
+    container_name: res_dea31
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA31
+      TYPE: 'RES'
+
+  res_dea32:
+    container_name: res_dea32
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA32
+      TYPE: 'RES'
+
+  res_dea33:
+    container_name: res_dea33
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA33
+      TYPE: 'RES'
+
+  res_dea34:
+    container_name: res_dea34
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA34
+      TYPE: 'RES'
+
+  res_dea35:
+    container_name: res_dea35
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA35
+      TYPE: 'RES'
+
+  res_dea36:
+    container_name: res_dea36
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA36
+      TYPE: 'RES'
+
+  res_dea37:
+    container_name: res_dea37
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA37
+      TYPE: 'RES'
+
+  res_dea38:
+    container_name: res_dea38
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA38
+      TYPE: 'RES'
+
+  res_dea41:
+    container_name: res_dea41
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA41
+      TYPE: 'RES'
+
+  res_dea42:
+    container_name: res_dea42
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA42
+      TYPE: 'RES'
+
+  res_dea43:
+    container_name: res_dea43
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA43
+      TYPE: 'RES'
+
+  res_dea44:
+    container_name: res_dea44
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA44
+      TYPE: 'RES'
+
+  res_dea45:
+    container_name: res_dea45
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA45
+      TYPE: 'RES'
+
+  res_dea46:
+    container_name: res_dea46
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA46
+      TYPE: 'RES'
+
+  res_dea47:
+    container_name: res_dea47
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA47
+      TYPE: 'RES'
+
+  res_dea51:
+    container_name: res_dea51
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA51
+      TYPE: 'RES'
+
+  res_dea52:
+    container_name: res_dea52
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA52
+      TYPE: 'RES'
+
+  res_dea53:
+    container_name: res_dea53
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA53
+      TYPE: 'RES'
+
+  res_dea54:
+    container_name: res_dea54
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA54
+      TYPE: 'RES'
+
+  res_dea55:
+    container_name: res_dea55
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA55
+      TYPE: 'RES'
+
+  res_dea56:
+    container_name: res_dea56
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA56
+      TYPE: 'RES'
+
+  res_dea57:
+    container_name: res_dea57
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA57
+      TYPE: 'RES'
+
+  res_dea58:
+    container_name: res_dea58
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA58
+      TYPE: 'RES'
+
+  res_dea59:
+    container_name: res_dea59
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA59
+      TYPE: 'RES'
+
+  res_dea5a:
+    container_name: res_dea5a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5A
+      TYPE: 'RES'
+
+  res_dea5b:
+    container_name: res_dea5b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5B
+      TYPE: 'RES'
+
+  res_dea5c:
+    container_name: res_dea5c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEA5C
+      TYPE: 'RES'
+
+  res_deb11:
+    container_name: res_deb11
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB11
+      TYPE: 'RES'
+
+  res_deb12:
+    container_name: res_deb12
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB12
+      TYPE: 'RES'
+
+  res_deb13:
+    container_name: res_deb13
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB13
+      TYPE: 'RES'
+
+  res_deb14:
+    container_name: res_deb14
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB14
+      TYPE: 'RES'
+
+  res_deb15:
+    container_name: res_deb15
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB15
+      TYPE: 'RES'
+
+  res_deb17:
+    container_name: res_deb17
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB17
+      TYPE: 'RES'
+
+  res_deb18:
+    container_name: res_deb18
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB18
+      TYPE: 'RES'
+
+  res_deb1a:
+    container_name: res_deb1a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1A
+      TYPE: 'RES'
+
+  res_deb1b:
+    container_name: res_deb1b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1B
+      TYPE: 'RES'
+
+  res_deb1c:
+    container_name: res_deb1c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1C
+      TYPE: 'RES'
+
+  res_deb1d:
+    container_name: res_deb1d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB1D
+      TYPE: 'RES'
+
+  res_deb21:
+    container_name: res_deb21
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB21
+      TYPE: 'RES'
+
+  res_deb22:
+    container_name: res_deb22
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB22
+      TYPE: 'RES'
+
+  res_deb23:
+    container_name: res_deb23
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB23
+      TYPE: 'RES'
+
+  res_deb24:
+    container_name: res_deb24
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB24
+      TYPE: 'RES'
+
+  res_deb25:
+    container_name: res_deb25
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB25
+      TYPE: 'RES'
+
+  res_deb31:
+    container_name: res_deb31
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB31
+      TYPE: 'RES'
+
+  res_deb32:
+    container_name: res_deb32
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB32
+      TYPE: 'RES'
+
+  res_deb33:
+    container_name: res_deb33
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB33
+      TYPE: 'RES'
+
+  res_deb34:
+    container_name: res_deb34
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB34
+      TYPE: 'RES'
+
+  res_deb35:
+    container_name: res_deb35
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB35
+      TYPE: 'RES'
+
+  res_deb36:
+    container_name: res_deb36
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB36
+      TYPE: 'RES'
+
+  res_deb37:
+    container_name: res_deb37
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB37
+      TYPE: 'RES'
+
+  res_deb38:
+    container_name: res_deb38
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB38
+      TYPE: 'RES'
+
+  res_deb39:
+    container_name: res_deb39
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB39
+      TYPE: 'RES'
+
+  res_deb3a:
+    container_name: res_deb3a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3A
+      TYPE: 'RES'
+
+  res_deb3b:
+    container_name: res_deb3b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3B
+      TYPE: 'RES'
+
+  res_deb3c:
+    container_name: res_deb3c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3C
+      TYPE: 'RES'
+
+  res_deb3d:
+    container_name: res_deb3d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3D
+      TYPE: 'RES'
+
+  res_deb3e:
+    container_name: res_deb3e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3E
+      TYPE: 'RES'
+
+  res_deb3f:
+    container_name: res_deb3f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3F
+      TYPE: 'RES'
+
+  res_deb3g:
+    container_name: res_deb3g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3G
+      TYPE: 'RES'
+
+  res_deb3h:
+    container_name: res_deb3h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3H
+      TYPE: 'RES'
+
+  res_deb3i:
+    container_name: res_deb3i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3I
+      TYPE: 'RES'
+
+  res_deb3j:
+    container_name: res_deb3j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3J
+      TYPE: 'RES'
+
+  res_deb3k:
+    container_name: res_deb3k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEB3K
+      TYPE: 'RES'
+
+  res_dec01:
+    container_name: res_dec01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC01
+      TYPE: 'RES'
+
+  res_dec02:
+    container_name: res_dec02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC02
+      TYPE: 'RES'
+
+  res_dec03:
+    container_name: res_dec03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC03
+      TYPE: 'RES'
+
+  res_dec04:
+    container_name: res_dec04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC04
+      TYPE: 'RES'
+
+  res_dec05:
+    container_name: res_dec05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC05
+      TYPE: 'RES'
+
+  res_dec06:
+    container_name: res_dec06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEC06
+      TYPE: 'RES'
+
+  res_ded21:
+    container_name: res_ded21
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED21
+      TYPE: 'RES'
+
+  res_ded2c:
+    container_name: res_ded2c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2C
+      TYPE: 'RES'
+
+  res_ded2d:
+    container_name: res_ded2d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2D
+      TYPE: 'RES'
+
+  res_ded2e:
+    container_name: res_ded2e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2E
+      TYPE: 'RES'
+
+  res_ded2f:
+    container_name: res_ded2f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED2F
+      TYPE: 'RES'
+
+  res_ded41:
+    container_name: res_ded41
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED41
+      TYPE: 'RES'
+
+  res_ded42:
+    container_name: res_ded42
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED42
+      TYPE: 'RES'
+
+  res_ded43:
+    container_name: res_ded43
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED43
+      TYPE: 'RES'
+
+  res_ded44:
+    container_name: res_ded44
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED44
+      TYPE: 'RES'
+
+  res_ded45:
+    container_name: res_ded45
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED45
+      TYPE: 'RES'
+
+  res_ded51:
+    container_name: res_ded51
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED51
+      TYPE: 'RES'
+
+  res_ded52:
+    container_name: res_ded52
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED52
+      TYPE: 'RES'
+
+  res_ded53:
+    container_name: res_ded53
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED53
+      TYPE: 'RES'
+
+  res_dee01:
+    container_name: res_dee01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE01
+      TYPE: 'RES'
+
+  res_dee02:
+    container_name: res_dee02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE02
+      TYPE: 'RES'
+
+  res_dee03:
+    container_name: res_dee03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE03
+      TYPE: 'RES'
+
+  res_dee04:
+    container_name: res_dee04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE04
+      TYPE: 'RES'
+
+  res_dee05:
+    container_name: res_dee05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE05
+      TYPE: 'RES'
+
+  res_dee06:
+    container_name: res_dee06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE06
+      TYPE: 'RES'
+
+  res_dee07:
+    container_name: res_dee07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE07
+      TYPE: 'RES'
+
+  res_dee08:
+    container_name: res_dee08
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE08
+      TYPE: 'RES'
+
+  res_dee09:
+    container_name: res_dee09
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE09
+      TYPE: 'RES'
+
+  res_dee0a:
+    container_name: res_dee0a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0A
+      TYPE: 'RES'
+
+  res_dee0b:
+    container_name: res_dee0b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0B
+      TYPE: 'RES'
+
+  res_dee0c:
+    container_name: res_dee0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0C
+      TYPE: 'RES'
+
+  res_dee0d:
+    container_name: res_dee0d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0D
+      TYPE: 'RES'
+
+  res_dee0e:
+    container_name: res_dee0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEE0E
+      TYPE: 'RES'
+
+  res_def01:
+    container_name: res_def01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF01
+      TYPE: 'RES'
+
+  res_def02:
+    container_name: res_def02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF02
+      TYPE: 'RES'
+
+  res_def03:
+    container_name: res_def03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF03
+      TYPE: 'RES'
+
+  res_def04:
+    container_name: res_def04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF04
+      TYPE: 'RES'
+
+  res_def05:
+    container_name: res_def05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF05
+      TYPE: 'RES'
+
+  res_def06:
+    container_name: res_def06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF06
+      TYPE: 'RES'
+
+  res_def07:
+    container_name: res_def07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF07
+      TYPE: 'RES'
+
+  res_def08:
+    container_name: res_def08
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF08
+      TYPE: 'RES'
+
+  res_def09:
+    container_name: res_def09
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF09
+      TYPE: 'RES'
+
+  res_def0a:
+    container_name: res_def0a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0A
+      TYPE: 'RES'
+
+  res_def0b:
+    container_name: res_def0b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0B
+      TYPE: 'RES'
+
+  res_def0c:
+    container_name: res_def0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0C
+      TYPE: 'RES'
+
+  res_def0d:
+    container_name: res_def0d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0D
+      TYPE: 'RES'
+
+  res_def0e:
+    container_name: res_def0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0E
+      TYPE: 'RES'
+
+  res_def0f:
+    container_name: res_def0f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEF0F
+      TYPE: 'RES'
+
+  res_deg01:
+    container_name: res_deg01
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG01
+      TYPE: 'RES'
+
+  res_deg02:
+    container_name: res_deg02
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG02
+      TYPE: 'RES'
+
+  res_deg03:
+    container_name: res_deg03
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG03
+      TYPE: 'RES'
+
+  res_deg04:
+    container_name: res_deg04
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG04
+      TYPE: 'RES'
+
+  res_deg05:
+    container_name: res_deg05
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG05
+      TYPE: 'RES'
+
+  res_deg06:
+    container_name: res_deg06
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG06
+      TYPE: 'RES'
+
+  res_deg07:
+    container_name: res_deg07
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG07
+      TYPE: 'RES'
+
+  res_deg09:
+    container_name: res_deg09
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG09
+      TYPE: 'RES'
+
+  res_deg0a:
+    container_name: res_deg0a
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0A
+      TYPE: 'RES'
+
+  res_deg0b:
+    container_name: res_deg0b
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0B
+      TYPE: 'RES'
+
+  res_deg0c:
+    container_name: res_deg0c
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0C
+      TYPE: 'RES'
+
+  res_deg0d:
+    container_name: res_deg0d
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0D
+      TYPE: 'RES'
+
+  res_deg0e:
+    container_name: res_deg0e
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0E
+      TYPE: 'RES'
+
+  res_deg0f:
+    container_name: res_deg0f
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0F
+      TYPE: 'RES'
+
+  res_deg0g:
+    container_name: res_deg0g
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0G
+      TYPE: 'RES'
+
+  res_deg0h:
+    container_name: res_deg0h
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0H
+      TYPE: 'RES'
+
+  res_deg0i:
+    container_name: res_deg0i
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0I
+      TYPE: 'RES'
+
+  res_deg0j:
+    container_name: res_deg0j
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0J
+      TYPE: 'RES'
+
+  res_deg0k:
+    container_name: res_deg0k
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0K
+      TYPE: 'RES'
+
+  res_deg0l:
+    container_name: res_deg0l
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0L
+      TYPE: 'RES'
+
+  res_deg0m:
+    container_name: res_deg0m
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0M
+      TYPE: 'RES'
+
+  res_deg0n:
+    container_name: res_deg0n
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0N
+      TYPE: 'RES'
+
+  res_deg0p:
+    container_name: res_deg0p
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DEG0P
       TYPE: 'RES'
 configs:
   compute_config:

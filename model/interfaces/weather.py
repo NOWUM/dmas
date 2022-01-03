@@ -30,7 +30,7 @@ class WeatherInterface:
         return pd.DataFrame(data_avg).set_index('time', drop=True)
 
     def get_temperature_in_area(self, area='DE111', date=pd.to_datetime('1995-1-1')):
-        return get_param_in_area('temp_air', area, date)
+        return self.get_param_in_area('temp_air', area, date)
         
 
     def get_wind_in_area(self, area='DE111', date=pd.to_datetime('1995-1-1')):
@@ -51,10 +51,10 @@ class WeatherInterface:
         return pd.DataFrame(data_avg).set_index('time', drop=True)
 
     def get_direct_radiation_in_area(self, area='DE111', date=pd.to_datetime('1995-1-1')):
-        return get_param_in_area('dhi', area, date)
+        return self.get_param_in_area('dhi', area, date)
 
     def get_diffuse_radiation_in_area(self, area='DE111', date=pd.to_datetime('1995-1-1')):
-        return get_param_in_area('dni', area, date)
+        return self.get_param_in_area('dni', area, date)
 
     def get_wind(self, date=pd.to_datetime('1995-1-1')):
         data_avg = []
@@ -74,13 +74,13 @@ class WeatherInterface:
         return pd.DataFrame(data_avg).set_index('time', drop=True)
 
     def get_direct_radiation(self, date=pd.to_datetime('1995-1-1')):
-        return get_param('dhi', date)
+        return self.get_param('dhi', date)
 
     def get_diffuse_radiation(self, date=pd.to_datetime('1995-1-1')):
-        return get_param('dni', date)
+        return self.get_param('dni', date)
 
     def get_temperature(self, date=pd.to_datetime('1995-1-1')):
-        return get_param('temp_air', date)
+        return self.get_param('temp_air', date)
 
 if __name__ == "__main__":    
     weather_database_uri = 'postgresql://opendata:opendata@10.13.10.41:5432/weather'
