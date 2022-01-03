@@ -6,11 +6,11 @@ import threading
 import numpy as np
 from tqdm import tqdm
 import dash
+from dash.dependencies import Input, Output, State
 
 # model modules
 from agents.basic_Agent import BasicAgent
-from dashboard import Dashboard
-from dash.dependencies import Input, Output
+from dashboards.dashboard import Dashboard
 
 app = dash.Dash('dMAS_controller', external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 
@@ -95,11 +95,10 @@ class CtlAgent(BasicAgent):
     def simulation_routine(self):
         self.logger.info('simulation started')
 
-        self.simulation_interface.initialize_tables()
-
         for date in tqdm(pd.date_range(start=self.start_date, end=self.stop_date, freq='D')):
             if self.sim_stop:
                 self.logger.info('simulation terminated')
+                self.simulation_interface.initialize_tables()
                 break
             else:
                 try:
@@ -130,8 +129,8 @@ class CtlAgent(BasicAgent):
                     self.simulation_interface.reset_order_book()
                     self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
 
-                    #self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
-                    #                           body=f'set_capacities {self.start_date.date()}')
+                    self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
+                                               body=f'set_capacities {self.start_date.date()}')
 
                 except Exception as e:
                     print(repr(e))
@@ -142,54 +141,35 @@ class CtlAgent(BasicAgent):
 
     def run(self):
 
-        app.layout = self.dashboard.layout
-
-        @app.server.route('/stop')
-        def stop_simulation():
-            self.sim_stop = True
-            self.logger.info('stopping simulation')
-            return redirect('/')
-
-        @app.server.route('/start', methods=['POST'])
-        def run_simulation():
-            rf = request.form
-            self.start_date = pd.to_datetime(rf.get('start', '1995-01-01'))
-            self.stop_date = pd.to_datetime(rf.get('stop', '1995-02-01'))
-
-            if not self.sim_start:
-                simulation = threading.Thread(target=self.simulation_routine)
-                check_orders = threading.Thread(target=self.check_orders)
-                simulation.start()
-                check_orders.start()
-                self.sim_start = True
-
-            return redirect('/')
-
         @app.callback(Output('information', 'children'), Input('tab_menu', 'value'))
         def render_information(tab):
-            agents = self.simulation_interface.get_agents()
             if tab == 'simulation':
-                if self.sim_start:
-                    return self.dashboard.get_simulation_info(agents=agents, date=self.date, running=self.sim_start)
-                else:
-                    return self.dashboard.get_simulation_info(agents=agents, running=self.sim_start)
-            if tab == 'pwp_Agent':
-                return self.dashboard.get_agent_info(agents=agents, agent_type='pwp')
-            if tab == 'res_Agent':
-                return self.dashboard.get_agent_info(agents=agents, agent_type='res')
-            if tab == 'str_Agent':
-                return self.dashboard.get_agent_info(agents=agents, agent_type='str')
-            if tab == 'dem_Agent':
-                return self.dashboard.get_agent_info(agents=agents, agent_type='dem')
-            if tab == 'mrk_Agent':
-                return None
-            if tab == 'tso_Agent':
-                return None
+                return self.dashboard.simulation_control(status=self.sim_start)
+            if tab == 'meta':
+                capacities = self.simulation_interface.get_global_capacities(self.date)
+                return self.dashboard.meta_information(capacities)
 
-        @app.callback(Output('plots', 'children'), Input('agent_dropdown', 'value'))
-        def render_plots(value):
-            generation = self.simulation_interface.get_planed_generation(value)
-            return self.dashboard.plot_data(generation)
+        @app.callback(Output('simulation_status', 'children'),
+                      Input('trigger_simulation', 'on'),
+                      State('date_range', 'start_date'),
+                      State('date_range', 'end_date'))
+        def simulation_controlling(on, start, end):
+            if on:
+                self.start_date = pd.to_datetime(start)
+                self.stop_date = pd.to_datetime(end)
+                if not self.sim_start:
+                    self.sim_stop = False
+                    simulation = threading.Thread(target=self.simulation_routine)
+                    check_orders = threading.Thread(target=self.check_orders)
+                    simulation.start()
+                    check_orders.start()
+                    self.sim_start = True
+            else:
+                self.sim_stop = True
+                self.logger.info('stopping simulation')
+            return 'Simulation is running: {}.'.format(on)
+
+        app.layout = self.dashboard.layout
 
         app.run_server(debug=False, port=5000, host='0.0.0.0')
 

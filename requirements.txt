@@ -22,3 +22,5 @@ pyomo
 dash
 geopandas
 glpk
+dash-bootstrap-components
+dash_daq

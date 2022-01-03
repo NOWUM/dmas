@@ -35,7 +35,8 @@ class PwpAgent(BasicAgent):
 
         # Construction power plants
         self.logger.info('Power Plants added')
-
+        self.simulation_interface.date = self.date
+        self.simulation_interface.set_capacities(self.portfolio, self.area)
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
 

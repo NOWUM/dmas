@@ -136,6 +136,18 @@ class SimulationInterface:
 
         data_frame.to_sql(name='capacities', con=self.database, if_exists='append')
 
+    def get_global_capacities(self, date):
+        query = f"SELECT sum(bio) as bio, " \
+                f"sum(water) as water, " \
+                f"sum(wind) as wind, " \
+                f"sum(solar) as solar, " \
+                f"sum(nuclear) as nuclear, " \
+                f"sum(lignite) as lignite, " \
+                f"sum(coal) as coal, " \
+                f"sum(gas) as gas " \
+                f"FROM capacities WHERE time='{date.isoformat()}'"
+        return pd.read_sql(query, self.database)
+
     def set_generation(self, portfolio, step, area):
         if isinstance(portfolio, list):
             data_frame = self.merge_portfolio(portfolio, type='generation')

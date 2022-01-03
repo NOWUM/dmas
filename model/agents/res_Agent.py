@@ -78,7 +78,8 @@ class ResAgent(BasicAgent):
         for system in tqdm(bio_mass_data.to_dict(orient='records')):
             self.portfolio_eeg.add_energy_system(system)
         self.logger.info('Biomass Power Plants added')
-
+        self.simulation_interface.date = self.date
+        self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area)
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def get_order_book(self, power, type='eeg'):

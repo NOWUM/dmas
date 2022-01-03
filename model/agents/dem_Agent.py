@@ -66,7 +66,8 @@ class DemAgent(BasicAgent):
         # Construction Standard Consumer agriculture
         #self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
         self.logger.info('Agriculture added')
-
+        self.simulation_interface.date = self.date
+        self.simulation_interface.set_capacities(self.portfolio, self.area)
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def get_order_book(self, power):

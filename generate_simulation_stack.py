@@ -37,6 +37,13 @@ output.append(f'''
       - POSTGRES_DB=dmas
     ports:
       - 5432:5432
+    volumes:
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
 ''')
 # Build Rabbitmq
 output.append('''
@@ -85,7 +92,7 @@ output.append(f'''
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
-for agent in agents:
+for agent in agents[:5]:
     output.append(f'''
   dem_{agent.lower()}:
     container_name: dem_{agent.lower()}
@@ -96,7 +103,7 @@ for agent in agents:
 ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
-for agent in agents:
+for agent in agents[:5]:
     output.append(f'''
   pwp_{agent.lower()}:
     container_name: pwp_{agent.lower()}
@@ -107,7 +114,7 @@ for agent in agents:
 ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
-for agent in agents:
+for agent in agents[:5]:
     output.append(f'''
   res_{agent.lower()}:
     container_name: res_{agent.lower()}
