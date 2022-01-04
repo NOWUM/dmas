@@ -24,7 +24,7 @@ class DayAheadMarket:
         self.parent_blocks = {}
 
         self.model = ConcreteModel()
-        self.opt = SolverFactory('gurobi')
+        self.opt = SolverFactory('gurobi', solver_io='python')
 
         self.t = np.arange(24)
 
