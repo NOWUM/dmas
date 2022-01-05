@@ -130,7 +130,7 @@ class CtlAgent(BasicAgent):
                     self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
 
                     self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
-                                               body=f'set_capacities {self.start_date.date()}')
+                                               body=f'set_capacities {self.date.date()}')
 
                 except Exception as e:
                     print(repr(e))

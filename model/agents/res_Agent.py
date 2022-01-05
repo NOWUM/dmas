@@ -78,8 +78,7 @@ class ResAgent(BasicAgent):
         for system in tqdm(bio_mass_data.to_dict(orient='records')):
             self.portfolio_eeg.add_energy_system(system)
         self.logger.info('Biomass Power Plants added')
-        self.simulation_interface.date = self.date
-        self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area)
+
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def get_order_book(self, power, type='eeg'):
@@ -114,12 +113,11 @@ class ResAgent(BasicAgent):
         super().callback(ch, method, properties, body)
 
         message = body.decode("utf-8")
-
         self.date = pd.to_datetime(message.split(' ')[1])
-        self.simulation_interface.date = self.date
+        self.logger.info(f'get command {message}')
 
         if 'set_capacities' in message:
-            self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area)
+            self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area, self.date)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -148,9 +146,9 @@ class ResAgent(BasicAgent):
 
         # save optimization results
         self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead',
-                                                 area=self.area)
+                                                 area=self.area, date=self.date)
         self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead',
-                                             area=self.area)
+                                             area=self.area, date=self.date)
 
         # Step 3: build orders from optimization results
         start_time = time.time()
@@ -167,7 +165,7 @@ class ResAgent(BasicAgent):
         self.logger.info('starting day ahead adjustments')
         start_time = time.time()
         # save optimization results
-        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area)
-        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area)
+        self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)
+        self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)
 
         self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

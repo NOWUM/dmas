@@ -74,7 +74,6 @@ class PriceForecast(BasicForecast):
         self.fitted = True
         self.score = self.model.score(x_std, np.asarray(self.output).reshape(-1, ))
 
-
     def forecast(self, date):
         if not self.fitted:
             power_price = default_power_price

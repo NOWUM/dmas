@@ -17,7 +17,6 @@ class SimulationInterface:
                                       f'{structure_database}',
                                       connect_args={"application_name": name})
         self.name = name
-        self.date = None
         self.mqtt_server = mqtt_server
 
     def initialize_tables(self):
@@ -104,17 +103,17 @@ class SimulationInterface:
             connection.execute("DELETE FROM linked_orders")
             connection.execute("DELETE FROM exclusive_orders")
 
-    def merge_portfolio(self, portfolio, type):
+    def merge_portfolio(self, portfolio, type, date):
         data_frames = []
         for prt in portfolio:
             if type == 'capacities':
-                data_frames.append(pd.DataFrame(index=[pd.to_datetime(self.date)], data=prt.capacities))
+                data_frames.append(pd.DataFrame(index=[pd.to_datetime(date)], data=prt.capacities))
             if type == 'generation':
-                data_frames.append(pd.DataFrame(index=pd.date_range(start=self.date, freq='h',
+                data_frames.append(pd.DataFrame(index=pd.date_range(start=date, freq='h',
                                                                     periods=len(prt.generation['total'])),
                                                 data=prt.generation))
             if type == 'demand':
-                data_frames.append(pd.DataFrame(index=pd.date_range(start=self.date, freq='h',
+                data_frames.append(pd.DataFrame(index=pd.date_range(start=date, freq='h',
                                                                     periods=len(prt.demand['power'])),
                                                 data=prt.demand))
         data_frame = data_frames[0]
@@ -124,11 +123,11 @@ class SimulationInterface:
 
         return data_frame
 
-    def set_capacities(self, portfolio, area):
+    def set_capacities(self, portfolio, area, date):
         if isinstance(portfolio, list):
-            data_frame = self.merge_portfolio(portfolio, type='capacities')
+            data_frame = self.merge_portfolio(portfolio, type='capacities', date=date)
         else:
-            data_frame = pd.DataFrame(index=[pd.to_datetime(self.date)], data=portfolio.capacities)
+            data_frame = pd.DataFrame(index=[pd.to_datetime(date)], data=portfolio.capacities)
 
         data_frame['agent'] = self.name
         data_frame['area'] = area
@@ -148,11 +147,11 @@ class SimulationInterface:
                 f"FROM capacities WHERE time='{date.isoformat()}'"
         return pd.read_sql(query, self.database)
 
-    def set_generation(self, portfolio, step, area):
+    def set_generation(self, portfolio, step, area, date):
         if isinstance(portfolio, list):
-            data_frame = self.merge_portfolio(portfolio, type='generation')
+            data_frame = self.merge_portfolio(portfolio, type='generation', date=date)
         else:
-            data_frame = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24),
+            data_frame = pd.DataFrame(index=pd.date_range(start=date, freq='h', periods=24),
                                       data=portfolio.generation)
 
         data_frame['agent'] = self.name
@@ -162,7 +161,7 @@ class SimulationInterface:
 
         data_frame.to_sql(name='generation', con=self.database, if_exists='append')
 
-    def get_planed_generation(self, agent):
+    def get_planed_generation(self, agent, date):
         try:
             df = pd.read_sql(f"select * from generation where step ='optimize_dayAhead "
                              f"and agent = {agent}'", self.database)
@@ -176,18 +175,19 @@ class SimulationInterface:
                                         coal=np.zeros(24),
                                         gas=np.zeros(24),
                                         nuclear=np.zeros(24)),
-                              index=pd.date_range(start=self.date, freq='h', periods=24))
+                              index=pd.date_range(start=date, freq='h', periods=24))
         return df
 
-    def set_demand(self, portfolio, step, area):
+    def set_demand(self, portfolio, step, area, date):
 
         if isinstance(portfolio, list):
-            data_frame = self.merge_portfolio(portfolio, type='demand')
+            data_frame = self.merge_portfolio(portfolio, type='demand', date=date)
         else:
-            data_frame = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24),
+            data_frame = pd.DataFrame(index=pd.date_range(start=date, freq='h', periods=24),
                                       data=portfolio.demand)
 
         data_frame['agent'] = self.name
+        data_frame['area'] = area
         data_frame.index.name = 'time'
         data_frame['step'] = step
 
@@ -250,8 +250,8 @@ class SimulationInterface:
     def set_auction_results(self, auction_results):
         auction_results.to_sql('auction_results', self.database, if_exists='append')
 
-    def get_auction_results(self):
-        start_date, end_date = get_interval(self.date)
+    def get_auction_results(self, date):
+        start_date, end_date = get_interval(date)
 
         query = f"select price, volume from auction_results where time >= '{start_date}'" \
                 f"and time < '{end_date}'"

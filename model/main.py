@@ -33,7 +33,7 @@ if __name__ == "__main__":
         'structure_server': os.getenv('STRUCTURE_SERVER', '10.13.10.41:5432'),
         'structure_credential': os.getenv('STRUCTURE_CREDENTIAL', 'opendata:opendata'),
         # weather data server default parameter
-        'weather_database_uri' : weather_database_uri
+        'weather_database_uri': weather_database_uri
     }
 
     try:

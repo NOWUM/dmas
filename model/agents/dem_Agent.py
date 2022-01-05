@@ -66,8 +66,7 @@ class DemAgent(BasicAgent):
         # Construction Standard Consumer agriculture
         #self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
         self.logger.info('Agriculture added')
-        self.simulation_interface.date = self.date
-        self.simulation_interface.set_capacities(self.portfolio, self.area)
+
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
     def get_order_book(self, power):
@@ -89,12 +88,10 @@ class DemAgent(BasicAgent):
         super().callback(ch, method, properties, body)
 
         message = body.decode("utf-8")
-
         self.date = pd.to_datetime(message.split(' ')[1])
-        self.simulation_interface.date = self.date
-
+        self.logger.info(f'get command {message}')
         if 'set_capacities' in message:
-            self.simulation_interface.set_capacities(self.portfolio,self.area)
+            self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -118,8 +115,8 @@ class DemAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
 
         # save optimization results
-        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area)
-        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area)
+        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area, self.date)
+        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area, self.date)
 
         # Step 3: build orders
         start_time = time.time()
@@ -134,7 +131,7 @@ class DemAgent(BasicAgent):
         self.logger.info('starting day ahead adjustments')
         start_time = time.time()
         # save optimization results
-        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area)
-        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area)
+        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
+        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
 
         self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')

@@ -35,8 +35,7 @@ class PwpAgent(BasicAgent):
 
         # Construction power plants
         self.logger.info('Power Plants added')
-        self.simulation_interface.date = self.date
-        self.simulation_interface.set_capacities(self.portfolio, self.area)
+
         self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
 
 
@@ -44,12 +43,11 @@ class PwpAgent(BasicAgent):
         super().callback(ch, method, properties, body)
 
         message = body.decode("utf-8")
-
         self.date = pd.to_datetime(message.split(' ')[1])
-        self.simulation_interface.date = self.date
+        self.logger.info(f'get command {message}')
 
         if 'set_capacities' in message:
-            self.simulation_interface.set_capacities(self.portfolio,self.area)
+            self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
         if 'opt_dayAhead' in message:
             self.optimize_day_ahead()
         if 'result_dayAhead' in message:
@@ -232,8 +230,8 @@ class PwpAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
 
         # save optimization results
-        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area)
-        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area)
+        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area, self.date)
+        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area, self.date)
 
         # Step 3: build orders from optimization results
         start_time = time.time()
@@ -262,8 +260,8 @@ class PwpAgent(BasicAgent):
         self.portfolio.optimize()
 
         # save optimization results
-        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area)
-        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area)
+        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
+        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
 
         self.weather_forecast.collect_data(self.date)
         self.price_forecast.collect_data(self.date)

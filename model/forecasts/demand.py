@@ -14,7 +14,7 @@ class DemandForecast(BasicForecast):
         self.model = {i: [] for i in range(7)}
 
     def collect_data(self, date):
-        demand = self.market.get_auction_results()
+        demand = self.market.get_auction_results(date)
         values = demand['volume'].to_numpy()
         for i in range(24):
             self.input.append(demand.index[i])
