@@ -54,6 +54,11 @@ output.append('''
     ports:
       - 15672:15672
       - 5672:5672
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
 ''')
 # Build one Control Agent
 output.append(f'''

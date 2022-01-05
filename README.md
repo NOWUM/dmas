@@ -34,7 +34,7 @@ Kumar Shivam; Stephen Bosch*
 
 ```
 # See how many services are running:
-`docker service ls | wc -l && docker service ls | grep 0/1 | wc -l && docker service ls | grep 1/1 | wc -l`
+docker service ls | wc -l && docker service ls | grep 0/1 | wc -l && docker service ls | grep 1/1 | wc -l`
 
 # check status of swarm nodes
 docker node ls

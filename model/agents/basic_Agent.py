@@ -49,7 +49,7 @@ class BasicAgent:
         self.channels = []
         self.publish = self.get_rabbitmq_connection()
         self.channel = self.get_rabbitmq_connection()
-        result = self.channel.queue_declare(queue=self.name, exclusive=True)
+        result = self.channel.queue_declare(queue=self.name, exclusive=False)
         self.channel.queue_bind(exchange=self.mqtt_exchange, queue=result.method.queue)
         self.logger.info('starting the agent')
 
@@ -60,7 +60,7 @@ class BasicAgent:
                 connection.close()
 
     def get_rabbitmq_connection(self):
-        for i in range(1,6):
+        for i in range(1, 6):
             try:
                 mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.mqtt_server, heartbeat=0))
                 channel = mqtt_connection.channel()
