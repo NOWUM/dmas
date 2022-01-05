@@ -49,7 +49,7 @@ class BasicAgent:
         self.channels = []
         self.publish = self.get_rabbitmq_connection()
         self.channel = self.get_rabbitmq_connection()
-        result = self.channel.queue_declare(queue=self.name, exclusive=False)
+        result = self.channel.queue_declare(queue=self.name, exclusive=False, auto_delete=True)
         self.channel.queue_bind(exchange=self.mqtt_exchange, queue=result.method.queue)
         self.logger.info('starting the agent')
 
