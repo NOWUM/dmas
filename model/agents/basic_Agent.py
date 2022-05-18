@@ -62,7 +62,7 @@ class BasicAgent:
     def get_rabbitmq_connection(self):
         for i in range(1, 11):
             try:
-                mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.mqtt_server, heartbeat=0))
+                mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.mqtt_server, blocked_connection_timeout=400, heartbeat=0))
                 channel = mqtt_connection.channel()
                 channel.exchange_declare(exchange=self.mqtt_exchange, exchange_type='fanout')
                 self.logger.info(f'connected to rabbitmq')
