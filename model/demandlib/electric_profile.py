@@ -60,12 +60,15 @@ class StandardLoadProfile:
         self.hourly = hourly
 
     def run_model(self, d):
+        '''
+        returns the load profile for a given day in [kW]
+        '''
 
         doy = d.dayofyear
         dow = d.dayofweek
         year = d.year
 
-        f = self.demandP / 10 ** 6
+        f = self.demandP / 10**6  # [kW] to [GW] ?
         if self.type == 'household':
             f *= -0.000000000392 * doy ** 4 + 0.00000032 * doy ** 3 - 0.0000702 * doy ** 2 + 0.0021 * doy + 1.24
 
@@ -97,3 +100,13 @@ class StandardLoadProfile:
             return np.asarray([np.mean(demand[i:i + 3]) for i in range(0, 96, 4)], np.float).reshape((-1,))
         else:
             return demand
+
+if __name__ == '__main__':
+    s = StandardLoadProfile(1000)
+    import pandas as pd
+
+    dd = pd.to_datetime('2021-12-12')
+    summe = s.run_model(dd)
+    for i in range(365):
+        summe += s.run_model(dd)
+    print(summe.sum())

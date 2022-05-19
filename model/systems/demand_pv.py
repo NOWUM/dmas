@@ -25,7 +25,7 @@ class HouseholdPvModel(EnergySystem):
                                                    dhi=self.weather['dhi'])
 
         solar_power = irradiance['poa_global'] * 0.14 * self.pv_system.arrays[0].module_parameters['pdc0'] * 7
-        self.generation['solar'] = solar_power.to_numpy()               # [kW]
+        self.generation['solar'] = solar_power.to_numpy() / 10**3       # [kW]
         self.demand['power'] = self.demand_system.run_model(self.date)  # [kW]
         grid_use = self.demand['power'] - self.generation['solar']
 

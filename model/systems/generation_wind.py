@@ -42,6 +42,7 @@ class WindModel(EnergySystem):
             self.wind_turbine = self.wind_turbine.assign_power_curve()
 
         else:
+            # windpowerlib uses Watt [W]
             self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
                                             rotor_diameter=wind_turbine['diameter'],
                                             nominal_power=wind_turbine['maxPower']*10**6,
@@ -62,6 +63,7 @@ class WindModel(EnergySystem):
 
     def optimize(self):
         self.mc.run_model(self.weather)
+        # value from windpowerlib is in Watt [W]
         self.generation['wind'] = np.asarray(self.mc.power_output, dtype=np.float64)/10**6
         self.generation['total'] = self.generation['wind']
         self.power = self.generation['wind']

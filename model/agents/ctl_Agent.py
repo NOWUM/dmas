@@ -154,6 +154,7 @@ class CtlAgent(BasicAgent):
                       State('date_range', 'start_date'),
                       State('date_range', 'end_date'))
         def simulation_controlling(on, start, end):
+            # TODO this stops the simulation if the date is change on the Dashboard
             if on:
                 self.start_date = pd.to_datetime(start)
                 self.stop_date = pd.to_datetime(end)
@@ -165,8 +166,10 @@ class CtlAgent(BasicAgent):
                     check_orders.start()
                     self.sim_start = True
             else:
+                if not self.sim_stop:
+                    self.logger.info('stopping simulation')
                 self.sim_stop = True
-                self.logger.info('stopping simulation')
+                
             return 'Simulation is running: {}.'.format(on)
 
         app.layout = self.dashboard.layout
