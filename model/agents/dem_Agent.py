@@ -44,11 +44,11 @@ class DemAgent(BasicAgent):
         self.logger.info('Prosumer Photovoltaic added')
 
         demands = self.infrastructure_interface.get_demand_in_area(self.area)
-        household_demand = demands['household'].values[0] * 10**9
+        household_demand = demands['household'].values[0] * 10**6
         household_demand -= demand
 
         rlm_demand = demands['business'].values[0] + demands['industry'].values[0] + demands['agriculture'].values[0]
-        rlm_demand *= 10**9
+        rlm_demand *= 10**6
 
         # Construction Standard Consumer H0
         self.portfolio.add_energy_system({'unitID': 'household', 'demandP': household_demand, 'type': 'household'})
