@@ -64,7 +64,10 @@ class DemandPortfolio(PortfolioModel):
         t = time.time()
         for model in tqdm(self.energy_systems):
             for key, value in model.generation.items():
-                self.generation[key] += value
+                if key == 'solar':
+                    self.generation[key] += value/10**3
+                else:
+                    self.generation[key] += value
             for key, value in model.demand.items():
                 self.demand[key] += value
 
