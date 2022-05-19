@@ -58,6 +58,7 @@ class RenewablePortfolio(PortfolioModel):
             self.generation['total'] = np.asarray(response, np.float).reshape((-1,))
 
     def optimize(self):
+        self.reset_data()
         t = time.time()
         self.energy_systems = self.worker.map(optimize_energy_system, tqdm(self.energy_systems))
         log.info(f'optimize took {np.round(time.time() - t, 2)}')

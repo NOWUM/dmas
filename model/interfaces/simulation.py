@@ -159,6 +159,7 @@ class SimulationInterface:
         data_frame['step'] = step
         data_frame.index.name = 'time'
 
+        # generation in MW
         data_frame.to_sql(name='generation', con=self.database, if_exists='append')
 
     def get_planed_generation(self, agent, date):
