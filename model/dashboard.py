@@ -74,9 +74,9 @@ class Dashboard:
                 html.Form(children=[
                     html.Div(children=[
                         html.Label('Starting Date:', htmlFor='start_date'),
-                        dcc.Input(type="date", id="start_date", name="start_date", value="1995-01-01"),
+                        dcc.Input(type="date", id="start_date", name="start_date", value="2018-01-01"),
                         html.Label('Ending Date:', htmlFor='end_date'),
-                        dcc.Input(type="date", id="end_date", name="end_date", value="1995-02-01")
+                        dcc.Input(type="date", id="end_date", name="end_date", value="2018-02-01")
                     ]),
                     dcc.Input(type="submit", value="run simulation", id='run_simulation',
                               style={'margin-top': '10px'})
