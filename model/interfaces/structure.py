@@ -296,7 +296,7 @@ class InfrastructureInterface:
                     #             for typ in df['typ']]
                     # df['typ'] = df['typ'].replace('', 'default')
                     # set tag for wind farms
-                    wind_farm_prefix = f'{area * 1e3}F'
+                    wind_farm_prefix = f'{area * 10}F'
                     df['windFarm'] = 'x'
                     counter = 0
                     for genId in df['generatorID'].unique():
