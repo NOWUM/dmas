@@ -1,45 +1,51 @@
 from sqlalchemy import create_engine
 import pandas as pd
 import geopandas as gpd
-import numpy as np
-import re
+
+geo_information = gpd.read_file(r'./interfaces/data/NUTS_EU.shp')
+plz_nuts = pd.read_csv(r'./interfaces/data/plz_to_nuts.csv', sep=';')
+plz_nuts['CODE'] = [int(str_.replace("'", "")) for str_ in plz_nuts['CODE']]
+plz_nuts['NUTS3'] = [str_.replace("'", "") for str_ in plz_nuts['NUTS3']]
+
+mastr_codes_fossil = pd.read_csv(r'./interfaces/data/mastr_codes_fossil.csv', index_col=0)
+mastr_codes_solar = pd.read_csv(r'./interfaces/data/mastr_codes_solar.csv', index_col=0)
+mastr_codes_wind = pd.read_csv(r'./interfaces/data/mastr_codes_wind.csv', index_col=0)
+storage_volumes = pd.read_csv(r'./interfaces/data/technical_parameter_storage.csv', index_col=0)
 
 
-# select column_name from information_schema.columns where table_name='turbineData'
+def get_lon_lat(area):
+    point = geo_information[geo_information['NUTS_ID'] == area]['geometry'].values[0].centroid
+    longitude, latitude = point.coords.xy
+    return longitude[0], latitude[0]
+
+def get_plz_codes(area):
+    return plz_nuts.loc[plz_nuts['NUTS3'] == area, 'CODE'].to_numpy()
+
+
+
+
 class InfrastructureInterface:
 
     def __init__(self, name, structure_data_server, structure_data_credential,
                  structure_databases=('mastr', 'oep', 'windmodel')):
+
         server_uri = f'postgresql://{structure_data_credential}@{structure_data_server}'
         
-        self.database_mastr = create_engine(f'{server_uri}/{structure_databases[0]}', connect_args={"application_name": name})
-        self.database_oep = create_engine(f'{server_uri}/{structure_databases[1]}', connect_args={"application_name": name})
-        self.database_wind = create_engine(f'{server_uri}/{structure_databases[2]}', connect_args={"application_name": name})
+        self.database_mastr = create_engine(f'{server_uri}/{structure_databases[0]}',
+                                            connect_args={"application_name": name})
+        self.database_oep = create_engine(f'{server_uri}/{structure_databases[1]}',
+                                          connect_args={"application_name": name})
+        self.database_wind = create_engine(f'{server_uri}/{structure_databases[2]}',
+                                           connect_args={"application_name": name})
 
-        self.geo_information = gpd.read_file(r'./interfaces/data/NUTS_EU.shp')
-        self.geo_information = self.geo_information.to_crs(4326)
-
-        plz_nuts = pd.read_csv(r'./interfaces/data/plz_to_nuts.csv', sep=';')
-        plz_nuts['CODE'] = [int(str_.replace("'", "")) for str_ in plz_nuts['CODE']]
-        plz_nuts['NUTS3'] = [str_.replace("'", "") for str_ in plz_nuts['NUTS3']]
-        self.plz_nuts = plz_nuts
-
-    def get_lon_lat(self, area):
-        point = self.geo_information[self.geo_information['NUTS_ID'] == area]['geometry'].values[0].centroid
-        longitude, latitude = point.coords.xy
-        return longitude[0], latitude[0]
-
-    def get_plz_codes(self, area):
-        return self.plz_nuts.loc[self.plz_nuts['NUTS3'] == area, 'CODE'].to_numpy()
 
     def get_power_plant_in_area(self, area=520, fuel_type='lignite'):
 
-        if area in self.geo_information['NUTS_ID'].values:
-            mastr_codes_fossil = pd.read_csv(r'./interfaces/data/mastr_codes_fossil.csv', index_col=0)
-            longitude, latitude = self.get_lon_lat(area)
-            plz_codes = self.get_plz_codes(area)
+        data_frames = []
+        if area in geo_information['NUTS_ID'].values:
 
-            data_frames = []
+            longitude, latitude = get_lon_lat(area)
+            plz_codes = get_plz_codes(area)
 
             for plz_code in plz_codes:
 
@@ -67,13 +73,12 @@ class InfrastructureInterface:
                              f'FROM "EinheitenKernkraft" ev ' + \
                              f'WHERE ev."Postleitzahl" = {plz_code} ' \
 
-                # Get Data from Postgres
                 df = pd.read_sql(query, self.database_mastr)
 
                 if not df.empty:
                     type_years = np.asarray([0, 2000, 2018])                    # technical setting typ
                     df['fuel'] = fuel_type                                      # current fuel typ
-                    df['maxPower'] = df['maxPower'] / 10**3                     # Rated Power [kW] --> [MW]
+                    df['maxPower'] = df['maxPower']                             # Rated Power [kW]
                     df['minPower'] = df['maxPower'] * 0.5                       # MinPower = 1/2 MaxPower
                     df['P0'] = df['minPower'] + 0.1
                     df['gradP'] = 0.1 * df['maxPower']                          # 10% Change per hour
@@ -84,7 +89,7 @@ class InfrastructureInterface:
                     df['off'] = 0                                               # off counter --> Plant is on NOT off
                     df['eta'] = 30                                              # efficiency
                     df['chi'] = 1.                                              # emission factor [t/MWh therm]
-                    df['startCost'] = 100 * df['maxPower']                      # starting cost [€/MW Rated]
+                    df['startCost'] = 100 * df['maxPower']                      # starting cost [€/kW Rated]
                     df['turbineTyp'] = [mastr_codes_fossil.loc[str(x), 'value'] # convert int to string
                                         if x is not None else None for x in df['turbineTyp'].to_numpy(int)]
                     df['startDate'] = [pd.to_datetime(x) if x is not None       # convert to timestamp and set default to 2005
@@ -98,12 +103,12 @@ class InfrastructureInterface:
                                          for id_ in df['generatorID']]
                     if 'kwkPowerTherm' in df.columns:
                         df['kwkPowerTherm'] = df['kwkPowerTherm'].fillna(0)
-                        df['kwkPowerTherm'] = df['kwkPowerTherm'] / 10**3
+                        df['kwkPowerTherm'] = df['kwkPowerTherm']
                     else:
                         df['kwkPowerTherm'] = 0
                     if 'kwkPowerElec' in df.columns:
                         df['kwkPowerElec'] = df['kwkPowerElec'].fillna(0)
-                        df['kwkPowerElec'] = df['kwkPowerElec'] / 10**3
+                        df['kwkPowerElec'] = df['kwkPowerElec']
                     else:
                         df['kwkPowerElec'] = 0
 
@@ -157,20 +162,16 @@ class InfrastructureInterface:
 
                     data_frames.append(df)
 
-            if len(data_frames):
-                return pd.concat(data_frames)
-            else:
-                return pd.DataFrame()
-        return pd.DataFrame()
+        return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
+
 
     def get_solar_systems_in_area(self, area=520, solar_type='roof_top'):
 
-        if area in self.geo_information['NUTS_ID'].values:
-            mastr_codes_solar = pd.read_csv(r'./interfaces/data/mastr_codes_solar.csv', index_col=0)
-            longitude, latitude = self.get_lon_lat(area)
-            plz_codes = self.get_plz_codes(area)
+        data_frames = []
+        if area in geo_information['NUTS_ID'].values:
 
-            data_frames = []
+            longitude, latitude = get_lon_lat(area)
+            plz_codes = get_plz_codes(area)
 
             for plz_code in plz_codes:
 
@@ -241,24 +242,19 @@ class InfrastructureInterface:
                     # rest nans are eeg assets and are managed by the tso
                     df['eeg'] = df['eeg'].replace(np.nan, 0)
                     # set max Power to [MW]
-                    df['maxPower'] = df['maxPower'] / 10**3
 
                     data_frames.append(df)
 
-            if len(data_frames):
-                return pd.concat(data_frames)
-            else:
-                return pd.DataFrame()
-        return pd.DataFrame()
+        return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_wind_turbines_in_area(self, area=520, wind_type='on_shore'):
 
-        if area in self.geo_information['NUTS_ID'].values:
-            mastr_codes_wind = pd.read_csv(r'./interfaces/data/mastr_codes_wind.csv', index_col=0)
-            longitude, latitude = self.get_lon_lat(area)
-            plz_codes = self.get_plz_codes(area)
+        data_frames = []
 
-            data_frames = []
+        if area in geo_information['NUTS_ID'].values:
+
+            longitude, latitude = get_lon_lat(area)
+            plz_codes = get_plz_codes(area)
 
             for plz_code in plz_codes:
 
@@ -284,8 +280,6 @@ class InfrastructureInterface:
                 df = pd.read_sql(query, self.database_mastr)
                 # If the response Dataframe is not empty set technical parameter
                 if not df.empty:
-                    # set max Power to [MW]
-                    df['maxPower'] = df['maxPower'] / 10**3
                     # all WEA with nan set hight to mean value
                     df['height'] = df['height'].fillna(df['height'].mean())
                     # all WEA with nan set hight to mean diameter
@@ -312,19 +306,15 @@ class InfrastructureInterface:
                             counter += 1
                     data_frames.append(df)
 
-            if len(data_frames):
-                return pd.concat(data_frames)
-            else:
-                return pd.DataFrame()
-        return pd.DataFrame()
+        return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_biomass_systems_in_area(self, area=520):
 
-        if area in self.geo_information['NUTS_ID'].values:
-            longitude, latitude = self.get_lon_lat(area)
-            plz_codes = self.get_plz_codes(area)
+        data_frames = []
 
-            data_frames = []
+        if area in geo_information['NUTS_ID'].values:
+            longitude, latitude = get_lon_lat(area)
+            plz_codes = get_plz_codes(area)
 
             for plz_code in plz_codes:
 
@@ -342,23 +332,16 @@ class InfrastructureInterface:
                 df = pd.read_sql(query, self.database_mastr)
                 # If the response Dataframe is not empty set technical parameter
                 if not df.empty:
-                    df['maxPower'] = df['maxPower'] / 10**3
-
                     data_frames.append(df)
-
-            if len(data_frames):
-                return pd.concat(data_frames)
-            else:
-                return pd.DataFrame()
-        return pd.DataFrame()
+        return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_run_river_systems_in_area(self, area=520):
 
-        if area in self.geo_information['NUTS_ID'].values:
-            plz_codes = self.get_plz_codes(area)
-            longitude, latitude = self.get_lon_lat(area)
+        data_frames = []
 
-            data_frames = []
+        if area in geo_information['NUTS_ID'].values:
+            plz_codes = get_plz_codes(area)
+            longitude, latitude = get_lon_lat(area)
 
             for plz_code in plz_codes:
                 query = f'SELECT "EinheitMastrNummer" as "unitID", ' \
@@ -374,24 +357,17 @@ class InfrastructureInterface:
                 df = pd.read_sql(query, self.database_mastr)
                 # If the response Dataframe is not empty set technical parameter
                 if not df.empty:
-                    df['maxPower'] = df['maxPower'] / 10**3
                     data_frames.append(df)
 
-            if len(data_frames):
-                return pd.concat(data_frames)
-            else:
-                return pd.DataFrame()
-
-        return pd.DataFrame()
+        return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_water_storage_systems(self, area=800):
 
-        if area in self.geo_information['NUTS_ID'].values:
-            storage_volumes = pd.read_csv(r'./interfaces/data/technical_parameter_storage.csv', index_col=0)
-            longitude, latitude = self.get_lon_lat(area)
-            plz_codes = self.get_plz_codes(area)
+        data_frames = []
+        if area in geo_information['NUTS_ID'].values:
 
-            data_frames = []
+            longitude, latitude = get_lon_lat(area)
+            plz_codes = get_plz_codes(area)
 
             for plz_code in plz_codes:
 
@@ -417,9 +393,7 @@ class InfrastructureInterface:
                 if not df.empty:
                     # set charge and discharge power
                     df['P+_max'] = df['P+_max'].fillna(df['P-_max'])            # fill na with Rated Power
-                    df['P-_max'] = df['P-_max'] / 10**3                         # [kW] --> [MW]
                     df['P-_min'] = 0                                            # set min to zero
-                    df['P+_max'] = df['P+_max'] / 10**3                         # [kW] --> [MW]
                     df['P+_min'] = 0                                            # set min to zero
 
                     # fill nan values with default from wiki
@@ -447,11 +421,7 @@ class InfrastructureInterface:
                         storages.append(storage)
                     data_frames.append(pd.DataFrame(storages))
 
-            if len(data_frames):
-                return pd.concat(data_frames)
-            else:
-                return pd.DataFrame()
-        return pd.DataFrame()
+        return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_demand_in_area(self, area=520):
         query = f'select sum(sector_consumption_residential) as household, sum(sector_consumption_retail) as business,' \
@@ -462,12 +432,11 @@ class InfrastructureInterface:
 
     def get_solar_storage_systems_in_area(self, area=521):
 
-        if area in self.geo_information['NUTS_ID'].values:
-            mastr_codes_solar = pd.read_csv(r'./interfaces/data/mastr_codes_solar.csv', index_col=0)
-            longitude, latitude = self.get_lon_lat(area)
-            plz_codes = self.get_plz_codes(area)
+        data_frames = []
+        if area in geo_information['NUTS_ID'].values:
 
-            data_frames = []
+            longitude, latitude = get_lon_lat(area)
+            plz_codes = get_plz_codes(area)
 
             for plz_code in plz_codes:
 
@@ -511,12 +480,7 @@ class InfrastructureInterface:
 
                     data_frames.append(df)
 
-            if len(data_frames):
-                return pd.concat(data_frames)
-            else:
-                return pd.DataFrame()
-
-        return pd.DataFrame()
+        return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_grid_nodes(self):
         return {}
@@ -532,11 +496,11 @@ if __name__ == "__main__":
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
 
     interface = InfrastructureInterface('test', structure_data_server=x, structure_data_credential=y)
-    # x = interface.get_power_plant_in_area(area='DEA2D', fuel_type='gas')
+    x = interface.get_power_plant_in_area(area='DEA2D', fuel_type='gas')
     #y = interface.get_water_storage_systems(area=415)
     #z = interface.get_solar_storage_systems_in_area(area=415)
-    a = interface.get_run_river_systems_in_area(area='DE111')
-    keys = np.unique(interface.plz_nuts['NUTS3'].to_numpy())
+    #a = interface.get_run_river_systems_in_area(area='DE111')
+    keys = np.unique(plz_nuts['NUTS3'].to_numpy())
 
 
     # pwp_agents = []
@@ -553,18 +517,18 @@ if __name__ == "__main__":
     # pwp_agents = np.asarray(pwp_agents)
     # np.save('pwp_agents', pwp_agents)
     #
-    # res_agents = []
-    # for plz in keys:
-    #     print(plz)
-    #     plants = False
-    #     wind = interface.get_wind_turbines_in_area(area=plz)
-    #     solar = interface.get_solar_storage_systems_in_area(area=plz)
-    #     bio = interface.get_biomass_systems_in_area(area=plz)
-    #     water = interface.get_run_river_systems_in_area(area=plz)
-    #     if any([not wind.empty,not solar.empty,not bio.empty, not water.empty]):
-    #         res_agents.append(plz)
-    #
-    # res_agents = np.asarray(res_agents)
+    res_agents = []
+    for plz in keys:
+        print(plz)
+        plants = False
+        wind = interface.get_wind_turbines_in_area(area=plz)
+        solar = interface.get_solar_storage_systems_in_area(area=plz)
+        bio = interface.get_biomass_systems_in_area(area=plz)
+        water = interface.get_run_river_systems_in_area(area=plz)
+        if any([not wind.empty,not solar.empty,not bio.empty, not water.empty]):
+            res_agents.append(plz)
+
+    res_agents = np.asarray(res_agents)
     # np.save('res_agents', res_agents)
     #
     # dem_agents = []
