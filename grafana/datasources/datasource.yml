@@ -10,8 +10,7 @@ deleteDatasources:
 # whats available in the database
 datasources:
   # <string, required> name of the datasource. Required
-- name: DMAS-DB
-  # <string, required> datasource type. Required
+- name: dMAS
   type: postgres
   url: simulationdb:5432
   user: dMAS
@@ -23,4 +22,17 @@ datasources:
     postgresVersion: 1200
     timescaledb: true
   isDefault: true
+  editable: true
+
+- name: Weather
+  type: postgres
+  url: 10.13.10.41:5432
+  user: readonly
+  database: weather
+  secureJsonData:
+    password: readonly
+  jsonData:
+    sslmode: "disable"
+    postgresVersion: 1200
+    timescaledb: true
   editable: true

@@ -19,9 +19,9 @@ class SimulationControl(Page):
                             id='date_range',
                             min_date_allowed=date(1995, 1, 1),
                             max_date_allowed=date(2030, 1, 1),
-                            initial_visible_month=date(1995, 1, 1),
-                            start_date=date(1995, 1, 1),
-                            end_date=date(1995, 2, 1)),
+                            initial_visible_month=date(2018, 1, 1),
+                            start_date=date(2018, 1, 1),
+                            end_date=date(2018, 2, 1)),
                         width=9),
                     dbc.Col(
                         PowerButton(id='trigger_simulation', on=status),

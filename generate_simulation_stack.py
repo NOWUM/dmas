@@ -85,6 +85,7 @@ output.append(f'''
   controller:
     container_name: ctl
     image: {image_repo}agent:latest
+    build: .
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'CTL'
@@ -118,6 +119,8 @@ output.append(f'''
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'NET'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
