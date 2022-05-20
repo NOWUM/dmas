@@ -48,6 +48,7 @@ output.append(f'''
 
   grafana:
     image: grafana/grafana
+    container_name: dmas-grafana
     user: "104"
     depends_on:
       - simulationdb

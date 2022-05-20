@@ -8,6 +8,10 @@ from systems.basic_system import EnergySystem
 class PortfolioModel:
 
     def __init__(self, T=24, date='2020-01-01'):
+        '''
+        Represents a portfolio of EnergySystems.
+        Its capacities, generation and demand is in MW
+        '''
 
         self.date = pd.to_datetime(date)
         self.energy_systems: list[EnergySystem] = []
@@ -17,6 +21,7 @@ class PortfolioModel:
         self.weather = {}
         self.prices = {}
 
+        # capacities are in [MW]
         self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0., solar=0.,
                                water=0., wind=0., storage=0.)
         self.generation = None
@@ -35,6 +40,11 @@ class PortfolioModel:
         self.prices = prices
 
     def add_energy_system(self, energy_system):
+        '''
+        adds an energy system to the portfolio
+        - power values of the EnergySystem are in kW
+        - the capacities of the Portfolio is stored in MW
+        '''
         pass
 
     def build_model(self, response=None):

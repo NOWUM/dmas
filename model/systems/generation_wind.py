@@ -29,7 +29,7 @@ class WindModel(EnergySystem):
                 diameter = min(turbine['diameter'], turbine['height']/2)
                 w = {'hub_height': turbine['height'],
                      'rotor_diameter': diameter,
-                     'nominal_power': turbine['maxPower']*1e3,
+                     'nominal_power': turbine['maxPower']* 1e3, # [kW] -> [W]
                      'power_curve': df}
                 heights.append(w['hub_height'])
                 wind_turbines.append(WindTurbine(**w))
@@ -47,7 +47,7 @@ class WindModel(EnergySystem):
             diameter = min(wind_turbine['diameter'], wind_turbine['height']/2)
             self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
                                             rotor_diameter=diameter,
-                                            nominal_power=wind_turbine['maxPower']*1e3,
+                                            nominal_power=wind_turbine['maxPower']*1e3, # [kW]
                                             power_curve=df)
 
         self.mc = ModelChain(self.wind_turbine)
@@ -65,8 +65,8 @@ class WindModel(EnergySystem):
 
     def optimize(self):
         self.mc.run_model(self.weather)
-        # value from windpowerlib is in Watt [kW]
-        self.generation['wind'] = np.asarray(self.mc.power_output, dtype=np.float64)/1e3
+        # windpowerlib calculated in [W]
+        self.generation['wind'] = np.asarray(self.mc.power_output, dtype=np.float64)/ 1e3 # [W] -> [kW]
         self.power = self.generation['wind']
 
         return self.power

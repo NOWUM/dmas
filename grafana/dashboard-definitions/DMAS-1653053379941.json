@@ -25,7 +25,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 1,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -81,7 +81,7 @@
               }
             ]
           },
-          "unit": "watt"
+          "unit": "megwatt"
         },
         "overrides": []
       },
@@ -192,7 +192,7 @@
               }
             ]
           },
-          "unit": "watt"
+          "unit": "megwatt"
         },
         "overrides": []
       },
@@ -332,7 +332,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "currencyEUR"
         },
         "overrides": []
       },

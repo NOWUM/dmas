@@ -19,7 +19,7 @@ if __name__ == '__main__':
     d = dem_agent.portfolio.demand['power']
     assert all(t-d < 0)
     pv = dem_agent.portfolio.energy_systems[-2]
-    pv.profile_generator.demandP/1e6 # ~300
+    pv.profile_generator.demandP/1e6 # ~300 GWh/year
 
     init_dict['type'] = 'PWP'
     agent_class = type_mapping[init_dict['type']]

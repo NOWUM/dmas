@@ -42,7 +42,7 @@ class RenewablePortfolio(PortfolioModel):
         if energy_system['type'] == 'bio':
             model = BioMassModel(self.T, **energy_system)
 
-        self.capacities[energy_system['type']] += energy_system['maxPower']
+        self.capacities[energy_system['type']] += energy_system['maxPower']/1e3 # [kW] -> [MW]
 
         self.energy_systems.append(model)
 
@@ -73,9 +73,9 @@ class RenewablePortfolio(PortfolioModel):
         try:
             for model in tqdm(self.energy_systems):
                 for key, value in model.generation.items():
-                    self.generation[key] += value/1e3     # -> [kW] in [MW]
+                    self.generation[key] += value/1e3 # [kW] -> [MW]
                 for key, value in model.demand.items():
-                    self.demand[key] += value/1e3         # -> [kW] in [MW]
+                    self.demand[key] += value/1e3 # [kW] -> [MW]
                 for key, value in model.cash_flow.items():
                     self.cash_flow[key] += value
 

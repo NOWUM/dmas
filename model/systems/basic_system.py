@@ -6,6 +6,12 @@ from datetime import date as to_date
 class EnergySystem:
 
     def __init__(self, T: int=24):
+        '''
+        Describes a basic EnergySystem which behaves dependent from weather and prices.
+
+        It has generation, demand and power in kW.
+        '''
+
         self.date = to_date(2018, 1, 1)
 
         self.T, self.t, self.dt = T, np.arange(T), 1

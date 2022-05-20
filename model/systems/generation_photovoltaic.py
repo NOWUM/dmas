@@ -22,7 +22,7 @@ class PvModel(es):
                                                    dni=self.weather['dni'],
                                                    ghi=self.weather['ghi'],
                                                    dhi=self.weather['dhi'])
-        # get generation in [kW]
+        # get generation in [kW/m^2] * [m^2]
         solar_power = (irradiance['poa_global'] / 1e3) * self.pv_system.arrays[0].module_parameters['pdc0']
         self.generation['solar'] = solar_power.to_numpy()
         self.power = self.generation['solar']

@@ -57,7 +57,7 @@ if __name__ == "__main__":
     energy_oep = get_power_oep()
     energy_household = energy_oep['household'] * 1e6
     power_ts_household = get_power_households(energy_household)
-    power_ts_entsoe = get_power_entsoe() * 1e3
+    power_ts_entsoe = get_power_entsoe() * 1e3 # [MW] -> [kW]
 
     power_ts_rlm = power_ts_entsoe - power_ts_household
 

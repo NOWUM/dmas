@@ -16,8 +16,8 @@ class PowerPlant(EnergySystem):
         super().__init__(T)
 
         self.name = unitID
-        self.power_plant = dict(fuel=fuel, maxPower=maxPower/1e3, minPower=minPower/1e3, eta=eta, P0=P0, chi=chi,
-                                stopTime=stopTime, runTime=runTime, gradP=gradP/1e3, gradM=gradM/1e3, on=on, off=off)
+        self.power_plant = dict(fuel=fuel, maxPower=maxPower, minPower=minPower, eta=eta, P0=P0, chi=chi,
+                                stopTime=stopTime, runTime=runTime, gradP=gradP, gradM=gradM, on=on, off=off)
         self.start_cost = startCost
 
         self.model = ConcreteModel()

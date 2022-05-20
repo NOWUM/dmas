@@ -19,7 +19,7 @@ class StrPort(PortfolioModel):
 
     def add_energy_system(self, energy_system):
         model = Storage(T=self.T, **energy_system)
-        self.capacities['storages'] += energy_system['VMax']
+        self.capacities['storages'] += energy_system['VMax']/1e3 # [kW] -> [MW]
         self.energy_systems.append(model)
 
     def build_model(self, response=None):
@@ -38,10 +38,10 @@ class StrPort(PortfolioModel):
         t = time.time()
         for model in tqdm(self.energy_systems):
             for key, value in model.generation.items():
-                self.generation['total'] += value
-                self.generation['water'] += value
+                self.generation['total'] += value/1e3 # [kW] -> [MW]
+                self.generation['water'] += value/1e3 # [kW] -> [MW]
             for key, value in model.demand.items():
-                self.demand[key] += value
+                self.demand[key] += value/1e3 # [kW] -> [MW]
             for key, value in model.cash_flow.items():
                 self.cash_flow[key] += value
 

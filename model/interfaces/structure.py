@@ -50,29 +50,34 @@ class InfrastructureInterface:
 
             for plz_code in plz_codes:
 
-                query = f'SELECT ev."EinheitMastrNummer" as "unitID", ' \
-                        f'ev."Energietraeger" as "fuel", ' \
-                        f'COALESCE(ev."Laengengrad", {longitude}) as "lon", ' \
-                        f'COALESCE(ev."Breitengrad", {latitude}) as "lat", ' \
-                        f'COALESCE(ev."Inbetriebnahmedatum", \'2010-01-01\') as "startDate", ' \
-                        f'ev."Nettonennleistung" as "maxPower", ' \
-                        f'COALESCE(ev."Technologie", 839) as "turbineTyp", ' \
-                        f'ev."GenMastrNummer" as "generatorID"'
+                query = f'''
+                    SELECT ev."EinheitMastrNummer" as "unitID",
+                    ev."Energietraeger" as "fuel",
+                    COALESCE(ev."Laengengrad", {longitude}) as "lon",
+                    COALESCE(ev."Breitengrad", {latitude}) as "lat",
+                    COALESCE(ev."Inbetriebnahmedatum", '2010-01-01') as "startDate",
+                    ev."Nettonennleistung" as "maxPower",
+                    COALESCE(ev."Technologie", 839) as "turbineTyp",
+                    ev."GenMastrNummer" as "generatorID"
+                    '''
                 if fuel_type != 'nuclear':
-                    query += f', ' + \
-                             f'kwk."ThermischeNutzleistung" as "kwkPowerTherm", ' + \
-                             f'kwk."ElektrischeKwkLeistung" as "kwkPowerElec", ' + \
-                             f'ev."AnlageIstImKombibetrieb" as "combination" ' + \
-                             f'FROM "EinheitenVerbrennung" ev ' + \
-                             f'LEFT JOIN "AnlagenKwk" kwk ON kwk."KwkMastrNummer" = ev."KwkMastrNummer" ' + \
-                             f'WHERE ev."Postleitzahl" = {plz_code} ' + \
-                             f'AND ev."Energietraeger" = {mastr_codes_fossil.loc[fuel_type, "value"]} ' + \
-                             f'AND ev."Nettonennleistung" > 5000 AND ev."EinheitBetriebsstatus" = 35 ' + \
-                             f'AND ev."ArtDerStilllegung" isnull;'
+                    query += f'''
+                        , 
+                        kwk."ThermischeNutzleistung" as "kwkPowerTherm",
+                        kwk."ElektrischeKwkLeistung" as "kwkPowerElec",
+                        ev."AnlageIstImKombibetrieb" as "combination"
+                        FROM "EinheitenVerbrennung" ev
+                        LEFT JOIN "AnlagenKwk" kwk ON kwk."KwkMastrNummer" = ev."KwkMastrNummer"
+                        WHERE ev."Postleitzahl" = {plz_code}
+                        AND ev."Energietraeger" = {mastr_codes_fossil.loc[fuel_type, "value"]}
+                        AND ev."Nettonennleistung" > 5000 AND ev."EinheitBetriebsstatus" = 35
+                        AND ev."ArtDerStilllegung" isnull;
+                        '''
                 else:
-                    query += f' ' + \
-                             f'FROM "EinheitenKernkraft" ev ' + \
-                             f'WHERE ev."Postleitzahl" = {plz_code} ' \
+                    query += f'''
+                             FROM "EinheitenKernkraft" ev
+                             WHERE ev."Postleitzahl" = {plz_code}
+                             '''
 
                 df = pd.read_sql(query, self.database_mastr)
 
@@ -214,13 +219,14 @@ class InfrastructureInterface:
                         df.loc[grid_use, 'ownConsumption'] = 0
                         df['ownConsumption'] = df['ownConsumption'].replace(689, 1)
                         df['ownConsumption'] = df['ownConsumption'].replace(688, 0)
-                        # assumption "regenerative Energiesysteme"
-                        df['demandP'] = df['maxPower'] * 10 ** 3
+                        # assumption "regenerative Energiesysteme":
+                        # a year has 1000 hours peak
+                        df['demandP'] = df['maxPower'] * 1e3
                     elif solar_type == 'free_area' or solar_type == 'other':
                         # set own consumption for solar power plant mounted PVs to 0, because the demand is unknown
                         df['ownConsumption'] = 0
                     if solar_type == 'roof_top':
-                        # all PVs with nan and startDate > 2012 and maxPower > 30 are limited to 70%
+                        # all PVs with nan and startDate > 2012 and maxPower > 30 kWp are limited to 70%
                         missing_values = df['limited'].isna()
                         power_cap = df['maxPower'] > 30
                         deadline = [date.year > 2012 for date in df['startDate']]
@@ -234,7 +240,7 @@ class InfrastructureInterface:
                         # nans have no limitation
                         df['limited'] = df['limited'].fillna(802)
                         df['limited'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['limited'].to_numpy(int)]
-                    # all PVs with nan and startDate > 2016 and maxPower > 100 have direct marketing
+                    # all PVs with nan and startDate > 2016 and maxPower > 100 kWp have direct marketing
                     missing_values = df['eeg'].isna()
                     power_cap = df['maxPower'] > 100
                     deadline = [date.year > 2016 for date in df['startDate']]
@@ -242,7 +248,6 @@ class InfrastructureInterface:
                     df.loc[eeg, 'eeg'] = 0
                     # rest nans are eeg assets and are managed by the tso
                     df['eeg'] = df['eeg'].replace(np.nan, 0)
-                    # set max Power to [MW]
 
                     data_frames.append(df)
 
@@ -399,8 +404,9 @@ class InfrastructureInterface:
 
                     # fill nan values with default from wiki
                     df['VMax'] = df['VMax'].fillna(0)
-                    df['VMax'] = df['VMax'] / 1e3
+                    df['VMax'] = df['VMax']
                     for index, row in df[df['VMax'] == 0].iterrows():
+                        # TODO validate that storage_volumes is in [kW]
                         for key, value in storage_volumes.iterrows():
                             if key in row['name']:
                                 df.at[index, 'VMax'] = value['volume']
@@ -473,7 +479,8 @@ class InfrastructureInterface:
                     # all PVs with nan have a tilt angle of 30°
                     df['tilt'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['tiltCode'].to_numpy(int)]
                     del df['tiltCode']
-                    # assumption "regenerative Energiesysteme"
+                    # assumption "regenerative Energiesysteme":
+                    # a year has 1000 hours peak
                     df['demandP'] = df['maxPower'] * 1e3
 
                     df['eta'] = 0.96
