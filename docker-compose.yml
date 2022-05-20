@@ -70,6 +70,7 @@ services:
   controller:
     container_name: ctl
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    build: .
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'CTL'
@@ -97,6 +98,8 @@ services:
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'NET'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de111:
     container_name: dem_de111

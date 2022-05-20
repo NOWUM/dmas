@@ -30,7 +30,7 @@ class CtlAgent(BasicAgent):
         self.dashboard = Dashboard()
         self.simulation_interface.date = self.start_date
 
-        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def set_waiting_list(self):
         self.waiting_list = self.simulation_interface.get_agents()
@@ -127,7 +127,7 @@ class CtlAgent(BasicAgent):
 
                     # 4. Step: reset the order_book table for the next day
                     self.simulation_interface.reset_order_book()
-                    self.logger.info(f'finished day in {np.round(time.time() - start_time, 2)} seconds')
+                    self.logger.info(f'finished day in {time.time() - start_time:.2f} seconds')
 
                     self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
                                                body=f'set_capacities {self.date.date()}')

@@ -15,7 +15,7 @@ class MarketAgent(BasicAgent):
         start_time = time.time()
         self.market = DayAheadMarket()
 
-        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)

@@ -27,7 +27,7 @@ class PvBatModel(es):
                                                    ghi=self.weather['ghi'],
                                                    dhi=self.weather['dhi'])
         # get generation in [kW]
-        solar_power = (irradiance['poa_global'] / 10**3) * self.pv_system.arrays[0].module_parameters['pdc0']
+        solar_power = (irradiance['poa_global'] / 1e3) * self.pv_system.arrays[0].module_parameters['pdc0']
         self.generation['solar'] = solar_power.to_numpy()
         # get demand in [kW]
         self.demand['power'] = self.demand_system.run_model(self.date)

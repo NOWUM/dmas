@@ -73,9 +73,9 @@ class RenewablePortfolio(PortfolioModel):
         try:
             for model in tqdm(self.energy_systems):
                 for key, value in model.generation.items():
-                    self.generation[key] += value/10**3     # -> [kW] in [MW]
+                    self.generation[key] += value/1e3     # -> [kW] in [MW]
                 for key, value in model.demand.items():
-                    self.demand[key] += value/10**3         # -> [kW] in [MW]
+                    self.demand[key] += value/1e3         # -> [kW] in [MW]
                 for key, value in model.cash_flow.items():
                     self.cash_flow[key] += value
 

@@ -36,7 +36,7 @@ class PwpAgent(BasicAgent):
         # Construction power plants
         self.logger.info('Power Plants added')
 
-        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
 
     def callback(self, ch, method, properties, body):
@@ -224,10 +224,10 @@ class PwpAgent(BasicAgent):
 
         self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
         self.portfolio.build_model()
-        self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
         # Step 2: optimization
         self.portfolio.optimize()
-        self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
         self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area, self.date)
@@ -239,7 +239,7 @@ class PwpAgent(BasicAgent):
         self.simulation_interface.set_linked_orders(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
-        self.logger.info(f'built Orders in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
@@ -272,4 +272,4 @@ class PwpAgent(BasicAgent):
             self.forecast_counter = 10
             self.logger.info(f'fitted price forecast with R²: {self.price_forecast.score}')
 
-        self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')

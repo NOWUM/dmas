@@ -80,7 +80,7 @@ class ResAgent(BasicAgent):
             self.portfolio_eeg.add_energy_system(system)
         self.logger.info('Biomass Power Plants added')
 
-        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def get_order_book(self, power, type='eeg'):
         order_book = {}
@@ -138,12 +138,12 @@ class ResAgent(BasicAgent):
 
         self.portfolio_mrk.set_parameter(self.date, weather.copy(),  prices.copy())
         self.portfolio_mrk.build_model()
-        self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
         start_time = time.time()
         # Step 2: optimization
         power_eeg = self.portfolio_eeg.optimize()
         power_mrk = self.portfolio_mrk.optimize()
-        self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
         self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead',
@@ -159,7 +159,7 @@ class ResAgent(BasicAgent):
         self.simulation_interface.set_hourly_orders(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
-        self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'built Orders and send in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
@@ -169,4 +169,4 @@ class ResAgent(BasicAgent):
         self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)
 
-        self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')

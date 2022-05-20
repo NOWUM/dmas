@@ -44,11 +44,11 @@ class DemAgent(BasicAgent):
         self.logger.info('Prosumer Photovoltaic added')
 
         demands = self.infrastructure_interface.get_demand_in_area(self.area)
-        household_demand = demands['household'].values[0] * 10**6
+        household_demand = demands['household'].values[0] * 1e6
         household_demand -= demand
 
         rlm_demand = demands['business'].values[0] + demands['industry'].values[0] + demands['agriculture'].values[0]
-        rlm_demand *= 10**6
+        rlm_demand *= 1e6
 
         # Construction Standard Consumer H0
         self.portfolio.add_energy_system({'unitID': 'household', 'demandP': household_demand, 'type': 'household'})
@@ -66,7 +66,7 @@ class DemAgent(BasicAgent):
         #self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
         self.logger.info('Agriculture added')
 
-        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def get_order_book(self, power):
         order_book = {}
@@ -109,11 +109,11 @@ class DemAgent(BasicAgent):
 
         self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
         self.portfolio.build_model()
-        self.logger.info(f'built model in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
         start_time = time.time()
         # Step 2: optimization
         power = self.portfolio.optimize()
-        self.logger.info(f'finished day ahead optimization in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
         self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area, self.date)
@@ -125,7 +125,7 @@ class DemAgent(BasicAgent):
         self.simulation_interface.set_hourly_orders(order_book)
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
-        self.logger.info(f'built Orders and send in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'built Orders and send in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
@@ -135,4 +135,5 @@ class DemAgent(BasicAgent):
         self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
 
-        self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')
+

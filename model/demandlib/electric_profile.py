@@ -68,7 +68,7 @@ class StandardLoadProfile:
         dow = d.dayofweek
         year = d.year
 
-        f = self.demandP / 10**6  # [kW] to [GW] ?
+        f = self.demandP / 1e6  # [kW] to [GW] ?
         if self.type == 'household':
             f *= -0.000000000392 * doy ** 4 + 0.00000032 * doy ** 3 - 0.0000702 * doy ** 2 + 0.0021 * doy + 1.24
 

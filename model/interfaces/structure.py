@@ -296,7 +296,7 @@ class InfrastructureInterface:
                     #             for typ in df['typ']]
                     # df['typ'] = df['typ'].replace('', 'default')
                     # set tag for wind farms
-                    wind_farm_prefix = f'{area * 10**3}F'
+                    wind_farm_prefix = f'{area * 1e3}F'
                     df['windFarm'] = 'x'
                     counter = 0
                     for genId in df['generatorID'].unique():
@@ -399,7 +399,7 @@ class InfrastructureInterface:
 
                     # fill nan values with default from wiki
                     df['VMax'] = df['VMax'].fillna(0)
-                    df['VMax'] = df['VMax'] / 10**3
+                    df['VMax'] = df['VMax'] / 1e3
                     for index, row in df[df['VMax'] == 0].iterrows():
                         for key, value in storage_volumes.iterrows():
                             if key in row['name']:
@@ -474,7 +474,7 @@ class InfrastructureInterface:
                     df['tilt'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['tiltCode'].to_numpy(int)]
                     del df['tiltCode']
                     # assumption "regenerative Energiesysteme"
-                    df['demandP'] = df['maxPower'] * 10**3
+                    df['demandP'] = df['maxPower'] * 1e3
 
                     df['eta'] = 0.96
                     df['V0'] = 0

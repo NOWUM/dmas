@@ -55,16 +55,16 @@ def get_power_entsoe():
 
 if __name__ == "__main__":
     energy_oep = get_power_oep()
-    energy_household = energy_oep['household'] * 10**6
+    energy_household = energy_oep['household'] * 1e6
     power_ts_household = get_power_households(energy_household)
-    power_ts_entsoe = get_power_entsoe() * 10**3
+    power_ts_entsoe = get_power_entsoe() * 1e3
 
     power_ts_rlm = power_ts_entsoe - power_ts_household
 
     power = pd.DataFrame(data=dict(value=power_ts_rlm),
                          index=pd.date_range(start='2019-01-01', freq='15min', periods=len(power_ts_rlm)))
 
-    power['value'] = power['value']/(sum(power['value'])/4) * 10**6
+    power['value'] = power['value']/(sum(power['value'])/4) * 1e6
 
     profiles = {'summer': {'sa': [],
                            'so': [],

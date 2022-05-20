@@ -29,7 +29,7 @@ class StrAgent(BasicAgent):
         df['agent'] = self.name
         df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='replace')
 
-        self.logger.info(f'setup of the agent completed in {np.round(time.time() - start_time,2)} seconds')
+        self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def callback(self, ch, method, properties, body):
         super().callback(ch, method, properties, body)
@@ -53,7 +53,7 @@ class StrAgent(BasicAgent):
         start_time = time.time()
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
-        self.logger.info(f'built Orders in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
@@ -61,4 +61,4 @@ class StrAgent(BasicAgent):
 
         self.logger.info('starting day ahead adjustments')
 
-        self.logger.info(f'finished day ahead adjustments in {np.round(time.time() - start_time, 2)} seconds')
+        self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')
