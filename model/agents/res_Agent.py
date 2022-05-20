@@ -45,7 +45,7 @@ class ResAgent(BasicAgent):
                                                           'type': 'wind', 'maxPower': turbine['maxPower']})
         self.logger.info('Wind Power Plants added')
 
-        # Construction of the pv systems (free area)
+        # Construction of the solar power plant
         pv_1 = self.infrastructure_interface.get_solar_systems_in_area(self.area, solar_type='free_area')
         pv_2 = self.infrastructure_interface.get_solar_systems_in_area(self.area, solar_type='other')
         pvs = pd.concat([pv_1, pv_2])
@@ -54,7 +54,8 @@ class ResAgent(BasicAgent):
             self.portfolio_eeg.add_energy_system(system)
         for system in tqdm(pvs[pvs['eeg'] == 0].to_dict(orient='records')):
             self.portfolio_mrk.add_energy_system(system)
-        self.logger.info('Free Area PV added')
+        self.logger.info('Solar power plant added')
+        # Freiflächen-PV-Anlage
 
         # Construction of the pv systems (h0)
         pv_data = self.infrastructure_interface.get_solar_systems_in_area(self.area, solar_type='roof_top')

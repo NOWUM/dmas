@@ -216,7 +216,7 @@ class InfrastructureInterface:
                         # assumption "regenerative Energiesysteme"
                         df['demandP'] = df['maxPower'] * 10 ** 3
                     elif solar_type == 'free_area' or solar_type == 'other':
-                        # set own consumption for free area mounted PVs to 0, because the demand is unknown
+                        # set own consumption for solar power plant mounted PVs to 0, because the demand is unknown
                         df['ownConsumption'] = 0
                     if solar_type == 'roof_top':
                         # all PVs with nan and startDate > 2012 and maxPower > 30 are limited to 70%
@@ -229,7 +229,7 @@ class InfrastructureInterface:
                         df['limited'] = df['limited'].fillna(802)
                         df['limited'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['limited'].to_numpy(int)]
                     if solar_type == 'free_area' or solar_type == 'other':
-                        # TODO: Check restrictions for free area pv
+                        # TODO: Check restrictions for solar power plant
                         # nans have no limitation
                         df['limited'] = df['limited'].fillna(802)
                         df['limited'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['limited'].to_numpy(int)]
@@ -295,7 +295,7 @@ class InfrastructureInterface:
                     #             for typ in df['typ']]
                     # df['typ'] = df['typ'].replace('', 'default')
                     # set tag for wind farms
-                    wind_farm_prefix = f'{area * 1000}F'
+                    wind_farm_prefix = f'{area * 10**3}F'
                     df['windFarm'] = 'x'
                     counter = 0
                     for genId in df['generatorID'].unique():

@@ -193,6 +193,8 @@ class DayAheadMarket:
                         * self.exclusive_total[block, t, order, name][0]
                 orders.append(price)
 
+            if not orders:
+                raise Exception('No Orders available - Is any demand connected?')
             prices.append(max(orders))
         prices = pd.DataFrame(data=dict(price=prices))
 

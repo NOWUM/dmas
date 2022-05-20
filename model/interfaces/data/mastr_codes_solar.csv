@@ -2,7 +2,7 @@
 free_area,used for pv <= 10kW,852
 roof_top,used for pv > 10 kW,853
 balcony,not used,2961
-other,used such as free area,2484
+other,used such as solar power plant,2484
 695,North,0
 696,North-East,45
 697,East,90

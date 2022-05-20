@@ -16,7 +16,7 @@ class WindModel(EnergySystem):
         super().__init__(T)
 
         if wind_turbine is None:
-            wind_turbine = dict(turbine_type='E-82/2300', height=112, diameter=102)
+            wind_turbine = dict(turbine_type='E-82/2300', height=108, diameter=82)
 
         self.wind_turbine = None
         # TODO: Replace default with new data
@@ -25,9 +25,10 @@ class WindModel(EnergySystem):
         if isinstance(wind_turbine, list):
             wind_turbines, numbers = [], []
             heights = []
+            diameter = min(turbine['diameter'], turbine['height']/2)
             for turbine in wind_turbine:
                 w = {'hub_height': turbine['height'],
-                     'rotor_diameter': turbine['diameter'],
+                     'rotor_diameter': diameter,
                      'nominal_power': turbine['maxPower']*10**3,
                      'power_curve': df}
                 heights.append(w['hub_height'])
@@ -43,8 +44,9 @@ class WindModel(EnergySystem):
 
         else:
             # windpowerlib uses Watt [W]
+            diameter = min(turbine['diameter'], turbine['height']/2)
             self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
-                                            rotor_diameter=wind_turbine['diameter'],
+                                            rotor_diameter=diameter,
                                             nominal_power=wind_turbine['maxPower']*10**3,
                                             power_curve=df)
 

@@ -64,7 +64,7 @@ if __name__ == "__main__":
     power = pd.DataFrame(data=dict(value=power_ts_rlm),
                          index=pd.date_range(start='2019-01-01', freq='15min', periods=len(power_ts_rlm)))
 
-    power['value'] = power['value']/(sum(power['value'])/4) * 1000 * 1000
+    power['value'] = power['value']/(sum(power['value'])/4) * 10**6
 
     profiles = {'summer': {'sa': [],
                            'so': [],
