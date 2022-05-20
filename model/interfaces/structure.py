@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 import pandas as pd
 import geopandas as gpd
+import numpy as np
 
 geo_information = gpd.read_file(r'./interfaces/data/NUTS_EU.shp')
 plz_nuts = pd.read_csv(r'./interfaces/data/plz_to_nuts.csv', sep=';')
@@ -490,8 +491,6 @@ class InfrastructureInterface:
 
 if __name__ == "__main__":
     import os
-    import numpy as np
-    from tqdm import tqdm
     x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
 

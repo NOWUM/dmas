@@ -5,7 +5,7 @@ import logging
 import time
 
 from interfaces.weather import WeatherInterface
-from interfaces.structure import InfrastructureInterface
+from interfaces.structure import InfrastructureInterface, get_lon_lat
 from interfaces.simulation import SimulationInterface
 
 
@@ -40,7 +40,7 @@ class BasicAgent:
         self.structure_data_credential= kwargs['structure_credential']
         self.infrastructure_interface = InfrastructureInterface(self.name, self.structure_data_server,
                                                                 self.structure_data_credential)
-        self.longitude, self.latitude = self.infrastructure_interface.get_lon_lat(self.area)
+        self.longitude, self.latitude = get_lon_lat(self.area)
 
         # declare weather data server
         self.weather_interface = WeatherInterface(self.name, kwargs['weather_database_uri'])
@@ -82,4 +82,7 @@ class BasicAgent:
         self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
         print(f' --> Agent {self.name} has connected to simulation '
               f'and is waiting for instructions (to exit press CTRL+C)')
-        self.channel.start_consuming()
+        try:
+            self.channel.start_consuming()
+        except KeyboardInterrupt:
+            print('KeyBoardInterrupt')

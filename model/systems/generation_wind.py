@@ -25,8 +25,8 @@ class WindModel(EnergySystem):
         if isinstance(wind_turbine, list):
             wind_turbines, numbers = [], []
             heights = []
-            diameter = min(turbine['diameter'], turbine['height']/2)
             for turbine in wind_turbine:
+                diameter = min(turbine['diameter'], turbine['height']/2)
                 w = {'hub_height': turbine['height'],
                      'rotor_diameter': diameter,
                      'nominal_power': turbine['maxPower']*10**3,
@@ -44,7 +44,7 @@ class WindModel(EnergySystem):
 
         else:
             # windpowerlib uses Watt [W]
-            diameter = min(turbine['diameter'], turbine['height']/2)
+            diameter = min(wind_turbine['diameter'], wind_turbine['height']/2)
             self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
                                             rotor_diameter=diameter,
                                             nominal_power=wind_turbine['maxPower']*10**3,
