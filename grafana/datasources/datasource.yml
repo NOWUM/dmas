@@ -1,0 +1,26 @@
+# config file version
+apiVersion: 1
+
+# list of datasources that should be deleted from the database
+deleteDatasources:
+  - name: DMAS-DB
+    orgId: 1
+
+# list of datasources to insert/update depending
+# whats available in the database
+datasources:
+  # <string, required> name of the datasource. Required
+- name: DMAS-DB
+  # <string, required> datasource type. Required
+  type: postgres
+  url: simulationdb:5432
+  user: dMAS
+  database: dmas
+  secureJsonData:
+    password: dMAS
+  jsonData:
+    sslmode: "disable"
+    postgresVersion: 1200
+    timescaledb: true
+  isDefault: true
+  editable: true

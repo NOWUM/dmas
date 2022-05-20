@@ -81,6 +81,8 @@ class DemAgent(BasicAgent):
                                      volume=power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')
+        if df.empty:
+            raise Exception(f'no orders found; order_book: {order_book}')
         return df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
     def callback(self, ch, method, properties, body):

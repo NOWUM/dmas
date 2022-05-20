@@ -2,13 +2,15 @@
 import numpy as np
 import pandas as pd
 
+from systems.basic_system import EnergySystem
+
 
 class PortfolioModel:
 
     def __init__(self, T=24, date='2020-01-01'):
 
         self.date = pd.to_datetime(date)
-        self.energy_systems = []
+        self.energy_systems: list[EnergySystem] = []
 
         self.T, self.t, self.dt = T, np.arange(T), 1
 

@@ -35,6 +35,25 @@ services:
       placement:
         constraints: [node.role == manager]
 
+  grafana:
+    image: grafana/grafana
+    user: "104"
+    depends_on:
+      - simulationdb
+    ports:
+      - 3001:3000
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboard-definitions:/etc/grafana/provisioning/dashboard-definitions
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management
@@ -54,6 +73,8 @@ services:
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'CTL'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
     ports:
       - 5000:5000
 
@@ -63,6 +84,8 @@ services:
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'MRK'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
     configs:
       - source: market_config
         target: /opt/gurobi/gurobi.lic
@@ -81,6 +104,8 @@ services:
     environment:
       AREA_CODE: DE111
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de112:
     container_name: dem_de112
@@ -88,6 +113,8 @@ services:
     environment:
       AREA_CODE: DE112
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de113:
     container_name: dem_de113
@@ -95,6 +122,8 @@ services:
     environment:
       AREA_CODE: DE113
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de114:
     container_name: dem_de114
@@ -102,6 +131,8 @@ services:
     environment:
       AREA_CODE: DE114
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de115:
     container_name: dem_de115
@@ -109,6 +140,8 @@ services:
     environment:
       AREA_CODE: DE115
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de116:
     container_name: dem_de116
@@ -116,6 +149,8 @@ services:
     environment:
       AREA_CODE: DE116
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de117:
     container_name: dem_de117
@@ -123,6 +158,8 @@ services:
     environment:
       AREA_CODE: DE117
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de118:
     container_name: dem_de118
@@ -130,6 +167,8 @@ services:
     environment:
       AREA_CODE: DE118
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de119:
     container_name: dem_de119
@@ -137,6 +176,8 @@ services:
     environment:
       AREA_CODE: DE119
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de11a:
     container_name: dem_de11a
@@ -144,6 +185,8 @@ services:
     environment:
       AREA_CODE: DE11A
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de11b:
     container_name: dem_de11b
@@ -151,6 +194,8 @@ services:
     environment:
       AREA_CODE: DE11B
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de11c:
     container_name: dem_de11c
@@ -158,6 +203,8 @@ services:
     environment:
       AREA_CODE: DE11C
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de11d:
     container_name: dem_de11d
@@ -165,6 +212,8 @@ services:
     environment:
       AREA_CODE: DE11D
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de121:
     container_name: dem_de121
@@ -172,6 +221,8 @@ services:
     environment:
       AREA_CODE: DE121
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de122:
     container_name: dem_de122
@@ -179,6 +230,8 @@ services:
     environment:
       AREA_CODE: DE122
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de123:
     container_name: dem_de123
@@ -186,6 +239,8 @@ services:
     environment:
       AREA_CODE: DE123
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de124:
     container_name: dem_de124
@@ -193,6 +248,8 @@ services:
     environment:
       AREA_CODE: DE124
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de125:
     container_name: dem_de125
@@ -200,6 +257,8 @@ services:
     environment:
       AREA_CODE: DE125
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de126:
     container_name: dem_de126
@@ -207,6 +266,8 @@ services:
     environment:
       AREA_CODE: DE126
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de127:
     container_name: dem_de127
@@ -214,6 +275,8 @@ services:
     environment:
       AREA_CODE: DE127
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de128:
     container_name: dem_de128
@@ -221,6 +284,8 @@ services:
     environment:
       AREA_CODE: DE128
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de129:
     container_name: dem_de129
@@ -228,6 +293,8 @@ services:
     environment:
       AREA_CODE: DE129
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de12a:
     container_name: dem_de12a
@@ -235,6 +302,8 @@ services:
     environment:
       AREA_CODE: DE12A
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de12b:
     container_name: dem_de12b
@@ -242,6 +311,8 @@ services:
     environment:
       AREA_CODE: DE12B
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de12c:
     container_name: dem_de12c
@@ -249,6 +320,8 @@ services:
     environment:
       AREA_CODE: DE12C
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de131:
     container_name: dem_de131
@@ -256,6 +329,8 @@ services:
     environment:
       AREA_CODE: DE131
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de132:
     container_name: dem_de132
@@ -263,6 +338,8 @@ services:
     environment:
       AREA_CODE: DE132
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de133:
     container_name: dem_de133
@@ -270,6 +347,8 @@ services:
     environment:
       AREA_CODE: DE133
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de134:
     container_name: dem_de134
@@ -277,6 +356,8 @@ services:
     environment:
       AREA_CODE: DE134
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de135:
     container_name: dem_de135
@@ -284,6 +365,8 @@ services:
     environment:
       AREA_CODE: DE135
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de136:
     container_name: dem_de136
@@ -291,6 +374,8 @@ services:
     environment:
       AREA_CODE: DE136
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de137:
     container_name: dem_de137
@@ -298,6 +383,8 @@ services:
     environment:
       AREA_CODE: DE137
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de138:
     container_name: dem_de138
@@ -305,6 +392,8 @@ services:
     environment:
       AREA_CODE: DE138
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de139:
     container_name: dem_de139
@@ -312,6 +401,8 @@ services:
     environment:
       AREA_CODE: DE139
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de13a:
     container_name: dem_de13a
@@ -319,6 +410,8 @@ services:
     environment:
       AREA_CODE: DE13A
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de141:
     container_name: dem_de141
@@ -326,6 +419,8 @@ services:
     environment:
       AREA_CODE: DE141
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de142:
     container_name: dem_de142
@@ -333,6 +428,8 @@ services:
     environment:
       AREA_CODE: DE142
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de143:
     container_name: dem_de143
@@ -340,6 +437,8 @@ services:
     environment:
       AREA_CODE: DE143
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de144:
     container_name: dem_de144
@@ -347,6 +446,8 @@ services:
     environment:
       AREA_CODE: DE144
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de145:
     container_name: dem_de145
@@ -354,6 +455,8 @@ services:
     environment:
       AREA_CODE: DE145
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de146:
     container_name: dem_de146
@@ -361,6 +464,8 @@ services:
     environment:
       AREA_CODE: DE146
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de147:
     container_name: dem_de147
@@ -368,6 +473,8 @@ services:
     environment:
       AREA_CODE: DE147
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de148:
     container_name: dem_de148
@@ -375,6 +482,8 @@ services:
     environment:
       AREA_CODE: DE148
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de149:
     container_name: dem_de149
@@ -382,6 +491,8 @@ services:
     environment:
       AREA_CODE: DE149
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de211:
     container_name: dem_de211
@@ -389,6 +500,8 @@ services:
     environment:
       AREA_CODE: DE211
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de212:
     container_name: dem_de212
@@ -396,6 +509,8 @@ services:
     environment:
       AREA_CODE: DE212
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de213:
     container_name: dem_de213
@@ -403,6 +518,8 @@ services:
     environment:
       AREA_CODE: DE213
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de214:
     container_name: dem_de214
@@ -410,6 +527,8 @@ services:
     environment:
       AREA_CODE: DE214
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de215:
     container_name: dem_de215
@@ -417,6 +536,8 @@ services:
     environment:
       AREA_CODE: DE215
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de216:
     container_name: dem_de216
@@ -424,6 +545,8 @@ services:
     environment:
       AREA_CODE: DE216
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de217:
     container_name: dem_de217
@@ -431,6 +554,8 @@ services:
     environment:
       AREA_CODE: DE217
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de218:
     container_name: dem_de218
@@ -438,6 +563,8 @@ services:
     environment:
       AREA_CODE: DE218
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de219:
     container_name: dem_de219
@@ -445,6 +572,8 @@ services:
     environment:
       AREA_CODE: DE219
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21a:
     container_name: dem_de21a
@@ -452,6 +581,8 @@ services:
     environment:
       AREA_CODE: DE21A
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21b:
     container_name: dem_de21b
@@ -459,6 +590,8 @@ services:
     environment:
       AREA_CODE: DE21B
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21c:
     container_name: dem_de21c
@@ -466,6 +599,8 @@ services:
     environment:
       AREA_CODE: DE21C
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21d:
     container_name: dem_de21d
@@ -473,6 +608,8 @@ services:
     environment:
       AREA_CODE: DE21D
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21e:
     container_name: dem_de21e
@@ -480,6 +617,8 @@ services:
     environment:
       AREA_CODE: DE21E
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21f:
     container_name: dem_de21f
@@ -487,6 +626,8 @@ services:
     environment:
       AREA_CODE: DE21F
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21g:
     container_name: dem_de21g
@@ -494,6 +635,8 @@ services:
     environment:
       AREA_CODE: DE21G
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21h:
     container_name: dem_de21h
@@ -501,6 +644,8 @@ services:
     environment:
       AREA_CODE: DE21H
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21i:
     container_name: dem_de21i
@@ -508,6 +653,8 @@ services:
     environment:
       AREA_CODE: DE21I
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21j:
     container_name: dem_de21j
@@ -515,6 +662,8 @@ services:
     environment:
       AREA_CODE: DE21J
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21k:
     container_name: dem_de21k
@@ -522,6 +671,8 @@ services:
     environment:
       AREA_CODE: DE21K
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21l:
     container_name: dem_de21l
@@ -529,6 +680,8 @@ services:
     environment:
       AREA_CODE: DE21L
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21m:
     container_name: dem_de21m
@@ -536,6 +689,8 @@ services:
     environment:
       AREA_CODE: DE21M
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de21n:
     container_name: dem_de21n
@@ -543,6 +698,8 @@ services:
     environment:
       AREA_CODE: DE21N
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de221:
     container_name: dem_de221
@@ -550,6 +707,8 @@ services:
     environment:
       AREA_CODE: DE221
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de222:
     container_name: dem_de222
@@ -557,6 +716,8 @@ services:
     environment:
       AREA_CODE: DE222
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de223:
     container_name: dem_de223
@@ -564,6 +725,8 @@ services:
     environment:
       AREA_CODE: DE223
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de224:
     container_name: dem_de224
@@ -571,6 +734,8 @@ services:
     environment:
       AREA_CODE: DE224
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de225:
     container_name: dem_de225
@@ -578,6 +743,8 @@ services:
     environment:
       AREA_CODE: DE225
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de226:
     container_name: dem_de226
@@ -585,6 +752,8 @@ services:
     environment:
       AREA_CODE: DE226
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de227:
     container_name: dem_de227
@@ -592,6 +761,8 @@ services:
     environment:
       AREA_CODE: DE227
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de228:
     container_name: dem_de228
@@ -599,6 +770,8 @@ services:
     environment:
       AREA_CODE: DE228
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de229:
     container_name: dem_de229
@@ -606,6 +779,8 @@ services:
     environment:
       AREA_CODE: DE229
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de22a:
     container_name: dem_de22a
@@ -613,6 +788,8 @@ services:
     environment:
       AREA_CODE: DE22A
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de22b:
     container_name: dem_de22b
@@ -620,6 +797,8 @@ services:
     environment:
       AREA_CODE: DE22B
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de22c:
     container_name: dem_de22c
@@ -627,6 +806,8 @@ services:
     environment:
       AREA_CODE: DE22C
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de231:
     container_name: dem_de231
@@ -634,6 +815,8 @@ services:
     environment:
       AREA_CODE: DE231
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de232:
     container_name: dem_de232
@@ -641,6 +824,8 @@ services:
     environment:
       AREA_CODE: DE232
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de233:
     container_name: dem_de233
@@ -648,6 +833,8 @@ services:
     environment:
       AREA_CODE: DE233
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de234:
     container_name: dem_de234
@@ -655,6 +842,8 @@ services:
     environment:
       AREA_CODE: DE234
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de235:
     container_name: dem_de235
@@ -662,6 +851,8 @@ services:
     environment:
       AREA_CODE: DE235
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de236:
     container_name: dem_de236
@@ -669,6 +860,8 @@ services:
     environment:
       AREA_CODE: DE236
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de237:
     container_name: dem_de237
@@ -676,6 +869,8 @@ services:
     environment:
       AREA_CODE: DE237
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de238:
     container_name: dem_de238
@@ -683,6 +878,8 @@ services:
     environment:
       AREA_CODE: DE238
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de239:
     container_name: dem_de239
@@ -690,6 +887,8 @@ services:
     environment:
       AREA_CODE: DE239
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de23a:
     container_name: dem_de23a
@@ -697,6 +896,8 @@ services:
     environment:
       AREA_CODE: DE23A
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de241:
     container_name: dem_de241
@@ -704,6 +905,8 @@ services:
     environment:
       AREA_CODE: DE241
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de242:
     container_name: dem_de242
@@ -711,6 +914,8 @@ services:
     environment:
       AREA_CODE: DE242
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de243:
     container_name: dem_de243
@@ -718,6 +923,8 @@ services:
     environment:
       AREA_CODE: DE243
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de244:
     container_name: dem_de244
@@ -725,6 +932,8 @@ services:
     environment:
       AREA_CODE: DE244
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de245:
     container_name: dem_de245
@@ -732,6 +941,8 @@ services:
     environment:
       AREA_CODE: DE245
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de246:
     container_name: dem_de246
@@ -739,6 +950,8 @@ services:
     environment:
       AREA_CODE: DE246
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de247:
     container_name: dem_de247
@@ -746,6 +959,8 @@ services:
     environment:
       AREA_CODE: DE247
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de248:
     container_name: dem_de248
@@ -753,6 +968,8 @@ services:
     environment:
       AREA_CODE: DE248
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de249:
     container_name: dem_de249
@@ -760,6 +977,8 @@ services:
     environment:
       AREA_CODE: DE249
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de24a:
     container_name: dem_de24a
@@ -767,6 +986,8 @@ services:
     environment:
       AREA_CODE: DE24A
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   dem_de24b:
     container_name: dem_de24b
@@ -774,6 +995,8 @@ services:
     environment:
       AREA_CODE: DE24B
       TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de111:
     container_name: pwp_de111
@@ -781,6 +1004,8 @@ services:
     environment:
       AREA_CODE: DE111
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de112:
     container_name: pwp_de112
@@ -788,6 +1013,8 @@ services:
     environment:
       AREA_CODE: DE112
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de113:
     container_name: pwp_de113
@@ -795,6 +1022,8 @@ services:
     environment:
       AREA_CODE: DE113
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de114:
     container_name: pwp_de114
@@ -802,6 +1031,8 @@ services:
     environment:
       AREA_CODE: DE114
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de116:
     container_name: pwp_de116
@@ -809,6 +1040,8 @@ services:
     environment:
       AREA_CODE: DE116
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de117:
     container_name: pwp_de117
@@ -816,6 +1049,8 @@ services:
     environment:
       AREA_CODE: DE117
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de118:
     container_name: pwp_de118
@@ -823,6 +1058,8 @@ services:
     environment:
       AREA_CODE: DE118
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de11a:
     container_name: pwp_de11a
@@ -830,6 +1067,8 @@ services:
     environment:
       AREA_CODE: DE11A
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de11d:
     container_name: pwp_de11d
@@ -837,6 +1076,8 @@ services:
     environment:
       AREA_CODE: DE11D
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de122:
     container_name: pwp_de122
@@ -844,6 +1085,8 @@ services:
     environment:
       AREA_CODE: DE122
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de124:
     container_name: pwp_de124
@@ -851,6 +1094,8 @@ services:
     environment:
       AREA_CODE: DE124
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de125:
     container_name: pwp_de125
@@ -858,6 +1103,8 @@ services:
     environment:
       AREA_CODE: DE125
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de126:
     container_name: pwp_de126
@@ -865,6 +1112,8 @@ services:
     environment:
       AREA_CODE: DE126
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de128:
     container_name: pwp_de128
@@ -872,6 +1121,8 @@ services:
     environment:
       AREA_CODE: DE128
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de129:
     container_name: pwp_de129
@@ -879,6 +1130,8 @@ services:
     environment:
       AREA_CODE: DE129
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de12b:
     container_name: pwp_de12b
@@ -886,6 +1139,8 @@ services:
     environment:
       AREA_CODE: DE12B
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de131:
     container_name: pwp_de131
@@ -893,6 +1148,8 @@ services:
     environment:
       AREA_CODE: DE131
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de132:
     container_name: pwp_de132
@@ -900,6 +1157,8 @@ services:
     environment:
       AREA_CODE: DE132
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de134:
     container_name: pwp_de134
@@ -907,6 +1166,8 @@ services:
     environment:
       AREA_CODE: DE134
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de137:
     container_name: pwp_de137
@@ -914,6 +1175,8 @@ services:
     environment:
       AREA_CODE: DE137
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de139:
     container_name: pwp_de139
@@ -921,6 +1184,8 @@ services:
     environment:
       AREA_CODE: DE139
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de144:
     container_name: pwp_de144
@@ -928,6 +1193,8 @@ services:
     environment:
       AREA_CODE: DE144
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de145:
     container_name: pwp_de145
@@ -935,6 +1202,8 @@ services:
     environment:
       AREA_CODE: DE145
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de146:
     container_name: pwp_de146
@@ -942,6 +1211,8 @@ services:
     environment:
       AREA_CODE: DE146
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de148:
     container_name: pwp_de148
@@ -949,6 +1220,8 @@ services:
     environment:
       AREA_CODE: DE148
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de211:
     container_name: pwp_de211
@@ -956,6 +1229,8 @@ services:
     environment:
       AREA_CODE: DE211
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de212:
     container_name: pwp_de212
@@ -963,6 +1238,8 @@ services:
     environment:
       AREA_CODE: DE212
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de213:
     container_name: pwp_de213
@@ -970,6 +1247,8 @@ services:
     environment:
       AREA_CODE: DE213
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de214:
     container_name: pwp_de214
@@ -977,6 +1256,8 @@ services:
     environment:
       AREA_CODE: DE214
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de219:
     container_name: pwp_de219
@@ -984,6 +1265,8 @@ services:
     environment:
       AREA_CODE: DE219
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de21a:
     container_name: pwp_de21a
@@ -991,6 +1274,8 @@ services:
     environment:
       AREA_CODE: DE21A
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de21b:
     container_name: pwp_de21b
@@ -998,6 +1283,8 @@ services:
     environment:
       AREA_CODE: DE21B
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de21h:
     container_name: pwp_de21h
@@ -1005,6 +1292,8 @@ services:
     environment:
       AREA_CODE: DE21H
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de21j:
     container_name: pwp_de21j
@@ -1012,6 +1301,8 @@ services:
     environment:
       AREA_CODE: DE21J
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de21k:
     container_name: pwp_de21k
@@ -1019,6 +1310,8 @@ services:
     environment:
       AREA_CODE: DE21K
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de21m:
     container_name: pwp_de21m
@@ -1026,6 +1319,8 @@ services:
     environment:
       AREA_CODE: DE21M
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de21n:
     container_name: pwp_de21n
@@ -1033,6 +1328,8 @@ services:
     environment:
       AREA_CODE: DE21N
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de224:
     container_name: pwp_de224
@@ -1040,6 +1337,8 @@ services:
     environment:
       AREA_CODE: DE224
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de226:
     container_name: pwp_de226
@@ -1047,6 +1346,8 @@ services:
     environment:
       AREA_CODE: DE226
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de227:
     container_name: pwp_de227
@@ -1054,6 +1355,8 @@ services:
     environment:
       AREA_CODE: DE227
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de252:
     container_name: pwp_de252
@@ -1061,6 +1364,8 @@ services:
     environment:
       AREA_CODE: DE252
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de254:
     container_name: pwp_de254
@@ -1068,6 +1373,8 @@ services:
     environment:
       AREA_CODE: DE254
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de261:
     container_name: pwp_de261
@@ -1075,6 +1382,8 @@ services:
     environment:
       AREA_CODE: DE261
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de262:
     container_name: pwp_de262
@@ -1082,6 +1391,8 @@ services:
     environment:
       AREA_CODE: DE262
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de263:
     container_name: pwp_de263
@@ -1089,6 +1400,8 @@ services:
     environment:
       AREA_CODE: DE263
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de264:
     container_name: pwp_de264
@@ -1096,6 +1409,8 @@ services:
     environment:
       AREA_CODE: DE264
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de267:
     container_name: pwp_de267
@@ -1103,6 +1418,8 @@ services:
     environment:
       AREA_CODE: DE267
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de269:
     container_name: pwp_de269
@@ -1110,6 +1427,8 @@ services:
     environment:
       AREA_CODE: DE269
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de271:
     container_name: pwp_de271
@@ -1117,6 +1436,8 @@ services:
     environment:
       AREA_CODE: DE271
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de272:
     container_name: pwp_de272
@@ -1124,6 +1445,8 @@ services:
     environment:
       AREA_CODE: DE272
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de278:
     container_name: pwp_de278
@@ -1131,6 +1454,8 @@ services:
     environment:
       AREA_CODE: DE278
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de27c:
     container_name: pwp_de27c
@@ -1138,6 +1463,8 @@ services:
     environment:
       AREA_CODE: DE27C
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de27e:
     container_name: pwp_de27e
@@ -1145,6 +1472,8 @@ services:
     environment:
       AREA_CODE: DE27E
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de300:
     container_name: pwp_de300
@@ -1152,6 +1481,8 @@ services:
     environment:
       AREA_CODE: DE300
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de401:
     container_name: pwp_de401
@@ -1159,6 +1490,8 @@ services:
     environment:
       AREA_CODE: DE401
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de402:
     container_name: pwp_de402
@@ -1166,6 +1499,8 @@ services:
     environment:
       AREA_CODE: DE402
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de404:
     container_name: pwp_de404
@@ -1173,6 +1508,8 @@ services:
     environment:
       AREA_CODE: DE404
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de406:
     container_name: pwp_de406
@@ -1180,6 +1517,8 @@ services:
     environment:
       AREA_CODE: DE406
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de409:
     container_name: pwp_de409
@@ -1187,6 +1526,8 @@ services:
     environment:
       AREA_CODE: DE409
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de40b:
     container_name: pwp_de40b
@@ -1194,6 +1535,8 @@ services:
     environment:
       AREA_CODE: DE40B
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de40c:
     container_name: pwp_de40c
@@ -1201,6 +1544,8 @@ services:
     environment:
       AREA_CODE: DE40C
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de40g:
     container_name: pwp_de40g
@@ -1208,6 +1553,8 @@ services:
     environment:
       AREA_CODE: DE40G
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de501:
     container_name: pwp_de501
@@ -1215,6 +1562,8 @@ services:
     environment:
       AREA_CODE: DE501
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de600:
     container_name: pwp_de600
@@ -1222,6 +1571,8 @@ services:
     environment:
       AREA_CODE: DE600
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de711:
     container_name: pwp_de711
@@ -1229,6 +1580,8 @@ services:
     environment:
       AREA_CODE: DE711
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de712:
     container_name: pwp_de712
@@ -1236,6 +1589,8 @@ services:
     environment:
       AREA_CODE: DE712
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de713:
     container_name: pwp_de713
@@ -1243,6 +1598,8 @@ services:
     environment:
       AREA_CODE: DE713
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de714:
     container_name: pwp_de714
@@ -1250,6 +1607,8 @@ services:
     environment:
       AREA_CODE: DE714
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de715:
     container_name: pwp_de715
@@ -1257,6 +1616,8 @@ services:
     environment:
       AREA_CODE: DE715
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de717:
     container_name: pwp_de717
@@ -1264,6 +1625,8 @@ services:
     environment:
       AREA_CODE: DE717
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de719:
     container_name: pwp_de719
@@ -1271,6 +1634,8 @@ services:
     environment:
       AREA_CODE: DE719
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de71b:
     container_name: pwp_de71b
@@ -1278,6 +1643,8 @@ services:
     environment:
       AREA_CODE: DE71B
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de724:
     container_name: pwp_de724
@@ -1285,6 +1652,8 @@ services:
     environment:
       AREA_CODE: DE724
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de731:
     container_name: pwp_de731
@@ -1292,6 +1661,8 @@ services:
     environment:
       AREA_CODE: DE731
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de732:
     container_name: pwp_de732
@@ -1299,6 +1670,8 @@ services:
     environment:
       AREA_CODE: DE732
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de733:
     container_name: pwp_de733
@@ -1306,6 +1679,8 @@ services:
     environment:
       AREA_CODE: DE733
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de734:
     container_name: pwp_de734
@@ -1313,6 +1688,8 @@ services:
     environment:
       AREA_CODE: DE734
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de736:
     container_name: pwp_de736
@@ -1320,6 +1697,8 @@ services:
     environment:
       AREA_CODE: DE736
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de737:
     container_name: pwp_de737
@@ -1327,6 +1706,8 @@ services:
     environment:
       AREA_CODE: DE737
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de803:
     container_name: pwp_de803
@@ -1334,6 +1715,8 @@ services:
     environment:
       AREA_CODE: DE803
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de804:
     container_name: pwp_de804
@@ -1341,6 +1724,8 @@ services:
     environment:
       AREA_CODE: DE804
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de80j:
     container_name: pwp_de80j
@@ -1348,6 +1733,8 @@ services:
     environment:
       AREA_CODE: DE80J
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de80n:
     container_name: pwp_de80n
@@ -1355,6 +1742,8 @@ services:
     environment:
       AREA_CODE: DE80N
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de911:
     container_name: pwp_de911
@@ -1362,6 +1751,8 @@ services:
     environment:
       AREA_CODE: DE911
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de912:
     container_name: pwp_de912
@@ -1369,6 +1760,8 @@ services:
     environment:
       AREA_CODE: DE912
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de913:
     container_name: pwp_de913
@@ -1376,6 +1769,8 @@ services:
     environment:
       AREA_CODE: DE913
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de918:
     container_name: pwp_de918
@@ -1383,6 +1778,8 @@ services:
     environment:
       AREA_CODE: DE918
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de91a:
     container_name: pwp_de91a
@@ -1390,6 +1787,8 @@ services:
     environment:
       AREA_CODE: DE91A
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de91b:
     container_name: pwp_de91b
@@ -1397,6 +1796,8 @@ services:
     environment:
       AREA_CODE: DE91B
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de91c:
     container_name: pwp_de91c
@@ -1404,6 +1805,8 @@ services:
     environment:
       AREA_CODE: DE91C
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de923:
     container_name: pwp_de923
@@ -1411,6 +1814,8 @@ services:
     environment:
       AREA_CODE: DE923
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de925:
     container_name: pwp_de925
@@ -1418,6 +1823,8 @@ services:
     environment:
       AREA_CODE: DE925
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de926:
     container_name: pwp_de926
@@ -1425,6 +1832,8 @@ services:
     environment:
       AREA_CODE: DE926
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de927:
     container_name: pwp_de927
@@ -1432,6 +1841,8 @@ services:
     environment:
       AREA_CODE: DE927
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de928:
     container_name: pwp_de928
@@ -1439,6 +1850,8 @@ services:
     environment:
       AREA_CODE: DE928
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de929:
     container_name: pwp_de929
@@ -1446,6 +1859,8 @@ services:
     environment:
       AREA_CODE: DE929
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de931:
     container_name: pwp_de931
@@ -1453,6 +1868,8 @@ services:
     environment:
       AREA_CODE: DE931
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de938:
     container_name: pwp_de938
@@ -1460,6 +1877,8 @@ services:
     environment:
       AREA_CODE: DE938
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de939:
     container_name: pwp_de939
@@ -1467,6 +1886,8 @@ services:
     environment:
       AREA_CODE: DE939
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   pwp_de93a:
     container_name: pwp_de93a
@@ -1474,6 +1895,8 @@ services:
     environment:
       AREA_CODE: DE93A
       TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de111:
     container_name: res_de111
@@ -1481,6 +1904,8 @@ services:
     environment:
       AREA_CODE: DE111
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de112:
     container_name: res_de112
@@ -1488,6 +1913,8 @@ services:
     environment:
       AREA_CODE: DE112
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de113:
     container_name: res_de113
@@ -1495,6 +1922,8 @@ services:
     environment:
       AREA_CODE: DE113
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de114:
     container_name: res_de114
@@ -1502,6 +1931,8 @@ services:
     environment:
       AREA_CODE: DE114
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de115:
     container_name: res_de115
@@ -1509,6 +1940,8 @@ services:
     environment:
       AREA_CODE: DE115
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de116:
     container_name: res_de116
@@ -1516,6 +1949,8 @@ services:
     environment:
       AREA_CODE: DE116
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de117:
     container_name: res_de117
@@ -1523,6 +1958,8 @@ services:
     environment:
       AREA_CODE: DE117
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de118:
     container_name: res_de118
@@ -1530,6 +1967,8 @@ services:
     environment:
       AREA_CODE: DE118
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de119:
     container_name: res_de119
@@ -1537,6 +1976,8 @@ services:
     environment:
       AREA_CODE: DE119
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de11a:
     container_name: res_de11a
@@ -1544,6 +1985,8 @@ services:
     environment:
       AREA_CODE: DE11A
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de11b:
     container_name: res_de11b
@@ -1551,6 +1994,8 @@ services:
     environment:
       AREA_CODE: DE11B
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de11c:
     container_name: res_de11c
@@ -1558,6 +2003,8 @@ services:
     environment:
       AREA_CODE: DE11C
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de11d:
     container_name: res_de11d
@@ -1565,6 +2012,8 @@ services:
     environment:
       AREA_CODE: DE11D
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de121:
     container_name: res_de121
@@ -1572,6 +2021,8 @@ services:
     environment:
       AREA_CODE: DE121
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de122:
     container_name: res_de122
@@ -1579,6 +2030,8 @@ services:
     environment:
       AREA_CODE: DE122
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de123:
     container_name: res_de123
@@ -1586,6 +2039,8 @@ services:
     environment:
       AREA_CODE: DE123
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de124:
     container_name: res_de124
@@ -1593,6 +2048,8 @@ services:
     environment:
       AREA_CODE: DE124
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de125:
     container_name: res_de125
@@ -1600,6 +2057,8 @@ services:
     environment:
       AREA_CODE: DE125
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de126:
     container_name: res_de126
@@ -1607,6 +2066,8 @@ services:
     environment:
       AREA_CODE: DE126
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de127:
     container_name: res_de127
@@ -1614,6 +2075,8 @@ services:
     environment:
       AREA_CODE: DE127
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de128:
     container_name: res_de128
@@ -1621,6 +2084,8 @@ services:
     environment:
       AREA_CODE: DE128
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de129:
     container_name: res_de129
@@ -1628,6 +2093,8 @@ services:
     environment:
       AREA_CODE: DE129
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de12a:
     container_name: res_de12a
@@ -1635,6 +2102,8 @@ services:
     environment:
       AREA_CODE: DE12A
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de12b:
     container_name: res_de12b
@@ -1642,6 +2111,8 @@ services:
     environment:
       AREA_CODE: DE12B
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de12c:
     container_name: res_de12c
@@ -1649,6 +2120,8 @@ services:
     environment:
       AREA_CODE: DE12C
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de131:
     container_name: res_de131
@@ -1656,6 +2129,8 @@ services:
     environment:
       AREA_CODE: DE131
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de132:
     container_name: res_de132
@@ -1663,6 +2138,8 @@ services:
     environment:
       AREA_CODE: DE132
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de133:
     container_name: res_de133
@@ -1670,6 +2147,8 @@ services:
     environment:
       AREA_CODE: DE133
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de134:
     container_name: res_de134
@@ -1677,6 +2156,8 @@ services:
     environment:
       AREA_CODE: DE134
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de135:
     container_name: res_de135
@@ -1684,6 +2165,8 @@ services:
     environment:
       AREA_CODE: DE135
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de136:
     container_name: res_de136
@@ -1691,6 +2174,8 @@ services:
     environment:
       AREA_CODE: DE136
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de137:
     container_name: res_de137
@@ -1698,6 +2183,8 @@ services:
     environment:
       AREA_CODE: DE137
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de138:
     container_name: res_de138
@@ -1705,6 +2192,8 @@ services:
     environment:
       AREA_CODE: DE138
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de139:
     container_name: res_de139
@@ -1712,6 +2201,8 @@ services:
     environment:
       AREA_CODE: DE139
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de13a:
     container_name: res_de13a
@@ -1719,6 +2210,8 @@ services:
     environment:
       AREA_CODE: DE13A
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de141:
     container_name: res_de141
@@ -1726,6 +2219,8 @@ services:
     environment:
       AREA_CODE: DE141
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de142:
     container_name: res_de142
@@ -1733,6 +2228,8 @@ services:
     environment:
       AREA_CODE: DE142
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de143:
     container_name: res_de143
@@ -1740,6 +2237,8 @@ services:
     environment:
       AREA_CODE: DE143
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de144:
     container_name: res_de144
@@ -1747,6 +2246,8 @@ services:
     environment:
       AREA_CODE: DE144
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de145:
     container_name: res_de145
@@ -1754,6 +2255,8 @@ services:
     environment:
       AREA_CODE: DE145
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de146:
     container_name: res_de146
@@ -1761,6 +2264,8 @@ services:
     environment:
       AREA_CODE: DE146
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de147:
     container_name: res_de147
@@ -1768,6 +2273,8 @@ services:
     environment:
       AREA_CODE: DE147
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de148:
     container_name: res_de148
@@ -1775,6 +2282,8 @@ services:
     environment:
       AREA_CODE: DE148
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de149:
     container_name: res_de149
@@ -1782,6 +2291,8 @@ services:
     environment:
       AREA_CODE: DE149
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de211:
     container_name: res_de211
@@ -1789,6 +2300,8 @@ services:
     environment:
       AREA_CODE: DE211
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de212:
     container_name: res_de212
@@ -1796,6 +2309,8 @@ services:
     environment:
       AREA_CODE: DE212
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de213:
     container_name: res_de213
@@ -1803,6 +2318,8 @@ services:
     environment:
       AREA_CODE: DE213
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de214:
     container_name: res_de214
@@ -1810,6 +2327,8 @@ services:
     environment:
       AREA_CODE: DE214
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de215:
     container_name: res_de215
@@ -1817,6 +2336,8 @@ services:
     environment:
       AREA_CODE: DE215
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de216:
     container_name: res_de216
@@ -1824,6 +2345,8 @@ services:
     environment:
       AREA_CODE: DE216
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de217:
     container_name: res_de217
@@ -1831,6 +2354,8 @@ services:
     environment:
       AREA_CODE: DE217
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de218:
     container_name: res_de218
@@ -1838,6 +2363,8 @@ services:
     environment:
       AREA_CODE: DE218
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de219:
     container_name: res_de219
@@ -1845,6 +2372,8 @@ services:
     environment:
       AREA_CODE: DE219
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21a:
     container_name: res_de21a
@@ -1852,6 +2381,8 @@ services:
     environment:
       AREA_CODE: DE21A
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21b:
     container_name: res_de21b
@@ -1859,6 +2390,8 @@ services:
     environment:
       AREA_CODE: DE21B
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21c:
     container_name: res_de21c
@@ -1866,6 +2399,8 @@ services:
     environment:
       AREA_CODE: DE21C
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21d:
     container_name: res_de21d
@@ -1873,6 +2408,8 @@ services:
     environment:
       AREA_CODE: DE21D
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21e:
     container_name: res_de21e
@@ -1880,6 +2417,8 @@ services:
     environment:
       AREA_CODE: DE21E
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21f:
     container_name: res_de21f
@@ -1887,6 +2426,8 @@ services:
     environment:
       AREA_CODE: DE21F
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21g:
     container_name: res_de21g
@@ -1894,6 +2435,8 @@ services:
     environment:
       AREA_CODE: DE21G
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21h:
     container_name: res_de21h
@@ -1901,6 +2444,8 @@ services:
     environment:
       AREA_CODE: DE21H
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21i:
     container_name: res_de21i
@@ -1908,6 +2453,8 @@ services:
     environment:
       AREA_CODE: DE21I
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21j:
     container_name: res_de21j
@@ -1915,6 +2462,8 @@ services:
     environment:
       AREA_CODE: DE21J
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21k:
     container_name: res_de21k
@@ -1922,6 +2471,8 @@ services:
     environment:
       AREA_CODE: DE21K
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21l:
     container_name: res_de21l
@@ -1929,6 +2480,8 @@ services:
     environment:
       AREA_CODE: DE21L
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21m:
     container_name: res_de21m
@@ -1936,6 +2489,8 @@ services:
     environment:
       AREA_CODE: DE21M
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de21n:
     container_name: res_de21n
@@ -1943,6 +2498,8 @@ services:
     environment:
       AREA_CODE: DE21N
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de221:
     container_name: res_de221
@@ -1950,6 +2507,8 @@ services:
     environment:
       AREA_CODE: DE221
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de222:
     container_name: res_de222
@@ -1957,6 +2516,8 @@ services:
     environment:
       AREA_CODE: DE222
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de223:
     container_name: res_de223
@@ -1964,6 +2525,8 @@ services:
     environment:
       AREA_CODE: DE223
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de224:
     container_name: res_de224
@@ -1971,6 +2534,8 @@ services:
     environment:
       AREA_CODE: DE224
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de225:
     container_name: res_de225
@@ -1978,6 +2543,8 @@ services:
     environment:
       AREA_CODE: DE225
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de226:
     container_name: res_de226
@@ -1985,6 +2552,8 @@ services:
     environment:
       AREA_CODE: DE226
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de227:
     container_name: res_de227
@@ -1992,6 +2561,8 @@ services:
     environment:
       AREA_CODE: DE227
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de228:
     container_name: res_de228
@@ -1999,6 +2570,8 @@ services:
     environment:
       AREA_CODE: DE228
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de229:
     container_name: res_de229
@@ -2006,6 +2579,8 @@ services:
     environment:
       AREA_CODE: DE229
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de22a:
     container_name: res_de22a
@@ -2013,6 +2588,8 @@ services:
     environment:
       AREA_CODE: DE22A
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de22b:
     container_name: res_de22b
@@ -2020,6 +2597,8 @@ services:
     environment:
       AREA_CODE: DE22B
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de22c:
     container_name: res_de22c
@@ -2027,6 +2606,8 @@ services:
     environment:
       AREA_CODE: DE22C
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de231:
     container_name: res_de231
@@ -2034,6 +2615,8 @@ services:
     environment:
       AREA_CODE: DE231
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de232:
     container_name: res_de232
@@ -2041,6 +2624,8 @@ services:
     environment:
       AREA_CODE: DE232
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de233:
     container_name: res_de233
@@ -2048,6 +2633,8 @@ services:
     environment:
       AREA_CODE: DE233
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de234:
     container_name: res_de234
@@ -2055,6 +2642,8 @@ services:
     environment:
       AREA_CODE: DE234
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de235:
     container_name: res_de235
@@ -2062,6 +2651,8 @@ services:
     environment:
       AREA_CODE: DE235
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de236:
     container_name: res_de236
@@ -2069,6 +2660,8 @@ services:
     environment:
       AREA_CODE: DE236
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de237:
     container_name: res_de237
@@ -2076,6 +2669,8 @@ services:
     environment:
       AREA_CODE: DE237
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de238:
     container_name: res_de238
@@ -2083,6 +2678,8 @@ services:
     environment:
       AREA_CODE: DE238
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de239:
     container_name: res_de239
@@ -2090,6 +2687,8 @@ services:
     environment:
       AREA_CODE: DE239
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de23a:
     container_name: res_de23a
@@ -2097,6 +2696,8 @@ services:
     environment:
       AREA_CODE: DE23A
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de241:
     container_name: res_de241
@@ -2104,6 +2705,8 @@ services:
     environment:
       AREA_CODE: DE241
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de242:
     container_name: res_de242
@@ -2111,6 +2714,8 @@ services:
     environment:
       AREA_CODE: DE242
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de243:
     container_name: res_de243
@@ -2118,6 +2723,8 @@ services:
     environment:
       AREA_CODE: DE243
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de244:
     container_name: res_de244
@@ -2125,6 +2732,8 @@ services:
     environment:
       AREA_CODE: DE244
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de245:
     container_name: res_de245
@@ -2132,6 +2741,8 @@ services:
     environment:
       AREA_CODE: DE245
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de246:
     container_name: res_de246
@@ -2139,6 +2750,8 @@ services:
     environment:
       AREA_CODE: DE246
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de247:
     container_name: res_de247
@@ -2146,6 +2759,8 @@ services:
     environment:
       AREA_CODE: DE247
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de248:
     container_name: res_de248
@@ -2153,6 +2768,8 @@ services:
     environment:
       AREA_CODE: DE248
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de249:
     container_name: res_de249
@@ -2160,6 +2777,8 @@ services:
     environment:
       AREA_CODE: DE249
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de24a:
     container_name: res_de24a
@@ -2167,6 +2786,8 @@ services:
     environment:
       AREA_CODE: DE24A
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 
   res_de24b:
     container_name: res_de24b
@@ -2174,6 +2795,8 @@ services:
     environment:
       AREA_CODE: DE24B
       TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
 configs:
   compute_config:
     file: ./gurobi.lic

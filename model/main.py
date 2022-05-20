@@ -23,10 +23,10 @@ if __name__ == "__main__":
         'area': os.getenv('AREA_CODE', 'DEA2D'),
         'type': os.getenv('TYPE', 'DEM'),
         # mqtt default parameter
-        'mqtt_server': os.getenv('MQTT_HOST', 'rabbitmq'),
+        'mqtt_server': os.getenv('MQTT_HOST', 'localhost'),
         'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dmas'),
         # simulation data server default parameter
-        'simulation_server': os.getenv('SIMULATION_SOURCE', 'simulationdb:5432'),
+        'simulation_server': os.getenv('SIMULATION_SOURCE', 'localhost:5432'),
         'simulation_credential': os.getenv('SIMULATION_DATABASE', 'dMAS:dMAS'),
         'simulation_database': os.getenv('SIMULATION_DATABASE', 'dmas'),
         # structure data server default parameter

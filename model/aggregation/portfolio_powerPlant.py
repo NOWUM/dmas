@@ -25,7 +25,7 @@ class PowerPlantPortfolio(PortfolioModel):
 
     def build_model(self, response=None):
         for model in tqdm(self.energy_systems):
-            model.set_parameter(date=self.date, weather=self.weather.copy(), prices=self.prices.copy())
+            model.set_parameter(self.date, self.weather.copy(), self.prices.copy())
 
     def optimize(self):
         """

@@ -30,7 +30,7 @@ class HouseholdPvModel(EnergySystem):
         solar_power = (irradiance['poa_global'] / 10**3) * self.pv_system.arrays[0].module_parameters['pdc0']
         self.generation['solar'] = solar_power.to_numpy()
         # get demand in [kW]
-        self.demand['power'] = StandardLoadProfile.run_model(self.date)
+        self.demand['power'] = self.demand_system.run_model(self.date)
 
         self.power = np.asarray(self.demand['power'] - self.generation['solar']).flatten()
 

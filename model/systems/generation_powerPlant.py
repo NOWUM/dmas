@@ -7,6 +7,8 @@ from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteMod
 # model modules
 from systems.basic_system import EnergySystem
 
+import logging
+log = logging.getLogger('powerplant_gen')
 class PowerPlant(EnergySystem):
 
     def __init__(self, T, steps, unitID, fuel, maxPower, minPower, eta, P0, chi, stopTime, runTime, gradP, gradM,
@@ -78,6 +80,12 @@ class PowerPlant(EnergySystem):
         self.model.start_cost = ConstraintList()
         self.model.profit_function = ConstraintList()
 
+        try:
+            fuel_prices = self.prices[str(self.power_plant['fuel']).replace('_combined', '')]
+        except KeyError as e:
+            log.error(f'prices were: {self.prices}')
+            raise Exception(f"No Fuel prices given for fuel {self.power_plant['fuel']}")
+
         for t in self.t:
             # output power of the plant
             self.model.real_power.add(self.model.p_out[t] == self.model.p_model[t] + self.model.z[t]
@@ -116,7 +124,7 @@ class PowerPlant(EnergySystem):
 
             self.model.fuel_cost.add(self.model.fuel[t]
                                      == self.model.p_out[t] / self.power_plant['eta']
-                                     * self.prices[str(self.power_plant['fuel']).replace('_combined', '')][t])
+                                     * fuel_prices[t])
 
             self.model.emission_cost.add(self.model.emissions[t]
                                          == self.model.p_out[t] / self.power_plant['eta']
