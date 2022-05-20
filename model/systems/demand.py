@@ -5,47 +5,66 @@ from demandlib.electric_profile import StandardLoadProfile
 
 class HouseholdModel(EnergySystem):
 
-    def __init__(self, T, demandP, *args, **kwargs):
+    def __init__(self, T: int, demandP: float, *args, **kwargs):
         super().__init__(T)
         self.profile_generator = StandardLoadProfile(demandP, type='household')
 
 
     def optimize(self):
+        """
+        run profile generator for current day
+        :return: timer series in [kW]
+        """
         self.power = self.profile_generator.run_model(self.date)
         self.demand['power'] = self.power
-        return self.power   # [kW]
+        return self.power
 
 
 class BusinessModel(EnergySystem):
 
-    def __init__(self, T, demandP, *args, **kwargs):
+    def __init__(self, T: int, demandP: float, *args, **kwargs):
         super().__init__(T)
         self.profile_generator = StandardLoadProfile(demandP, type='business')
 
+
     def optimize(self):
+        """
+        run profile generator for current day
+        :return: timer series in [kW]
+        """
         self.power = self.profile_generator.run_model(self.date)
         self.demand['power'] = self.power
-        return self.power   # [kW]
+        return self.power
 
 
 class IndustryModel(EnergySystem):
 
-    def __init__(self, T, demandP, *args, **kwargs):
+    def __init__(self, T: int, demandP: float, *args, **kwargs):
         super().__init__(T)
         self.profile_generator = StandardLoadProfile(demandP, type='industry')
 
+
     def optimize(self):
+        """
+        run profile generator for current day
+        :return: timer series in [kW]
+        """
         self.power = self.profile_generator.run_model(self.date)
         self.demand['power'] = self.power
-        return self.power   # [kW]
+        return self.power
 
 class AgricultureModel(EnergySystem):
 
-    def __init__(self, T, demandP, *args, **kwargs):
+    def __init__(self, T: int, demandP: float, *args, **kwargs):
         super().__init__(T)
         self.profile_generator = StandardLoadProfile(demandP, type='agriculture')
 
+
     def optimize(self):
+        """
+        run profile generator for current day
+        :return: timer series in [kW]
+        """
         self.power = self.profile_generator.run_model(self.date)
         self.demand['power'] = self.power
-        return self.power   # [kW]
+        return self.power

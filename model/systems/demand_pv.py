@@ -10,26 +10,29 @@ from demandlib.electric_profile import StandardLoadProfile
 
 class HouseholdPvModel(EnergySystem):
 
-    def __init__(self, T, demandP, maxPower, azimuth, tilt, *args, **kwargs):
+    def __init__(self, T: int, demandP: float, maxPower: float, azimuth: int, tilt: int, *args, **kwargs):
         super().__init__(T)
 
         self.demand_system = StandardLoadProfile(type='household', demandP=demandP)
-
         self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower), surface_tilt=tilt, surface_azimuth=azimuth)
 
     def optimize(self):
+        """
+        :return: timer series in [kW]
+        """
+        # -> irradiance unit [W/m²]
         irradiance = self.pv_system.get_irradiance(solar_zenith=self.weather['zenith'],
                                                    solar_azimuth=self.weather['azimuth'],
                                                    dni=self.weather['dni'],
                                                    ghi=self.weather['ghi'],
                                                    dhi=self.weather['dhi'])
+        # get generation in [kW]
+        solar_power = (irradiance['poa_global'] / 10**3) * self.pv_system.arrays[0].module_parameters['pdc0']
+        self.generation['solar'] = solar_power.to_numpy()
+        # get demand in [kW]
+        self.demand['power'] = StandardLoadProfile.run_model(self.date)
 
-        solar_power = irradiance['poa_global'] * 0.14 * self.pv_system.arrays[0].module_parameters['pdc0'] * 7
-        self.generation['solar'] = solar_power.to_numpy() / 10**3       # [kW]
-        self.demand['power'] = self.demand_system.run_model(self.date)  # [kW]
-        grid_use = self.demand['power'] - self.generation['solar']
+        self.power = np.asarray(self.demand['power'] - self.generation['solar']).flatten()
 
-        self.power = np.asarray(grid_use, np.float).reshape((-1,))
-
-        return self.power   # [kW]
+        return self.power
 

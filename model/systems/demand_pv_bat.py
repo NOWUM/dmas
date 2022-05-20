@@ -13,23 +13,24 @@ class PvBatModel(es):
         super().__init__(T)
 
         self.demand_system = StandardLoadProfile(type='household', demandP=demandP)
-
         self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower), surface_tilt=tilt, surface_azimuth=azimuth)
-
         self.battery_system = dict(v0=V0, v_max=VMax, efficiency=eta, maxPower=batPower, vt=np.zeros((self.T,)))
 
     def optimize(self):
+        """
+        :return: timer series in [kW]
+        """
+        # -> irradiance unit [W/m²]
         irradiance = self.pv_system.get_irradiance(solar_zenith=self.weather['zenith'],
                                                    solar_azimuth=self.weather['azimuth'],
                                                    dni=self.weather['dni'],
                                                    ghi=self.weather['ghi'],
                                                    dhi=self.weather['dhi'])
-
-        solar_power = irradiance['poa_global'] * 0.14 * self.pv_system.arrays[0].module_parameters['pdc0'] * 7
-        self.generation['solar'] = solar_power.to_numpy()/10**3   # [kW]
-
-        self.demand['power'] = self.demand_system.run_model(self.date) # in [kW]
-
+        # get generation in [kW]
+        solar_power = (irradiance['poa_global'] / 10**3) * self.pv_system.arrays[0].module_parameters['pdc0']
+        self.generation['solar'] = solar_power.to_numpy()
+        # get demand in [kW]
+        self.demand['power'] = self.demand_system.run_model(self.date)
         residual = self.demand['power'] - self.generation['solar']
 
         vt = self.battery_system['v0']

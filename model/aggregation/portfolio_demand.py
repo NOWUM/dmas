@@ -54,27 +54,37 @@ class DemandPortfolio(PortfolioModel):
         for model in tqdm(self.energy_systems):
             model.set_parameter(date=self.date, weather=self.weather.copy(), prices=self.prices.copy())
 
+
     def optimize(self):
-        self.reset_data()
+        """
+        optimize the portfolio for the day ahead market
+        :return: time series in [MW]
+        """
 
-        t = time.time()
-        self.energy_systems = self.worker.map(optimize_energy_system, tqdm(self.energy_systems))
-        log.info(f'optimize took {np.round(time.time() - t,2)}')
+        try:
+            self.reset_data()  # -> rest time series data
+            self.energy_systems = self.worker.map(optimize_energy_system, tqdm(self.energy_systems))
+            log.info(f'optimized portfolio')
+        except Exception as e:
+            log.error(f'error in portfolio optimization: {repr(e)}')
 
-        t = time.time()
-        for model in tqdm(self.energy_systems):
-            for key, value in model.generation.items():
-                if key == 'solar':
-                    self.generation[key] += value/10**3
-                else:
-                    self.generation[key] += value
-            for key, value in model.demand.items():
-                self.demand[key] += value
+        try:
+            for model in tqdm(self.energy_systems):
+                for key, value in model.generation.items():
+                    self.generation[key] += value/10**3     # -> [kW] in [MW]
+                for key, value in model.demand.items():
+                    self.demand[key] += value/10**3         # -> [kW] in [MW]
 
-        self.power = self.generation['total'] - self.demand['power']
-        log.info(f'append took {np.round(time.time() - t,2)}')
+            for key, value in self.generation.items():
+                if key != 'total':
+                    self.generation['total'] += value
 
-        return self.power/10**3  # [MW]
+            self.power = self.generation['total'] - self.demand['power']
+
+        except Exception as e:
+            log.error(f'error in collecting result: {repr(e)}')
+
+        return self.power
 
 
 
