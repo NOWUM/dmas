@@ -4,7 +4,7 @@ from main import init_dict, type_mapping
 
 if __name__ == '__main__':
     init_dict['type'] = 'RES'
-    init_dict['area'] = 'DE113'
+    init_dict['area'] = 'DE11A'
     agent_class = type_mapping[init_dict['type']]
     res_agent = agent_class(**init_dict)
     res_agent.optimize_day_ahead()

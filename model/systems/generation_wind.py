@@ -24,8 +24,7 @@ class WindModel(EnergySystem):
         df['value'] /= max(df['value'])
 
         if isinstance(wind_turbine, list):
-            wind_turbines, numbers = [], []
-            heights = []
+            wind_turbines, heights, numbers = [], [], []
             for turbine in wind_turbine:
                 diameter = min(turbine['diameter'], turbine['height']/2)
                 height = max(turbine['diameter']*2, turbine['height'])
@@ -41,7 +40,7 @@ class WindModel(EnergySystem):
                 numbers.append(1)
             wind_turbine_fleet = pd.DataFrame({'wind_turbine': wind_turbines, 'number_of_turbines': numbers})
 
-            efficiency = pd.DataFrame(data=dict(wind_speed=range(30), efficiency=[100 for _ in range(30)]))
+            efficiency = pd.DataFrame(data=dict(wind_speed=range(30), efficiency=[1 for _ in range(30)]))
 
             self.wind_turbine = WindFarm(wind_turbine_fleet, efficiency=efficiency)
             self.wind_turbine.hub_height = np.mean(heights)
