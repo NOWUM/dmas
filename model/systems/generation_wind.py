@@ -21,16 +21,21 @@ class WindModel(EnergySystem):
         self.wind_turbine = None
         # TODO: Replace default with new data
         df = pd.read_csv(r'./systems/data/default_turbine.csv', sep=';', decimal=',')
+        df['value'] /= max(df['value'])
 
         if isinstance(wind_turbine, list):
             wind_turbines, numbers = [], []
             heights = []
             for turbine in wind_turbine:
                 diameter = min(turbine['diameter'], turbine['height']/2)
-                w = {'hub_height': turbine['height'],
+                height = max(turbine['diameter']*2, turbine['height'])
+                max_power = turbine['maxPower']* 1e3 # [kW] -> [W]
+                pow_c = df.copy()
+                pow_c['value'] *= max_power
+                w = {'hub_height': height,
                      'rotor_diameter': diameter,
-                     'nominal_power': turbine['maxPower']* 1e3, # [kW] -> [W]
-                     'power_curve': df}
+                     'nominal_power': max_power,
+                     'power_curve': pow_c}
                 heights.append(w['hub_height'])
                 wind_turbines.append(WindTurbine(**w))
                 numbers.append(1)
@@ -45,10 +50,14 @@ class WindModel(EnergySystem):
         else:
             # windpowerlib uses Watt [W]
             diameter = min(wind_turbine['diameter'], wind_turbine['height']/2)
-            self.wind_turbine = WindTurbine(hub_height=wind_turbine['height'],
+            height = max(wind_turbine['diameter']*2, wind_turbine['height'])
+            max_power = wind_turbine['maxPower']* 1e3 # [kW] -> [W]
+            pow_c = df.copy()
+            pow_c['value'] *= max_power
+            self.wind_turbine = WindTurbine(hub_height=height,
                                             rotor_diameter=diameter,
-                                            nominal_power=wind_turbine['maxPower']*1e3, # [kW]
-                                            power_curve=df)
+                                            nominal_power=max_power,
+                                            power_curve=pow_c)
 
         self.mc = ModelChain(self.wind_turbine)
 

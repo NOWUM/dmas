@@ -89,6 +89,7 @@ class RenewablePortfolio(PortfolioModel):
             log.error(f'error in collecting result: {repr(e)}')
 
         return self.power
+        # Falls mehr Winderzeugung vorhanden als benötigt:
         # if self.lock_generation:
         #     power_response = self.generation['total']
         #     for i in self.t:

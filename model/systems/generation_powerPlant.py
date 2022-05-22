@@ -16,7 +16,8 @@ class PowerPlant(EnergySystem):
         super().__init__(T)
 
         self.name = unitID
-        self.power_plant = dict(fuel=fuel, maxPower=maxPower, minPower=minPower, eta=eta, P0=P0, chi=chi,
+        # PWP solves in MW but is initialized with kW as all others too
+        self.power_plant = dict(fuel=fuel, maxPower=maxPower/1e3, minPower=minPower/1e3, eta=eta, P0=P0, chi=chi,
                                 stopTime=stopTime, runTime=runTime, gradP=gradP, gradM=gradM, on=on, off=off)
         self.start_cost = startCost
 
@@ -224,6 +225,10 @@ class PowerPlant(EnergySystem):
 
             self.committed_power = None
 
+        # PWP solves in MW but returns kW as all others do
+        self.power *=1e3
+        self.generation *=1e3
+        
         return self.power
 
 if __name__ == "__main__":

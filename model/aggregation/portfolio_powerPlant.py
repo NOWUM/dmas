@@ -48,8 +48,7 @@ class PowerPlantPortfolio(PortfolioModel):
                 for key, value in model.demand.items():
                     self.demand[key] += value/1e3 # [kW] -> [MW]
                 for key, value in model.cash_flow.items():
-                    self.cash_flow[key] += value/1e3 # [kW] -> [MW]
-
+                    self.cash_flow[key] += value
             for key, value in self.generation.items():
                 if key != 'total':
                     self.generation['total'] += value

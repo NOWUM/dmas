@@ -91,7 +91,7 @@ class ResAgent(BasicAgent):
                                      block_id=t,
                                      order_id=0,
                                      name=self.name + '_eeg',
-                                     price=-500,
+                                     price=-500, # €/MWh
                                      volume=power[t])
             if type == 'mrk' and power[t] > 0.5:
                 order_book[t] = dict(type='generation',

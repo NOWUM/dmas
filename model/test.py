@@ -4,9 +4,17 @@ from main import init_dict, type_mapping
 
 if __name__ == '__main__':
     init_dict['type'] = 'RES'
+    init_dict['area'] = 'DE113'
     agent_class = type_mapping[init_dict['type']]
     res_agent = agent_class(**init_dict)
     res_agent.optimize_day_ahead()
+    res_agent.portfolio_eeg.capacities
+    res_agent.portfolio_mrk.capacities
+    res_agent.portfolio_eeg.generation
+    res_agent.portfolio_mrk.generation
+    wp = res_agent.portfolio_mrk.energy_systems[0]
+    wp.mc.run_model(wp.weather)
+    assert all(wp.mc.power_output <= wp.mc.power_plant.nominal_power)
 
     init_dict['type'] = 'DEM'
     agent_class = type_mapping[init_dict['type']]
@@ -26,3 +34,4 @@ if __name__ == '__main__':
     pwp_agent = agent_class(**init_dict)
     pwp_agent.optimize_day_ahead()
     pwp_agent.get_order_books()
+    pwp_agent.portfolio.capacities

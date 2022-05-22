@@ -203,8 +203,12 @@ class PwpAgent(BasicAgent):
                                 block_number += 1  # increment block number
 
                     last_power = result['power']  # set last_power to current power
-
-        df = pd.DataFrame.from_dict(order_book, orient='index')
+        if order_book:
+            df = pd.DataFrame.from_dict(order_book, orient='index')
+        else:
+            # if nothing in self.portfolio.energy_systems
+            df = pd.DataFrame(columns=['price', 'volume', 'link', 'type'])
+        
         df['type'] = 'generation'
         df.columns = ['price', 'volume', 'link', 'type']
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'order_id', 'name'])
