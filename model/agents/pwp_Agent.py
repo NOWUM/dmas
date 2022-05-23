@@ -211,6 +211,9 @@ class PwpAgent(BasicAgent):
         
         df['type'] = 'generation'
         df.columns = ['price', 'volume', 'link', 'type']
+        # as values are used from energy_systems, they are in €/kW
+        # we convert them to €/MW to send them to the market
+        df['price'] /= 1e3
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'order_id', 'name'])
 
         return df

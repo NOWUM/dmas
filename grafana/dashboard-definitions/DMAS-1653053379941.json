@@ -51,7 +51,7 @@
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -83,7 +83,20 @@
           },
           "unit": "megwatt"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.lineInterpolation",
+                "value": "stepAfter"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -113,7 +126,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  \"time\" AS \"time\",\n  volume\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
+          "rawSql": "SELECT\n  \"time\" AS \"time\",\n  volume AS \"market volume\"\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -122,6 +135,12 @@
                   "volume"
                 ],
                 "type": "column"
+              },
+              {
+                "params": [
+                  "market volume"
+                ],
+                "type": "alias"
               }
             ]
           ],
@@ -133,6 +152,132 @@
               "name": "$__timeFilter",
               "params": [],
               "type": "macro"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "P7508C69064B8A4D9"
+          },
+          "format": "time_series",
+          "group": [
+            {
+              "params": [
+                "$__interval",
+                "none"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(power) AS \"total demand\"\nFROM demand\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
+          "refId": "B",
+          "select": [
+            [
+              {
+                "params": [
+                  "power"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "total demand"
+                ],
+                "type": "alias"
+              }
+            ]
+          ],
+          "table": "demand",
+          "timeColumn": "\"time\"",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            },
+            {
+              "datatype": "text",
+              "name": "",
+              "params": [
+                "step",
+                "=",
+                "'post_dayAhead'"
+              ],
+              "type": "expression"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "P7508C69064B8A4D9"
+          },
+          "format": "time_series",
+          "group": [
+            {
+              "params": [
+                "$__interval",
+                "none"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(total) AS \"total generation\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
+          "refId": "C",
+          "select": [
+            [
+              {
+                "params": [
+                  "total"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "total generation"
+                ],
+                "type": "alias"
+              }
+            ]
+          ],
+          "table": "generation",
+          "timeColumn": "\"time\"",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            },
+            {
+              "datatype": "text",
+              "name": "",
+              "params": [
+                "step",
+                "=",
+                "'post_dayAhead'"
+              ],
+              "type": "expression"
             }
           ]
         }
@@ -231,7 +376,7 @@
             }
           ],
           "metricColumn": "none",
-          "rawQuery": false,
+          "rawQuery": true,
           "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(power) AS \"demand\"\nFROM demand\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
@@ -472,30 +617,6 @@
               {
                 "id": "unit",
                 "value": "kelvin"
-              }
-            ]
-          },
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "temp_air"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
               }
             ]
           }
@@ -1255,8 +1376,8 @@
     "list": []
   },
   "time": {
-    "from": "2017-12-31T23:00:00.000Z",
-    "to": "2018-01-31T23:00:00.000Z"
+    "from": "2018-01-06T17:22:36.521Z",
+    "to": "2018-01-08T13:24:20.869Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1275,6 +1396,6 @@
   "timezone": "",
   "title": "DMAS",
   "uid": "VdwbNAX72",
-  "version": 1,
+  "version": 3,
   "weekStart": ""
 }

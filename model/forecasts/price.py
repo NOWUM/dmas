@@ -13,15 +13,17 @@ from forecasts.demand import DemandForecast
 from forecasts.weather import WeatherForecast
 
 
+# load default prices in €/MWh therm -> convert to €/kWh therm
 with open(r'./forecasts/data/default_price.pkl', 'rb') as file:
-    default_power_price = np.load(file).reshape((24,))                  # hourly mean values 2015-2018
+    default_power_price = np.load(file).reshape((24,))/1e3                  # hourly mean values 2015-2018
 with open(r'./forecasts/data/default_gas.pkl', 'rb') as file:
-    default_gas = np.load(file).reshape((12,))                          # month mean values year 2018
+    default_gas = np.load(file).reshape((12,))/1e3                          # month mean values year 2018
 with open(r'./forecasts/data/default_emission.pkl', 'rb') as file:
-    default_emission = np.load(file).reshape((12,))                     # month mean values year 2018
+    default_emission = np.load(file).reshape((12,))/1e3                     # month mean values year 2018
 
-default_coal = 65.18 / 8.141                                            # €/ske --> €/MWh
-default_lignite = 1.5                                                   # agora Deutsche "Braunkohlewirtschaft"
+default_coal = 65.18 / 8.141 /1e3                                           # €/ske --> €/MWh -> €/kWh
+default_lignite = 1.5 /1e3                                                  # agora Deutsche "Braunkohlewirtschaft" in €/kWh
+default_nuclear = 1 /1e3                                                    # no valid source but less then lignite [€/kWh]
 
 
 class PriceForecast(BasicForecast):
@@ -101,7 +103,7 @@ class PriceForecast(BasicForecast):
             gas=np.ones_like(power_price) * default_gas[date.month - 1] * np.random.uniform(0.95, 1.05, 24),
             coal=np.ones_like(power_price) * default_coal * np.random.uniform(0.95, 1.05),
             lignite = np.ones_like(power_price) * default_lignite * np.random.uniform(0.95, 1.05),
-            nuclear=np.ones_like(power_price) * np.random.uniform(0.95, 1.05)
+            nuclear=np.ones_like(power_price) * default_nuclear * np.random.uniform(0.95, 1.05)
         )
 
         df = pd.DataFrame(index=pd.date_range(start=date, periods=24, freq='h'), data=prices)
