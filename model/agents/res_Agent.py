@@ -111,12 +111,7 @@ class ResAgent(BasicAgent):
 
 
     def callback(self, ch, method, properties, body):
-        super().callback(ch, method, properties, body)
-
-        message = body.decode("utf-8")
-        self.date = pd.to_datetime(message.split(' ')[1])
-        self.logger.debug(f'get command {message}')
-
+        message = super().callback(ch, method, properties, body)
         if 'set_capacities' in message:
             self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area, self.date)
         if 'opt_dayAhead' in message:

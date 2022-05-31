@@ -18,10 +18,8 @@ class MarketAgent(BasicAgent):
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def callback(self, ch, method, properties, body):
-        super().callback(ch, method, properties, body)
+        message = super().callback(ch, method, properties, body)
 
-        message = body.decode("utf-8")
-        self.date = pd.to_datetime(message.split(' ')[1])
         if 'dayAhead_clearing' in message:
             self.market_clearing()
 

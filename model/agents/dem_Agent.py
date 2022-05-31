@@ -86,11 +86,8 @@ class DemAgent(BasicAgent):
         return df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
     def callback(self, ch, method, properties, body):
-        super().callback(ch, method, properties, body)
+        message = super().callback(ch, method, properties, body)
 
-        message = body.decode("utf-8")
-        self.date = pd.to_datetime(message.split(' ')[1])
-        self.logger.info(f'get command {message}')
         if 'set_capacities' in message:
             self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
         if 'opt_dayAhead' in message:

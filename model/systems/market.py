@@ -139,7 +139,7 @@ class DayAheadMarket:
 
 
         # # Step 8 set constraint: Meet Demand in each hour
-        max_prc = [np.round(20000, 2) for i in range(24)]
+        max_prc = [20000 for i in range(24)]
         self.model.magic_source = Var(self.t, bounds=(0, None), within=Reals)
 
         self.model.demand = ConstraintList()

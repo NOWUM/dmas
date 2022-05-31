@@ -77,6 +77,8 @@ class BasicAgent:
     def callback(self, ch, method, properties, body):
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
+        self.logger.debug(f'get command {message}')
+        return message
 
 
     def dispatch_messages(self):

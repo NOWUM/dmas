@@ -74,8 +74,7 @@ class CtlAgent(BasicAgent):
         self.cleared = False
 
     def callback(self, ch, method, properties, body):
-        super().callback(ch, method, properties, body)
-        message = body.decode("utf-8")
+        message = super().callback(ch, method, properties, body)
         agent, date = message.split(' ')
         date = pd.to_datetime(date)
 

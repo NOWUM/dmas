@@ -24,9 +24,7 @@ class NetAgent(BasicAgent):
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def callback(self, ch, method, properties, body):
-        super().callback(ch, method, properties, body)
-        message = body.decode("utf-8")
-        self.date = pd.to_datetime(message.split(' ')[1])
+        message = super().callback(ch, method, properties, body)
 
         if 'calculate_power_flow' in message:
             self.calculate_power_flow()
