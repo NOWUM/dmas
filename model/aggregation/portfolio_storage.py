@@ -19,7 +19,7 @@ class StrPort(PortfolioModel):
 
     def add_energy_system(self, energy_system):
         model = Storage(T=self.T, **energy_system)
-        self.capacities['storages'] += energy_system['VMax']/1e3 # [kW] -> [MW]
+        self.capacities['storages'] += energy_system['VMax'] # [kW]
         self.energy_systems.append(model)
 
     def build_model(self, response=None):

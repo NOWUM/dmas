@@ -21,7 +21,7 @@ class PowerPlantPortfolio(PortfolioModel):
 
     def add_energy_system(self, energy_system):
         model = PowerPlant(T=self.T, steps=self.steps, **energy_system)
-        self.capacities[str(energy_system['fuel']).replace('_combined', '')] += energy_system['maxPower']/1e3 # [kW] -> [MW]
+        self.capacities[str(energy_system['fuel']).replace('_combined', '')] += energy_system['maxPower'] # [kW]
         self.energy_systems.append(model)
 
     def build_model(self, response=None):
@@ -31,7 +31,7 @@ class PowerPlantPortfolio(PortfolioModel):
     def optimize(self):
         """
         optimize the portfolio for the day ahead market
-        :return: time series in [MW]
+        :return: time series in [kW]
         """
         try:
             self.reset_data()
@@ -45,9 +45,9 @@ class PowerPlantPortfolio(PortfolioModel):
         try:
             for model in tqdm(self.energy_systems):
                 for key, value in model.generation.items():
-                    self.generation[str(model.power_plant['fuel']).replace('_combined', '')] += value/1e3 # [kW] -> [MW]
+                    self.generation[str(model.power_plant['fuel']).replace('_combined', '')] += value
                 for key, value in model.demand.items():
-                    self.demand[key] += value/1e3 # [kW] -> [MW]
+                    self.demand[key] += value
                 for key, value in model.cash_flow.items():
                     self.cash_flow[key] += value
             for key, value in self.generation.items():

@@ -42,7 +42,7 @@ class RenewablePortfolio(PortfolioModel):
         if energy_system['type'] == 'bio':
             model = BioMassModel(self.T, **energy_system)
 
-        self.capacities[energy_system['type']] += energy_system['maxPower']/1e3 # [kW] -> [MW]
+        self.capacities[energy_system['type']] += energy_system['maxPower'] # [kW]
 
         self.energy_systems.append(model)
 

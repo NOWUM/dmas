@@ -460,40 +460,9 @@
               }
             ]
           },
-          "unit": "megwatt"
+          "unit": "kwatt"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "bio",
-                  "coal",
-                  "lignite",
-                  "gas",
-                  "water",
-                  "storage",
-                  "nuclear"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -531,7 +500,7 @@
           ],
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(bio) AS \"bio\",\n  sum(wind) AS \"wind\",\n  sum(solar) AS \"solar\",\n  sum(coal) AS \"coal\",\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(water) AS \"water\",\n  sum(storage) AS \"storage\",\n  sum(nuclear) AS \"nuclear\"\nFROM capacities\nWHERE\n  $__timeFilter(\"time\") AND\n  agent NOT LIKE 'dem_de%' AND\n  area = 'DE21A'\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(bio) AS \"bio\",\n  sum(wind) AS \"wind\",\n  sum(solar) AS \"solar\",\n  sum(coal) AS \"coal\",\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(water) AS \"water\",\n  sum(storage) AS \"storage\",\n  sum(nuclear) AS \"nuclear\"\nFROM capacities\nWHERE\n  $__timeFilter(\"time\") AND\n  agent NOT LIKE 'dem_de%'\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -733,16 +702,6 @@
                 "'dem_de%'"
               ],
               "type": "expression"
-            },
-            {
-              "datatype": "text",
-              "name": "",
-              "params": [
-                "area",
-                "=",
-                "'DE21A'"
-              ],
-              "type": "expression"
             }
           ]
         }
@@ -765,14 +724,14 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 25,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -802,37 +761,9 @@
               }
             ]
           },
-          "unit": "megwatt"
+          "unit": "kwatt"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "wind",
-                  "solar",
-                  "water",
-                  "bio"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -870,32 +801,12 @@
           ],
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(wind) AS \"wind\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\",\n  sum(solar) AS \"solar\",\n  sum(water) AS \"water\",\n  sum(bio) AS \"bio\",\n  sum(gas) AS \"gas\",\n  sum(lignite) AS \"lignite\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'optimize_dayAhead'\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\",\n  sum(water) AS \"water\",\n  sum(bio) AS \"bio\",\n  sum(gas) AS \"gas\",\n  sum(lignite) AS \"lignite\",\n  sum(wind) AS \"wind\",\n  sum(solar) AS \"solar\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'optimize_dayAhead'\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
               {
                 "params": [
-                  "wind"
-                ],
-                "type": "column"
-              },
-              {
-                "params": [
-                  "sum"
-                ],
-                "type": "aggregate"
-              },
-              {
-                "params": [
-                  "wind"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
                   "nuclear"
                 ],
                 "type": "column"
@@ -929,26 +840,6 @@
               {
                 "params": [
                   "coal"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "solar"
-                ],
-                "type": "column"
-              },
-              {
-                "params": [
-                  "sum"
-                ],
-                "type": "aggregate"
-              },
-              {
-                "params": [
-                  "solar"
                 ],
                 "type": "alias"
               }
@@ -1029,6 +920,46 @@
               {
                 "params": [
                   "lignite"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "wind"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "wind"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "solar"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "solar"
                 ],
                 "type": "alias"
               }
@@ -1056,7 +987,7 @@
           ]
         }
       ],
-      "title": "Generation Overview",
+      "title": "Generation Overview Opt-DA",
       "type": "timeseries"
     },
     {
@@ -1111,7 +1042,7 @@
               }
             ]
           },
-          "unit": "megwatt"
+          "unit": "kwatt"
         },
         "overrides": [
           {
@@ -1123,6 +1054,21 @@
               {
                 "id": "custom.lineInterpolation",
                 "value": "stepAfter"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "D"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
               }
             ]
           }
@@ -1142,7 +1088,7 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -1154,6 +1100,7 @@
           },
           "format": "time_series",
           "group": [],
+          "hide": false,
           "metricColumn": "none",
           "rawQuery": false,
           "rawSql": "SELECT\n  \"time\" AS \"time\",\n  volume AS \"market volume\"\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
@@ -1265,7 +1212,7 @@
           ],
           "hide": false,
           "metricColumn": "none",
-          "rawQuery": false,
+          "rawQuery": true,
           "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(total) AS \"total generation\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
           "refId": "C",
           "select": [
@@ -1310,6 +1257,39 @@
               "type": "expression"
             }
           ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "P7508C69064B8A4D9"
+          },
+          "format": "time_series",
+          "group": [],
+          "hide": false,
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\",\n  sum(water) AS \"water\",\n  sum(bio) AS \"bio\",\n  sum(gas) AS \"gas\",\n  sum(lignite) AS \"lignite\",\n  sum(wind) AS \"wind\",\n  sum(solar) AS \"solar\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'optimize_dayAhead'\nGROUP BY 1\nORDER BY 1",
+          "refId": "D",
+          "select": [
+            [
+              {
+                "params": [
+                  "price"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "table": "auction_results",
+          "timeColumn": "\"time\"",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
         }
       ],
       "title": "Market Volume",
@@ -1330,14 +1310,14 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 25,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -1347,7 +1327,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1367,9 +1347,34 @@
               }
             ]
           },
-          "unit": "megwatt"
+          "unit": "kwatt"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "lignite"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1377,7 +1382,7 @@
         "x": 12,
         "y": 16
       },
-      "id": 3,
+      "id": 14,
       "options": {
         "legend": {
           "calcs": [],
@@ -1385,8 +1390,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1406,14 +1411,14 @@
             }
           ],
           "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(power) AS \"demand\"\nFROM demand\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\",\n  sum(water) AS \"water\",\n  sum(bio) AS \"bio\",\n  sum(gas) AS \"gas\",\n  sum(lignite) AS \"lignite\",\n  sum(wind) AS \"wind\",\n  sum(solar) AS \"solar\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
               {
                 "params": [
-                  "power"
+                  "nuclear"
                 ],
                 "type": "column"
               },
@@ -1425,13 +1430,153 @@
               },
               {
                 "params": [
-                  "demand"
+                  "nuclear"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "coal"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "coal"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "water"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "water"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "bio"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "bio"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "gas"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "gas"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "lignite"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "lignite"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "wind"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "wind"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "solar"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "solar"
                 ],
                 "type": "alias"
               }
             ]
           ],
-          "table": "demand",
+          "table": "generation",
           "timeColumn": "\"time\"",
           "timeColumnType": "timestamp",
           "where": [
@@ -1453,7 +1598,7 @@
           ]
         }
       ],
-      "title": "Demand",
+      "title": "Generation Overview Post DA",
       "type": "timeseries"
     },
     {
@@ -1708,19 +1853,150 @@
               "type": "expression"
             }
           ]
-        },
-        {
-          "datasource": {
-            "type": "__expr__",
-            "uid": "__expr__"
-          },
-          "expression": "$C - $B",
-          "hide": false,
-          "refId": "D",
-          "type": "math"
         }
       ],
       "title": "Difference Generation - Demand",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "P7508C69064B8A4D9"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "kwatt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "P7508C69064B8A4D9"
+          },
+          "format": "time_series",
+          "group": [
+            {
+              "params": [
+                "$__interval",
+                "none"
+              ],
+              "type": "time"
+            }
+          ],
+          "metricColumn": "none",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(power) AS \"demand\"\nFROM demand\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "power"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
+              },
+              {
+                "params": [
+                  "demand"
+                ],
+                "type": "alias"
+              }
+            ]
+          ],
+          "table": "demand",
+          "timeColumn": "\"time\"",
+          "timeColumnType": "timestamp",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            },
+            {
+              "datatype": "text",
+              "name": "",
+              "params": [
+                "step",
+                "=",
+                "'post_dayAhead'"
+              ],
+              "type": "expression"
+            }
+          ]
+        }
+      ],
+      "title": "Demand",
       "type": "timeseries"
     },
     {
@@ -1796,7 +2072,7 @@
         "h": 7,
         "w": 6,
         "x": 12,
-        "y": 24
+        "y": 32
       },
       "id": 12,
       "options": {
@@ -1807,7 +2083,7 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1827,9 +2103,9 @@
             }
           ],
           "hide": false,
-          "metricColumn": "none",
+          "metricColumn": "agent",
           "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead' AND\n  agent = 'pwp_de11a'\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  agent AS metric,\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead' AND\n  agent LIKE 'pwp_de%' AND\n  total > 500\nGROUP BY 1,2\nORDER BY 1,2",
           "refId": "A",
           "select": [
             [
@@ -1937,8 +2213,18 @@
               "name": "",
               "params": [
                 "agent",
-                "=",
-                "'pwp_de11a'"
+                "LIKE",
+                "'pwp_de%'"
+              ],
+              "type": "expression"
+            },
+            {
+              "datatype": "float8",
+              "name": "",
+              "params": [
+                "total",
+                ">",
+                "500"
               ],
               "type": "expression"
             }
@@ -1959,10 +2245,10 @@
               "type": "time"
             }
           ],
-          "hide": false,
-          "metricColumn": "none",
+          "hide": true,
+          "metricColumn": "agent",
           "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'optimize_dayAhead' AND\n  agent = 'pwp_de11a'\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  agent AS metric,\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'optimize_dayAhead' AND\n  agent LIKE 'pwp_de%' AND\n  total > 30\nGROUP BY 1,2\nORDER BY 1,2",
           "refId": "B",
           "select": [
             [
@@ -2070,246 +2356,18 @@
               "name": "",
               "params": [
                 "agent",
-                "=",
-                "'pwp_de11a'"
+                "LIKE",
+                "'pwp_de%'"
               ],
               "type": "expression"
-            }
-          ]
-        }
-      ],
-      "title": "Fahrpläne",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "P7508C69064B8A4D9"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "megwatt"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "custom.lineInterpolation",
-                "value": "stepAfter"
-              }
-            ]
-          },
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "coal"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 18,
-        "y": 24
-      },
-      "id": 11,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "P7508C69064B8A4D9"
-          },
-          "format": "time_series",
-          "group": [
-            {
-              "params": [
-                "$__interval",
-                "none"
-              ],
-              "type": "time"
-            }
-          ],
-          "metricColumn": "none",
-          "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead'\nGROUP BY 1\nORDER BY 1",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "lignite"
-                ],
-                "type": "column"
-              },
-              {
-                "params": [
-                  "sum"
-                ],
-                "type": "aggregate"
-              },
-              {
-                "params": [
-                  "lignite"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "gas"
-                ],
-                "type": "column"
-              },
-              {
-                "params": [
-                  "sum"
-                ],
-                "type": "aggregate"
-              },
-              {
-                "params": [
-                  "gas"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "nuclear"
-                ],
-                "type": "column"
-              },
-              {
-                "params": [
-                  "sum"
-                ],
-                "type": "aggregate"
-              },
-              {
-                "params": [
-                  "nuclear"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "coal"
-                ],
-                "type": "column"
-              },
-              {
-                "params": [
-                  "sum"
-                ],
-                "type": "aggregate"
-              },
-              {
-                "params": [
-                  "coal"
-                ],
-                "type": "alias"
-              }
-            ]
-          ],
-          "table": "generation",
-          "timeColumn": "\"time\"",
-          "timeColumnType": "timestamp",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
             },
             {
-              "datatype": "text",
+              "datatype": "float8",
               "name": "",
               "params": [
-                "step",
-                "=",
-                "'post_dayAhead'"
+                "total",
+                ">",
+                "30"
               ],
               "type": "expression"
             }
@@ -2328,8 +2386,8 @@
     "list": []
   },
   "time": {
-    "from": "2017-12-29T08:01:46.517Z",
-    "to": "2018-02-02T11:13:33.787Z"
+    "from": "2017-12-31T23:00:00.000Z",
+    "to": "2018-01-30T23:00:00.000Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -2348,6 +2406,6 @@
   "timezone": "",
   "title": "DMAS",
   "uid": "VdwbNAX72",
-  "version": 2,
+  "version": 5,
   "weekStart": ""
 }

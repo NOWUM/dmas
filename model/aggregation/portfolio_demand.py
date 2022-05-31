@@ -35,10 +35,10 @@ class DemandPortfolio(PortfolioModel):
 
         if energy_system['type'] == 'battery':
             model=PvBatModel(T=self.T, **energy_system)
-            self.capacities['solar'] += energy_system['maxPower']/1e3 # [kW] -> [MW]
+            self.capacities['solar'] += energy_system['maxPower'] # [kW]
         elif energy_system['type'] == 'solar':
             model=HouseholdPvModel(T=self.T, **energy_system)
-            self.capacities['solar'] += energy_system['maxPower']/1e3 # [kW] -> [MW]
+            self.capacities['solar'] += energy_system['maxPower'] # [kW]
         elif energy_system['type'] == 'household':
             model=HouseholdModel(T=self.T, **energy_system)
         elif energy_system['type'] == 'business':
@@ -77,7 +77,7 @@ class DemandPortfolio(PortfolioModel):
 
             for key, value in self.generation.items():
                 if key != 'total':
-                    self.generation['total'] += value
+                    self.generation['total'] += value # [kW]
 
             self.power = self.generation['total'] - self.demand['power']
 

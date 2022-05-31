@@ -21,7 +21,7 @@ class PortfolioModel:
         self.weather = {}
         self.prices = {}
 
-        # capacities are in [MW]
+        # capacities are in [kW]
         self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0., solar=0.,
                                water=0., wind=0., storage=0.)
         self.generation = None
