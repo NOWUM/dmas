@@ -17,11 +17,10 @@ class PowerPlant(EnergySystem):
 
         self.name = unitID
 
-        # PWP solves in MW but is initialized with kW as all others too
-        # emission factor chi is given in t/MWh
-        self.power_plant = dict(fuel=fuel, maxPower=maxPower, minPower=minPower, eta=eta, P0=P0, chi=chi/1e3, 
+        # PWP solves in kW as all others too
+        self.power_plant = dict(fuel=fuel, maxPower=maxPower, minPower=minPower, eta=eta, P0=P0, chi=chi,
                                 stopTime=stopTime, runTime=runTime, gradP=gradP, gradM=gradM, on=on, off=off)
-        self.start_cost = startCost/1e3 # [€/kW] -> [€/MW]
+        self.start_cost = startCost
 
         self.model = ConcreteModel()
         self.opt = SolverFactory('glpk')
@@ -34,6 +33,7 @@ class PowerPlant(EnergySystem):
                                                 emission=np.zeros(self.T, float),
                                                 fuel=np.zeros(self.T, float),
                                                 start=np.zeros(self.T, float),
+                                                profit=np.zeros(self.T, float),
                                                 obj=0) for step in steps}
 
         self.prevented_start = {step: dict(prevent_start=False,
@@ -57,6 +57,7 @@ class PowerPlant(EnergySystem):
         self.model.w = Var(self.t, within=Binary)
 
         # cash flow variables
+        # XXX not opt variable - can be pyomo expression
         self.model.fuel = Var(self.t, bounds=(0, None), within=Reals)
         self.model.emissions = Var(self.t, bounds=(0, None), within=Reals)
         self.model.start_ups = Var(self.t, bounds=(0, None), within=Reals)
@@ -76,7 +77,7 @@ class PowerPlant(EnergySystem):
         self.model.run_time = ConstraintList()
         self.model.states = ConstraintList()
         self.model.initial_on = ConstraintList()
-        self.model.initial_off =ConstraintList()
+        self.model.initial_off = ConstraintList()
         # define constraint for cash-flow aspects
         self.model.fuel_cost = ConstraintList()
         self.model.emission_cost = ConstraintList()
@@ -93,7 +94,7 @@ class PowerPlant(EnergySystem):
             # output power of the plant
             self.model.real_power.add(self.model.p_out[t] == self.model.p_model[t] + self.model.z[t]
                                       * self.power_plant['minPower'])
-            if t < 23:
+            if t < 23: # only the next day
                 self.model.real_max.add(self.model.p_out[t] <= self.power_plant['minPower']
                                         * (self.model.z[t] + self.model.v[t+1] + self.model.p_model[t]))
             # model power for optimization
@@ -122,7 +123,7 @@ class PowerPlant(EnergySystem):
 
             if t < self.power_plant['runTime'] - self.power_plant['on']:
                 self.model.initial_on.add(self.model.z[t] == 1)
-            elif t < self.power_plant['stopTime'] - self.power_plant['off']:
+            elif self.power_plant['off']>0 and t < self.power_plant['stopTime'] - self.power_plant['off']:
                 self.model.initial_off.add(self.model.z[t] == 0)
 
             self.model.fuel_cost.add(self.model.fuel[t]
@@ -171,9 +172,9 @@ class PowerPlant(EnergySystem):
 
         if self.committed_power is None:
 
-            base_price = self.prices.loc[:, 'power']
-            prices_24h = self.prices.iloc[:24, :]
-            prices_48h = self.prices.iloc[:48, :]
+            base_price = self.prices.loc[:, 'power'].copy()
+            prices_24h = self.prices.iloc[:24, :].copy()
+            prices_48h = self.prices.iloc[:48, :].copy()
 
             for step in self.steps:
 
@@ -189,6 +190,7 @@ class PowerPlant(EnergySystem):
                     self.optimization_results[step]['fuel'][t] = self.model.fuel[t].value
                     self.optimization_results[step]['start'][t] = self.model.start_ups[t].value
                     self.optimization_results[step]['obj'] = value(self.model.obj)
+                    self.optimization_results[step]['profit'][t] = value(self.model.profit[t].value)
 
                 p_out = np.asarray([self.model.p_out[t].value for t in self.t])
                 objective_value = value(self.model.obj)
@@ -211,7 +213,8 @@ class PowerPlant(EnergySystem):
                 if step == 0:
                     self.cash_flow = dict(fuel=self.optimization_results[step]['fuel'],
                                           emission=self.optimization_results[step]['emission'],
-                                          start_ups=self.optimization_results[step]['start'])
+                                          start_ups=self.optimization_results[step]['start'],
+                                          profit=self.optimization_results[step]['profit'])
                     self.generation[str(self.power_plant['fuel']).replace('_combined', '')] = self.optimization_results[step]['power']
                     self.power = self.optimization_results[step]['power']
 
@@ -222,6 +225,7 @@ class PowerPlant(EnergySystem):
                 self.cash_flow['fuel'][t] = float(self.model.fuel[t].value)
                 self.cash_flow['emission'][t] = float(self.model.emissions[t].value)
                 self.cash_flow['start_ups'][t] = float(self.model.start_ups[t].value)
+                self.cash_flow['profit'][t] = float(self.model.profit[t].value)
                 self.power[t] = float(self.model.p_out[t].value)
                 self.generation[str(self.power_plant['fuel']).replace('_combined', '')][t] = self.power[t]
 
@@ -232,27 +236,28 @@ class PowerPlant(EnergySystem):
 if __name__ == "__main__":
     plant = {'unitID':'x',
              'fuel':'lignite',
-             'maxPower': 300,
-             'minPower': 100,
-             'eta': 0.4,
+             'maxPower': 300, # kW
+             'minPower': 100, # kW
+             'eta': 0.4, # Wirkungsgrad
              'P0': 120,
-             'chi': 0.407,
-             'stopTime': 5,
-             'runTime': 10,
-             'gradP': 300,
-             'gradM': 300,
-             'on': 1,
+             'chi': 0.407/1e3, # t CO2/kWh
+             'stopTime': 5, # hours
+             'runTime': 10, # hours
+             'gradP': 300, # kW/h
+             'gradM': 300, # kW/h
+             'on': 1, # running since
              'off': 0,
-             'startCost': 10*1e3}
+             'startCost': 1e3 # €/Start
+             }
+    steps = np.array([-100, -10, 0, 10, 100])
+    pw = PowerPlant(T=24, steps=steps, **plant)
 
-    pw = PowerPlant(T=24, steps=[-100, -10, 0, 10, 1000], **plant)
-
-    power_price = np.ones(48) * 27 * np.random.uniform(0.95, 1.05, 48)
-    co = np.ones(48) * 23.8 * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
-    gas = np.ones(48) * 24.8 * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/MWh]
-    lignite =np.ones(48) * 1.5 * np.random.uniform(0.95, 1.05)                   # -- Lignite Price      [€/MWh]
-    coal = np.ones(48) * 9.9 * np.random.uniform(0.95, 1.05)                      # -- Hard Coal Price    [€/MWh]
-    nuc = np.ones(48) * 1.0 * np.random.uniform(0.95, 1.05)                       # -- nuclear Price      [€/MWh]
+    power_price = np.ones(48) * 0.3 #* np.random.uniform(0.95, 1.05, 48) # €/kWh
+    co = np.ones(48) * 23.8 #* np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
+    gas = np.ones(48) * 0.03 #* np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
+    lignite =np.ones(48) * 0.015 #* np.random.uniform(0.95, 1.05)                   # -- Lignite Price      [€/kWh]
+    coal = np.ones(48) * 0.02 #* np.random.uniform(0.95, 1.05)                      # -- Hard Coal Price    [€/kWh]
+    nuc = np.ones(48) * 0.01 #* np.random.uniform(0.95, 1.05)                       # -- nuclear Price      [€/kWh]
 
     prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
     prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
@@ -260,9 +265,15 @@ if __name__ == "__main__":
                      prices=prices)
 
     power = pw.optimize()
+    test_power = power.copy()
 
-    power *= 0.5
+    clean_spread = (1/0.4 * 0.015 + 1/0.4 * 0.407/1e3 * 23.8)
+    plant['maxPower']* clean_spread # €/kWh cost
 
-    pw.committed_power = power
+    # assume market only gives you halve of your offers
+    pw.committed_power = power/2
     pw.build_model()
     pw.optimize()
+
+    assert all(test_power/2 == pw.power)
+    # actual schedule corresponds to the market result

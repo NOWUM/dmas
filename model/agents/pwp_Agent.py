@@ -65,7 +65,7 @@ class PwpAgent(BasicAgent):
             prevent_orders = {}
 
             # build orders for each offset
-            for offset in [-10, -5, 0, 5, 100]:
+            for offset in self.portfolio.steps:
                 # get optimization result for key (block) and offset
                 result = model.optimization_results[offset]
                 starts = model.prevented_start[offset]
@@ -193,7 +193,7 @@ class PwpAgent(BasicAgent):
                                 price = np.round(
                                     (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
                                 power = np.round(0.2 * delta[hour], 2)
-                                # split volume in five orders and add them to order_boo
+                                # split volume in five orders and add them to order_book
                                 for order in range(5):
                                     order_book.update({(block_number, hour, order, name): (price,
                                                                                            power,

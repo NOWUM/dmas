@@ -14,12 +14,13 @@ log.setLevel('INFO')
 
 class PowerPlantPortfolio(PortfolioModel):
 
-    def __init__(self, T=24, date='2020-01-01'):
+    def __init__(self, T=24, date='2020-01-01', steps=np.array([-10, -5, 0, 5, 100])/1e3):
         super().__init__(T, date)
+        self.steps = steps
 
 
     def add_energy_system(self, energy_system):
-        model = PowerPlant(T=self.T, steps=[-10, -5, 0, 5, 100], **energy_system)
+        model = PowerPlant(T=self.T, steps=self.steps, **energy_system)
         self.capacities[str(energy_system['fuel']).replace('_combined', '')] += energy_system['maxPower']/1e3 # [kW] -> [MW]
         self.energy_systems.append(model)
 

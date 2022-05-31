@@ -154,17 +154,20 @@ class InfrastructureInterface:
                     # Set technical parameter corresponding to the type (0, 2000, 2018)
                     technical_parameter = pd.read_csv(fr'./interfaces/data/technical_parameter_{fuel_type}.csv',
                                                       sep=';', decimal=',', index_col=0)
+                    # start cost given in [€/MW]
+                    # chi in [t CO2/MWh therm.]
 
                     for line, row in df.iterrows():
+                        start_cost = technical_parameter.at[row['type'], 'startCost']/1e3 # [€/MW] -> [€/kW]
                         df.at[line, 'minPower'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'minPower'] / 100
                         df.at[line, 'P0'] = df.at[line, 'minPower']
                         df.at[line, 'gradP'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradP'] * 60 / 100,2)
                         df.at[line, 'gradM'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradM'] * 60 / 100,2)
                         df.at[line, 'eta'] = technical_parameter.at[row['type'], 'eta']
-                        df.at[line, 'chi'] = technical_parameter.at[row['type'], 'chi']
+                        df.at[line, 'chi'] = technical_parameter.at[row['type'], 'chi']/1e3 # [t CO2/MWh therm.] -> [t CO2/kWh therm.]
                         df.at[line, 'stopTime'] = technical_parameter.at[row['type'], 'stopTime']
                         df.at[line, 'runTime'] = technical_parameter.at[row['type'], 'runTime']
-                        df.at[line, 'startCost'] = df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'startCost']
+                        df.at[line, 'startCost'] = df.at[line, 'maxPower'] * start_cost
 
                     data_frames.append(df)
 

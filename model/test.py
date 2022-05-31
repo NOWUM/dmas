@@ -38,3 +38,16 @@ if __name__ == '__main__':
     pwp_agent.optimize_day_ahead()
     pwp_agent.get_order_book()
     pwp_agent.portfolio.capacities
+
+    pwp_agent.portfolio.capacities
+    pwp = pwp_agent.portfolio.energy_systems[0]
+    pwp.start_cost # €/kWh
+
+    # Gesamterlöse
+    for k,v in pwp.optimization_results.items(): print(k,v['obj'])
+    # Fahrpläne
+    for k,v in pwp.optimization_results.items(): print(k,v['power'])
+    high_prices = list(pwp.optimization_results.values())[-1]
+    assert all(high_prices['power']) > 0, 'pwp must be running'
+    assert high_prices['obj'] > 0 # günstig sollte sich immer lohnen
+    
