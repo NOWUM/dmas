@@ -115,7 +115,7 @@ class ResAgent(BasicAgent):
 
         message = body.decode("utf-8")
         self.date = pd.to_datetime(message.split(' ')[1])
-        self.logger.info(f'get command {message}')
+        self.logger.debug(f'get command {message}')
 
         if 'set_capacities' in message:
             self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area, self.date)
@@ -163,7 +163,7 @@ class ResAgent(BasicAgent):
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
-        self.logger.info('starting day ahead adjustments')
+        self.logger.info(f'starting day ahead adjustments {self.date}')
         start_time = time.time()
         # save optimization results
         self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)
