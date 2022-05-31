@@ -102,7 +102,7 @@ class ResAgent(BasicAgent):
                                      order_id=0,
                                      name=self.name + '_mrk',
                                      # TODO better values
-                                     price=0.001, # [€/kWh] 
+                                     price=0.001, # [€/kWh]
                                      volume=power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')

@@ -151,12 +151,12 @@ class CtlAgent(BasicAgent):
                 simulation.start()
                 check_orders.start()
                 self.sim_start = True
+            return f'Simulation is running: {start}: from {self.start_date} to {self.stop_date}'
         else:
             if not self.sim_stop:
                 self.logger.info('stopping simulation')
             self.sim_stop = True
-            
-        return f'Simulation is running: {start}: from {begin} to {end}'
+            return f'Simulation not running'
 
     def run(self):
 
@@ -165,7 +165,7 @@ class CtlAgent(BasicAgent):
             begin = request.form.get('begin')
             end = request.form.get('end')
             return self.handle_simulation(begin, end, start=True)
-        # allows programatically start: 
+        # allows programatically start:
         # curl -X POST http://localhost:5000/start -d "begin=2018-01-01" -d "end=2018-02-01"
 
         @app.callback(Output('information', 'children'), Input('tab_menu', 'value'))
