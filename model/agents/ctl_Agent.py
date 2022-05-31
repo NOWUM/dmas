@@ -12,7 +12,9 @@ from dash.dependencies import Input, Output, State
 from agents.basic_Agent import BasicAgent
 from dashboards.dashboard import Dashboard
 
-app = dash.Dash('dMAS_controller', external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
+server = Flask('dMAS_controller')
+
+app = dash.Dash('dMAS_controller', external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'], server=server)
 
 
 class CtlAgent(BasicAgent):
@@ -138,7 +140,33 @@ class CtlAgent(BasicAgent):
         self.sim_start = False
         self.logger.info('simulation finished')
 
+    def handle_simulation(self, begin, end, start=False):
+        if start:
+            self.start_date = pd.to_datetime(begin)
+            self.stop_date = pd.to_datetime(end)
+            if not self.sim_start:
+                self.sim_stop = False
+                simulation = threading.Thread(target=self.simulation_routine)
+                check_orders = threading.Thread(target=self.check_orders)
+                simulation.start()
+                check_orders.start()
+                self.sim_start = True
+        else:
+            if not self.sim_stop:
+                self.logger.info('stopping simulation')
+            self.sim_stop = True
+            
+        return f'Simulation is running: {start}: from {begin} to {end}'
+
     def run(self):
+
+        @server.route('/start', methods=['POST'])
+        def start_post():
+            begin = request.form.get('begin')
+            end = request.form.get('end')
+            return self.handle_simulation(begin, end, start=True)
+        # allows programatically start: 
+        # curl -X POST http://localhost:5000/start -d "begin=2018-01-01" -d "end=2018-02-01"
 
         @app.callback(Output('information', 'children'), Input('tab_menu', 'value'))
         def render_information(tab):
@@ -154,22 +182,7 @@ class CtlAgent(BasicAgent):
                       State('date_range', 'end_date'))
         def simulation_controlling(on, start, end):
             # TODO this stops the simulation if the date is change on the Dashboard
-            if on:
-                self.start_date = pd.to_datetime(start)
-                self.stop_date = pd.to_datetime(end)
-                if not self.sim_start:
-                    self.sim_stop = False
-                    simulation = threading.Thread(target=self.simulation_routine)
-                    check_orders = threading.Thread(target=self.check_orders)
-                    simulation.start()
-                    check_orders.start()
-                    self.sim_start = True
-            else:
-                if not self.sim_stop:
-                    self.logger.info('stopping simulation')
-                self.sim_stop = True
-                
-            return 'Simulation is running: {}.'.format(on)
+            return self.handle_simulation(start, end, on)
 
         app.layout = self.dashboard.layout
 
