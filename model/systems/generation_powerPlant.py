@@ -220,7 +220,8 @@ class PowerPlant(EnergySystem):
 
         else:
             self.opt.solve(self.model)
-
+            running_since = 0
+            off_since = 0
             for t in self.t:
                 self.cash_flow['fuel'][t] = float(self.model.fuel[t].value)
                 self.cash_flow['emission'][t] = float(self.model.emissions[t].value)
@@ -228,6 +229,17 @@ class PowerPlant(EnergySystem):
                 self.cash_flow['profit'][t] = float(self.model.profit[t].value)
                 self.power[t] = float(self.model.p_out[t].value)
                 self.generation[str(self.power_plant['fuel']).replace('_combined', '')][t] = self.power[t]
+                
+                # find count of last 1s and 0s
+                if self.model.z[t].value >0:
+                    running_since += 1
+                    off_since = 0
+                else:
+                    running_since = 0
+                    off_since +=1
+
+            self.power_plant['on'] = running_since
+            self.power_plant['off'] = off_since
 
             self.committed_power = None
         
@@ -276,4 +288,20 @@ if __name__ == "__main__":
     pw.optimize()
 
     assert all(test_power/2 == pw.power)
+    assert pw.power_plant['on'] == 24
+    assert pw.power_plant['off'] == 0
+
+    pw = PowerPlant(T=24, steps=steps, **plant)
+    pw.set_parameter(date='2018-01-01', weather=None,
+                     prices=prices)
+    power = pw.optimize()
+    pw.committed_power = power*0
+    pw.build_model()
+    pw.optimize()
+
+    assert pw.power_plant['on'] == 0
+    assert pw.power_plant['off'] == 15
+
+    for k,v in pw.optimization_results.items(): print(k, v['power'])
+    for k,v in pw.optimization_results.items(): print(k, v['obj'])
     # actual schedule corresponds to the market result
