@@ -87,14 +87,14 @@ class PwpAgent(BasicAgent):
                     last_power = result['power']  # set last_power to current power
                     continue  # do next offset
 
-                # check if a start is prevented
+                # check if a start (and stop) is prevented
                 if starts['prevent_start']:
                     hours = starts['hours']  # get hours in which the start is prevented
                     count = len(hours)
                     p_min = model.power_plant['PMin']
                     # calculate the reduction coefficient for each hour
                     factor = starts['delta'] / np.sum(p_min * count)
-                    # if no orders already set, that prevent a start add new orders
+                    # if no orders that prevent a start are already set add new orders
                     if len(prevent_orders) == 0:
                         # for each hour with power > 0 add order to order_book
                         for hour in hours:

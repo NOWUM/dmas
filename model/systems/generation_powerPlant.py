@@ -207,7 +207,7 @@ class PowerPlant(EnergySystem):
                     delta = value(self.model.obj) - objective_value
                     percentage = delta / objective_value if objective_value else 0
                     if prevent_start and percentage > 0.05:
-                        self.prevented_start.update({step: dict(prevented=True, hours=hours, delta=delta)})
+                        self.prevented_start.update({step: dict(prevent_start=True, hours=hours, delta=delta)})
                     self.t = np.arange(self.T)
 
                 if step == 0:
