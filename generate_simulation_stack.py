@@ -1,7 +1,7 @@
 import numpy as np
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
-counter = 100
+counter = 2
 
 configs = {}
 output = []
