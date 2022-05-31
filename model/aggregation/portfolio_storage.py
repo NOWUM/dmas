@@ -27,6 +27,9 @@ class StrPort(PortfolioModel):
             model.set_parameter(date=self.date, weather=self.weather.copy(), prices=self.prices.copy())
 
     def optimize(self):
+        '''
+        returns power in [kW]
+        '''
 
         self.reset_data()
 
@@ -38,10 +41,10 @@ class StrPort(PortfolioModel):
         t = time.time()
         for model in tqdm(self.energy_systems):
             for key, value in model.generation.items():
-                self.generation['total'] += value/1e3 # [kW] -> [MW]
-                self.generation['water'] += value/1e3 # [kW] -> [MW]
+                self.generation['total'] += value # [kW]
+                self.generation['water'] += value # [kW]
             for key, value in model.demand.items():
-                self.demand[key] += value/1e3 # [kW] -> [MW]
+                self.demand[key] += value # [kW]
             for key, value in model.cash_flow.items():
                 self.cash_flow[key] += value
 

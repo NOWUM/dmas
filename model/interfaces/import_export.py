@@ -23,8 +23,10 @@ class InfrastructureInterface:
                 f'from query_installed_generation_capacity_per_unit ' \
                 f'where country = {land}'
         df = pd.read_sql(self.database_entsoe, query)
-
+        df['maxPower'] /= 1e3 # [MW] -> [kW]
         for index, row in df.iterrows():
             pass
+
+        return df
 
 

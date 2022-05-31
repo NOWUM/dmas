@@ -77,7 +77,7 @@ class DemAgent(BasicAgent):
                                      order_id=0,
                                      block_id=t,
                                      name=self.name,
-                                     price=3000, # €/MWh
+                                     price=3000, # €/kWh
                                      volume=power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')

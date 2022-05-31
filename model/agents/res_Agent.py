@@ -91,7 +91,9 @@ class ResAgent(BasicAgent):
                                      block_id=t,
                                      order_id=0,
                                      name=self.name + '_eeg',
-                                     price=-500, # €/MWh
+                                     price=-500, # €/kWh
+                                     # lower limit of DA auction
+                                     # https://www.epexspot.com/sites/default/files/2022-05/22-05-23_TradingBrochure.pdf
                                      volume=power[t])
             if type == 'mrk' and power[t] > 0.5:
                 order_book[t] = dict(type='generation',
@@ -99,7 +101,8 @@ class ResAgent(BasicAgent):
                                      hour=t,
                                      order_id=0,
                                      name=self.name + '_mrk',
-                                     price=0,
+                                     # TODO better values
+                                     price=0.001, # [€/kWh] 
                                      volume=power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')

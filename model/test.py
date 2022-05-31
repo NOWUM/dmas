@@ -36,12 +36,17 @@ if __name__ == '__main__':
     agent_class = type_mapping[init_dict['type']]
     pwp_agent = agent_class(**init_dict)
     pwp_agent.optimize_day_ahead()
-    pwp_agent.get_order_book()
+    pwp_orderbook = pwp_agent.get_order_book()
     pwp_agent.portfolio.capacities
 
-    pwp_agent.portfolio.capacities
     pwp = pwp_agent.portfolio.energy_systems[0]
     pwp.start_cost # €/kWh
+    plant = pwp.power_plant
+    prices = pwp.prices
+    clean_spread = (1/plant['eta'] * (prices[plant['fuel']].mean() + plant['chi'] * prices['co'].mean()))
+
+    print(pwp.get_clean_spread()) # €/kWh cost
+    print(pwp.power_plant['maxPower']*pwp.get_clean_spread())
 
     # Gesamterlöse
     for k,v in pwp.optimization_results.items(): print(k,v['obj'])
@@ -50,4 +55,22 @@ if __name__ == '__main__':
     high_prices = list(pwp.optimization_results.values())[-1]
     assert all(high_prices['power']) > 0, 'pwp must be running'
     assert high_prices['obj'] > 0 # günstig sollte sich immer lohnen
-    
+
+    init_dict['type'] = 'MRK'
+    agent_class = type_mapping[init_dict['type']]
+    mrk_agent = agent_class(**init_dict)
+    mrk = mrk_agent.market
+
+    hourly_orders = mrk_agent.simulation_interface.get_hourly_orders()
+
+    ask = hourly_orders.loc[hourly_orders['type'] == 'generation']
+    all(ask['volume'] > 0)
+    bid = hourly_orders.loc[hourly_orders['type'] == 'demand']
+    all(bid['volume'] < 0)
+    asks = ask['volume'].groupby('hour').sum()
+    bids = bid['volume'].groupby('hour').sum()
+    diff = asks + bids
+    # if diff[t] < 0 - renewables are not enough and pwp is needed
+
+    linked = mrk_agent.simulation_interface.get_linked_orders()
+    exclusive_orders= mrk_agent.simulation_interface.get_exclusive_orders()

@@ -31,7 +31,7 @@ class InfrastructureInterface:
                  structure_databases=('mastr', 'oep', 'windmodel')):
 
         server_uri = f'postgresql://{structure_data_credential}@{structure_data_server}'
-        
+
         self.database_mastr = create_engine(f'{server_uri}/{structure_databases[0]}',
                                             connect_args={"application_name": name})
         self.database_oep = create_engine(f'{server_uri}/{structure_databases[1]}',
@@ -62,7 +62,7 @@ class InfrastructureInterface:
                     '''
                 if fuel_type != 'nuclear':
                     query += f'''
-                        , 
+                        ,
                         kwk."ThermischeNutzleistung" as "kwkPowerTherm",
                         kwk."ElektrischeKwkLeistung" as "kwkPowerElec",
                         ev."AnlageIstImKombibetrieb" as "combination"
@@ -93,7 +93,7 @@ class InfrastructureInterface:
                     df['runTime'] = 5                                           # default run time 5h
                     df['on'] = 1                                                # on counter --> Plant is on till 1 hour
                     df['off'] = 0                                               # off counter --> Plant is on NOT off
-                    df['eta'] = 30                                              # efficiency
+                    df['eta'] = 0.3                                              # efficiency
                     df['chi'] = 1.                                              # emission factor [t/MWh therm]
                     df['startCost'] = 100 * df['maxPower']                      # starting cost [€/kW Rated]
                     df['turbineTyp'] = [mastr_codes_fossil.loc[str(x), 'value'] # convert int to string
@@ -163,7 +163,7 @@ class InfrastructureInterface:
                         df.at[line, 'P0'] = df.at[line, 'minPower']
                         df.at[line, 'gradP'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradP'] * 60 / 100,2)
                         df.at[line, 'gradM'] = np.round(df.at[line, 'maxPower'] * technical_parameter.at[row['type'], 'gradM'] * 60 / 100,2)
-                        df.at[line, 'eta'] = technical_parameter.at[row['type'], 'eta']
+                        df.at[line, 'eta'] = technical_parameter.at[row['type'], 'eta']/100 # convert to percentage
                         df.at[line, 'chi'] = technical_parameter.at[row['type'], 'chi']/1e3 # [t CO2/MWh therm.] -> [t CO2/kWh therm.]
                         df.at[line, 'stopTime'] = technical_parameter.at[row['type'], 'stopTime']
                         df.at[line, 'runTime'] = technical_parameter.at[row['type'], 'runTime']
@@ -495,7 +495,7 @@ class InfrastructureInterface:
 
     def get_grid_nodes(self):
         return {}
-    
+
     def get_grid_edges(self):
         return {}
 

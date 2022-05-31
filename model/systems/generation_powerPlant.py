@@ -229,7 +229,7 @@ class PowerPlant(EnergySystem):
                 self.cash_flow['profit'][t] = float(self.model.profit[t].value)
                 self.power[t] = float(self.model.p_out[t].value)
                 self.generation[str(self.power_plant['fuel']).replace('_combined', '')][t] = self.power[t]
-                
+
                 # find count of last 1s and 0s
                 if self.model.z[t].value >0:
                     running_since += 1
@@ -242,8 +242,14 @@ class PowerPlant(EnergySystem):
             self.power_plant['off'] = off_since
 
             self.committed_power = None
-        
+
         return self.power
+
+    def get_clean_spread(self, prices=None):
+        if not prices:
+            prices = self.prices
+        return 1/self.power_plant['eta'] * (prices[self.power_plant['fuel']].mean()
+                                            + self.power_plant['chi'] * prices['co'].mean())
 
 if __name__ == "__main__":
     plant = {'unitID':'x',
@@ -262,7 +268,7 @@ if __name__ == "__main__":
              'startCost': 1e3 # €/Start
              }
     steps = np.array([-100, -10, 0, 10, 100])
-    pw = PowerPlant(T=24, steps=steps, **plant)
+    pwp = PowerPlant(T=24, steps=steps, **plant)
 
     power_price = np.ones(48) * 0.3 #* np.random.uniform(0.95, 1.05, 48) # €/kWh
     co = np.ones(48) * 23.8 #* np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
@@ -273,35 +279,36 @@ if __name__ == "__main__":
 
     prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
     prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
-    pw.set_parameter(date='2018-01-01', weather=None,
+    pwp.set_parameter(date='2018-01-01', weather=None,
                      prices=prices)
 
-    power = pw.optimize()
+    power = pwp.optimize()
     test_power = power.copy()
 
-    clean_spread = (1/0.4 * 0.015 + 1/0.4 * 0.407/1e3 * 23.8)
-    plant['maxPower']* clean_spread # €/kWh cost
+    #clean_spread = (1/plant['eta'] * (prices[plant['fuel']].mean() + plant['chi'] * prices['co'].mean()))
+    print(pwp.get_clean_spread()) # €/kWh cost
+    print(pwp.power_plant['maxPower']*pwp.get_clean_spread()) # €/h full operation
 
     # assume market only gives you halve of your offers
-    pw.committed_power = power/2
-    pw.build_model()
-    pw.optimize()
+    pwp.committed_power = power/2
+    pwp.build_model()
+    pwp.optimize()
 
-    assert all(test_power/2 == pw.power)
-    assert pw.power_plant['on'] == 24
-    assert pw.power_plant['off'] == 0
+    assert all(test_power/2 == pwp.power)
+    assert pwp.power_plant['on'] == 24
+    assert pwp.power_plant['off'] == 0
 
-    pw = PowerPlant(T=24, steps=steps, **plant)
-    pw.set_parameter(date='2018-01-01', weather=None,
+    pwp = PowerPlant(T=24, steps=steps, **plant)
+    pwp.set_parameter(date='2018-01-01', weather=None,
                      prices=prices)
-    power = pw.optimize()
-    pw.committed_power = power*0
-    pw.build_model()
-    pw.optimize()
+    power = pwp.optimize()
+    pwp.committed_power = power*0
+    pwp.build_model()
+    pwp.optimize()
 
-    assert pw.power_plant['on'] == 0
-    assert pw.power_plant['off'] == 15
+    assert pwp.power_plant['on'] == 0
+    assert pwp.power_plant['off'] == 15
 
-    for k,v in pw.optimization_results.items(): print(k, v['power'])
-    for k,v in pw.optimization_results.items(): print(k, v['obj'])
+    for k,v in pwp.optimization_results.items(): print(k, v['power'])
+    for k,v in pwp.optimization_results.items(): print(k, v['obj'])
     # actual schedule corresponds to the market result

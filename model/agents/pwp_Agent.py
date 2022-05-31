@@ -71,11 +71,11 @@ class PwpAgent(BasicAgent):
                     # for hours with power > 0 calculate mean variable costs
                     hours = np.argwhere(result['power'] > 0).reshape((-1,))
                     costs = result['fuel'][hours] + result['emission'][hours] + result['start'][hours]
-                    var_costs = np.round(np.mean(costs / result['power'][hours]), 2)
+                    var_costs = np.mean(costs / result['power'][hours])
                     # for each hour with power > 0 add order to order_book
                     for hour in hours:
                         price = var_costs
-                        power = np.round(result['power'][hour], 2)
+                        power = result['power'][hour]
                         order_book.update({(0, hour, 0, name): (price, power, 0)})
                         links.update({hour: block_number})
 
@@ -95,8 +95,8 @@ class PwpAgent(BasicAgent):
                         # for each hour with power > 0 add order to order_book
                         for hour in hours:
                             costs = model.prices['fuel'][hour] + model.prices['emission'][hour]
-                            var_costs = np.round(costs / p_min, 2)
-                            power = np.round(p_min, 2)
+                            var_costs = costs / p_min
+                            power = p_min
                             order_book.update({(block_number, hour, 0, name): (var_costs, power, links[hour])})
                             prevent_orders.update({(block_number, hour, 0, name): (var_costs, power, links[hour])})
                             links.update({hour: block_number})
@@ -107,12 +107,12 @@ class PwpAgent(BasicAgent):
                         for hour in hours:
                             for id_, order in prevent_orders.items():
                                 if id_[1] == hour:
-                                    order_to_prevent = {id_: (np.round(order[0] - factor, 2),
-                                                              np.round(result['power'][hour], 2),
+                                    order_to_prevent = {id_: (order[0] - factor,
+                                                              result['power'][hour],
                                                               order[2])}
 
-                                    order_to_book = {id_: (np.round(order[0] - factor, 2),
-                                                           np.round(result['power'][hour], 2),
+                                    order_to_book = {id_: (order[0] - factor,
+                                                           result['power'][hour],
                                                            order[2])}
 
                                     prevent_orders.update(order_to_prevent)
@@ -131,9 +131,8 @@ class PwpAgent(BasicAgent):
                         # check if delta > 0
                         if delta[hour] > 0:
                             # calculate variable cost for the hour and set it as requested price
-                            price = np.round(
-                                (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
-                            power = np.round(0.2 * delta[hour], 2)
+                            price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
+                            power = 0.2 * delta[hour]
                             # check if the last linked block for this hour is unknown
                             if links[hour] == -1:
                                 link = 0  # if unknown, link to mother order
@@ -163,8 +162,8 @@ class PwpAgent(BasicAgent):
                             # check if delta > 0
                             if delta[hour] > 0:
                                 # calculate variable cost for the hour and set it as requested price
-                                price = np.round((result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
-                                power = np.round(0.2 * delta[hour], 2)
+                                price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
+                                power = 0.2 * delta[hour]
                                 # split volume in five orders and add them to order_book
                                 for order in range(5):
                                     order_book.update({(block_number, hour, order, name): (price, power, link)})
@@ -186,9 +185,8 @@ class PwpAgent(BasicAgent):
                             # check if delta > 0
                             if delta[hour] > 0:
                                 # calculate variable cost for the hour and set it as requested price
-                                price = np.round(
-                                    (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour], 2)
-                                power = np.round(0.2 * delta[hour], 2)
+                                price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
+                                power = 0.2 * delta[hour]
                                 # split volume in five orders and add them to order_book
                                 for order in range(5):
                                     order_book.update({(block_number, hour, order, name): (price,
@@ -204,12 +202,9 @@ class PwpAgent(BasicAgent):
         else:
             # if nothing in self.portfolio.energy_systems
             df = pd.DataFrame(columns=['price', 'volume', 'link', 'type'])
-        
+
         df['type'] = 'generation'
         df.columns = ['price', 'volume', 'link', 'type']
-        # as values are used from energy_systems, they are in €/kW
-        # we convert them to €/MW to send them to the market
-        df['price'] /= 1e3
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'order_id', 'name'])
 
         return df

@@ -12,9 +12,9 @@ def get_interval(start):
 class SimulationInterface:
 
     def __init__(self, name, simulation_data_server, simulation_data_credential,
-                 structure_database, mqtt_server):
+                 simulation_db, mqtt_server):
         self.database = create_engine(f'postgresql://{simulation_data_credential}@{simulation_data_server}/'
-                                      f'{structure_database}',
+                                      f'{simulation_db}',
                                       connect_args={"application_name": name})
         self.name = name
         self.mqtt_server = mqtt_server
@@ -36,8 +36,8 @@ class SimulationInterface:
               DROP TABLE IF EXISTS exclusive_results;
             '''
             connection.execute(query)
-            
-            query = '''CREATE TABLE hourly_orders (hour bigint, block_id bigint , order_id bigint, name text, 
+
+            query = '''CREATE TABLE hourly_orders (hour bigint, block_id bigint , order_id bigint, name text,
                                                 price double precision, volume double precision, type text)'''
             connection.execute(query)
             connection.execute('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
@@ -81,7 +81,7 @@ class SimulationInterface:
             connection.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
 
             # hourly orders
-            query = '''CREATE TABLE hourly_results (hour bigint, block_id bigint , order_id bigint, name text, 
+            query = '''CREATE TABLE hourly_results (hour bigint, block_id bigint , order_id bigint, name text,
                                                     price double precision, volume double precision, type text)'''
             connection.execute(query)
             connection.execute('ALTER TABLE "hourly_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
@@ -159,7 +159,7 @@ class SimulationInterface:
         data_frame['step'] = step
         data_frame.index.name = 'time'
 
-        # generation in MW
+        # generation in kW
         data_frame.to_sql(name='generation', con=self.database, if_exists='append')
 
     def get_planed_generation(self, agent, date):

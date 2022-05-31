@@ -58,7 +58,7 @@ class DemandPortfolio(PortfolioModel):
     def optimize(self):
         """
         optimize the portfolio for the day ahead market
-        :return: time series in [MW]
+        :return: time series in [kW]
         """
 
         try:
@@ -71,9 +71,9 @@ class DemandPortfolio(PortfolioModel):
         try:
             for model in tqdm(self.energy_systems):
                 for key, value in model.generation.items():
-                    self.generation[key] += value/1e3     # -> [kW] in [MW]
+                    self.generation[key] += value # [kW]
                 for key, value in model.demand.items():
-                    self.demand[key] += value/1e3         # -> [kW] in [MW]
+                    self.demand[key] += value # [kW]
 
             for key, value in self.generation.items():
                 if key != 'total':
