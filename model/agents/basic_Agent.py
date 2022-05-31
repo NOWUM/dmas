@@ -3,7 +3,6 @@ import pandas as pd
 import pika
 import logging
 import time
-import threading
 
 from interfaces.weather import WeatherInterface
 from interfaces.structure import InfrastructureInterface, get_lon_lat
@@ -81,27 +80,11 @@ class BasicAgent:
         return message
 
 
-    def dispatch_messages(self):
-        method_frame = True
-        # consume all frames in the buffer
-        while method_frame:
-            method_frame, properties, body = self.channel.basic_get(self.name)
-            if method_frame:
-                self.callback(self.name, method_frame, properties, body)
-                self.channel.basic_ack(method_frame.delivery_tag)
-            else:
-                pass
-
     def run(self):
-        ticker = threading.Event()
-        self.logger.info(f' --> Agent {self.name} has connected to simulation '
+        self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
+        print(f' --> Agent {self.name} has connected to simulation '
               f'and is waiting for instructions (to exit press CTRL+C)')
         try:
-            while not ticker.wait(2):
-                self.logger.debug('dispatching')
-                self.dispatch_messages()
+            self.channel.start_consuming()
         except KeyboardInterrupt:
-            self.logger.info('KeyboardInterrupt')
-        #self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
-        
-        #self.channel.start_consuming()
+            print('KeyBoardInterrupt')
