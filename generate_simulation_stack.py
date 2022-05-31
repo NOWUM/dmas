@@ -30,12 +30,13 @@ output.append(f'''
   simulationdb:
     container_name: simulationdb
     image: timescale/timescaledb:latest-pg14
-    command: postgres -c 'max_connections=500' -B 4096MB
+    #command: postgres -c 'max_connections=500' -B 4096MB
     restart: always
     environment:
       - POSTGRES_USER=dMAS
       - POSTGRES_PASSWORD=dMAS
       - POSTGRES_DB=dmas
+      - TS_TUNE_MAX_CONNS=2000
     ports:
       - 5432:5432
     volumes:
@@ -54,6 +55,9 @@ output.append(f'''
       - simulationdb
     ports:
       - 3001:3000
+    environment:
+      GF_SECURITY_ALLOW_EMBEDDING: true
+      GF_AUTH_ANONYMOUS_ENABLED: true
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
