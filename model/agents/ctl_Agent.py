@@ -62,6 +62,7 @@ class CtlAgent(BasicAgent):
                 still_waiting = len(self.waiting_list)
 
                 time.sleep(1)
+                self.dispatch_messages()
 
     def wait_for_market(self):
         t = time.time()
@@ -70,7 +71,6 @@ class CtlAgent(BasicAgent):
             time.sleep(1)
             if time.time() - t > 120:
                 self.cleared = True
-                pass
         self.cleared = False
 
     def callback(self, ch, method, properties, body):
@@ -83,14 +83,6 @@ class CtlAgent(BasicAgent):
             self.waiting_list.remove(agent)
         if agent == 'mrk_de111' and date == self.date:
             self.cleared = True
-
-    def check_orders(self):
-        try:
-            self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
-            print(' --> Waiting for orders')
-            self.channel.start_consuming()
-        except Exception as e:
-            print(repr(e))
 
     def simulation_routine(self):
         self.logger.info('simulation started')
@@ -154,16 +146,13 @@ class CtlAgent(BasicAgent):
                       State('date_range', 'start_date'),
                       State('date_range', 'end_date'))
         def simulation_controlling(on, start, end):
-            # TODO this stops the simulation if the date is change on the Dashboard
             if on:
                 self.start_date = pd.to_datetime(start)
                 self.stop_date = pd.to_datetime(end)
                 if not self.sim_start:
                     self.sim_stop = False
                     simulation = threading.Thread(target=self.simulation_routine)
-                    check_orders = threading.Thread(target=self.check_orders)
                     simulation.start()
-                    check_orders.start()
                     self.sim_start = True
             else:
                 if not self.sim_stop:
