@@ -26,7 +26,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1654066936950,
+  "iteration": 1654112294339,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -2236,7 +2236,7 @@
           "hide": false,
           "metricColumn": "agent",
           "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  agent AS metric,\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead' AND\n  agent LIKE $agent\nGROUP BY 1,2\nORDER BY 1,2",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  agent AS metric,\n  sum(lignite) AS \"lignite\",\n  sum(gas) AS \"gas\",\n  sum(nuclear) AS \"nuclear\",\n  sum(coal) AS \"coal\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead' AND\n  agent = '$agent'\nGROUP BY 1,2\nORDER BY 1,2",
           "refId": "A",
           "select": [
             [
@@ -2344,8 +2344,8 @@
               "name": "",
               "params": [
                 "agent",
-                "LIKE",
-                "$agent"
+                "=",
+                "'$agent'"
               ],
               "type": "expression"
             }
@@ -2507,13 +2507,9 @@
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": [
-            "pwp_de111"
-          ],
-          "value": [
-            "pwp_de111"
-          ]
+          "selected": true,
+          "text": "pwp_def01",
+          "value": "pwp_def01"
         },
         "datasource": {
           "type": "postgres",
@@ -2522,12 +2518,12 @@
         "definition": "Select distinct agent from capacities",
         "hide": 0,
         "includeAll": false,
-        "multi": true,
+        "multi": false,
         "name": "agent",
         "options": [],
         "query": "Select distinct agent from capacities",
         "refresh": 1,
-        "regex": "",
+        "regex": "/pwp_de.*/",
         "skipUrlSync": false,
         "sort": 2,
         "type": "query"
@@ -2555,6 +2551,6 @@
   "timezone": "utc",
   "title": "DMAS",
   "uid": "VdwbNAX72",
-  "version": 8,
+  "version": 2,
   "weekStart": "monday"
 }
