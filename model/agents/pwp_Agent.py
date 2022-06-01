@@ -209,18 +209,22 @@ class PwpAgent(BasicAgent):
 
         return df
 
-    def optimize_day_ahead(self):
-        """scheduling for the DayAhead market"""
-        self.logger.info('dayAhead market scheduling started')
-        start_time = time.time()
-
-        # Step 1: forecast data data and init the model for the coming day
+    def _initialize_parameters(self):
+            # Step 1: forecast data data and init the model for the coming day
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
         prices = pd.concat([prices, prices.copy()])
         prices.index = pd.date_range(start=self.date, freq='h', periods=48)
 
         self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
+
+
+    def optimize_day_ahead(self):
+        """scheduling for the DayAhead market"""
+        self.logger.info('dayAhead market scheduling started')
+        start_time = time.time()
+
+        self._initialize_parameters()
         self.portfolio.build_model()
         self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
         # Step 2: optimization
@@ -243,6 +247,8 @@ class PwpAgent(BasicAgent):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
 
+        if not self.portfolio.prices:
+            self._initialize_parameters()
         start_time = time.time()
 
         # query the DayAhead results

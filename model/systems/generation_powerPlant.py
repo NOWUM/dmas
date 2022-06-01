@@ -121,7 +121,7 @@ class PowerPlant(EnergySystem):
             if t > 0:
                 self.model.states.add(self.model.z[t-1] - self.model.z[t] + self.model.v[t] - self.model.w[t] == 0)
 
-            if t < self.power_plant['runTime'] - self.power_plant['on']:
+            if self.power_plant['on']>0 and t < self.power_plant['runTime'] - self.power_plant['on']:
                 self.model.initial_on.add(self.model.z[t] == 1)
             elif self.power_plant['off']>0 and t < self.power_plant['stopTime'] - self.power_plant['off']:
                 self.model.initial_off.add(self.model.z[t] == 0)
@@ -237,7 +237,8 @@ class PowerPlant(EnergySystem):
                 else:
                     running_since = 0
                     off_since +=1
-
+                
+            self.power_plant['P0'] = self.power[-1]
             self.power_plant['on'] = running_since
             self.power_plant['off'] = off_since
 
@@ -308,6 +309,15 @@ if __name__ == "__main__":
 
     assert pwp.power_plant['on'] == 0
     assert pwp.power_plant['off'] == 15
+
+    pwp.build_model()
+    pwp.optimize()
+    pwp.committed_power = power*0
+    pwp.build_model()
+    pwp.optimize()
+
+    assert pwp.power_plant['on'] == 0
+    assert pwp.power_plant['off'] == 24    
 
     for k,v in pwp.optimization_results.items(): print(k, v['power'])
     for k,v in pwp.optimization_results.items(): print(k, v['obj'])
