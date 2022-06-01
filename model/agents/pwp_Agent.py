@@ -123,7 +123,7 @@ class PwpAgent(BasicAgent):
                 if any(result['power'] - last_power > 0):
                     delta = result['power'] - last_power  # get deltas
                     stack_vertical = np.argwhere(last_power > 0).reshape((-1,))  # and check if last_power > 0
-                    self.logger.info(stack_vertical)
+                    self.logger.debug(stack_vertical)
                     # for each power with last_power > 0
                     for hour in stack_vertical:
                         # check if delta > 0
@@ -142,57 +142,58 @@ class PwpAgent(BasicAgent):
                             links[hour] = block_number  # update last known block for hour
                             block_number += 1  # increment block number
 
-                    left = stack_vertical[0]  # get first left hour from last_power   ->  __|-----|__
-                    right = stack_vertical[-1]  # get first right hour from last_power  __|-----|__ <--
+                    if stack_vertical: # can be empty if turned completely off in a case
+                        left = stack_vertical[0]  # get first left hour from last_power   ->  __|-----|__
+                        right = stack_vertical[-1]  # get first right hour from last_power  __|-----|__ <--
 
-                    # if the left hour differs from first hour of the current day
-                    if left > 0:
-                        # build array for e.g. [0,1,2,3,4,5, ..., left-1]
-                        stack_left = np.arange(start=left - 1, stop=-1, step=-1)
-                        # check if the last linked block for the fist left hour is unknown
-                        # (only first hour is connected to mother)
-                        if links[stack_left[0]] == -1:
-                            link = 0  # if unknown, link to mother order
-                        else:
-                            link = links[stack_left[0]]  # else link to last block for this hour
-                        # for each hour in left_stack
-                        for hour in stack_left:
-                            # check if delta > 0
-                            if delta[hour] > 0:
-                                # calculate variable cost for the hour and set it as requested price
-                                price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
-                                power = 0.2 * delta[hour]
-                                # split volume in five orders and add them to order_book
-                                for order in range(5):
-                                    order_book.update({(block_number, hour, order, name): (price, power, link)})
-                                link = block_number
-                                links[hour] = block_number  # update last known block for hour
-                                block_number += 1  # increment block number
+                        # if the left hour differs from first hour of the current day
+                        if left > 0:
+                            # build array for e.g. [0,1,2,3,4,5, ..., left-1]
+                            stack_left = np.arange(start=left - 1, stop=-1, step=-1)
+                            # check if the last linked block for the fist left hour is unknown
+                            # (only first hour is connected to mother)
+                            if links[stack_left[0]] == -1:
+                                link = 0  # if unknown, link to mother order
+                            else:
+                                link = links[stack_left[0]]  # else link to last block for this hour
+                            # for each hour in left_stack
+                            for hour in stack_left:
+                                # check if delta > 0
+                                if delta[hour] > 0:
+                                    # calculate variable cost for the hour and set it as requested price
+                                    price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
+                                    power = 0.2 * delta[hour]
+                                    # split volume in five orders and add them to order_book
+                                    for order in range(5):
+                                        order_book.update({(block_number, hour, order, name): (price, power, link)})
+                                    link = block_number
+                                    links[hour] = block_number  # update last known block for hour
+                                    block_number += 1  # increment block number
 
-                    # if the right hour differs from last hour of the current day
-                    if right < 23:
-                        # build array for e.g. [right + 1, ... ,19,20,21,22,23]
-                        stack_right = np.arange(start=right + 1, stop=24)
-                        # check if the last linked block for the fist right hour is unknown
-                        # (only first hour is connected to mother)
-                        if links[stack_right[0]] == -1:
-                            link = 0  # if unknown, link to mother order
-                        else:
-                            link = links[stack_right[0]]  # else link to last block for this hour
-                        for hour in stack_right:
-                            # check if delta > 0
-                            if delta[hour] > 0:
-                                # calculate variable cost for the hour and set it as requested price
-                                price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
-                                power = 0.2 * delta[hour]
-                                # split volume in five orders and add them to order_book
-                                for order in range(5):
-                                    order_book.update({(block_number, hour, order, name): (price,
-                                                                                           power,
-                                                                                           link)})
-                                link = block_number
-                                links[hour] = block_number  # update last known block for hour
-                                block_number += 1  # increment block number
+                        # if the right hour differs from last hour of the current day
+                        if right < 23:
+                            # build array for e.g. [right + 1, ... ,19,20,21,22,23]
+                            stack_right = np.arange(start=right + 1, stop=24)
+                            # check if the last linked block for the fist right hour is unknown
+                            # (only first hour is connected to mother)
+                            if links[stack_right[0]] == -1:
+                                link = 0  # if unknown, link to mother order
+                            else:
+                                link = links[stack_right[0]]  # else link to last block for this hour
+                            for hour in stack_right:
+                                # check if delta > 0
+                                if delta[hour] > 0:
+                                    # calculate variable cost for the hour and set it as requested price
+                                    price = (result['fuel'][hour] + result['emission'][hour]) / result['power'][hour]
+                                    power = 0.2 * delta[hour]
+                                    # split volume in five orders and add them to order_book
+                                    for order in range(5):
+                                        order_book.update({(block_number, hour, order, name): (price,
+                                                                                            power,
+                                                                                            link)})
+                                    link = block_number
+                                    links[hour] = block_number  # update last known block for hour
+                                    block_number += 1  # increment block number
 
                     last_power = result['power']  # set last_power to current power
         if order_book:
