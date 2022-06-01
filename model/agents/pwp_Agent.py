@@ -60,11 +60,11 @@ class PwpAgent(BasicAgent):
             name = model.name
             prevent_orders = {}
 
-            # build orders for each offset
-            for offset in self.portfolio.steps:
-                # get optimization result for key (block) and offset
-                result = model.optimization_results[offset]
-                starts = model.prevented_start[offset]
+            # build orders for each step
+            for step in self.portfolio.steps:
+                # get optimization result for key (block) and step
+                result = model.optimization_results[step]
+                prevented_starts = model.prevented_start[step]
 
                 # build mother order if any power > 0 for the current day and the block_number is zero
                 if any(result['power'] > 0) and block_number == 0:
@@ -81,21 +81,19 @@ class PwpAgent(BasicAgent):
 
                     block_number += 1  # increment block number
                     last_power = result['power']  # set last_power to current power
-                    continue  # do next offset
+                    continue  # do next step
 
                 # check if a start (and stop) is prevented
-                if starts['prevent_start']:
-                    hours = starts['hours']  # get hours in which the start is prevented
-                    self.logger.info(f'hours is: {hours}')
-                    count = len(hours)
+                if prevented_starts['prevent_start']:
+                    hours = prevented_starts['hours']  # get hours in which the start is prevented
+                    self.logger.debug(f'prevented start hours are: {hours}')
                     p_min = model.power_plant['minPower']
                     # calculate the reduction coefficient for each hour
-                    factor = starts['delta'] / np.sum(p_min * count)
+                    factor = prevented_starts['delta'] / np.sum(p_min * len(hours))
                     # if no orders that prevent a start are already set add new orders
                     if len(prevent_orders) == 0:
                         # for each hour with power > 0 add order to order_book
                         for hour in hours:
-                            hour = hour[0] # XXX
                             costs = result['fuel'][hour] + result['emission'][hour]
                             var_costs = costs / p_min
                             power = p_min
@@ -109,7 +107,6 @@ class PwpAgent(BasicAgent):
                         # for each hour with power > 0 add order to order_book
                         # todo: if prices are too negative update this part
                         for hour in hours:
-                            hour = hour[0] # XXX
                             for id_, order in prevent_orders.items():
                                 if id_[1] == hour:
                                     prevent_orders[id_] = (order[0] - factor,
@@ -121,13 +118,14 @@ class PwpAgent(BasicAgent):
                                                            order[2])
 
                     last_power[hours] = result['power'][hours]
-                    result = model.optimization_results[offset]
+                    result = model.optimization_results[step]
 
                 # add linked hour blocks
                 # check if current power is higher then the last known power
                 if any(result['power'] - last_power > 0):
                     delta = result['power'] - last_power  # get deltas
                     stack_vertical = np.argwhere(last_power > 0).reshape((-1,))  # and check if last_power > 0
+                    self.logger.info(stack_vertical)
                     # for each power with last_power > 0
                     for hour in stack_vertical:
                         # check if delta > 0
