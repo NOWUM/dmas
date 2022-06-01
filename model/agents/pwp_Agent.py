@@ -86,6 +86,7 @@ class PwpAgent(BasicAgent):
                 # check if a start (and stop) is prevented
                 if starts['prevent_start']:
                     hours = starts['hours']  # get hours in which the start is prevented
+                    self.logger.info(f'hours is: {hours}')
                     count = len(hours)
                     p_min = model.power_plant['minPower']
                     # calculate the reduction coefficient for each hour
@@ -94,6 +95,7 @@ class PwpAgent(BasicAgent):
                     if len(prevent_orders) == 0:
                         # for each hour with power > 0 add order to order_book
                         for hour in hours:
+                            hour = hour[0] # XXX
                             costs = result['fuel'][hour] + result['emission'][hour]
                             var_costs = costs / p_min
                             power = p_min
@@ -107,6 +109,7 @@ class PwpAgent(BasicAgent):
                         # for each hour with power > 0 add order to order_book
                         # todo: if prices are too negative update this part
                         for hour in hours:
+                            hour = hour[0] # XXX
                             for id_, order in prevent_orders.items():
                                 if id_[1] == hour:
                                     prevent_orders[id_] = (order[0] - factor,
