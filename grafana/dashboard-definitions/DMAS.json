@@ -26,7 +26,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1654064763512,
+  "iteration": 1654066936950,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -73,7 +73,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -617,7 +618,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1069,7 +1071,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#ffffff"
+                "color": "#ffffff",
+                "value": null
               }
             ]
           },
@@ -1253,7 +1256,7 @@
           ],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(nuclear) + sum(coal) +  sum(water) + sum(bio) + sum(gas) + sum(lignite) + sum(wind) + sum(solar) as \"total\"\nFROM generation\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(nuclear) + sum(coal) +  sum(water) + sum(bio) + sum(gas) + sum(lignite) + sum(wind) + sum(solar) as \"total\"\nFROM capacities\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -1504,7 +1507,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1767,7 +1771,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2168,7 +2173,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2503,10 +2509,10 @@
         "current": {
           "selected": false,
           "text": [
-            "pwp_de406"
+            "pwp_de111"
           ],
           "value": [
-            "pwp_de406"
+            "pwp_de111"
           ]
         },
         "datasource": {
