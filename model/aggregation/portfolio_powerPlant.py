@@ -24,9 +24,22 @@ class PowerPlantPortfolio(PortfolioModel):
         self.capacities[str(energy_system['fuel']).replace('_combined', '')] += energy_system['maxPower'] # [kW]
         self.energy_systems.append(model)
 
-    def build_model(self, response=None):
+    def set_parameter(self, date, weather, prices):
+        super().set_parameter(date, weather, prices)
+
         for model in tqdm(self.energy_systems):
             model.set_parameter(self.date, self.weather.copy(), self.prices.copy())
+
+    def build_model(self, get_linked_result):
+        # query the DayAhead results
+        for model in self.energy_systems:
+            power = np.zeros(24)
+            committed_power = get_linked_result(model.name)
+            for index, row in committed_power.iterrows():
+                power[int(row.hour)] = float(row.volume)
+
+            model.committed_power = power
+            model.build_model()
 
     def optimize(self):
         """

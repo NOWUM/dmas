@@ -225,7 +225,6 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
 
         self._initialize_parameters()
-        self.portfolio.build_model()
         self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
         # Step 2: optimization
         self.portfolio.optimize()
@@ -251,16 +250,8 @@ class PwpAgent(BasicAgent):
             self._initialize_parameters()
         start_time = time.time()
 
-        # query the DayAhead results
-        for model in self.portfolio.energy_systems:
-            power = np.zeros(24)
-            committed_power = self.simulation_interface.get_linked_result(model.name)
-            for index, row in committed_power.iterrows():
-                power[int(row.hour)] = float(row.volume)
 
-            model.committed_power = power
-            model.build_model()
-
+        self.portfolio.build_model(self.simulation_interface.get_linked_result)
         self.portfolio.optimize()
 
         # save optimization results
