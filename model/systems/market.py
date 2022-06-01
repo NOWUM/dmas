@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 from pyomo.environ import  Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
     minimize, maximize, quicksum, ConstraintList
-
+import logging
 
 class DayAheadMarket:
 
     def __init__(self):
 
-
+        self.logger = logging.getLogger('market')
         self.hourly_ask_total = {}
         self.hourly_ask_orders = {}
 
@@ -25,7 +25,7 @@ class DayAheadMarket:
 
         self.model = ConcreteModel()
         self.opt = SolverFactory('gurobi', solver_io='python')
-
+        
         self.t = np.arange(24)
 
     def set_parameter(self, hourly_ask, hourly_bid, linked_orders, exclusive_orders):
@@ -243,11 +243,16 @@ class DayAheadMarket:
 
         used_bid_orders = self.hourly_bid_total
         volumes = []
+        sum_magic_source = 0
         for t in self.t:
+            sum_magic_source += self.model.magic_source[t].value
             volume = 0
             for block, order, name in self.hourly_bid_orders[t]:
                 volume += (-1) * self.hourly_bid_total[block, t, order, name][1]
             volumes.append(volume)
+        
+        self.logger.info(f'Got {sum_magic_source} kWh from Magic source on {self.date}')        
+
         used_bid_orders = pd.DataFrame.from_dict(used_bid_orders, orient='index')
         used_bid_orders.index = pd.MultiIndex.from_tuples(used_bid_orders.index,
                                                           names=['block_id', 'hour', 'order_id', 'name'])
@@ -258,9 +263,7 @@ class DayAheadMarket:
             used_bid_orders.columns = ['price', 'volume']
 
         prices['volume'] = volumes
-
         self.reset_parameter()
-
         return prices, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders
 
 
