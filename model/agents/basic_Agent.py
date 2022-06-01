@@ -49,7 +49,8 @@ class BasicAgent:
         self.channels = []
         self.publish = self.get_rabbitmq_connection()
         self.channel = self.get_rabbitmq_connection()
-        result = self.channel.queue_declare(queue=self.name, exclusive=True, auto_delete=True)
+        # auto_delete deletes if consumer was connected and channel is then closed
+        result = self.channel.queue_declare(queue=self.name, auto_delete=True)
         self.channel.queue_bind(exchange=self.mqtt_exchange, queue=result.method.queue)
         self.logger.info('starting the agent')
 
@@ -88,3 +89,15 @@ class BasicAgent:
             self.channel.start_consuming()
         except KeyboardInterrupt:
             print('KeyBoardInterrupt')
+
+
+if __name__ == '__main__':
+    mqtt_connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', blocked_connection_timeout=3600, heartbeat=0))
+
+    channel = mqtt_connection.channel()
+    channel.exchange_declare(exchange='dmas', exchange_type='fanout')
+    result = channel.queue_declare(queue='test', exclusive=False, auto_delete=True)
+    channel.queue_bind(exchange='dmas', queue=result.method.queue)
+
+    #if mqtt_connection and not mqtt_connection.is_closed:
+    #    mqtt_connection.close()

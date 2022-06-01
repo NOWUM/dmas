@@ -88,11 +88,11 @@ class CtlAgent(BasicAgent):
 
     def check_orders(self):
         self.channel = self.get_rabbitmq_connection()
-        result = self.channel.queue_declare(queue=f'ag_{self.name}', auto_delete=True)
+        result = self.channel.queue_declare(queue=self.name, auto_delete=True)
         self.channel.queue_bind(exchange=self.mqtt_exchange, queue=result.method.queue)
 
         try:
-            self.channel.basic_consume(queue=f'ag_{self.name}', on_message_callback=self.callback, auto_ack=True)
+            self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
             print(' --> Waiting for orders')
             self.channel.start_consuming()
         except Exception as e:
