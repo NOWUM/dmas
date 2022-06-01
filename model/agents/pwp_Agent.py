@@ -77,7 +77,7 @@ class PwpAgent(BasicAgent):
                         price = var_costs
                         power = result['power'][hour]
                         order_book.update({(0, hour, 0, name): (price, power, 0)})
-                        links.update({hour: block_number})
+                        links[hour] = block_number
 
                     block_number += 1  # increment block number
                     last_power = result['power']  # set last_power to current power
@@ -94,12 +94,14 @@ class PwpAgent(BasicAgent):
                     if len(prevent_orders) == 0:
                         # for each hour with power > 0 add order to order_book
                         for hour in hours:
-                            costs = model.prices['fuel'][hour] + model.prices['emission'][hour]
+                            costs = result['fuel'][hour] + result['emission'][hour]
                             var_costs = costs / p_min
                             power = p_min
-                            order_book.update({(block_number, hour, 0, name): (var_costs, power, links[hour])})
-                            prevent_orders.update({(block_number, hour, 0, name): (var_costs, power, links[hour])})
-                            links.update({hour: block_number})
+                            self.logger.info((block_number, hour, 0, name))
+                            self.logger.info((var_costs, power, links[hour]))
+                            order_book[(block_number, hour, 0, name)] = (var_costs, power, links[hour])
+                            prevent_orders[(block_number, hour, 0, name)] = (var_costs, power, links[hour])
+                            links[hour] = block_number
                             block_number += 1  # increment block number
                     else:
                         # for each hour with power > 0 add order to order_book
@@ -107,16 +109,13 @@ class PwpAgent(BasicAgent):
                         for hour in hours:
                             for id_, order in prevent_orders.items():
                                 if id_[1] == hour:
-                                    order_to_prevent = {id_: (order[0] - factor,
+                                    prevent_orders[id_] = (order[0] - factor,
                                                               result['power'][hour],
-                                                              order[2])}
+                                                              order[2])
 
-                                    order_to_book = {id_: (order[0] - factor,
+                                    order_book[id_] = (order[0] - factor,
                                                            result['power'][hour],
-                                                           order[2])}
-
-                                    prevent_orders.update(order_to_prevent)
-                                    order_book.update(order_to_book)
+                                                           order[2])
 
                     last_power[hours] = result['power'][hours]
                     result = model.optimization_results[offset]
@@ -141,7 +140,7 @@ class PwpAgent(BasicAgent):
                             # split volume in five orders and add them to order_book
                             for order in range(5):
                                 order_book.update({(block_number, hour, order, name): (price, power, link)})
-                            links.update({hour: block_number})  # update last known block for hour
+                            links[hour] = block_number  # update last known block for hour
                             block_number += 1  # increment block number
 
                     left = stack_vertical[0]  # get first left hour from last_power   ->  __|-----|__
@@ -168,7 +167,7 @@ class PwpAgent(BasicAgent):
                                 for order in range(5):
                                     order_book.update({(block_number, hour, order, name): (price, power, link)})
                                 link = block_number
-                                links.update({hour: block_number})  # update last known block for hour
+                                links[hour] = block_number  # update last known block for hour
                                 block_number += 1  # increment block number
 
                     # if the right hour differs from last hour of the current day
@@ -193,7 +192,7 @@ class PwpAgent(BasicAgent):
                                                                                            power,
                                                                                            link)})
                                 link = block_number
-                                links.update({hour: block_number})  # update last known block for hour
+                                links[hour] = block_number  # update last known block for hour
                                 block_number += 1  # increment block number
 
                     last_power = result['power']  # set last_power to current power

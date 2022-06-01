@@ -251,7 +251,7 @@ class DayAheadMarket:
                 volume += (-1) * self.hourly_bid_total[block, t, order, name][1]
             volumes.append(volume)
         
-        self.logger.info(f'Got {sum_magic_source} kWh from Magic source on {self.date}')        
+        self.logger.info(f'Got {sum_magic_source} kWh from Magic source')
 
         used_bid_orders = pd.DataFrame.from_dict(used_bid_orders, orient='index')
         used_bid_orders.index = pd.MultiIndex.from_tuples(used_bid_orders.index,
