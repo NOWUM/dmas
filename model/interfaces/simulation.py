@@ -134,8 +134,12 @@ class SimulationInterface:
         data_frame['agent'] = self.name
         data_frame['area'] = area
         data_frame.index.name = 'time'
-
-        data_frame.to_sql(name='capacities', con=self.database, if_exists='append')
+        
+        try:
+            data_frame.to_sql(name='capacities', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.error(f'capacities already exist for {area} and {date} - ignoring')
+        
 
     def get_global_capacities(self, date):
         query = f"SELECT sum(bio) as bio, " \
@@ -200,7 +204,7 @@ class SimulationInterface:
         try:
             data_frame.to_sql(name='demand', con=self.database, if_exists='append')
         except IntegrityError:
-            self.logger.error(f'generation already exists for {area} and {date} - ignoring')
+            self.logger.error(f'demand already exists for {area} and {date} - ignoring')
 
     # hourly orders
     def set_hourly_orders(self, order_book):

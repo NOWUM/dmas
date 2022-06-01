@@ -97,8 +97,6 @@ class PwpAgent(BasicAgent):
                             costs = result['fuel'][hour] + result['emission'][hour]
                             var_costs = costs / p_min
                             power = p_min
-                            self.logger.info((block_number, hour, 0, name))
-                            self.logger.info((var_costs, power, links[hour]))
                             order_book[(block_number, hour, 0, name)] = (var_costs, power, links[hour])
                             prevent_orders[(block_number, hour, 0, name)] = (var_costs, power, links[hour])
                             links[hour] = block_number
@@ -246,7 +244,7 @@ class PwpAgent(BasicAgent):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
 
-        if not self.portfolio.prices.empty:
+        if self.portfolio.prices.empty:
             self.logger.info('initialize_parameters in post_day_ahead')
             self._initialize_parameters()
         start_time = time.time()
