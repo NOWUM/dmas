@@ -21,6 +21,10 @@ class CtlAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.channel = self.get_rabbitmq_connection()
+        result = self.channel.queue_declare(queue=f'ag_{self.name}', auto_delete=True)
+        self.channel.queue_bind(exchange=self.mqtt_exchange, queue=result.method.queue)
+        
         start_time = time.time()
         self.sim_start = False
         self.sim_stop = False
