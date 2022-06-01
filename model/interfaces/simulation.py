@@ -1,13 +1,14 @@
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 import requests
 import pandas as pd
 import numpy as np
+import logging
 
 def get_interval(start):
     start_date = pd.to_datetime(start).date()
     end_date = (start_date + pd.DateOffset(days=1)).date()
     return start_date, end_date
-
 
 class SimulationInterface:
 
@@ -17,6 +18,7 @@ class SimulationInterface:
                                       f'{simulation_db}',
                                       connect_args={"application_name": name})
         self.name = name
+        self.logger = logging.getLogger('simulation')
         self.mqtt_server = mqtt_server
 
     def initialize_tables(self):
@@ -160,7 +162,10 @@ class SimulationInterface:
         data_frame.index.name = 'time'
 
         # generation in kW
-        data_frame.to_sql(name='generation', con=self.database, if_exists='append')
+        try:
+            data_frame.to_sql(name='generation', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.error(f'generation already exists for {area} and {date} - ignoring')
 
     def get_planed_generation(self, agent, date):
         try:
@@ -192,7 +197,10 @@ class SimulationInterface:
         data_frame.index.name = 'time'
         data_frame['step'] = step
 
-        data_frame.to_sql(name='demand', con=self.database, if_exists='append')
+        try:
+            data_frame.to_sql(name='demand', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.error(f'generation already exists for {area} and {date} - ignoring')
 
     # hourly orders
     def set_hourly_orders(self, order_book):
