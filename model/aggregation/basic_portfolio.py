@@ -18,8 +18,8 @@ class PortfolioModel:
 
         self.T, self.t, self.dt = T, np.arange(T), 1
 
-        self.weather = {}
-        self.prices = {}
+        self.weather = pd.DataFrame()
+        self.prices = pd.DataFrame()
 
         # capacities are in [kW]
         self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0., solar=0.,

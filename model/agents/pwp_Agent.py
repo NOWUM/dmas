@@ -246,7 +246,8 @@ class PwpAgent(BasicAgent):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
 
-        if not self.portfolio.prices:
+        if not self.portfolio.prices.empty:
+            self.logger.info('initialize_parameters in post_day_ahead')
             self._initialize_parameters()
         start_time = time.time()
 
