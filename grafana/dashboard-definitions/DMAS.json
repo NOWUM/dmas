@@ -26,7 +26,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1654112294339,
+  "iteration": 1654183993427,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -1543,7 +1543,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "kelvin"
+                "value": "celsius"
               }
             ]
           }
@@ -1586,13 +1586,13 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  avg(temp_air) AS \"temp_air\",\n  avg(ghi) AS \"ghi\"\nFROM cosmo\nWHERE\n  $__timeFilter(\"time\") AND\n  country = 'DE'\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  avg(temp_air-273.15) AS \"temp_air\",\n  avg(ghi) AS \"ghi\"\nFROM cosmo\nWHERE\n  $__timeFilter(\"time\") AND\n  country = 'DE'\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
               {
                 "params": [
-                  "temp_air"
+                  "temp_air-273.15"
                 ],
                 "type": "column"
               },
@@ -2182,7 +2182,7 @@
               }
             ]
           },
-          "unit": "megwatt"
+          "unit": "kwatt"
         },
         "overrides": [
           {
@@ -2507,7 +2507,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "pwp_def01",
           "value": "pwp_def01"
         },
