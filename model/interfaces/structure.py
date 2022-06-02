@@ -502,7 +502,7 @@ class InfrastructureInterface:
 if __name__ == "__main__":
     import os
     x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432')
-    y = os.getenv('INFRASTRUCTURE_LOGIN', 'opendata:opendata')
+    y = os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
 
     interface = InfrastructureInterface('test', structure_data_server=x, structure_data_credential=y)
     x = interface.get_power_plant_in_area(area='DEA2D', fuel_type='gas')

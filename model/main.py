@@ -14,7 +14,7 @@ logging.getLogger("pika").propagate = False
 logging.basicConfig()
 
 weather_server = os.getenv('WEATHER_SERVER', '10.13.10.41:5432')
-weather_credential = os.getenv('WEATHER_CREDENTIAL', 'opendata:opendata')
+weather_credential = os.getenv('WEATHER_CREDENTIAL', 'readonly:readonly')
 weather_database = os.getenv('WEATHER_DATABASE', 'weather')
 weather_database_uri = f'postgresql://{weather_credential}@{weather_server}/{weather_database}'
 init_dict = {
@@ -30,7 +30,7 @@ init_dict = {
     'simulation_database': os.getenv('SIMULATION_DATABASE', 'dmas'),
     # structure data server default parameter
     'structure_server': os.getenv('STRUCTURE_SERVER', '10.13.10.41:5432'),
-    'structure_credential': os.getenv('STRUCTURE_CREDENTIAL', 'opendata:opendata'),
+    'structure_credential': os.getenv('STRUCTURE_CREDENTIAL', 'readonly:readonly'),
     # weather data server default parameter
     'weather_database_uri': weather_database_uri
 }

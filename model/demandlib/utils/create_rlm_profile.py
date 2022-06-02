@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 winter = np.asarray(np.load(open(r'./demandlib/data/winter.pkl', 'rb')))
 summer = np.asarray(np.load(open(r'./demandlib/data/summer.pkl', 'rb')))
-database_oep = create_engine(f'postgresql://opendata:opendata@10.13.10.41:5432/oep', connect_args={"application_name": 'rlm'})
+database_oep = create_engine(f'postgresql://readonly:readonly@10.13.10.41:5432/oep', connect_args={"application_name": 'rlm'})
 
 
 bdew_profiles = {

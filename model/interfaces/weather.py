@@ -83,7 +83,7 @@ class WeatherInterface:
         return self.get_param('temp_air', date)
 
 if __name__ == "__main__":    
-    weather_database_uri = 'postgresql://opendata:opendata@10.13.10.41:5432/weather'
+    weather_database_uri = 'postgresql://readonly:readonly@10.13.10.41:5432/weather'
     interface_weather = WeatherInterface('test', weather_database_uri)
     
     mean_temp = interface_weather.get_temperature()
