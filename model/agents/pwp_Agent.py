@@ -69,7 +69,7 @@ class PwpAgent(BasicAgent):
                 # build mother order if any power > 0 for the current day and the block_number is zero
                 if any(result['power'] > 0) and block_number == 0:
                     # for hours with power > 0 calculate mean variable costs
-                    hours = np.argwhere(result['power'] > 0).reshape((-1,))
+                    hours = np.argwhere(result['power'] > 0).flatten()
                     costs = result['fuel'][hours] + result['emission'][hours] + result['start'][hours]
                     var_costs = np.mean(costs / result['power'][hours])
                     # for each hour with power > 0 add order to order_book
@@ -122,7 +122,7 @@ class PwpAgent(BasicAgent):
                 # check if current power is higher then the last known power
                 if any(result['power'] - last_power > 0):
                     delta = result['power'] - last_power  # get deltas
-                    stack_vertical = np.argwhere(last_power > 0).reshape((-1,))  # and check if last_power > 0
+                    stack_vertical = np.argwhere(last_power > 0).flatten()  # and check if last_power > 0
                     self.logger.debug(stack_vertical)
                     # for each power with last_power > 0
                     for hour in stack_vertical:
@@ -142,7 +142,7 @@ class PwpAgent(BasicAgent):
                             links[hour] = block_number  # update last known block for hour
                             block_number += 1  # increment block number
 
-                    if stack_vertical: # can be empty if turned completely off in a case
+                    if len(stack_vertical) > 0: # can be empty if turned completely off in a case
                         left = stack_vertical[0]  # get first left hour from last_power   ->  __|-----|__
                         right = stack_vertical[-1]  # get first right hour from last_power  __|-----|__ <--
 

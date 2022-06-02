@@ -44,6 +44,7 @@ class DemAgent(BasicAgent):
         self.logger.info('Prosumer Photovoltaic added')
 
         demands = self.infrastructure_interface.get_demand_in_area(self.area)
+        demands.fillna(0, inplace=True)
         household_demand = demands['household'].values[0] * 1e6
         household_demand -= demand
 

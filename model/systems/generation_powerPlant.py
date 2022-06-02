@@ -196,7 +196,7 @@ class PowerPlant(EnergySystem):
                 objective_value = value(self.model.obj)
 
                 if p_out[-1] == 0:
-                    hours = np.argwhere(p_out == 0).reshape((-1,))
+                    hours = np.argwhere(p_out == 0).flatten()
                     self.t = np.arange(48)
                     self.prices = prices_48h
                     self.prices['power'] = base_price + step

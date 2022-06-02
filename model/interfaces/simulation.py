@@ -208,7 +208,11 @@ class SimulationInterface:
 
     # hourly orders
     def set_hourly_orders(self, order_book):
-        order_book.to_sql('hourly_orders', con=self.database, if_exists='append')
+        try:
+            order_book.to_sql('hourly_orders', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.warning(f'hourly_orders already exists - ignoring')
+        
 
     def get_hourly_orders(self):
         df = pd.read_sql("Select * from hourly_orders", self.database)

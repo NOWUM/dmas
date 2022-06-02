@@ -100,8 +100,8 @@ class RenewablePortfolio(PortfolioModel):
         #
         # power = self.generation['wind'] + self.generation['solar'] + self.generation['water'] + self.generation['bio']
         #
-        # self.generation['total'] = np.asarray(power, np.float).reshape((-1,))
-        # self.power = np.asarray(power, np.float).reshape((-1,))
+        # self.generation['total'] = np.asarray(power, np.float).flatten()
+        # self.power = np.asarray(power, np.float).flatten()
 
 
 
