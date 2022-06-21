@@ -168,13 +168,14 @@ class PowerPlant(EnergySystem):
                                                      - self.model.start_ups[i] - self.model.delta_cost[i]
                                                      for i in self.t), sense=maximize)
 
-    def optimize(self):
+    def optimize(self, steps=None):
 
         if self.committed_power is None:
 
             base_price = self.prices.loc[:, 'power'].copy()
             prices_24h = self.prices.iloc[:24, :].copy()
             prices_48h = self.prices.iloc[:48, :].copy()
+            steps = steps or self.steps
 
             for step in steps:
 
@@ -214,8 +215,6 @@ class PowerPlant(EnergySystem):
                         self.prevented_start = dict(prevent=True, hours=hours, delta=delta/len(hours))
                     self.t = np.arange(self.T)
 
-                step = -100
-
                 if step == 0:
                     self.cash_flow = dict(fuel=self.optimization_results[step]['fuel'],
                                           emission=self.optimization_results[step]['emission'],
@@ -250,7 +249,7 @@ class PowerPlant(EnergySystem):
 
             self.committed_power = None
 
-        return self.power
+        return self.power.copy()
 
     def get_clean_spread(self, prices=None):
         if not prices:
@@ -349,8 +348,8 @@ if __name__ == "__main__":
              'runTime': 6, # hours
              'gradP': 300, # kW/h
              'gradM': 300, # kW/h
-             'on': 0, # running since
-             'off': 10,
+             'on': 1, # running since
+             'off': 0,
              'startCost': 1e3 # €/Start
              }
     steps = np.array([-100, 0])
@@ -370,7 +369,6 @@ if __name__ == "__main__":
 
     power = pwp.optimize()
     o_book = pwp.get_orderbook()
-    test_power = power.copy()
 
     #clean_spread = (1/plant['eta'] * (prices[plant['fuel']].mean() + plant['chi'] * prices['co'].mean()))
     print(pwp.get_clean_spread()) # €/kWh cost
@@ -381,7 +379,7 @@ if __name__ == "__main__":
     pwp.build_model()
     pwp.optimize()
 
-    assert all(test_power/2 == pwp.power)
+    assert all(power/2 == pwp.power)
     assert pwp.power_plant['on'] == 24
     assert pwp.power_plant['off'] == 0
 
@@ -394,7 +392,10 @@ if __name__ == "__main__":
     pwp.optimize()
 
     assert pwp.power_plant['on'] == 0
-    assert pwp.power_plant['off'] == 15
+    assert pwp.power_plant['off'] == 19
+
+    pwp.set_parameter(date='2018-01-02', weather=None,
+                      prices=prices)
 
     pwp.build_model()
     pwp.optimize()
