@@ -18,6 +18,8 @@ class PowerPlant(EnergySystem):
                  on, off, startCost, *args, **kwargs):
         super().__init__(T)
 
+        self.base_price = None
+
         self.name = unitID
 
         # PWP solves in kW as all others too
@@ -42,6 +44,10 @@ class PowerPlant(EnergySystem):
         self.prevented_start = dict(prevent=False, hours=np.zeros(self.T, float), delta=0)
 
         self.committed_power = None
+
+    def set_parameter(self, date, weather=None, prices=None):
+        super().set_parameter(date, weather, prices)
+        self.base_price = prices.copy()
 
     def build_model(self):
 
@@ -171,16 +177,14 @@ class PowerPlant(EnergySystem):
     def optimize(self, steps=None):
 
         if self.committed_power is None:
-
-            base_price = self.prices.loc[:, 'power'].copy()
-            prices_24h = self.prices.iloc[:24, :].copy()
-            prices_48h = self.prices.iloc[:48, :].copy()
+            prices_24h = self.base_price.iloc[:24, :].copy()
+            prices_48h = self.base_price.iloc[:48, :].copy()
             steps = steps or self.steps
 
             for step in steps:
 
                 self.prices = prices_24h
-                self.prices.loc[:, 'power'] = base_price.iloc[:24] + step
+                self.prices.loc[:, 'power'] = self.base_price.iloc[:24]['power'] + step
                 self.build_model()
 
                 results = self.opt.solve(self.model)
@@ -204,7 +208,7 @@ class PowerPlant(EnergySystem):
 
                     self.t = np.arange(48)
                     self.prices = prices_48h
-                    self.prices['power'] = base_price + step
+                    self.prices.loc[:, 'power'] = self.base_price.iloc[:48]['power'] + step
                     self.build_model()
                     self.opt.solve(self.model)
                     power_check = np.asarray([self.model.p_out[t].value for t in self.t])
@@ -252,8 +256,7 @@ class PowerPlant(EnergySystem):
         return self.power.copy()
 
     def get_clean_spread(self, prices=None):
-        if not prices:
-            prices = self.prices
+        prices = prices or self.prices
         return 1/self.power_plant['eta'] * (prices[self.power_plant['fuel']].mean()
                                             + self.power_plant['chi'] * prices['co'].mean())
 

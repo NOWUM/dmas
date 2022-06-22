@@ -58,7 +58,7 @@ class PwpAgent(BasicAgent):
             df = pd.DataFrame(columns=['block_id', 'hour', 'order_id', 'name',
                                        'price', 'volume', 'link', 'type'])
 
-        df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'order_id', 'name'])
+        df.set_index(['block_id', 'hour', 'order_id', 'name'], inplace=True)
 
         return df
 
