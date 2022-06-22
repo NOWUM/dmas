@@ -18,7 +18,6 @@ class PowerPlantPortfolio(PortfolioModel):
         super().__init__(T, date)
         self.steps = steps
 
-
     def add_energy_system(self, energy_system):
         model = PowerPlant(T=self.T, steps=self.steps, **energy_system)
         self.capacities[str(energy_system['fuel']).replace('_combined', '')] += energy_system['maxPower'] # [kW]
@@ -29,6 +28,7 @@ class PowerPlantPortfolio(PortfolioModel):
 
         for model in tqdm(self.energy_systems):
             model.set_parameter(self.date, self.weather.copy(), self.prices.copy())
+            model.build_model()
 
     def build_model(self, get_linked_result):
         # query the DayAhead results
@@ -53,7 +53,6 @@ class PowerPlantPortfolio(PortfolioModel):
             log.info(f'optimized portfolio')
         except Exception as e:
             log.error(f'error in portfolio optimization: {repr(e)}')
-
 
         try:
             for model in tqdm(self.energy_systems):

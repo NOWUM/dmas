@@ -1,6 +1,7 @@
 # third party modules
 import numpy as np
 from datetime import date as to_date
+import pandas as pd
 
 
 class EnergySystem:
@@ -12,12 +13,13 @@ class EnergySystem:
         It has generation, demand and power in kW.
         '''
 
+        self.name = None
         self.date = to_date(2018, 1, 1)
 
         self.T, self.t, self.dt = T, np.arange(T), 1
 
-        self.weather = {}
-        self.prices = {}
+        self.weather = pd.DataFrame()
+        self.prices = pd.DataFrame()
 
         self.generation = None
         self.demand = None
@@ -59,3 +61,6 @@ class EnergySystem:
 
         self.volume = np.zeros(self.T, float)
         self.power = np.zeros(self.T, float)
+
+    def build_model(self):
+        pass
