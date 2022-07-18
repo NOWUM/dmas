@@ -175,14 +175,12 @@ class PowerPlant(EnergySystem):
                                                      for i in self.t), sense=maximize)
 
     def optimize(self, steps=None):
-
+        steps = steps or self.steps
         if self.committed_power is None:
             prices_24h = self.base_price.iloc[:24, :].copy()
             prices_48h = self.base_price.iloc[:48, :].copy()
-            steps = steps or self.steps
 
             for step in steps:
-
                 self.prices = prices_24h
                 self.prices.loc[:, 'power'] = self.base_price.iloc[:24]['power'] + step
                 self.build_model()
@@ -228,6 +226,7 @@ class PowerPlant(EnergySystem):
                     self.power = self.optimization_results[step]['power']
 
         else:
+            self.build_model()
             self.opt.solve(self.model)
             running_since = 0
             off_since = 0
@@ -238,6 +237,16 @@ class PowerPlant(EnergySystem):
                 self.cash_flow['profit'][t] = float(self.model.profit[t].value)
                 self.power[t] = float(self.model.p_out[t].value)
                 self.generation[str(self.power_plant['fuel']).replace('_combined', '')][t] = self.power[t]
+
+                # write to opt_results for all steps - to overwrite old data
+                # needed for correct order_book view
+                for step in steps:
+                    self.optimization_results[step]['power'][t] = self.model.p_out[t].value
+                    self.optimization_results[step]['emission'][t] = self.model.emissions[t].value
+                    self.optimization_results[step]['fuel'][t] = self.model.fuel[t].value
+                    self.optimization_results[step]['start'][t] = self.model.start_ups[t].value
+                    self.optimization_results[step]['obj'] = value(self.model.obj)
+                    self.optimization_results[step]['profit'][t] = value(self.model.profit[t].value)
 
                 # find count of last 1s and 0s
                 if self.model.z[t].value >0:
@@ -262,18 +271,19 @@ class PowerPlant(EnergySystem):
 
     def get_orderbook(self) -> pd.DataFrame:
 
-        def set_order(r: dict, h: int, b: int, split: int, lnk: dict, book: dict,
+        def set_order(r: dict, h: int, block_nr: int, split: int, link: dict,
                       lst_pwr: np.array = np.zeros(self.T), add: int = 0):
+            book = {}
             pwr = r['power'][h]
             if split == 0:
                 prc = np.mean((r['fuel'][h] + r['emission'][h] + r['start'][h]) / pwr)
-                l = -1 if lnk[h] is None else lnk[h]
-                book.update({(b, h, 0, self.name): (prc, pwr - lst_pwr[h], l)})
+                l = -1 if link[h] is None else link[h]
+                book[(block_nr, h, 0, self.name)] = (prc, pwr - lst_pwr[h], l)
             else:
                 prc = (r['fuel'][h] + r['emission'][h]) / pwr
-                l = 0 if lnk[h + add] is None else lnk[h + add]
+                l = 0 if link[h + add] is None else link[h + add]
                 for o in range(split):
-                    book.update({(b, h, o, self.name): (prc, (pwr - lst_pwr[h]) / split, l)})
+                    book[(block_nr, h, o, self.name)] = (prc, (pwr - lst_pwr[h]) / split, l)
             return book
 
         # -> initialize empty dict
@@ -288,7 +298,7 @@ class PowerPlant(EnergySystem):
             result = self.optimization_results[step]
             if any(result['power'] > 0) and block_number == 0:
                 for hour in np.argwhere(result['power'] > 0).flatten():
-                    order_book = set_order(result, hour, block_number, 0, links, order_book)
+                    order_book.update(set_order(result, hour, block_number, 0, links))
                     links[hour] = block_number
                 block_number += 1                               # -> increment block number
                 last_power = result['power']                    # -> set last_power to current power
@@ -311,7 +321,7 @@ class PowerPlant(EnergySystem):
                 # -> add on top
                 for hour in self.t:
                     if delta[hour] > 0 and last_power[hour] > 0:
-                        order_book = set_order(result, hour, block_number, 5, links, order_book, last_power)
+                        order_book.update(set_order(result, hour, block_number, 5, links, last_power))
                         last_power[hour] += delta[hour]
                         links[hour] = block_number          # -> update last known block for hour
                         block_number += 1                   # -> increment block number
@@ -322,7 +332,7 @@ class PowerPlant(EnergySystem):
                     for start, end, inc in zip([stack[-1], stack[0]], [self.T, 0], [1, -1]):
                         for hour in range(start, end, inc):
                             if delta[hour] > 0:
-                                order_book = set_order(result, hour, block_number, 5, links, order_book, last_power, -inc)
+                                order_book.update(set_order(result, hour, block_number, 5, links, last_power, -inc))
                                 last_power[hour] += delta[hour]
                                 links[hour] = block_number
                                 block_number += 1
@@ -338,6 +348,127 @@ class PowerPlant(EnergySystem):
 
         return df
 
+
+def visualize_orderbook(order_book):
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import ListedColormap   
+    tab20_cmap = plt.get_cmap("tab20c")
+    ob = order_book.reset_index( level = [0,2,3])
+    idx = np.arange(24)
+
+    y_past = np.zeros(24)
+    for i, df_grouped in ob.groupby('order_id'):
+        my_cmap_raw = np.array(tab20_cmap.colors)*(1-0.1*i)
+        my_cmap = ListedColormap(my_cmap_raw)
+        
+        for j, o in df_grouped.groupby('link'):
+            x = idx #o.index
+            ys = np.zeros(24)
+            ys[o.index] = o['volume']
+            if len(list(ys)) > 0:
+                plt.bar(x, ys, bottom=y_past, color=my_cmap.colors[(j+1)%20])
+            y_past += ys
+    plt.title('Orderbook')
+    plt.xlabel('hour')
+    plt.ylabel('kW')
+    plt.show()  
+
+def test_half_power(plant):
+    pwp = PowerPlant(T=24, steps=steps, **plant)
+    pwp.set_parameter(date='2018-01-01', weather=None,
+                    prices=prices)
+
+    power = pwp.optimize()
+    o_book = pwp.get_orderbook()
+    # running since 1
+    visualize_orderbook(o_book)
+
+    #clean_spread = (1/plant['eta'] * (prices[plant['fuel']].mean() + plant['chi'] * prices['co'].mean()))
+    print(f'{pwp.get_clean_spread()} €/kWh cost')
+    print(f"{pwp.power_plant['maxPower']*pwp.get_clean_spread()} €/h full operation")
+
+    # assume market only gives you halve of your offers
+    pwp.committed_power = power/2
+    pwp.optimize()
+
+    # running since 1
+    visualize_orderbook(pwp.get_orderbook())
+
+    assert all((power/2 - pwp.power) < 1e-10) # smaller than threshold
+    assert pwp.power_plant['on'] == 24
+    assert pwp.power_plant['off'] == 0
+
+def test_ramp_down(plant):
+    pwp = PowerPlant(T=24, steps=steps, **plant)
+    pwp.set_parameter(date='2018-01-01', weather=None,
+                    prices=prices)
+    power = pwp.optimize()    
+
+    visualize_orderbook(pwp.get_orderbook())
+
+    # power plant should ramp down correctly
+    pwp.committed_power = power*0
+
+    pwp.optimize()
+    visualize_orderbook(pwp.get_orderbook())
+
+    assert pwp.power_plant['on'] == 0
+    assert pwp.power_plant['off'] == 19
+
+    pwp.set_parameter(date='2018-01-02', weather=None,
+                    prices=prices)
+
+    pwp.optimize()
+
+    visualize_orderbook(pwp.get_orderbook())
+    
+    # another day off - this time a full day
+    pwp.committed_power = power*0
+    pwp.optimize()
+
+    visualize_orderbook(pwp.get_orderbook())
+
+    assert pwp.power_plant['on'] == 0
+    assert pwp.power_plant['off'] == 24
+
+    #for k,v in pwp.optimization_results.items(): print(k, v['power'])
+    #for k,v in pwp.optimization_results.items(): print(k, v['obj'])
+    # actual schedule corresponds to the market result
+
+def test_minimize_diff(plant):
+    pwp = PowerPlant(T=24, steps=steps, **plant)
+    pwp.set_parameter(date='2018-01-01', weather=None,
+                    prices=prices)
+    power = pwp.optimize()    
+
+    visualize_orderbook(pwp.get_orderbook())
+
+    # power plant has to minimize loss, when market did something weird
+    p = power.copy()
+    p[4:10] = 0
+    pwp.committed_power = p
+
+    p2 = pwp.optimize()
+    visualize_orderbook(pwp.get_orderbook())
+
+    return pwp
+
+def test_up_down(plant):
+    pwp = PowerPlant(T=24, steps=steps, **plant)
+    pwp.set_parameter(date='2018-01-01', weather=None,
+                    prices=prices)
+    power = pwp.optimize()    
+
+    visualize_orderbook(pwp.get_orderbook())
+
+    # power plant has to minimize loss, when market did something weird
+    p = power.copy()
+    p[::2] = 0
+    pwp.committed_power = p
+
+    p2 = pwp.optimize()
+    visualize_orderbook(pwp.get_orderbook())
+    return pwp
 
 if __name__ == "__main__":
     plant = {'unitID':'x',
@@ -355,60 +486,48 @@ if __name__ == "__main__":
              'off': 0,
              'startCost': 1e3 # €/Start
              }
-    steps = np.array([-100, 0])
-    pwp = PowerPlant(T=24, steps=steps, **plant)
+    steps = np.array([-100, 0, 100])
 
     power_price = np.ones(48) #* np.random.uniform(0.95, 1.05, 48) # €/kWh
     co = np.ones(48) * 23.8 #* np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
     gas = np.ones(48) * 0.03 #* np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
-    lignite = np.ones(48) * 0.015 #* np.random.uniform(0.95, 1.05)                   # -- Lignite Price      [€/kWh]
-    coal = np.ones(48) * 0.02 #* np.random.uniform(0.95, 1.05)                      # -- Hard Coal Price    [€/kWh]
-    nuc = np.ones(48) * 0.01 #* np.random.uniform(0.95, 1.05)                       # -- nuclear Price      [€/kWh]
+    lignite = np.ones(48) * 0.015 #* np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
+    coal = np.ones(48) * 0.02 #* np.random.uniform(0.95, 1.05)       # -- Hard Coal Price    [€/kWh]
+    nuc = np.ones(48) * 0.01 #* np.random.uniform(0.95, 1.05)        # -- nuclear Price      [€/kWh]
 
     prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
     prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
-    pwp.set_parameter(date='2018-01-01', weather=None,
-                     prices=prices)
+    
+    test_half_power(plant)
+    
+    test_ramp_down(plant)
 
-    power = pwp.optimize()
-    o_book = pwp.get_orderbook()
+    plant['maxPower'] = 700 # kW
+    test_ramp_down(plant)
 
-    #clean_spread = (1/plant['eta'] * (prices[plant['fuel']].mean() + plant['chi'] * prices['co'].mean()))
-    print(pwp.get_clean_spread()) # €/kWh cost
-    print(pwp.power_plant['maxPower']*pwp.get_clean_spread()) # €/h full operation
+    plant['minPower'] = 10 # kW
+    test_ramp_down(plant)
+    plant['maxPower'] = 600 # kW
+    test_half_power(plant)
 
-    # assume market only gives you halve of your offers
-    pwp.committed_power = power/2
-    pwp.build_model()
-    pwp.optimize()
-
-    assert all(power/2 == pwp.power)
+    # test minimize difference
+    plant['minPower'] = 10 # kW
+    plant['maxPower'] = 600 # kW
+    pwp = test_minimize_diff(plant)
+    # powerplant runs with minPower
+    # currently no evaluation of start cost, if shutdown is possible
     assert pwp.power_plant['on'] == 24
     assert pwp.power_plant['off'] == 0
 
-    pwp = PowerPlant(T=24, steps=steps, **plant)
-    pwp.set_parameter(date='2018-01-01', weather=None,
-                     prices=prices)
-    power = pwp.optimize()
-    pwp.committed_power = power*0
-    pwp.build_model()
-    pwp.optimize()
+    plant['minPower'] = 10 # kW
+    plant['maxPower'] = 600 # kW
+    plant['stopTime'] = 1 # hours
+    plant['runTime'] = 1 # hours
+    # shut down if possible
+    pwp = test_minimize_diff(plant)
 
-    assert pwp.power_plant['on'] == 0
-    assert pwp.power_plant['off'] == 19
-
-    pwp.set_parameter(date='2018-01-02', weather=None,
-                      prices=prices)
-
-    pwp.build_model()
-    pwp.optimize()
-    pwp.committed_power = power*0
-    pwp.build_model()
-    pwp.optimize()
-
-    assert pwp.power_plant['on'] == 0
-    assert pwp.power_plant['off'] == 24
-
-    for k,v in pwp.optimization_results.items(): print(k, v['power'])
-    for k,v in pwp.optimization_results.items(): print(k, v['obj'])
-    # actual schedule corresponds to the market result
+    plant['off'] = 3
+    plant['on'] = 0
+    plant['stopTime'] = 10
+    pwp = test_up_down(plant)
+    
