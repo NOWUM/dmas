@@ -115,10 +115,11 @@ class DayAheadMarket:
             block, agent = data
             for b, _, _, a in self.linked_total.keys():
                 if b == block and a == agent:
-                    order_counter += 1
-            self.model.all_orders_in_block.add(self.model.use_linked_block[block, agent] * order_counter
+                    order_counter += 1                    # hab ich alle gebote/orders aus meinem block genutzt
+            self.model.all_orders_in_block.add(self.model.use_linked_block[block, agent] * order_counter # 5 orders pro block
                                                >= quicksum(self.model.use_linked_order[block, :, :, agent]))
-
+                                                                # ^-- wieviele order ich als Markt tatsächlich genutzt habe (von 5 möglichen)
+            # hab ich meinen vorherigen block komplett genutzt?
         # Step 6 set constraint: If parent block of an agent is used -> enable usage of child block
         self.model.enable_child_block = ConstraintList()
         for data in self.get_unique([(block, agent) for block, _, _, agent in self.linked_total.keys()]):
@@ -129,7 +130,7 @@ class DayAheadMarket:
                                                   <= self.model.use_linked_block[parent_id, agent])
 
 
-        # Constraints for excluive block orders
+        # Constraints for exclusive block orders
         # ------------------------------------------------
         # Step 7 set constraint: only one scheduling can be used
         self.model.one_exclusive_block = ConstraintList()
