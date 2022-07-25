@@ -1,6 +1,6 @@
 # third party modules
 import numpy as np
-from datetime import date as to_date
+from datetime import date
 import pandas as pd
 
 
@@ -14,7 +14,7 @@ class EnergySystem:
         '''
 
         self.name = None
-        self.date = to_date(2018, 1, 1)
+        self.date = date(2018, 1, 1)
 
         self.T, self.t, self.dt = T, np.arange(T), 1
 

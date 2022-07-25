@@ -1,7 +1,7 @@
 # model modules
 from systems.basic_system import EnergySystem
 from demandlib.electric_profile import StandardLoadProfile
-
+import pandas as pd
 
 class HouseholdModel(EnergySystem):
 
@@ -15,7 +15,7 @@ class HouseholdModel(EnergySystem):
         run profile generator for current day
         :return: timer series in [kW]
         """
-        self.power = self.profile_generator.run_model(self.date)
+        self.power = self.profile_generator.run_model(pd.to_datetime(self.date))
         self.demand['power'] = self.power
         return self.power
 

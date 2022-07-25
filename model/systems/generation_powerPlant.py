@@ -270,6 +270,7 @@ class PowerPlant(EnergySystem):
                                             + self.power_plant['chi'] * prices['co'].mean())
 
     def get_orderbook(self) -> pd.DataFrame:
+        order_counter = 5
 
         def set_order(r: dict, h: int, block_nr: int, split: int, link: dict,
                       lst_pwr: np.array = np.zeros(self.T), add: int = 0):
@@ -297,11 +298,21 @@ class PowerPlant(EnergySystem):
             # -> get optimization result for key (block) and step
             result = self.optimization_results[step]
             if any(result['power'] > 0) and block_number == 0:
-                for hour in np.argwhere(result['power'] > 0).flatten():
-                    order_book.update(set_order(result, hour, block_number, 0, links))
-                    links[hour] = block_number
+                # so lange wie ich muss
+                hours_needed_to_run = (self.power_plant['runTime'] - self.power_plant['on'])
+
+                if hours_needed_to_run < 1:
+                    order_book.update(set_order(result, 0, block_number, order_counter, links))
+                    links[0] = block_number
+                    last_power[0] = result['power'][0]                    # -> set last_power to current power
+                else:
+                    for hour in np.argwhere(result['power'] > 0).flatten():
+                        order_book.update(set_order(result, hour, block_number, 0, links))
+                        links[hour] = block_number
+                        last_power[hour] = result['power'][hour]                    # -> set last_power to current power
                 block_number += 1                               # -> increment block number
-                last_power = result['power']                    # -> set last_power to current power
+
+
 
                 if self.prevented_start['prevent']:
                     for hour in self.prevented_start['hours']:
@@ -321,7 +332,7 @@ class PowerPlant(EnergySystem):
                 # -> add on top
                 for hour in self.t:
                     if delta[hour] > 0 and last_power[hour] > 0:
-                        order_book.update(set_order(result, hour, block_number, 5, links, last_power))
+                        order_book.update(set_order(result, hour, block_number, order_counter, links, last_power))
                         last_power[hour] += delta[hour]
                         links[hour] = block_number          # -> update last known block for hour
                         block_number += 1                   # -> increment block number
@@ -332,7 +343,7 @@ class PowerPlant(EnergySystem):
                     for start, end, inc in zip([stack[-1], stack[0]], [self.T, 0], [1, -1]):
                         for hour in range(start, end, inc):
                             if delta[hour] > 0:
-                                order_book.update(set_order(result, hour, block_number, 5, links, last_power, -inc))
+                                order_book.update(set_order(result, hour, block_number, order_counter, links, last_power, -inc))
                                 last_power[hour] += delta[hour]
                                 links[hour] = block_number
                                 block_number += 1
@@ -351,7 +362,7 @@ class PowerPlant(EnergySystem):
 
 def visualize_orderbook(order_book):
     import matplotlib.pyplot as plt
-    from matplotlib.colors import ListedColormap   
+    from matplotlib.colors import ListedColormap
     tab20_cmap = plt.get_cmap("tab20c")
     ob = order_book.reset_index( level = [0,2,3])
     idx = np.arange(24)
@@ -360,7 +371,7 @@ def visualize_orderbook(order_book):
     for i, df_grouped in ob.groupby('order_id'):
         my_cmap_raw = np.array(tab20_cmap.colors)*(1-0.1*i)
         my_cmap = ListedColormap(my_cmap_raw)
-        
+
         for j, o in df_grouped.groupby('link'):
             x = idx #o.index
             ys = np.zeros(24)
@@ -371,7 +382,7 @@ def visualize_orderbook(order_book):
     plt.title('Orderbook')
     plt.xlabel('hour')
     plt.ylabel('kW')
-    plt.show()  
+    plt.show()
 
 def test_half_power(plant):
     pwp = PowerPlant(T=24, steps=steps, **plant)
@@ -402,7 +413,7 @@ def test_ramp_down(plant):
     pwp = PowerPlant(T=24, steps=steps, **plant)
     pwp.set_parameter(date='2018-01-01', weather=None,
                     prices=prices)
-    power = pwp.optimize()    
+    power = pwp.optimize()
 
     visualize_orderbook(pwp.get_orderbook())
 
@@ -421,7 +432,7 @@ def test_ramp_down(plant):
     pwp.optimize()
 
     visualize_orderbook(pwp.get_orderbook())
-    
+
     # another day off - this time a full day
     pwp.committed_power = power*0
     pwp.optimize()
@@ -439,7 +450,7 @@ def test_minimize_diff(plant):
     pwp = PowerPlant(T=24, steps=steps, **plant)
     pwp.set_parameter(date='2018-01-01', weather=None,
                     prices=prices)
-    power = pwp.optimize()    
+    power = pwp.optimize()
 
     visualize_orderbook(pwp.get_orderbook())
 
@@ -457,7 +468,7 @@ def test_up_down(plant):
     pwp = PowerPlant(T=24, steps=steps, **plant)
     pwp.set_parameter(date='2018-01-01', weather=None,
                     prices=prices)
-    power = pwp.optimize()    
+    power = pwp.optimize()
 
     visualize_orderbook(pwp.get_orderbook())
 
@@ -497,9 +508,9 @@ if __name__ == "__main__":
 
     prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
     prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
-    
+
     test_half_power(plant)
-    
+
     test_ramp_down(plant)
 
     plant['maxPower'] = 700 # kW
@@ -530,4 +541,3 @@ if __name__ == "__main__":
     plant['on'] = 0
     plant['stopTime'] = 10
     pwp = test_up_down(plant)
-    
