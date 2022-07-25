@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import numpy as np
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
@@ -5,7 +6,7 @@ counter = 2
 
 configs = {}
 output = []
-output.append('version: "3.9"\n')
+output.append('version: "3"\n')
 output.append('services:\n')
 
 output.append(f'''

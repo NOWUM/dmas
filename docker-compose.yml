@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
 services:
 
   # gurobi-compute with wls-license
@@ -83,6 +83,11 @@ services:
       SIMULATION_SOURCE: 'simulationdb:5432'
     ports:
       - 5000:5000
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
 
   market:
     container_name: mrk
