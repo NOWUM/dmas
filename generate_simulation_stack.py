@@ -98,6 +98,11 @@ output.append(f'''
       SIMULATION_SOURCE: 'simulationdb:5432'
     ports:
       - 5000:5000
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
 ''')
 # Build one Market
 output.append(f'''
