@@ -6,7 +6,7 @@ counter = 2
 
 configs = {}
 output = []
-output.append('version: "3"\n')
+output.append('version: "3.9"\n')
 output.append('services:\n')
 
 output.append(f'''
