@@ -198,23 +198,23 @@ class PowerPlant(EnergySystem):
                 p_out = np.asarray([self.model.p_out[t].value for t in self.t])
                 objective_value = value(self.model.obj)
 
-                if p_out[-1] == 0:
+                if p_out[-1] == 0 and step==0:
                     all_off = np.argwhere(p_out == 0).flatten()
                     last_on = np.argwhere(p_out > 0).flatten()
                     last_on = last_on[-1] if len(last_on) > 0 else 0
-                    hours = all_off[all_off > last_on]
+                    prevented_off_hours = all_off[all_off > last_on]
 
                     self.t = np.arange(48)
                     self.prices = prices_48h
-                    self.prices.loc[:, 'power'] = self.base_price.iloc[:48]['power'] + step
+                    self.prices.loc[:, 'power'] = self.base_price.iloc[:48]['power']
                     self.build_model()
                     self.opt.solve(self.model)
                     power_check = np.asarray([self.model.p_out[t].value for t in self.t])
-                    prevent_start = all(power_check[hours] > 0)
+                    prevent_start = all(power_check[prevented_off_hours] > 0)
                     delta = value(self.model.obj) - objective_value
                     percentage = delta / objective_value if objective_value else 0
                     if prevent_start and percentage > 0.05:
-                        self.prevented_start = dict(prevent=True, hours=hours, delta=delta/len(hours))
+                        self.prevented_start = dict(prevent=True, hours=prevented_off_hours, delta=delta/len(prevented_off_hours))
                     self.t = np.arange(self.T)
 
                 if step == 0:
@@ -266,7 +266,7 @@ class PowerPlant(EnergySystem):
 
     def get_clean_spread(self, prices=None):
         prices = prices or self.prices
-        return 1/self.power_plant['eta'] * (prices[self.power_plant['fuel']].mean()
+        return 1/self.power_plant['eta'] * (prices[self.power_plant['fuel'].replace('_combined', '')].mean()
                                             + self.power_plant['chi'] * prices['co'].mean())
 
     def get_orderbook(self) -> pd.DataFrame:
@@ -312,19 +312,6 @@ class PowerPlant(EnergySystem):
                         last_power[hour] = result['power'][hour]                    # -> set last_power to current power
                 block_number += 1                               # -> increment block number
 
-
-
-                if self.prevented_start['prevent']:
-                    for hour in self.prevented_start['hours']:
-                        cost = result['fuel'][hour] + result['emission'][hour] / self.power_plant['minPower']
-                        prc = cost - (self.prevented_start['delta'] / self.power_plant['minPower'])
-                        order_book[(block_number, hour, 0, self.name)] = (prc, self.power_plant['minPower'], 0)
-                        last_power[hour] += self.power_plant['minPower']
-                        links[hour] = block_number
-                    block_number += 1
-
-                continue  # do next step
-
             # -> add linked hour blocks
             # -> check if current power is higher then the last known power
             if any(result['power'] - last_power > 0):
@@ -357,6 +344,18 @@ class PowerPlant(EnergySystem):
         df.columns = ['price', 'volume', 'link', 'type']
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'order_id', 'name'])
 
+        if self.prevented_start['prevent']:
+            prevented_hours = len(self.prevented_start['hours'])
+            cost = result['fuel'][hour] + result['emission'][hour] / self.power_plant['minPower']
+            price_reduction = cost - (self.prevented_start['delta'] / self.power_plant['minPower'] / max(prevented_hours,1))
+            # reduction of the price per prevented hour
+
+            # find price of hours with a prevented start
+            # and substract the price reduction from the base load as it is beneficial to run without a stop
+            hours_with_prev_start = df.index.get_level_values('hour').isin(self.prevented_start['hours'])
+            reduced_price = df.loc[:,hours_with_prev_start,:]['price'] - price_reduction
+            # update the values through df.update as df.loc does not allow updates on a view
+            df.update(reduced_price)
         return df
 
 

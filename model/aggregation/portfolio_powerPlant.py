@@ -14,7 +14,7 @@ log.setLevel('INFO')
 
 class PowerPlantPortfolio(PortfolioModel):
 
-    def __init__(self, T=24, date='2020-01-01', steps=np.array([-10, -5, 0, 5, 100])/1e3):
+    def __init__(self, T=24, date='2020-01-01', steps=np.array([-10, -5, 0, 5, 100, 1e9])/1e3):
         super().__init__(T, date)
         self.steps = steps
 
