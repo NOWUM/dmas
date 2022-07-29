@@ -145,7 +145,7 @@ class DayAheadMarket:
         # # Step 8 set constraint: Meet Demand in each hour
         max_prc = [1e9 for i in range(24)]
         self.model.magic_source = Var(self.t, bounds=(0, None), within=Reals)
-        self.model.magic_sink = Var(self.t, bounds=(0, None), within=Reals)
+        #self.model.magic_sink = Var(self.t, bounds=(0, None), within=Reals)
 
         self.model.demand = ConstraintList()
         for t in self.t:
@@ -161,7 +161,8 @@ class DayAheadMarket:
                                   + self.model.magic_source[t]
                                   == sum(-1 * self.hourly_bid_total[block, t, order, name][1]
                                          for block, order, name in self.hourly_bid_orders[t])
-                                         + self.model.magic_sink[t])
+                                        )
+                                         #+ self.model.magic_sink[t])
 
         # Step 5 set constraint: Cost for each hour
         self.model.generation_cost = Var(self.t, within=Reals)
@@ -176,7 +177,8 @@ class DayAheadMarket:
                                  + quicksum(self.hourly_ask_total[block, t, order, name][0] *
                                             self.model.use_hourly_ask[block, t, order, name]
                                             for block, order, name in self.hourly_ask_orders[t])
-                                 + (self.model.magic_sink[t] + self.model.magic_source[t]) * max_prc[t] == self.model.generation_cost[t])
+                                 + (self.model.magic_source[t]) * max_prc[t] == self.model.generation_cost[t])
+                                 # self.model.magic_sink[t] + 
 
         self.model.obj = Objective(expr=quicksum(self.model.generation_cost[t] for t in self.t), sense=minimize)
 

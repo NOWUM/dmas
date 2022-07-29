@@ -21,6 +21,7 @@ class MarketAgent(BasicAgent):
         message = super().callback(ch, method, properties, body)
 
         if 'dayAhead_clearing' in message:
+            self.logger.info(f'started market clearing {self.date}')
             self.market_clearing()
 
     def market_clearing(self):
@@ -62,6 +63,6 @@ class MarketAgent(BasicAgent):
         self.simulation_interface.set_auction_results(auction_results)
         self.simulation_interface.set_market_results(market_results)
 
-        self.logger.info('cleared market and saved result in database')
+        self.logger.info(f'cleared market and saved result in database {self.date}')
 
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')

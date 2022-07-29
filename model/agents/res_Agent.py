@@ -91,7 +91,7 @@ class ResAgent(BasicAgent):
                                      block_id=t,
                                      order_id=0,
                                      name=self.name + '_eeg',
-                                     price=-500, # €/kWh
+                                     price=-500/1e3, # €/kWh min eex bid
                                      # lower limit of DA auction
                                      # https://www.epexspot.com/sites/default/files/2022-05/22-05-23_TradingBrochure.pdf
                                      volume=power[t])
@@ -102,7 +102,7 @@ class ResAgent(BasicAgent):
                                      order_id=0,
                                      name=self.name + '_mrk',
                                      # TODO better values
-                                     price=0.001, # [€/kWh]
+                                     price=1e-4, # [€/kWh] # this is relevant for negative prices §51 EEG
                                      volume=power[t])
 
         df = pd.DataFrame.from_dict(order_book, orient='index')
