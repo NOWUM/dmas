@@ -25,7 +25,7 @@ class MarketAgent(BasicAgent):
             self.market_clearing()
 
     def market_clearing(self):
-
+        start_time = time.time()
         df = self.simulation_interface.get_hourly_orders()
         ask = df.loc[df['type'] == 'generation']
         hourly_ask = {}
@@ -63,6 +63,6 @@ class MarketAgent(BasicAgent):
         self.simulation_interface.set_auction_results(auction_results)
         self.simulation_interface.set_market_results(market_results)
 
-        self.logger.info(f'cleared market and saved result in database {self.date}')
+        self.logger.info(f'cleared market in {time.time() - start_time:.2f} seconds and saved result in database {self.date}')
 
         self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
