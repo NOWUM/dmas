@@ -20,10 +20,10 @@ weather_database_uri = f'postgresql://{weather_credential}@{weather_server}/{wea
 init_dict = {
     'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
     'area': os.getenv('AREA_CODE', 'DEA2D'),
-    'type': os.getenv('TYPE', 'DEM'),
+    'type': os.getenv('TYPE', 'CTL'),
     # mqtt default parameter
-    'mqtt_server': os.getenv('MQTT_HOST', 'localhost'),
-    'mqtt_exchange': os.getenv('MQTT_EXCHANGE', 'dmas'),
+    'ws_host': os.getenv('WS_HOST', 'localhost'),
+    'ws_port': int(os.getenv('WS_PORT', 4005)),
     # simulation data server default parameter
     'simulation_server': os.getenv('SIMULATION_SOURCE', 'localhost:5432'),
     'simulation_credential': os.getenv('SIMULATION_DATABASE', 'dMAS:dMAS'),

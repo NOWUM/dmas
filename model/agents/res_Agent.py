@@ -3,7 +3,7 @@ import time as time
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-
+from websockets import WebSocketClientProtocol as wsClientPrtl
 
 # model modules
 from forecasts.weather import WeatherForecast
@@ -112,15 +112,21 @@ class ResAgent(BasicAgent):
 
         return df
 
-
-    def callback(self, ch, method, properties, body):
-        message = super().callback(ch, method, properties, body)
-        if 'set_capacities' in message:
-            self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area, self.date)
-        if 'opt_dayAhead' in message:
-            self.optimize_day_ahead()
-        if 'result_dayAhead' in message:
-            self.post_day_ahead()
+    async def message_handler(self, ws: wsClientPrtl):
+        await super().message_handler(ws)
+        while self.running and self.connected:
+            async for message in ws:
+                message, date = message.split(' ')
+                self.date = pd.to_datetime(date)
+                if 'set_capacities' in message:
+                    self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area, self.date)
+                if 'optimize_dayAhead' in message:
+                    self.optimize_day_ahead()
+                    await ws.send(f'optimized_dayAhead {self.name}')
+                if 'results_dayAhead' in message:
+                    self.post_day_ahead()
+                if 'finished' in message:
+                    break
 
     def optimize_day_ahead(self):
         """Scheduling before DayAhead Market"""
@@ -155,7 +161,6 @@ class ResAgent(BasicAgent):
         self.simulation_interface.set_hourly_orders(order_book)
         order_book = self.get_order_book(power_mrk, type='mrk')
         self.simulation_interface.set_hourly_orders(order_book)
-        self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders and send in {time.time() - start_time:.2f} seconds')
 

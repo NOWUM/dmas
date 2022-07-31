@@ -9,6 +9,7 @@ from forecasts.price import PriceForecast
 from forecasts.weather import WeatherForecast
 from aggregation.portfolio_powerPlant import PowerPlantPortfolio
 from agents.basic_Agent import BasicAgent
+from websockets import WebSocketClientProtocol as wsClientPrtl
 
 
 class PwpAgent(BasicAgent):
@@ -39,15 +40,21 @@ class PwpAgent(BasicAgent):
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
 
-    def callback(self, ch, method, properties, body):
-        message = super().callback(ch, method, properties, body)
-
-        if 'set_capacities' in message:
-            self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
-        if 'opt_dayAhead' in message:
-            self.optimize_day_ahead()
-        if 'result_dayAhead' in message:
-            self.post_day_ahead()
+    async def message_handler(self, ws: wsClientPrtl):
+        await super().message_handler(ws)
+        while self.running and self.connected:
+            async for message in ws:
+                message, date = message.split(' ')
+                self.date = pd.to_datetime(date)
+                if 'set_capacities' in message:
+                    self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
+                if 'optimize_dayAhead' in message:
+                    self.optimize_day_ahead()
+                    await ws.send(f'optimized_dayAhead {self.name}')
+                if 'results_dayAhead' in message:
+                    self.post_day_ahead()
+                if 'finished' in message:
+                    break
 
     def get_order_book(self):
         total_order_book = [system.get_orderbook().reset_index() for system in self.portfolio.energy_systems]
@@ -91,7 +98,6 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
         order_book = self.get_order_book()
         self.simulation_interface.set_linked_orders(order_book)
-        self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
 
         self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
 

@@ -278,10 +278,3 @@ class SimulationInterface:
         df.index.name = 'time'
 
         return df
-
-    def get_agents(self):
-        headers = {'content-type': 'application/json', }
-        response = requests.get(f'http://{self.mqtt_server}:15672/api/queues', headers=headers, auth=('guest', 'guest'))
-        agents = response.json()
-        return [agent['name'] for agent in agents if agent['name'][:3]
-                in ['dem', 'res', 'str', 'pwp']]

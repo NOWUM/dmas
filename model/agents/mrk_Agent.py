@@ -2,6 +2,7 @@
 import time as time
 import pandas as pd
 import numpy as np
+from websockets import WebSocketClientProtocol as wsClientPrtl
 
 # model modules
 from systems.market import DayAheadMarket
@@ -17,12 +18,18 @@ class MarketAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    def callback(self, ch, method, properties, body):
-        message = super().callback(ch, method, properties, body)
-
-        if 'dayAhead_clearing' in message:
-            self.logger.info(f'started market clearing {self.date}')
-            self.market_clearing()
+    async def message_handler(self, ws: wsClientPrtl):
+        await super().message_handler(ws)
+        while self.running and self.connected:
+            async for message in ws:
+                message, date = message.split(' ')
+                self.date = pd.to_datetime(date)
+                if 'clear_market' in message:
+                    self.logger.info(f'started market clearing {self.date}')
+                    self.market_clearing()
+                    await ws.send(f'cleared market {self.name}')
+                if 'finished' in message:
+                    break
 
     def market_clearing(self):
 
@@ -64,5 +71,3 @@ class MarketAgent(BasicAgent):
         self.simulation_interface.set_market_results(market_results)
 
         self.logger.info(f'cleared market and saved result in database {self.date}')
-
-        self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')

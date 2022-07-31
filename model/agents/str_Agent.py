@@ -2,6 +2,8 @@
 import time as time
 import pandas as pd
 import numpy as np
+from websockets import WebSocketClientProtocol as wsClientPrtl
+
 
 # model modules
 from aggregation.portfolio_storage import StrPort
@@ -31,30 +33,28 @@ class StrAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    def callback(self, ch, method, properties, body):
-        message = super().callback(ch, method, properties, body)        
-        self.simulation_interface.date = self.date
-
-        if 'set_capacities' in message:
-            self.simulation_interface.set_capacities(self.portfolio)
-        if 'opt_dayAhead' in message:
-            self.optimize_day_ahead()
-        if 'result_dayAhead' in message:
-            self.post_day_ahead()
+    async def message_handler(self, ws: wsClientPrtl):
+        await super().message_handler(ws)
+        while self.running and self.connected:
+            async for message in ws:
+                message, date = message.split(' ')
+                self.date = pd.to_datetime(date)
+                if 'set_capacities' in message:
+                    self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
+                if 'optimize_dayAhead' in message:
+                    self.optimize_day_ahead()
+                    await ws.send(f'optimized_dayAhead {self.name}')
+                if 'results_dayAhead' in message:
+                    self.post_day_ahead()
+                if 'finished' in message:
+                    break
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('dayAhead market scheduling started')
 
-        start_time = time.time()
-        self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='', body=f'{self.name} {self.date.date()}')
-
-        self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
-        start_time = time.time()
-
         self.logger.info('starting day ahead adjustments')
 
-        self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')
