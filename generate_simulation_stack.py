@@ -2,7 +2,7 @@
 import numpy as np
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
-counter = 2
+counter = 1
 
 configs = {}
 output = []
@@ -97,6 +97,7 @@ output.append(f'''
       TYPE: 'CTL'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: '0.0.0.0'
     ports:
       - 5000:5000
     deploy:
@@ -115,6 +116,7 @@ output.append(f'''
       TYPE: 'MRK'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
     configs:
       - source: market_config
         target: /opt/gurobi/gurobi.lic
@@ -132,6 +134,7 @@ output.append(f'''
       TYPE: 'NET'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
@@ -145,6 +148,7 @@ for agent in agents[:counter]:
       TYPE: 'DEM'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
@@ -158,6 +162,7 @@ for agent in agents[:counter]:
       TYPE: 'PWP'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
@@ -171,6 +176,7 @@ for agent in agents[:counter]:
       TYPE: 'RES'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 ''')
 output.append('configs:')
 for config, location in configs.items():

@@ -1,6 +1,5 @@
 numpy
 pandas
-pika
 sqlalchemy
 psycopg2-binary
 gurobipy
@@ -19,8 +18,6 @@ scipy
 tqdm
 geojson
 pyomo
-dash
 geopandas
 glpk
-dash-bootstrap-components
-dash_daq
+websockets

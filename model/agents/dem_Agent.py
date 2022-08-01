@@ -90,7 +90,6 @@ class DemAgent(BasicAgent):
     async def message_handler(self, ws: wsClientPrtl):
         await super().message_handler(ws)
         while self.running and self.registered:
-            print('run')
             async for message in ws:
                 print(message)
                 message, date = message.split(' ')

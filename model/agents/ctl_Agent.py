@@ -39,11 +39,14 @@ class CtlAgent(BasicAgent):
         self.sim_connector.start()
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    def run(self):
+
+    async def async_run(self):
         host, port = self.ws_uri.split(':')
-        server = websockets.serve(self.handler, host, int(port))
-        self.loop.run_until_complete(server)
-        self.loop.run_forever()
+        server = await websockets.serve(self.handler, host, int(port))
+        await server.wait_closed()
+
+    def run(self):
+        self.loop.run_until_complete(self.async_run())
 
     async def receive_message(self, ws):
         async for message in ws:
@@ -99,7 +102,12 @@ class CtlAgent(BasicAgent):
             await asyncio.sleep(2.5)
 
     async def handler(self, ws):
-        await asyncio.gather(self.receive_message(ws), self.send_message())
+        try:
+            await asyncio.gather(self.receive_message(ws), self.send_message())
+        except websockets.exceptions.ConnectionClosed:
+            log.info("Agent disconnected")
+        except Exception as e:
+            log.exception(e)
 
     def start_simulation(self):
 
@@ -109,4 +117,4 @@ class CtlAgent(BasicAgent):
             self.stop_date = pd.to_datetime(request.form.get('end'))
             self.simulation_step = 0
             return 'OK'
-        server.run(debug=False, port=5005, host='0.0.0.0')
+        server.run(debug=False, port=5000, host='0.0.0.0')

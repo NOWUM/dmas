@@ -81,6 +81,7 @@ services:
       TYPE: 'CTL'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: '0.0.0.0'
     ports:
       - 5000:5000
     deploy:
@@ -97,6 +98,7 @@ services:
       TYPE: 'MRK'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
     configs:
       - source: market_config
         target: /opt/gurobi/gurobi.lic
@@ -110,6 +112,7 @@ services:
       TYPE: 'NET'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 
   dem_de111:
     container_name: dem_de111
@@ -119,15 +122,7 @@ services:
       TYPE: 'DEM'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
-
-  dem_de112:
-    container_name: dem_de112
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE112
-      TYPE: 'DEM'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 
   pwp_de111:
     container_name: pwp_de111
@@ -137,15 +132,7 @@ services:
       TYPE: 'PWP'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
-
-  pwp_de112:
-    container_name: pwp_de112
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE112
-      TYPE: 'PWP'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 
   res_de111:
     container_name: res_de111
@@ -155,15 +142,7 @@ services:
       TYPE: 'RES'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
-
-  res_de112:
-    container_name: res_de112
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE112
-      TYPE: 'RES'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
 configs:
   compute_config:
     file: ./gurobi.lic

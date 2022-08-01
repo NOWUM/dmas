@@ -654,7 +654,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#ffffff",
+                  "fixedColor": "text",
                   "mode": "fixed"
                 }
               },
@@ -1053,6 +1053,7 @@
           ]
         }
       ],
+      "title": "Market Overview",
       "type": "timeseries"
     },
     {
@@ -1071,7 +1072,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#ffffff",
+                "color": "text",
                 "value": null
               }
             ]
@@ -2499,7 +2500,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": false,
+  "refresh": "5s",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [],
