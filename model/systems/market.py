@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pyomo.environ import (Var, Objective, SolverFactory, ConcreteModel, 
-                        NonNegativeRealsReals, Binary,
+                        NonNegativeReals, Reals, Binary,
                         minimize, maximize, quicksum, ConstraintList)
 import logging
 
