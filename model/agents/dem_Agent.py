@@ -89,12 +89,14 @@ class DemAgent(BasicAgent):
 
     async def message_handler(self, ws: wsClientPrtl):
         await super().message_handler(ws)
-        while self.running and self.connected:
+        while self.running and self.registered:
+            print('run')
             async for message in ws:
+                print(message)
                 message, date = message.split(' ')
                 self.date = pd.to_datetime(date)
                 if 'set_capacities' in message:
-                    self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
+                    self.simulation_interface.set_capacities(self.portfolio, self.area, self.date)
                 if 'optimize_dayAhead' in message:
                     self.optimize_day_ahead()
                     await ws.send(f'optimized_dayAhead {self.name}')

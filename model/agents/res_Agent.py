@@ -114,7 +114,7 @@ class ResAgent(BasicAgent):
 
     async def message_handler(self, ws: wsClientPrtl):
         await super().message_handler(ws)
-        while self.running and self.connected:
+        while self.running and self.registered:
             async for message in ws:
                 message, date = message.split(' ')
                 self.date = pd.to_datetime(date)

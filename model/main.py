@@ -23,7 +23,7 @@ init_dict = {
     'type': os.getenv('TYPE', 'CTL'),
     # mqtt default parameter
     'ws_host': os.getenv('WS_HOST', 'localhost'),
-    'ws_port': int(os.getenv('WS_PORT', 4005)),
+    'ws_port': int(os.getenv('WS_PORT', 4000)),
     # simulation data server default parameter
     'simulation_server': os.getenv('SIMULATION_SOURCE', 'localhost:5432'),
     'simulation_credential': os.getenv('SIMULATION_DATABASE', 'dMAS:dMAS'),
@@ -35,7 +35,7 @@ init_dict = {
     'weather_database_uri': weather_database_uri
 }
 
-type_mapping= {
+type_mapping = {
     'DEM': DemAgent,
     'RES': ResAgent,
     'PWP': PwpAgent,

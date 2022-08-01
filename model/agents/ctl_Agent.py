@@ -35,7 +35,6 @@ class CtlAgent(BasicAgent):
         self.loop = asyncio.get_event_loop()
 
         self.simulation_step = -1
-        self.total_agents = 0
         self.sim_connector = threading.Thread(target=self.start_simulation)
         self.sim_connector.start()
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
@@ -51,7 +50,8 @@ class CtlAgent(BasicAgent):
             name = message.split(' ')[-1]
             if 'register' in message:  # -> register agent
                 self.registered_agents[name] = ws
-                self.waiting_list.append(name)
+                if name != 'market':
+                    self.waiting_list.append(name)
                 self.logger.info(f'{name} connects')
             if 'optimized_dayAhead' in message:
                 self.waiting_list.remove(name)
@@ -64,28 +64,32 @@ class CtlAgent(BasicAgent):
         while True:
             connected = set(self.registered_agents.values())
             # -> 1.Step: optimize day Ahead
-            if len(self.registered_agents) == self.total_agents and self.simulation_step == 0:
-                websockets.broadcast(connected, "optimize_dayAhead")
+            if self.simulation_step == 0:
+                websockets.broadcast(connected, f"optimize_dayAhead {self.date.date()}")
                 self.logger.info('send command: optimize_dayAhead')
                 self.simulation_step += 1
             # -> 2.Step: clear market
-            elif len(self.registered_agents) == 0 and self.simulation_step == 1:
-                await self.registered_agents['market'].send('clear_market')
-                self.logger.info('send command: clear_market')
+            elif len(self.waiting_list) == 0 and self.simulation_step == 1:
+                if 'market' in self.registered_agents.keys():
+                    await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
+                    self.logger.info('send command: clear_market')
+                else:
+                    self.logger.info('no market found')
                 self.simulation_step += 1
             # -> 3.Step: adjust power to market results
             elif self.cleared and self.simulation_step == 2:
-                websockets.broadcast(connected, "results_dayAhead")
+                websockets.broadcast(connected, f"results_dayAhead {self.date.date()}")
                 self.logger.info('send command: results_dayAhead')
                 self.simulation_step += 1
             # -> 4.Step: store current capacities
             elif self.simulation_step == 3:
-                websockets.broadcast(connected, "set_capacities")
+                websockets.broadcast(connected, f"set_capacities {self.date.date()}")
                 self.logger.info('send command: set_capacities')
                 # -> prepare next day
                 self.simulation_step = 0
                 self.cleared = False
-                self.waiting_list = [*self.registered_agents.keys()]
+                self.simulation_interface.reset_order_book()
+                self.waiting_list = [key for key in self.registered_agents.keys() if key != 'market']
                 self.date += timedelta(days=1)
             # -> terminate simulation
             if self.date == self.stop_date:
@@ -96,7 +100,6 @@ class CtlAgent(BasicAgent):
     async def handler(self, ws):
         await asyncio.gather(self.receive_message(ws), self.send_message())
 
-
     def start_simulation(self):
 
         @server.route('/start', methods=['POST'])
@@ -104,5 +107,5 @@ class CtlAgent(BasicAgent):
             self.start_date = pd.to_datetime(request.form.get('begin'))
             self.stop_date = pd.to_datetime(request.form.get('end'))
             self.simulation_step = 0
-
+            return 'OK'
         server.run(debug=False, port=5005, host='0.0.0.0')

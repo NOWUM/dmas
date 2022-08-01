@@ -18,7 +18,7 @@ class BasicAgent:
         # declare meta data
         self.area = area
         self.type = type
-        self.name = f'{self.type}_{self.area}'.lower()
+        self.name = f'{self.type}_{self.area}'.lower() if 'mrk' not in type.lower() else 'market'
         self.date = pd.to_datetime(date)
 
         # declare logging options
@@ -26,10 +26,9 @@ class BasicAgent:
         self.logger.setLevel(logging.INFO)
 
         # declare websocket parameter
-        self.ws_uri = f"{kwargs['ws_host']}:{kwargs['ws_port']}"
+        self.ws_uri = f"ws://{kwargs['ws_host']}:{kwargs['ws_port']}"
         self.registered = False
-        self.connected = False
-
+        self.running = False
 
         # declare simulation data server
         self.simulation_data_server = kwargs['simulation_server']
@@ -41,7 +40,7 @@ class BasicAgent:
                                                         kwargs['ws_host'])
         # declare structure data sever
         self.structure_data_server = kwargs['structure_server']
-        self.structure_data_credential= kwargs['structure_credential']
+        self.structure_data_credential = kwargs['structure_credential']
         self.infrastructure_interface = InfrastructureInterface(self.name, self.structure_data_server,
                                                                 self.structure_data_credential)
         self.longitude, self.latitude = get_lon_lat(self.area)
@@ -58,7 +57,7 @@ class BasicAgent:
         # -> register to simulation
         if not self.registered:
             await ws.send(f'register {self.name}')
-            self.running, self.registered= True, True
+            self.running, self.registered = True, True
             print(f' --> Agent {self.name} has connected to simulation '
                   f'and is waiting for instructions')
 
@@ -73,6 +72,3 @@ class BasicAgent:
 
 if __name__ == '__main__':
     pass
-
-    #if mqtt_connection and not mqtt_connection.is_closed:
-    #    mqtt_connection.close()

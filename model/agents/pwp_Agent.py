@@ -39,10 +39,9 @@ class PwpAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-
     async def message_handler(self, ws: wsClientPrtl):
         await super().message_handler(ws)
-        while self.running and self.connected:
+        while self.running and self.registered:
             async for message in ws:
                 message, date = message.split(' ')
                 self.date = pd.to_datetime(date)
