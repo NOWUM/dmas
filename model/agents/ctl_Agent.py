@@ -95,6 +95,7 @@ class CtlAgent(BasicAgent):
             if self.date == self.stop_date:
                 websockets.broadcast(connected, "finished")
                 self.registered_agents = dict()
+                break
             await asyncio.sleep(2.5)
 
     async def handler(self, ws):
