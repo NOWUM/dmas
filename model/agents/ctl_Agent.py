@@ -1,20 +1,18 @@
 # third party modules
 import time
 import pandas as pd
+from datetime import timedelta
 from flask import Flask, request, redirect
 import threading
 import numpy as np
 from tqdm import tqdm
-import dash
-from dash.dependencies import Input, Output, State
+import websockets
+import asyncio
 
 # model modules
 from agents.basic_Agent import BasicAgent
-from dashboards.dashboard import Dashboard
 
 server = Flask('dMAS_controller')
-
-app = dash.Dash('dMAS_controller', external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'], server=server)
 
 
 class CtlAgent(BasicAgent):
@@ -23,174 +21,92 @@ class CtlAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         
         start_time = time.time()
-        self.sim_start = False
-        self.sim_stop = False
 
         self.start_date = pd.to_datetime('2018-01-01')
         self.stop_date = pd.to_datetime('2018-02-01')
+
+        self.registered_agents = dict()
         self.waiting_list = []
+
         self.cleared = False
-        self.dashboard = Dashboard()
         self.simulation_interface.date = self.start_date
 
+        self.ws_uri = f"{kwargs['ws_host']}:{kwargs['ws_port']}"
+        self.loop = asyncio.get_event_loop()
+
+        self.simulation_step = -1
+        self.sim_connector = threading.Thread(target=self.start_simulation)
+        self.sim_connector.start()
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    def set_waiting_list(self):
-        self.waiting_list = self.simulation_interface.get_agents()
-        self.logger.info(f'{len(self.waiting_list)} agent(s) are running')
-
-    def wait_for_agents(self):
-        t = time.time()
-        total = len(self.waiting_list)
-        still_waiting = len(self.waiting_list)
-        with tqdm(total=total) as p_bar:
-            display = True
-            while len(self.waiting_list) > 0:
-                if time.time() - t > 30 and display:
-                    current_agents = self.simulation_interface.get_agents()
-                    for agent in self.waiting_list:
-                        if agent not in current_agents:
-                            self.waiting_list.remove(agent)
-                            self.logger.info(f'{agent} left the simulation stack')
-                            self.logger.info(f'removed agent {agent} from current list')
-                        else:
-                            self.logger.info(f'still waiting for {agent}')
-                        display = False
-                if time.time() - t > 120:
-                    for agent in self.waiting_list:
-                        self.waiting_list.remove(agent)
-                        self.logger.info(f'get no response of {agent}')
-                        self.logger.info(f'removed agent {agent} from current list')
-                p_bar.update(still_waiting - len(self.waiting_list))
-                still_waiting = len(self.waiting_list)
-
-                time.sleep(1)
-
-    def wait_for_market(self):
-        t = time.time()
-        while not self.cleared:
-            self.logger.info(f'still waiting for market clearing')
-            time.sleep(1)
-            if time.time() - t > 120:
-                self.cleared = True
-                pass
-        self.cleared = False
-
-    def callback(self, ch, method, properties, body):
-        message = super().callback(ch, method, properties, body)
-        agent, date = message.split(' ')
-        date = pd.to_datetime(date)
-
-        if date == self.date and agent in self.waiting_list:
-            self.waiting_list.remove(agent)
-        if agent == 'mrk_de111' and date == self.date:
-            self.cleared = True
-
-    def check_orders(self):
-        self.channel = self.get_rabbitmq_connection()
-        result = self.channel.queue_declare(queue=self.name, auto_delete=True)
-        self.channel.queue_bind(exchange=self.mqtt_exchange, queue=result.method.queue)
-
-        try:
-            self.channel.basic_consume(queue=self.name, on_message_callback=self.callback, auto_ack=True)
-            print(' --> Waiting for orders')
-            self.channel.start_consuming()
-        except Exception as e:
-            print(repr(e))
-
-    def simulation_routine(self):
-
-        self.publish = self.get_rabbitmq_connection()
-        self.logger.info('simulation started')
-        for date in tqdm(pd.date_range(start=self.start_date, end=self.stop_date, freq='D')):
-            if self.sim_stop:
-                self.logger.info('simulation terminated')
-                self.simulation_interface.initialize_tables()
-                break
-            else:
-                try:
-                    start_time = time.time()
-
-                    self.date = date.date()
-
-                    # 1.Step: optimization for dayAhead Market
-                    self.set_waiting_list()
-                    self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
-                                               body=f'opt_dayAhead {date.date()}')
-
-                    self.wait_for_agents()
-                    self.logger.info('agents set their orders')
-
-                    # 2. Step: run market clearing
-                    self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
-                                               body=f'dayAhead_clearing {date.date()}')
-
-                    self.wait_for_market()
-                    self.logger.info(f'day ahead clearing finished')
-
-                    # 3. Step: agents have to adjust their demand and generation
-                    self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
-                                               body=f'result_dayAhead {date.date()}')
-
-                    # 4. Step: reset the order_book table for the next day
-                    self.simulation_interface.reset_order_book()
-                    self.logger.info(f'finished day in {time.time() - start_time:.2f} seconds')
-
-                    self.publish.basic_publish(exchange=self.mqtt_exchange, routing_key='',
-                                               body=f'set_capacities {self.date.date()}')
-
-                except Exception as e:
-                    print(repr(e))
-                    self.logger.exception('Error in Simulation')
-
-        self.sim_start = False
-        self.logger.info('simulation finished')
-
-    def handle_simulation(self, begin, end, start=False):
-        if start:
-            self.start_date = pd.to_datetime(begin)
-            self.stop_date = pd.to_datetime(end)
-            if not self.sim_start:
-                self.sim_stop = False
-                simulation = threading.Thread(target=self.simulation_routine)
-                check_orders = threading.Thread(target=self.check_orders)
-                simulation.start()
-                check_orders.start()
-                self.sim_start = True
-            return f'Simulation is running: {start}: from {self.start_date} to {self.stop_date}'
-        else:
-            if not self.sim_stop:
-                self.logger.info('stopping simulation')
-            self.sim_stop = True
-            return f'Simulation not running'
-
     def run(self):
+        host, port = self.ws_uri.split(':')
+        server = websockets.serve(self.handler, host, int(port))
+        self.loop.run_until_complete(server)
+        self.loop.run_forever()
+
+    async def receive_message(self, ws):
+        async for message in ws:
+            name = message.split(' ')[-1]
+            if 'register' in message:  # -> register agent
+                self.registered_agents[name] = ws
+                if name != 'market':
+                    self.waiting_list.append(name)
+                self.logger.info(f'{name} connects')
+            if 'optimized_dayAhead' in message:
+                self.waiting_list.remove(name)
+                self.logger.info(f'agent {name} set orders')
+            if 'cleared market' in message:
+                self.cleared = True
+                self.logger.info('market has cleared the market')
+
+    async def send_message(self):
+        while True:
+            connected = set(self.registered_agents.values())
+            # -> 1.Step: optimize day Ahead
+            if self.simulation_step == 0:
+                websockets.broadcast(connected, f"optimize_dayAhead {self.date.date()}")
+                self.logger.info('send command: optimize_dayAhead')
+                self.simulation_step += 1
+            # -> 2.Step: clear market
+            elif len(self.waiting_list) == 0 and self.simulation_step == 1:
+                if 'market' in self.registered_agents.keys():
+                    await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
+                    self.logger.info('send command: clear_market')
+                else:
+                    self.logger.info('no market found')
+                self.simulation_step += 1
+            # -> 3.Step: adjust power to market results
+            elif self.cleared and self.simulation_step == 2:
+                websockets.broadcast(connected, f"results_dayAhead {self.date.date()}")
+                self.logger.info('send command: results_dayAhead')
+                self.simulation_step += 1
+            # -> 4.Step: store current capacities
+            elif self.simulation_step == 3:
+                websockets.broadcast(connected, f"set_capacities {self.date.date()}")
+                self.logger.info('send command: set_capacities')
+                # -> prepare next day
+                self.simulation_step = 0
+                self.cleared = False
+                self.simulation_interface.reset_order_book()
+                self.waiting_list = [key for key in self.registered_agents.keys() if key != 'market']
+                self.date += timedelta(days=1)
+            # -> terminate simulation
+            if self.date == self.stop_date:
+                websockets.broadcast(connected, "finished")
+                self.registered_agents = dict()
+                break
+            await asyncio.sleep(2.5)
+
+    async def handler(self, ws):
+        await asyncio.gather(self.receive_message(ws), self.send_message())
+
+    def start_simulation(self):
 
         @server.route('/start', methods=['POST'])
         def start_post():
-            begin = request.form.get('begin')
-            end = request.form.get('end')
-            return self.handle_simulation(begin, end, start=True)
-        # allows programatically start:
-        # curl -X POST http://localhost:5000/start -d "begin=2018-01-01" -d "end=2018-02-01"
-
-        @app.callback(Output('information', 'children'), Input('tab_menu', 'value'))
-        def render_information(tab):
-            if tab == 'simulation':
-                return self.dashboard.simulation_control(status=self.sim_start)
-            if tab == 'meta':
-                capacities = self.simulation_interface.get_global_capacities(self.date)
-                return self.dashboard.meta_information(capacities)
-
-        @app.callback(Output('simulation_status', 'children'),
-                      Input('trigger_simulation', 'on'),
-                      State('date_range', 'start_date'),
-                      State('date_range', 'end_date'))
-        def simulation_controlling(on, start, end):
-            # TODO this stops the simulation if the date is change on the Dashboard
-            return self.handle_simulation(start, end, on)
-
-        app.layout = self.dashboard.layout
-
-        app.run_server(debug=False, port=5000, host='0.0.0.0')
-
+            self.start_date = pd.to_datetime(request.form.get('begin'))
+            self.stop_date = pd.to_datetime(request.form.get('end'))
+            self.simulation_step = 0
+            return 'OK'
+        server.run(debug=False, port=5005, host='0.0.0.0')
