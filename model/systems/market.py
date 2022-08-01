@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
-from pyomo.environ import Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
-    minimize, maximize, quicksum, ConstraintList
+from pyomo.environ import (Var, Objective, SolverFactory, ConcreteModel, 
+                        NonNegativeRealsReals, Binary,
+                        minimize, maximize, quicksum, ConstraintList)
 import logging
 
 
@@ -201,7 +202,7 @@ class DayAheadMarket:
         for t in self.t:
             for block, order, name in self.hourly_ask_orders[t]:
                 if self.model.use_hourly_ask[block, t, order, name].value:
-                    used_ask_orders.update[(block, t, order, name)] = self.hourly_ask_total[block, t, order, name]
+                    used_ask_orders[(block, t, order, name)] = self.hourly_ask_total[block, t, order, name]
         used_ask_orders = pd.DataFrame.from_dict(used_ask_orders, orient='index')
         used_ask_orders.index = pd.MultiIndex.from_tuples(used_ask_orders.index,
                                                           names=['block_id', 'hour', 'order_id', 'name'])
