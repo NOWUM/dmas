@@ -16,6 +16,8 @@ class DemandForecast(BasicForecast):
     def collect_data(self, date):
         demand = self.market.get_auction_results(date)
         values = demand['volume'].to_numpy()
+        if len(demand.index) < 24:
+            raise Exception('No Results from market available')
         for i in range(24):
             self.input.append(demand.index[i])
             self.output.append(values[i])
