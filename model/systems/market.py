@@ -111,10 +111,13 @@ class DayAheadMarket:
         # ------------------------------------------------
 
         # Step 5 set constraint: If a block is used -> set one block = True
-        # self.model.all_orders_in_block = ConstraintList()
         self.model.at_least_one_order_in_block = ConstraintList()
+        self.model.all_orders_in_block = ConstraintList()
         for data in self.get_unique([(block, agent) for block, _, _, agent in self.linked_total.keys()]):
             block, agent = data
+            self.model.all_orders_in_block.add(self.model.use_linked_block[block, agent] * 1e9
+                                               >= quicksum(self.model.use_linked_order[block, :, :, agent]))
+
             self.model.at_least_one_order_in_block.add(self.model.use_linked_block[block, agent]
                                                        <= quicksum(self.model.use_linked_order[block, :, :, agent]))
 
@@ -307,6 +310,7 @@ if __name__ == "__main__":
     house.optimize()
     demand = house.demand['power']
 
+
     def demand_order_book(demand, house):
         order_book = {}
         for t in house.t:
@@ -340,7 +344,6 @@ if __name__ == "__main__":
     prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = my_market.optimize()
 
     committed_power = used_linked_orders.groupby('hour').sum()['volume']
-    print(committed_power)
 
     comm = np.zeros(24)
     comm[committed_power.index] = committed_power
