@@ -26,8 +26,7 @@ class BasicAgent:
         self.logger.setLevel(logging.INFO)
 
         # declare websocket parameter
-        self.ws_uri = f"ws://{kwargs['ws_host']}:{kwargs['ws_port']}"
-        self.registered = False
+        self.ws_uri = f"ws://{kwargs['ws_host']}:{kwargs['ws_port']}/{self.name}"
         self.running = False
 
         # declare simulation data server
@@ -54,12 +53,23 @@ class BasicAgent:
         self.logger.info('shutting down')
 
     async def message_handler(self, ws: wsClientPrtl):
-        # -> register to simulation
-        if not self.registered:
-            await ws.send(f'register {self.name}')
-            self.running, self.registered = True, True
-            print(f' --> Agent {self.name} has connected to simulation '
+        self.running = True
+        self.logger.info(f' --> Agent {self.name} has connected to simulation '
                   f'and is waiting for instructions')
+
+        while self.running:
+            async for message in ws:
+                message, date = message.split(' ')
+                self.date = pd.to_datetime(date)
+
+                if 'finished' in message:
+                    self.running = False
+                await self.handle_message(message)
+            await asyncio.sleep(0.1)
+    
+    async def handle_message(self, message):
+        pass
+
 
     async def connect(self):
         async with websockets.connect(self.ws_uri) as ws:

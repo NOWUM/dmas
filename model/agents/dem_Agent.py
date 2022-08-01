@@ -87,22 +87,14 @@ class DemAgent(BasicAgent):
             raise Exception(f'no orders found; order_book: {order_book}')
         return df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
-    async def message_handler(self, ws: wsClientPrtl):
-        await super().message_handler(ws)
-        while self.running and self.registered:
-            async for message in ws:
-                print(message)
-                message, date = message.split(' ')
-                self.date = pd.to_datetime(date)
-                if 'set_capacities' in message:
-                    self.simulation_interface.set_capacities(self.portfolio, self.area, self.date)
-                if 'optimize_dayAhead' in message:
-                    self.optimize_day_ahead()
-                    await ws.send(f'optimized_dayAhead {self.name}')
-                if 'results_dayAhead' in message:
-                    self.post_day_ahead()
-                if 'finished' in message:
-                    break
+    async def handle_message(self, message):
+        if 'set_capacities' in message:
+            self.simulation_interface.set_capacities(self.portfolio, self.area, self.date)
+        if 'optimize_dayAhead' in message:
+            self.optimize_day_ahead()
+            await ws.send(f'optimized_dayAhead {self.name}')
+        if 'results_dayAhead' in message:
+            self.post_day_ahead()
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""

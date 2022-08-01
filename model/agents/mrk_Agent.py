@@ -18,18 +18,11 @@ class MarketAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    async def message_handler(self, ws: wsClientPrtl):
-        await super().message_handler(ws)
-        while self.running and self.registered:
-            async for message in ws:
-                message, date = message.split(' ')
-                self.date = pd.to_datetime(date)
-                if 'clear_market' in message:
-                    self.logger.info(f'started market clearing {self.date}')
-                    self.market_clearing()
-                    await ws.send(f'cleared market {self.name}')
-                if 'finished' in message:
-                    break
+    async def handle_message(self, message):
+        if 'clear_market' in message:
+            self.logger.info(f'started market clearing {self.date}')
+            self.market_clearing()
+            await ws.send(f'cleared market {self.name}')
 
     def market_clearing(self):
         start_time = time.time()
