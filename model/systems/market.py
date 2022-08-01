@@ -111,7 +111,7 @@ class DayAheadMarket:
         # ------------------------------------------------
 
         # Step 5 set constraint: If a block is used -> set one block = True
-        self.model.all_orders_in_block = ConstraintList()
+        # self.model.all_orders_in_block = ConstraintList()
         self.model.at_least_one_order_in_block = ConstraintList()
         for data in self.get_unique([(block, agent) for block, _, _, agent in self.linked_total.keys()]):
             block, agent = data
@@ -165,8 +165,7 @@ class DayAheadMarket:
                                    + quicksum(self.hourly_ask_total[block, t, order, name][0] *
                                               self.model.use_hourly_ask[block, t, order, name]
                                               for block, order, name in self.hourly_ask_orders[t])
-                                   + (self.model.magic_source[t]) * max_prc[t] == self.model.generation_cost[t]
-                                   for t in self.t)
+                                   + self.model.magic_source[t] * max_prc[t] for t in self.t)
 
         self.model.obj = Objective(expr=generation_cost, sense=minimize)
 
@@ -308,7 +307,6 @@ if __name__ == "__main__":
     house.optimize()
     demand = house.demand['power']
 
-
     def demand_order_book(demand, house):
         order_book = {}
         for t in house.t:
@@ -342,6 +340,8 @@ if __name__ == "__main__":
     prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = my_market.optimize()
 
     committed_power = used_linked_orders.groupby('hour').sum()['volume']
+    print(committed_power)
+
     comm = np.zeros(24)
     comm[committed_power.index] = committed_power
     committed_power.plot()
