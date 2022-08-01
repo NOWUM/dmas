@@ -18,11 +18,11 @@ class MarketAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    async def handle_message(self, message):
+    def handle_message(self, message):
         if 'clear_market' in message:
             self.logger.info(f'started market clearing {self.date}')
             self.market_clearing()
-            await ws.send(f'cleared market {self.name}')
+            return f'cleared market {self.name}'
 
     def market_clearing(self):
         start_time = time.time()

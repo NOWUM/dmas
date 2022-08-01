@@ -28,6 +28,7 @@ class BasicAgent:
         # declare websocket parameter
         self.ws_uri = f"ws://{kwargs['ws_host']}:{kwargs['ws_port']}/{self.name}"
         self.running = False
+        self.connection_tries = 3
 
         # declare simulation data server
         self.simulation_data_server = kwargs['simulation_server']
@@ -64,16 +65,30 @@ class BasicAgent:
 
                 if 'finished' in message:
                     self.running = False
-                await self.handle_message(message)
+                msg = self.handle_message(message)
+                if msg:
+                    await ws.send(msg)
             await asyncio.sleep(0.1)
     
-    async def handle_message(self, message):
+    def handle_message(self, message):
         pass
 
 
     async def connect(self):
-        async with websockets.connect(self.ws_uri) as ws:
-            await self.message_handler(ws)
+        i = 0
+        while i < self.connection_tries:
+            try:
+                await asyncio.sleep(2*i)
+                self.logger.info(f'connecting to {self.ws_uri}')
+                # wait at the beginning
+                async with websockets.connect(self.ws_uri) as ws:
+                    await self.message_handler(ws)
+            except OSError:
+                i += 1
+                self.logger.error('could not connect to '+self.ws_uri)
+            except websockets.exceptions.ConnectionClosed as e:
+                i += 1
+                self.logger.error(f"Controller was shut down, trying again {i}")
 
     def run(self):
         loop = asyncio.get_event_loop()

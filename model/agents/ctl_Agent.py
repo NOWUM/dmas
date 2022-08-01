@@ -93,7 +93,7 @@ class CtlAgent(BasicAgent):
             elif self.cleared and self.simulation_step == SimStep.RESULTS:
                 websockets.broadcast(connected, f"results_dayAhead {self.date.date()}")
                 self.logger.info(f'send command: results_dayAhead {self.date.date()}')
-                self.simulation_step += 1
+                self.simulation_step = SimStep.CAPACITIES
             # -> 4.Step: store current capacities
             elif self.simulation_step == SimStep.CAPACITIES:
                 websockets.broadcast(connected, f"set_capacities {self.date.date()}")
@@ -104,8 +104,8 @@ class CtlAgent(BasicAgent):
                 self.simulation_interface.reset_order_book()
                 self.date += timedelta(days=1)
             await asyncio.sleep(2.5)
-        websockets.broadcast(connected, "finished")
-        self.registered_agents = dict()
+        self.logger.info('finished simulation')
+        websockets.broadcast(connected, f"finished {self.date.date()}")
 
     async def handler(self, ws):
 
@@ -115,9 +115,9 @@ class CtlAgent(BasicAgent):
         try:
             await asyncio.gather(self.receive_message(ws), self.send_message())
         except websockets.exceptions.ConnectionClosed:
-            log.info("Agent disconnected")
+            self.logger.info("Agent disconnected")
         except Exception as e:
-            log.exception(e)
+            self.logger.exception(e)
         finally:
             del self.registered_agents[agent_name]
 
