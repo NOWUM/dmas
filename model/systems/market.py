@@ -141,7 +141,8 @@ class DayAheadMarket:
 
         # Step 8 set constraint: Meet Demand in each hour
         max_prc = [1e9] * 24
-        self.model.magic_source = Var(self.t, bounds=(0, None), within=Reals)
+        self.model.magic_source = Var(self.t, within=NonNegativeReals)
+        #self.model.magic_sink = Var(self.t, bounds=(0, None), within=NonNegativeReals)
 
         self.model.demand = ConstraintList()
         for t in self.t:
@@ -200,7 +201,7 @@ class DayAheadMarket:
         for t in self.t:
             for block, order, name in self.hourly_ask_orders[t]:
                 if self.model.use_hourly_ask[block, t, order, name].value:
-                    used_ask_orders.update({(block, t, order, name): self.hourly_ask_total[block, t, order, name]})
+                    used_ask_orders.update[(block, t, order, name)] = self.hourly_ask_total[block, t, order, name]
         used_ask_orders = pd.DataFrame.from_dict(used_ask_orders, orient='index')
         used_ask_orders.index = pd.MultiIndex.from_tuples(used_ask_orders.index,
                                                           names=['block_id', 'hour', 'order_id', 'name'])
@@ -214,7 +215,7 @@ class DayAheadMarket:
         for t in self.t:
             for block, order, name in self.hourly_linked_orders[t]:
                 if self.model.use_linked_order[block, t, order, name].value:
-                    used_linked_orders.update({(block, t, order, name): self.linked_total[block, t, order, name]})
+                    used_linked_orders[(block, t, order, name)] = self.linked_total[block, t, order, name]
         used_linked_orders = pd.DataFrame.from_dict(used_linked_orders, orient='index')
         used_linked_orders.index = pd.MultiIndex.from_tuples(used_linked_orders.index,
                                                              names=['block_id', 'hour', 'order_id', 'name'])
@@ -229,7 +230,7 @@ class DayAheadMarket:
         for t in self.t:
             for block, order, name in self.hourly_exclusive_orders[t]:
                 if self.model.use_linked_order[block, t, order, name].value:
-                    used_exclusive_orders.update({(block, t, order, name): self.exclusive_total[block, t, order, name]})
+                    used_exclusive_orders[(block, t, order, name)] = self.exclusive_total[block, t, order, name]
         used_exclusive_orders = pd.DataFrame.from_dict(used_exclusive_orders, orient='index')
         used_exclusive_orders.index = pd.MultiIndex.from_tuples(used_exclusive_orders.index,
                                                                 names=['block_id', 'hour', 'order_id', 'name'])

@@ -53,6 +53,9 @@ class PriceForecast(BasicForecast):
         input = []
 
         market_result = self.market.get_auction_results(date)
+
+        if len(market_result.index) < 24:
+            raise Exception('No Auction Results from market available')
         input.append(market_result['volume'])
         input.append(self.weather.get_wind(date))
         input.append(self.weather.get_diffuse_radiation(date))
@@ -112,3 +115,12 @@ class PriceForecast(BasicForecast):
         df.index.name = 'time'
 
         return df
+
+
+if __name__ == "__main__":
+    pf = PriceForecast(position=dict(lat=50, lon=10),
+            simulation_interface=None,
+            weather_interface=None)
+    pf.collect_data('2018-01-01')
+    pf.fit_model()
+    forecast = pf.forecast('2018-01-02')

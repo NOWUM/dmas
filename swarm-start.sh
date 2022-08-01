@@ -9,16 +9,13 @@ sleep 10;
 
 docker stack deploy --with-registry-auth -c docker-compose.yml dmas
 
-docker service ls | wc -l && docker service ls | grep 0/1 | wc -l && docker service ls | grep 1/1 | wc -l
+while test "$(docker service ls | grep 0/1 | wc -l)" -gt 3
+do
+  docker service ls | wc -l && docker service ls | grep 0/1 | wc -l && docker service ls | grep 1/1 | wc -l
+  sleep 30;
+done
 
-sleep 120
-
-docker service ls | wc -l && docker service ls | grep 0/1 | wc -l && docker service ls | grep 1/1 | wc -l
-
-# remove services with weird windpower
-#docker service rm dmas_res_def07 dmas_res_de40h dmas_res_de734 dmas_res_de733 dmas_res_de922 dmas_res_de254 dmas_res_dea37 dmas_res_dea38 dmas_res_de25c dmas_res_def0b
-
-sleep 600
+sleep 400
 
 curl -X POST http://localhost:5000/start -d "begin=2018-01-01" -d "end=2018-02-01"
 
