@@ -164,8 +164,12 @@ class DayAheadMarket:
 
         self.model.obj = Objective(expr=generation_cost, sense=minimize)
 
-        result = self.opt.solve(self.model)
-        print(result)
+        try:
+            result = self.opt.solve(self.model, options={'MIPGap': 0.1, 'TimeLimit': 60})
+            print(result)
+        except Exception:
+            self.logger.exception('error solving optimization problem')
+            self.logger.error(f'Model: {self.model}')
 
         prices = []
         for t in self.t:
