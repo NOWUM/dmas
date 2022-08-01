@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from pyomo.environ import Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
     minimize, maximize, quicksum, ConstraintList
+from pyomo.environ import value as get_real_number
 import logging
 
 
@@ -95,9 +96,6 @@ class DayAheadMarket:
         # Step 1 initialize binary variables for hourly ask block per agent and id
         self.model.use_hourly_ask = Var(self.get_unique((block, hour, order_id, agent) for block, hour, order_id, agent
                                                         in self.hourly_ask_total.keys()), within=Binary)
-        # Step 2 initialize binary variables for linked ask block per agent
-        self.model.use_linked_block = Var(self.get_unique([(block, agent) for block, _, _, agent
-                                                           in self.linked_total.keys()]), within=Binary)
 
         # Step 3 initialize binary variables for ask order in block per agent
         self.model.use_linked_order = Var(self.get_unique([(block, hour, order, agent) for block, hour, order, agent
@@ -107,28 +105,15 @@ class DayAheadMarket:
         self.model.use_exclusive_block = Var(self.get_unique([(block, agent) for block, _, agent
                                                               in self.exclusive_total.keys()]), within=Binary)
 
-        # Constraints for linked block orders
-        # ------------------------------------------------
-
-        # Step 5 set constraint: If a block is used -> set one block = True
-        self.model.at_least_one_order_in_block = ConstraintList()
-        self.model.all_orders_in_block = ConstraintList()
-        for data in self.get_unique([(block, agent) for block, _, _, agent in self.linked_total.keys()]):
-            block, agent = data
-            self.model.all_orders_in_block.add(self.model.use_linked_block[block, agent] * 1e9
-                                               >= quicksum(self.model.use_linked_order[block, :, :, agent]))
-
-            self.model.at_least_one_order_in_block.add(self.model.use_linked_block[block, agent]
-                                                       <= quicksum(self.model.use_linked_order[block, :, :, agent]))
-
         # Step 6 set constraint: If parent block of an agent is used -> enable usage of child block
         self.model.enable_child_block = ConstraintList()
         for data in self.get_unique([(block, agent) for block, _, _, agent in self.linked_total.keys()]):
             block, agent = data
             parent_id = self.parent_blocks[block, agent]
             if parent_id != -1:
-                self.model.enable_child_block.add(self.model.use_linked_block[block, agent]
-                                                  <= self.model.use_linked_block[parent_id, agent])
+                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, :, :, agent]) <=
+                                                  2 * quicksum(self.model.use_linked_order[parent_id, :, :, agent]))
+
 
         # Constraints for exclusive block orders
         # ------------------------------------------------
@@ -139,24 +124,31 @@ class DayAheadMarket:
             agent = data
             self.model.one_exclusive_block.add(1 >= quicksum(self.model.use_exclusive_block[:, agent]))
 
-        # Step 8 set constraint: Meet Demand in each hour
-        max_prc = [1e9] * 24
-        self.model.magic_source = Var(self.t, bounds=(0, None), within=Reals)
+        magic_source = [-1 * (quicksum(self.linked_total[block, t, order, name][1] *
+                                       self.model.use_linked_order[block, t, order, name]
+                                       for block, order, name in self.hourly_linked_orders[t])
+                              + quicksum(self.exclusive_total[block, t, name][1] *
+                                         self.model.use_linked_order[block, name]
+                                         for block, name in self.hourly_exclusive_orders[t])
+                              + quicksum(self.hourly_ask_total[block, t, order, name][1] *
+                                         self.model.use_hourly_ask[block, t, order, name]
+                                         for block, order, name in self.hourly_ask_orders[t])
+                              + quicksum(self.hourly_bid_total[block, t, order, name][1]
+                                         for block, order, name in self.hourly_bid_orders[t])) for t in self.t]
 
-        self.model.demand = ConstraintList()
+        self.model.gen_dem = ConstraintList()
         for t in self.t:
-            self.model.demand.add(quicksum(self.linked_total[block, t, order, name][1] *
-                                           self.model.use_linked_order[block, t, order, name]
-                                           for block, order, name in self.hourly_linked_orders[t])
-                                  + quicksum(self.exclusive_total[block, t, name][1] *
-                                             self.model.use_linked_order[block, name]
-                                             for block, name in self.hourly_exclusive_orders[t])
-                                  + quicksum(self.hourly_ask_total[block, t, order, name][1] *
-                                             self.model.use_hourly_ask[block, t, order, name]
-                                             for block, order, name in self.hourly_ask_orders[t])
-                                  + self.model.magic_source[t]
-                                  == sum(-1 * self.hourly_bid_total[block, t, order, name][1]
-                                         for block, order, name in self.hourly_bid_orders[t]))
+            self.model.gen_dem.add(quicksum(self.linked_total[block, t, order, name][1] *
+                                            self.model.use_linked_order[block, t, order, name]
+                                            for block, order, name in self.hourly_linked_orders[t])
+                                   + quicksum(self.exclusive_total[block, t, name][1] *
+                                              self.model.use_linked_order[block, name]
+                                              for block, name in self.hourly_exclusive_orders[t])
+                                   + quicksum(self.hourly_ask_total[block, t, order, name][1] *
+                                              self.model.use_hourly_ask[block, t, order, name]
+                                              for block, order, name in self.hourly_ask_orders[t])
+                                   <= -1 * quicksum(self.hourly_bid_total[block, t, order, name][1]
+                                                    for block, order, name in self.hourly_bid_orders[t]))
 
         # Step 9 set constraint: Cost for each hour
         generation_cost = quicksum(quicksum(self.linked_total[block, t, order, name][0] *
@@ -168,7 +160,7 @@ class DayAheadMarket:
                                    + quicksum(self.hourly_ask_total[block, t, order, name][0] *
                                               self.model.use_hourly_ask[block, t, order, name]
                                               for block, order, name in self.hourly_ask_orders[t])
-                                   + self.model.magic_source[t] * max_prc[t] for t in self.t)
+                                   + magic_source[t] * 1e9 for t in self.t)
 
         self.model.obj = Objective(expr=generation_cost, sense=minimize)
 
@@ -243,12 +235,12 @@ class DayAheadMarket:
         volumes = []
         sum_magic_source = 0
         for t in self.t:
-            sum_magic_source += self.model.magic_source[t].value
+            sum_magic_source += get_real_number(magic_source[t])
             volume = 0
             for block, order, name in self.hourly_bid_orders[t]:
                 volume += (-1) * self.hourly_bid_total[block, t, order, name][1]
             volumes.append(volume)
-
+        print(sum_magic_source)
         self.logger.info(f'Got {sum_magic_source} kWh from Magic source')
 
         used_bid_orders = pd.DataFrame.from_dict(used_bid_orders, orient='index')
