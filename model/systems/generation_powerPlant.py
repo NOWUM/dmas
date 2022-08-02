@@ -281,7 +281,7 @@ class PowerPlant(EnergySystem):
                 l = -1 if link[h] is None else link[h]
                 book[(block_nr, h, 0, self.name)] = (prc, pwr - lst_pwr[h], l)
             else:
-                prc = (r['fuel'][h] + r['emission'][h]) / pwr
+                prc = (r['fuel'][h] + r['emission'][h]) / pwr if pwr else 1e6
                 l = 0 if link[h + add] is None else link[h + add]
                 for o in range(split):
                     book[(block_nr, h, o, self.name)] = (prc, (pwr - lst_pwr[h]) / split, l)
