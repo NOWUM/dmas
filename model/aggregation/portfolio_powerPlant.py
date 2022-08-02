@@ -35,8 +35,9 @@ class PowerPlantPortfolio(PortfolioModel):
         for model in self.energy_systems:
             power = np.zeros(24)
             committed_power = get_linked_result(model.name)
-            for index, row in committed_power.iterrows():
-                power[int(row.hour)] = float(row.volume)
+            if not committed_power.empty:
+                for index, row in committed_power.iterrows():
+                    power[int(row.hour)] = float(row.volume)
 
             model.committed_power = power
             model.build_model()
