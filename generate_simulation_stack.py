@@ -74,7 +74,7 @@ output.append(f'''
 # Build one Control Agent
 output.append(f'''
   controller:
-    container_name: ctl
+    container_name: controller
     image: {image_repo}agent:latest
     build: .
     environment:
@@ -95,7 +95,7 @@ output.append(f'''
 # Build one Market
 output.append(f'''
   market:
-    container_name: mrk
+    container_name: market
     image: {image_repo}agent:latest
     environment:
       AREA_CODE: 'DE111'
@@ -106,13 +106,15 @@ output.append(f'''
     configs:
       - source: market_config
         target: /opt/gurobi/gurobi.lic
+    depends_on:
+      - controller
 
 ''')
 configs[f'market_config']= f'./market_gurobi.lic'
 
 # Build one TSO
 output.append(f'''
-  tso:
+  net:
     container_name: net
     image: {image_repo}agent:latest
     environment:
@@ -121,6 +123,8 @@ output.append(f'''
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+    depends_on:
+      - controller
 ''')
 # Build Demand Agents
 agents = np.load('dem_agents.npy')
@@ -135,6 +139,8 @@ for agent in agents[:counter]:
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+    depends_on:
+      - controller
 ''')
 # Build Power Plant Agents
 agents = np.load('pwp_agents.npy')
@@ -163,6 +169,8 @@ for agent in agents[:counter]:
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+    depends_on:
+      - controller
 ''')
 output.append('configs:')
 for config, location in configs.items():
