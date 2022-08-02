@@ -277,7 +277,7 @@ class PowerPlant(EnergySystem):
             book = {}
             pwr = r['power'][h]
             if split == 0:
-                prc = np.mean((r['fuel'][h] + r['emission'][h] + r['start'][h]) / pwr)
+                prc = (r['fuel'][h] + r['emission'][h] + r['start'][h]) / pwr if pwr else 1e6
                 l = -1 if link[h] is None else link[h]
                 book[(block_nr, h, 0, self.name)] = (prc, pwr - lst_pwr[h], l)
             else:

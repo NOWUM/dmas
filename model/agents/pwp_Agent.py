@@ -59,6 +59,12 @@ class PwpAgent(BasicAgent):
 
         df.set_index(['block_id', 'hour', 'order_id', 'name'], inplace=True)
 
+        if not df[df.isna()].empty:
+            self.logger.error('Orderbook has NaN values')
+            self.logger.error(df[df.isna()])
+
+            for system in self.portfolio.energy_systems:
+                for k,v in system.optimization_results.items(): self.logger.info(k,v)
         return df
 
     def _initialize_parameters(self):
