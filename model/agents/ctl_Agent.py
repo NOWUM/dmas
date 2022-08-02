@@ -26,7 +26,7 @@ class CtlAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         start_time = time.time()
 
         self.start_date = pd.to_datetime('2018-01-01')
@@ -50,6 +50,7 @@ class CtlAgent(BasicAgent):
     async def async_run(self):
         host, port = self.ws_uri.split(':')
         server = await websockets.serve(self.handler, host, int(port))
+        self.logger.info('finished serving')
         await server.wait_closed()
 
     def run(self):
@@ -60,7 +61,7 @@ class CtlAgent(BasicAgent):
     async def receive_message(self, ws):
         async for message in ws:
             name = message.split(' ')[-1]
-                
+
             if 'optimized_dayAhead' in message:
                 self.waiting_list.remove(name)
                 self.logger.info(f'agent {name} set orders')
@@ -82,13 +83,15 @@ class CtlAgent(BasicAgent):
                 self.logger.info(f'send command: optimize_dayAhead {self.date.date()}')
                 self.simulation_step = SimStep.MARKET_CLEARING
             # -> 2.Step: clear market
-            elif len(self.waiting_list) == 0 and self.simulation_step == SimStep.MARKET_CLEARING:
-                if 'market' in self.registered_agents.keys():
-                    await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
-                    self.logger.info('send command: clear_market')
-                else:
-                    self.logger.info('no market found')
-                self.simulation_step = SimStep.RESULTS
+            elif self.simulation_step == SimStep.MARKET_CLEARING:
+                self.logger.debug(self.waiting_list)
+                if len(self.waiting_list) == 0:
+                    if 'market' in self.registered_agents.keys():
+                        await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
+                        self.logger.info('send command: clear_market')
+                    else:
+                        self.logger.info('no market found')
+                    self.simulation_step = SimStep.RESULTS
             # -> 3.Step: adjust power to market results
             elif self.cleared and self.simulation_step == SimStep.RESULTS:
                 websockets.broadcast(connected, f"results_dayAhead {self.date.date()}")
@@ -101,13 +104,17 @@ class CtlAgent(BasicAgent):
                 # -> prepare next day
                 self.simulation_step = SimStep.MARKET_BIDS
                 self.cleared = False
-                self.simulation_interface.reset_order_book()
                 self.date += timedelta(days=1)
             await asyncio.sleep(2.5)
         self.logger.info('finished simulation')
         websockets.broadcast(connected, f"finished {self.date.date()}")
 
     async def handler(self, ws):
+        '''
+        handles new websocket connections
+        - registers clients
+        - dispatches messages
+        '''
 
         agent_name = ws.path.strip('/')
         self.registered_agents[agent_name] = ws
@@ -115,9 +122,12 @@ class CtlAgent(BasicAgent):
         try:
             await asyncio.gather(self.receive_message(ws), self.send_message())
         except websockets.exceptions.ConnectionClosed:
-            self.logger.info("Agent disconnected")
-        except Exception as e:
-            self.logger.exception(e)
+            self.logger.info(f"Agent {agent_name} disconnected")
+            self.logger.exception('Error in Agent Handler')
+            if agent_name in self.waiting_list:
+                self.waiting_list.remove(agent_name)
+        except Exception:
+            self.logger.exception('Error in Agent Handler')
         finally:
             del self.registered_agents[agent_name]
 
@@ -133,4 +143,9 @@ class CtlAgent(BasicAgent):
                 return 'OK', 200
             else:
                 return 'Simulation already running', 409
+
+        @server.route('/agent_count')
+        def agent_count():
+            return str(len(self.registered_agents)), 200
+
         server.run(debug=False, port=5000, host='0.0.0.0')

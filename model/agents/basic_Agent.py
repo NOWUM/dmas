@@ -9,7 +9,7 @@ from websockets import WebSocketClientProtocol as wsClientPrtl
 from interfaces.weather import WeatherInterface
 from interfaces.structure import InfrastructureInterface, get_lon_lat
 from interfaces.simulation import SimulationInterface
-
+from functools import partial
 
 class BasicAgent:
 
@@ -65,12 +65,19 @@ class BasicAgent:
 
                 if 'finished' in message:
                     self.running = False
-                msg = self.handle_message(message)
+                loop = asyncio.get_event_loop()
+                function = partial(self.handle_message, message=message)
+                msg = await loop.run_in_executor(None, function)
                 if msg:
                     await ws.send(msg)
             await asyncio.sleep(0.1)
     
     def handle_message(self, message):
+        '''
+        empty message handler - overwritten in implementation
+        
+        returns response message
+        '''
         pass
 
 
@@ -88,6 +95,7 @@ class BasicAgent:
                 self.logger.error('could not connect to '+self.ws_uri)
             except websockets.exceptions.ConnectionClosed as e:
                 i += 1
+                self.logger.exception('Error in Agent Handler')
                 self.logger.error(f"Controller was shut down, trying again {i}")
 
     def run(self):

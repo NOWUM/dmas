@@ -23,6 +23,9 @@ class MarketAgent(BasicAgent):
             self.logger.info(f'started market clearing {self.date}')
             self.market_clearing()
             return f'cleared market {self.name}'
+        elif 'set_capacities' in message:
+            # now its time to reset the order book
+            self.simulation_interface.reset_order_book()
 
     def market_clearing(self):
         start_time = time.time()

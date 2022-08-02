@@ -2,7 +2,7 @@
 import numpy as np
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
-counter = 1
+counter = 4
 
 configs = {}
 output = []
@@ -71,21 +71,6 @@ output.append(f'''
         constraints: [node.role == manager]
 
 ''')
-# Build Rabbitmq
-output.append('''
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3-management
-    restart: always
-    ports:
-      - 15672:15672
-      - 5672:5672
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
-''')
 # Build one Control Agent
 output.append(f'''
   controller:
@@ -100,6 +85,7 @@ output.append(f'''
       WS_HOST: '0.0.0.0'
     ports:
       - 5000:5000
+      - 4000:4000
     deploy:
       mode: replicated
       replicas: 1
