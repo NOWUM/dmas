@@ -95,7 +95,6 @@ class BasicAgent:
                 self.logger.error('could not connect to '+self.ws_uri)
             except websockets.exceptions.ConnectionClosed as e:
                 i += 1
-                self.logger.exception('Error in Agent Handler')
                 self.logger.error(f"Controller was shut down, trying again {i}")
 
     def run(self):
