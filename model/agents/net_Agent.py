@@ -23,7 +23,7 @@ class NetAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    def handle_message(message):
+    def handle_message(self, message):
         if 'calculate_power_flow' in message:
             self.calculate_power_flow()
 

@@ -59,19 +59,6 @@ services:
         constraints: [node.role == manager]
 
 
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3-management
-    restart: always
-    ports:
-      - 15672:15672
-      - 5672:5672
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
-
   controller:
     container_name: ctl
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
@@ -84,6 +71,7 @@ services:
       WS_HOST: '0.0.0.0'
     ports:
       - 5000:5000
+      - 4000:4000
     deploy:
       mode: replicated
       replicas: 1
@@ -124,6 +112,36 @@ services:
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
 
+  dem_de112:
+    container_name: dem_de112
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE112
+      TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
+  dem_de113:
+    container_name: dem_de113
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE113
+      TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
+  dem_de114:
+    container_name: dem_de114
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE114
+      TYPE: 'DEM'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
   pwp_de111:
     container_name: pwp_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
@@ -134,11 +152,71 @@ services:
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
 
+  pwp_de112:
+    container_name: pwp_de112
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE112
+      TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
+  pwp_de113:
+    container_name: pwp_de113
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE113
+      TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
+  pwp_de114:
+    container_name: pwp_de114
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE114
+      TYPE: 'PWP'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
   res_de111:
     container_name: res_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       AREA_CODE: DE111
+      TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
+  res_de112:
+    container_name: res_de112
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE112
+      TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
+  res_de113:
+    container_name: res_de113
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE113
+      TYPE: 'RES'
+      MQTT_HOST: 'rabbitmq'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+
+  res_de114:
+    container_name: res_de114
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DE114
       TYPE: 'RES'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'

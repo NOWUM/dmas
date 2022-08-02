@@ -66,6 +66,9 @@ class BasicAgent:
                 if 'finished' in message:
                     self.running = False
                 loop = asyncio.get_event_loop()
+
+                # without this, the blocking call causes websocket timeouts
+                # https://stackoverflow.com/a/53335373
                 function = partial(self.handle_message, message=message)
                 msg = await loop.run_in_executor(None, function)
                 if msg:
