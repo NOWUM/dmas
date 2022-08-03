@@ -28,7 +28,7 @@ class BasicAgent:
         # declare websocket parameter
         self.ws_uri = f"ws://{kwargs['ws_host']}:{kwargs['ws_port']}/{self.name}"
         self.running = False
-        self.connection_tries = 3
+        self.connection_tries = 30
 
         # declare simulation data server
         self.simulation_data_server = kwargs['simulation_server']
