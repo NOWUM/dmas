@@ -93,7 +93,7 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
         order_book = self.get_order_book()
         self.simulation_interface.set_linked_orders(order_book)
-        self.simulation_interface.set_orders(order_book, area=self.area)
+        self.simulation_interface.set_orders(order_book, date=self.date, area=self.area)
         self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):

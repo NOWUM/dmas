@@ -297,7 +297,7 @@ class SimulationInterface:
             for block, df in dfs.groupby(level=1):
                 order = df.aggregate(mapping)
                 for key in [k for k in orders.keys() if k != 'block_id']:
-                    orders[key] += [order[key]] if key != 'time' else date + td(hours=int(hour))
+                    orders[key] += [order[key]] if key != 'time' else [date + td(hours=int(hour))]
                 orders['block_id'] += [block]
 
         orders = pd.DataFrame.from_dict(orders)

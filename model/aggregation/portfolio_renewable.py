@@ -63,7 +63,7 @@ class RenewablePortfolio(PortfolioModel):
         :return: time series in [kW]
         """
 
-        if self.committed is None:
+        if self.committed_power is None:
 
             try:
                 self.reset_data()  # -> rest time series data
@@ -97,7 +97,7 @@ class RenewablePortfolio(PortfolioModel):
             power = self.generation['total'] - self.demand['power']
             priority_fuel = ['wind', 'bio', 'water', 'solar']
             for t in self.t:
-                delta = power[t] - self.committed[t]
+                delta = power[t] - self.committed_power[t]
                 for fuel in priority_fuel:
                     if delta > 0:
                         delta_fuel = self.generation[fuel][t] - max(self.generation[fuel][t] - delta, 0)
