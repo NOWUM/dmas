@@ -1,14 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
-import requests
 import pandas as pd
 import numpy as np
 import logging
+from datetime import timedelta as td
+
 
 def get_interval(start):
     start_date = pd.to_datetime(start).date()
     end_date = (start_date + pd.DateOffset(days=1)).date()
     return start_date, end_date
+
 
 class SimulationInterface:
 
@@ -32,6 +34,7 @@ class SimulationInterface:
               DROP TABLE IF EXISTS capacities;
               DROP TABLE IF EXISTS demand;
               DROP TABLE IF EXISTS generation;
+              DROP TABLE IF EXISTS orders;
               DROP TABLE IF EXISTS auction_results;
               DROP TABLE IF EXISTS hourly_results;
               DROP TABLE IF EXISTS linked_results;
@@ -97,6 +100,12 @@ class SimulationInterface:
                                                         volume double precision)'''
             connection.execute(query)
             connection.execute('ALTER TABLE "exclusive_results" ADD PRIMARY KEY ("block_id", "hour", "name");')
+
+            query = '''CREATE TABLE orders ("time" timestamp without time zone, total double precision,
+                                            volume double precision, price double precision, block_id integer,
+                                            agent text, area text)'''
+            connection.execute(query)
+            connection.execute(f'ALTER TABLE orders ADD PRIMARY KEY ("time","agent","block_id");')
 
 
     def reset_order_book(self):
@@ -212,7 +221,6 @@ class SimulationInterface:
             order_book.to_sql('hourly_orders', con=self.database, if_exists='append')
         except IntegrityError:
             self.logger.warning(f'hourly_orders already exists - ignoring')
-        
 
     def get_hourly_orders(self):
         df = pd.read_sql("Select * from hourly_orders", self.database)
@@ -245,6 +253,7 @@ class SimulationInterface:
                          f"where name = '{name}' group by hour",
                          self.database)
         return df
+
     # exclusive orders
     def set_exclusive_orders(self, order_book):
         order_book.to_sql('exclusive_orders', con=self.database, if_exists='append')
@@ -259,6 +268,7 @@ class SimulationInterface:
                          f"where name = '{name}' group by hour",
                          self.database)
         return df
+
     # market result
     def set_market_results(self, results):
         for key, value in results.items():
@@ -278,3 +288,24 @@ class SimulationInterface:
         df.index.name = 'time'
 
         return df
+
+    def set_orders(self, order_book, date, area):
+
+        mapping = dict(price='max', volume='sum')
+        orders = dict(volume=[], price=[], time=[], block_id=[])
+        for hour, dfs in order_book.groupby(level=0):
+            for block, df in dfs.groupby(level=1):
+                order = df.aggregate(mapping)
+                for key in [k for k in orders.keys() if k != 'block_id']:
+                    orders[key] += [order[key]] if key != 'time' else date + td(hours=int(hour))
+                orders['block_id'] += [block]
+
+        orders = pd.DataFrame.from_dict(orders)
+
+        orders['agent'] = self.name
+        orders['area'] = area
+
+        try:
+            orders.to_sql(name='orders', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.error(f'orders already exists for {self.name} and {date} - ignoring')

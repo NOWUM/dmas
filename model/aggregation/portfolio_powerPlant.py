@@ -2,7 +2,6 @@
 import numpy as np
 from tqdm import tqdm
 import logging
-import time
 
 # model modules
 from systems.generation_powerPlant import PowerPlant
@@ -15,8 +14,7 @@ log.setLevel('INFO')
 class PowerPlantPortfolio(PortfolioModel):
 
     def __init__(self, T=24, date='2020-01-01', steps=np.array([-10, -5, 0, 5, 100, 1e9])/1e3):
-        super().__init__(T, date)
-        self.steps = steps
+        super().__init__(T, date, steps)
 
     def add_energy_system(self, energy_system):
         model = PowerPlant(T=self.T, steps=self.steps, **energy_system)

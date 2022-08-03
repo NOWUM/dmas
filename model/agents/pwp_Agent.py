@@ -1,7 +1,6 @@
 # third party modules
 import time
 import pandas as pd
-import numpy as np
 from tqdm import tqdm
 
 # model modules
@@ -9,7 +8,6 @@ from forecasts.price import PriceForecast
 from forecasts.weather import WeatherForecast
 from aggregation.portfolio_powerPlant import PowerPlantPortfolio
 from agents.basic_Agent import BasicAgent
-from websockets import WebSocketClientProtocol as wsClientPrtl
 
 
 class PwpAgent(BasicAgent):
@@ -76,7 +74,6 @@ class PwpAgent(BasicAgent):
 
         self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
 
-
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('dayAhead market scheduling started')
@@ -96,7 +93,7 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
         order_book = self.get_order_book()
         self.simulation_interface.set_linked_orders(order_book)
-
+        self.simulation_interface.set_orders(order_book, area=self.area)
         self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):
@@ -107,7 +104,6 @@ class PwpAgent(BasicAgent):
             self.logger.info('initialize_parameters in post_day_ahead')
             self._initialize_parameters()
         start_time = time.time()
-
 
         self.portfolio.build_model(self.simulation_interface.get_linked_result)
         self.portfolio.optimize()

@@ -7,7 +7,7 @@ from systems.basic_system import EnergySystem
 
 class PortfolioModel:
 
-    def __init__(self, T=24, date='2020-01-01'):
+    def __init__(self, T=24, date='2020-01-01', steps=(0,)):
         '''
         Represents a portfolio of EnergySystems.
         Its capacities, generation and demand is in MW
@@ -31,6 +31,9 @@ class PortfolioModel:
         self.power = None
         self.volume = None
         self.committed_power = None
+
+        self.steps = steps
+
         self.reset_data()
 
     def set_total_generation(self):
