@@ -168,10 +168,10 @@ class ResAgent(BasicAgent):
             power[int(row.hour)] = float(row.volume)
 
         # -> fist EEG (power > power_eeg -> no adjustments)
-        self.portfolio_eeg.set_parameter(committed=power)
+        self.portfolio_eeg.set_parameter(self.date, None, None, committed=power)
         power_eeg = self.portfolio_eeg.optimize()
         # -> second MARKET ((power - power_eeg) < power_mrk -> adjustments)
-        self.portfolio_mrk.set_parameter(committed=power - power_eeg)
+        self.portfolio_mrk.set_parameter(self.date, None, None, committed=power - power_eeg)
         self.portfolio_mrk.optimize()
 
         # save optimization results
