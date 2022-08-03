@@ -107,6 +107,7 @@ class DayAheadMarket:
 
         # Step 6 set constraint: If parent block of an agent is used -> enable usage of child block
         self.model.enable_child_block = ConstraintList()
+        self.model.mother_bid = ConstraintList()
         for data in self.get_unique([(block, agent) for block, _, _, agent in self.linked_total.keys()]):
             block, agent = data
             parent_id = self.parent_blocks[block, agent]
@@ -114,6 +115,12 @@ class DayAheadMarket:
                 self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, :, :, agent]) <=
                                                   2 * quicksum(self.model.use_linked_order[parent_id, :, :, agent]))
 
+            if block ==0:
+                # mother bid must exist with at least one entry
+                # either the whole mother bid can be used or none
+                mother_bid_counter = len(list(self.model.use_linked_order[0, :, 0, agent]))
+                first_mother_hour = list(self.model.use_linked_order[0, :, 0, agent])[0]
+                self.model.mother_bid.add(quicksum(self.model.use_linked_order[0, :, 0, agent]) == mother_bid_counter * first_mother_hour)
 
         # Constraints for exclusive block orders
         # ------------------------------------------------
@@ -136,6 +143,7 @@ class DayAheadMarket:
                               + quicksum(self.hourly_bid_total[block, t, order, name][1]
                                          for block, order, name in self.hourly_bid_orders[t])) for t in self.t]
 
+        # generation must be smaller than demand
         self.model.gen_dem = ConstraintList()
         for t in self.t:
             self.model.gen_dem.add(quicksum(self.linked_total[block, t, order, name][1] *
@@ -297,7 +305,8 @@ if __name__ == "__main__":
                       prices=prices)
     power = pwp.optimize()
     o_book = pwp.get_orderbook()
-    # visualize_orderbook(o_book)
+    # order book for first day without market
+    visualize_orderbook(o_book)
 
     house = HouseholdModel(24, 3e6)
     house.set_parameter(date='2018-01-01', weather=None,
@@ -323,8 +332,10 @@ if __name__ == "__main__":
         demand_order = demand_order.set_index(['block_id', 'hour', 'order_id', 'name'])
         return demand_order
 
-
+    #demand[2:4] = 1
     demand_order = demand_order_book(demand, house)
+    # plot demand which is matched by pwp
+    (-demand_order['volume']).plot()
 
     my_market = DayAheadMarket()
 
@@ -337,14 +348,20 @@ if __name__ == "__main__":
         linked_orders[key] = (value['price'], value['volume'], value['link'])
 
     my_market.set_parameter({}, hourly_bid, linked_orders, {})
-    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = my_market.optimize()
+    # optimize and unpack
+    result = my_market.optimize()
+    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
+    my_market.model.use_linked_order.pprint()
 
     committed_power = used_linked_orders.groupby('hour').sum()['volume']
 
+
+    # plot committed power of the pwp for results of first day
     comm = np.zeros(24)
     comm[committed_power.index] = committed_power
     committed_power.plot()
 
+    ################# second day ##############
     pwp.committed_power = comm
     power = pwp.optimize()
     import matplotlib.pyplot as plt
