@@ -29,10 +29,17 @@ class PortfolioModel:
         self.cash_flow = None
 
         self.power = None
-
         self.volume = None
+        self.committed = None
 
         self.reset_data()
+
+    def set_total_generation(self):
+        fuels = [*self.generation.keys()]
+        fuels.remove('total')
+
+        for fuel in fuels:
+            self.generation['total'] += self.generation[fuel]
 
     def set_parameter(self, date, weather, prices):
         self.date = pd.to_datetime(date)
@@ -40,11 +47,11 @@ class PortfolioModel:
         self.prices = prices
 
     def add_energy_system(self, energy_system):
-        '''
+        """
         adds an energy system to the portfolio
         - power values of the EnergySystem are in kW
         - the capacities of the Portfolio is stored in MW
-        '''
+        """
         pass
 
     def build_model(self, response=None):

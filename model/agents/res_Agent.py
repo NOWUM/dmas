@@ -161,6 +161,19 @@ class ResAgent(BasicAgent):
         """Scheduling after DayAhead Market"""
         self.logger.info(f'starting day ahead adjustments {self.date}')
         start_time = time.time()
+
+        market_result = self.simulation_interface.get_hourly_result(self.name)
+        power = np.zeros(self.portfolio_eeg.T)
+        for index, row in market_result.iterrows():
+            power[int(row.hour)] = float(row.volume)
+
+        # -> fist EEG (power > power_eeg -> no adjustments)
+        self.portfolio_eeg.committed = power
+        power_eeg = self.portfolio_eeg.optimize()
+        # -> second MARKET ((power - power_eeg) < power_mrk -> adjustments)
+        self.portfolio_mrk.committed = power - power_eeg
+        self.portfolio_mrk.optimize()
+
         # save optimization results
         self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)

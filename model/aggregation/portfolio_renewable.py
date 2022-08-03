@@ -63,45 +63,51 @@ class RenewablePortfolio(PortfolioModel):
         :return: time series in [kW]
         """
 
-        try:
-            self.reset_data()  # -> rest time series data
-            self.energy_systems = self.worker.map(optimize_energy_system, tqdm(self.energy_systems))
-            log.info(f'optimized portfolio')
-        except Exception as e:
-            log.error(f'error in portfolio optimization: {repr(e)}')
+        if self.committed is None:
 
-        try:
-            for model in tqdm(self.energy_systems):
-                for key, value in model.generation.items():
-                    self.generation[key] += value # [kW]
-                for key, value in model.demand.items():
-                    self.demand[key] += value # [kW]
-                for key, value in model.cash_flow.items():
-                    self.cash_flow[key] += value
+            try:
+                self.reset_data()  # -> rest time series data
+                self.energy_systems = self.worker.map(optimize_energy_system, tqdm(self.energy_systems))
+                log.info(f'optimized portfolio')
+            except Exception as e:
+                log.error(f'error in portfolio optimization: {repr(e)}')
 
-            for key, value in self.generation.items():
-                if key != 'total':
-                    self.generation['total'] += value
+            try:
+                for model in tqdm(self.energy_systems):
+                    for key, value in model.generation.items():
+                        self.generation[key] += value # [kW]
+                    for key, value in model.demand.items():
+                        self.demand[key] += value # [kW]
+                    for key, value in model.cash_flow.items():
+                        self.cash_flow[key] += value
 
-            self.power = self.generation['total'] - self.demand['power']
+                for key, value in self.generation.items():
+                    if key != 'total':
+                        self.generation['total'] += value
 
-        except Exception as e:
-            log.error(f'error in collecting result: {repr(e)}')
+                self.power = self.generation['total'] - self.demand['power']
 
-        return self.power
-        # Falls mehr Winderzeugung vorhanden als benötigt:
-        # if self.lock_generation:
-        #     power_response = self.generation['total']
-        #     for i in self.t:
-        #         power_delta = power_response[i] - power[i]
-        #         if power_delta < 0:
-        #             self.generation['wind'][i] += power_delta
-        #             self.generation['wind'][i] = np.max((self.generation['wind'][i], 0))
-        #
-        # power = self.generation['wind'] + self.generation['solar'] + self.generation['water'] + self.generation['bio']
-        #
-        # self.generation['total'] = np.asarray(power, np.float).flatten()
-        # self.power = np.asarray(power, np.float).flatten()
+            except Exception as e:
+                log.error(f'error in collecting result: {repr(e)}')
+
+            return self.power
+
+        else:
+
+            power = self.generation['total'] - self.demand['power']
+            priority_fuel = ['wind', 'bio', 'water', 'solar']
+            for t in self.t:
+                delta = power[t] - self.committed[t]
+                for fuel in priority_fuel:
+                    if delta > 0:
+                        delta_fuel = self.generation[fuel][t] - max(self.generation[fuel][t] - delta, 0)
+                        self.generation[fuel][t] -= delta_fuel
+                        delta -= delta_fuel
+
+            self.set_total_generation()
+            self.power = self.generation['total']
+
+            return self.power
 
 
 
