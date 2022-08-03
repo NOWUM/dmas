@@ -70,7 +70,14 @@ class CtlAgent(BasicAgent):
                 self.logger.info('market has cleared the market')
 
     async def send_message(self):
+        duration_in_state = 0
+        previous_state = self.simulation_step
         while self.date != self.stop_date:
+            if previous_state != self.simulation_step:
+                duration_in_state = 0
+                previous_state = self.simulation_step
+            duration_in_state +=1
+
             connected = set(self.registered_agents.values())
             # -> 1.Step: optimize day Ahead
             if self.simulation_step == SimStep.MARKET_BIDS:
@@ -84,8 +91,9 @@ class CtlAgent(BasicAgent):
                 self.simulation_step = SimStep.MARKET_CLEARING
             # -> 2.Step: clear market
             elif self.simulation_step == SimStep.MARKET_CLEARING:
-                self.logger.debug(self.waiting_list)
-                if len(self.waiting_list) == 0:
+                if len(self.waiting_list) <= 7 and duration_in_state%4==0:
+                    self.logger.info(self.waiting_list)
+                elif len(self.waiting_list) == 0:
                     if 'market' in self.registered_agents.keys():
                         await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
                         self.logger.info('send command: clear_market')
