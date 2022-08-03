@@ -30,21 +30,21 @@ class PortfolioModel:
 
         self.power = None
         self.volume = None
-        self.committed = None
-
+        self.committed_power = None
         self.reset_data()
 
     def set_total_generation(self):
         fuels = [*self.generation.keys()]
         fuels.remove('total')
-
+        self.generation['total'] = np.zeros((self.T,), float)
         for fuel in fuels:
             self.generation['total'] += self.generation[fuel]
 
-    def set_parameter(self, date, weather, prices):
+    def set_parameter(self, date, weather, prices, *agrs, **kwargs):
         self.date = pd.to_datetime(date)
         self.weather = weather
         self.prices = prices
+        self.committed_power = kwargs['committed']
 
     def add_energy_system(self, energy_system):
         """
