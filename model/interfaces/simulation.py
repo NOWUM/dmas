@@ -306,6 +306,6 @@ class SimulationInterface:
         orders['area'] = area
 
         try:
-            orders.to_sql(name='orders', con=self.database, if_exists='append')
+            orders.to_sql(name='orders', con=self.database, if_exists='append', index=None)
         except IntegrityError:
             self.logger.error(f'orders already exists for {self.name} and {date} - ignoring')
