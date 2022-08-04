@@ -40,8 +40,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -83,7 +81,7 @@
               }
             ]
           },
-          "unit": "currencyEUR"
+          "unit": "€/MWh"
         },
         "overrides": [
           {
@@ -589,8 +587,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -819,10 +815,9 @@
               "options": {
                 "mode": "exclude",
                 "names": [
-                  "market volume",
                   "demand",
-                  "wind",
-                  "solar"
+                  "market volume",
+                  "generation"
                 ],
                 "prefix": "All except:",
                 "readOnly": true
@@ -867,11 +862,19 @@
             "uid": "P7508C69064B8A4D9"
           },
           "format": "time_series",
-          "group": [],
+          "group": [
+            {
+              "params": [
+                "$__interval",
+                "none"
+              ],
+              "type": "time"
+            }
+          ],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  \"time\" AS \"time\",\n  volume AS \"market volume\"\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  sum(volume) AS \"market volume\"\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -880,6 +883,12 @@
                   "volume"
                 ],
                 "type": "column"
+              },
+              {
+                "params": [
+                  "sum"
+                ],
+                "type": "aggregate"
               },
               {
                 "params": [
@@ -1245,7 +1254,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.1.0-beta1",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -1483,8 +1492,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -1913,8 +1920,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "left",
             "barAlignment": 0,
@@ -2180,8 +2185,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -2327,7 +2330,7 @@
           ],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1h),\n  max(price) AS \"price\",\n  sum(volume) AS \"volume\"\nFROM orders\nWHERE\n  $__timeFilter(\"time\") AND\n  agent = '$agent'\nGROUP BY 1, block_id\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1h),\n  max(price)*100 AS \"agent price\",\n  sum(volume) AS \"volume\"\nFROM orders\nWHERE\n  $__timeFilter(\"time\") AND\n  agent = '$agent'\nGROUP BY 1, block_id\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -2410,13 +2413,13 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1h),\n  avg(price) AS \"market price\"\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1h),\n  avg(price*100) AS \"market price\"\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1\nORDER BY 1",
           "refId": "B",
           "select": [
             [
               {
                 "params": [
-                  "price"
+                  "price*100"
                 ],
                 "type": "column"
               },
@@ -2460,8 +2463,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -2822,16 +2823,16 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 37,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": "pwp_de91a",
-          "value": "pwp_de91a"
+          "selected": false,
+          "text": "pwp_de272",
+          "value": "pwp_de272"
         },
         "datasource": {
           "type": "postgres",
@@ -2853,7 +2854,7 @@
     ]
   },
   "time": {
-    "from": "2018-01-01T00:00:00.000Z",
+    "from": "2017-12-31T00:00:00.000Z",
     "to": "2018-03-01T00:00:00.000Z"
   },
   "timepicker": {
@@ -2873,6 +2874,6 @@
   "timezone": "utc",
   "title": "DMAS",
   "uid": "VdwbNAX72",
-  "version": 1,
+  "version": 3,
   "weekStart": "monday"
 }
