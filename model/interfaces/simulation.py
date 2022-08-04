@@ -293,8 +293,8 @@ class SimulationInterface:
 
         mapping = dict(price='max', volume='sum')
         orders = dict(volume=[], price=[], time=[], block_id=[])
-        for hour, dfs in order_book.groupby(level=0):
-            for block, df in dfs.groupby(level=1):
+        for block, dfs in order_book.groupby(level=0):
+            for hour, df in dfs.groupby(level=1):
                 order = df.aggregate(mapping)
                 for key in [k for k in orders.keys() if k != 'block_id']:
                     orders[key] += [order[key]] if key != 'time' else [date + td(hours=int(hour))]
