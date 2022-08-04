@@ -162,18 +162,23 @@ class ResAgent(BasicAgent):
         self.logger.info(f'starting day ahead adjustments {self.date}')
         start_time = time.time()
 
-        market_result = self.simulation_interface.get_hourly_result(self.name)
-        power = np.zeros(self.portfolio_eeg.T)
-        for index, row in market_result.iterrows():
-            power[int(row.hour)] = float(row.volume)
+        market_result_eeg = self.simulation_interface.get_hourly_result(self.name+'_eeg')
+        market_result_mrk = self.simulation_interface.get_hourly_result(self.name+'_mrk')
+
+        power_mrk = np.zeros(self.portfolio_mrk.T)
+        for index, row in market_result_mrk.iterrows():
+            power_mrk[int(row.hour)] = float(row.volume)
+        power_eeg = np.zeros(self.portfolio_eeg.T)
+        for index, row in market_result_eeg.iterrows():
+            power_eeg[int(row.hour)] = float(row.volume)
         
-        self.logger.info(f'Committed power is: {power}')
+        self.logger.info(f'Committed power is: {power_eeg} and {power_mrk}')
 
         # -> fist EEG (power > power_eeg -> no adjustments)
-        self.portfolio_eeg.set_parameter(self.date, None, None, committed=power)
-        power_eeg = self.portfolio_eeg.optimize()
+        self.portfolio_eeg.set_parameter(self.date, {}, {}, committed=power_eeg)
+        self.portfolio_eeg.optimize()
         # -> second MARKET ((power - power_eeg) < power_mrk -> adjustments)
-        self.portfolio_mrk.set_parameter(self.date, None, None, committed=power - power_eeg)
+        self.portfolio_mrk.set_parameter(self.date, {}, {}, committed=power_mrk)
         self.portfolio_mrk.optimize()
 
         # save optimization results
