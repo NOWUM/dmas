@@ -100,18 +100,18 @@ class RenewablePortfolio(PortfolioModel):
             log.info(f'need to reduce res by {to_reduce}')
             for t in self.t:
                 for fuel in priority_fuel:
-                    if to_reduce[t] > 0:
+                    if to_reduce[t] > 1e-9:
                         # substract delta from generation in priority order
                         # if first generation is not enough, reduce completely
                         # and reduce second generation too
                         if self.generation[fuel][t] - to_reduce[t] < 0:
                             to_reduce[t] -= self.generation[fuel][t]
                             self.generation[fuel][t] = 0
-                            log.info(f'reduced {fuel} - still need to reduce {to_reduce[t]}')
+                            log.info(f'reduced {fuel} - {t} still need to reduce {to_reduce[t]}')
                         else:
                             self.generation[fuel][t] -= to_reduce[t]
                             to_reduce[t] = 0
-                            log.info(f'reduced {fuel} - still need to reduce {to_reduce[t]}')
+                            log.info(f'reduced {fuel} - {t}')
 
             self.set_total_generation()
             self.power = self.generation['total']
