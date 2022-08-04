@@ -43,7 +43,7 @@ class PortfolioModel:
         for fuel in fuels:
             self.generation['total'] += self.generation[fuel]
 
-    def set_parameter(self, date, weather, prices, committed=None, *agrs, **kwargs):
+    def set_parameter(self, date, weather, prices, committed=None):
         self.date = pd.to_datetime(date)
         self.weather = weather
         self.prices = prices

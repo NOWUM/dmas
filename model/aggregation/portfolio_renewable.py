@@ -97,12 +97,18 @@ class RenewablePortfolio(PortfolioModel):
             power = self.generation['total'] - self.demand['power']
             priority_fuel = ['wind', 'bio', 'water', 'solar']
             for t in self.t:
-                delta = power[t] - self.committed_power[t]
+                to_reduce = power[t] - self.committed_power[t]
                 for fuel in priority_fuel:
-                    if delta > 0:
-                        delta_fuel = self.generation[fuel][t] - max(self.generation[fuel][t] - delta, 0)
-                        self.generation[fuel][t] -= delta_fuel
-                        delta -= delta_fuel
+                    if to_reduce > 0:
+                        # substract delta from generation in priority order
+                        # if first generation is not enough, reduce completely
+                        # and reduce second generation too
+                        if self.generation[fuel][t] - to_reduce < 0:
+                            to_reduce -= self.generation[fuel][t]
+                            self.generation[fuel][t] = 0
+                        else:
+                            self.generation[fuel][t] -= to_reduce
+                            to_reduce = 0
 
             self.set_total_generation()
             self.power = self.generation['total']
@@ -111,3 +117,18 @@ class RenewablePortfolio(PortfolioModel):
 
 
 
+if __name__ == '__main__':
+    rpf = RenewablePortfolio()
+    bm = {
+        'type': 'bio',
+        'maxPower': 300,
+    }
+    rpf.add_energy_system(bm)
+    rpf.build_model()
+    assert rpf.capacities['bio']==300
+    power = rpf.optimize()
+    assert (power == 300).all()
+    assert (rpf.generation['total'] == 300).all()
+    assert (rpf.generation['bio'] == 300).all()
+    rpf.set_parameter(rpf.date, None, None, committed=power)
+    t = rpf.optimize()

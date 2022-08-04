@@ -130,10 +130,10 @@ class ResAgent(BasicAgent):
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
 
-        self.portfolio_eeg.set_parameter(self.date, weather.copy(),  prices.copy(), comitted=None)
+        self.portfolio_eeg.set_parameter(self.date, weather.copy(),  prices.copy(), committed=None)
         self.portfolio_eeg.build_model()
 
-        self.portfolio_mrk.set_parameter(self.date, weather.copy(),  prices.copy(), comitted=None)
+        self.portfolio_mrk.set_parameter(self.date, weather.copy(),  prices.copy(), committed=None)
         self.portfolio_mrk.build_model()
         self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
         start_time = time.time()
