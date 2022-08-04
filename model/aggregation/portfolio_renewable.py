@@ -97,7 +97,7 @@ class RenewablePortfolio(PortfolioModel):
             power = self.generation['total'] - self.demand['power']
             priority_fuel = ['wind', 'bio', 'water', 'solar']
             to_reduce = power - self.committed_power
-            self.logger.info(f'need to reduce res by {to_reduce}')
+            log.info(f'need to reduce res by {to_reduce}')
             for t in self.t:
                 for fuel in priority_fuel:
                     if to_reduce[t] > 0:
@@ -107,11 +107,11 @@ class RenewablePortfolio(PortfolioModel):
                         if self.generation[fuel][t] - to_reduce[t] < 0:
                             to_reduce[t] -= self.generation[fuel][t]
                             self.generation[fuel][t] = 0
-                            self.logger.info(f'reduced {fuel} - still need to reduce {to_reduce[t]}')
+                            log.info(f'reduced {fuel} - still need to reduce {to_reduce[t]}')
                         else:
                             self.generation[fuel][t] -= to_reduce[t]
                             to_reduce[t] = 0
-                            self.logger.info(f'reduced {fuel} - still need to reduce {to_reduce[t]}')
+                            log.info(f'reduced {fuel} - still need to reduce {to_reduce[t]}')
 
             self.set_total_generation()
             self.power = self.generation['total']

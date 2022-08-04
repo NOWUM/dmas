@@ -130,12 +130,13 @@ class CtlAgent(BasicAgent):
         try:
             await asyncio.gather(self.receive_message(ws), self.send_message())
         except websockets.exceptions.ConnectionClosed:
-            self.logger.info(f"Agent {agent_name} disconnected")
-            if agent_name in self.waiting_list:
-                self.waiting_list.remove(agent_name)
+            self.logger.info(f"Agent {agent_name} closed connection")
         except Exception:
             self.logger.exception('Error in Agent Handler')
         finally:
+            self.logger.info(f"Agent {agent_name} disconnected")
+            if agent_name in self.waiting_list:
+                self.waiting_list.remove(agent_name)
             del self.registered_agents[agent_name]
 
     def start_sim_server(self):
