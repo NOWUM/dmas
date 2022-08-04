@@ -301,7 +301,7 @@ class PowerPlant(EnergySystem):
                 # so lange wie ich muss
                 hours_needed_to_run = (self.power_plant['runTime'] - self.power_plant['on'])
 
-                if hours_needed_to_run < 1:
+                if hours_needed_to_run < 1 and result['power'][0] > 0:
                     order_book.update(set_order(result, 0, block_number, order_counter, links))
                     links[0] = block_number
                     last_power[0] = result['power'][0]                    # -> set last_power to current power
@@ -309,7 +309,7 @@ class PowerPlant(EnergySystem):
                     for hour in np.argwhere(result['power'] > 0).flatten():
                         order_book.update(set_order(result, hour, block_number, 0, links))
                         links[hour] = block_number
-                        last_power[hour] = result['power'][hour]                    # -> set last_power to current power
+                        last_power[hour] = result['power'][hour]          # -> set last_power to current power
                 block_number += 1                               # -> increment block number
 
             # -> add linked hour blocks
