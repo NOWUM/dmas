@@ -166,6 +166,8 @@ class ResAgent(BasicAgent):
         power = np.zeros(self.portfolio_eeg.T)
         for index, row in market_result.iterrows():
             power[int(row.hour)] = float(row.volume)
+        
+        self.logger.info(f'Committed power is: {power}')
 
         # -> fist EEG (power > power_eeg -> no adjustments)
         self.portfolio_eeg.set_parameter(self.date, None, None, committed=power)

@@ -133,5 +133,18 @@ if __name__ == '__main__':
     assert (power == 300).all()
     assert (rpf.generation['total'] == 300).all()
     assert (rpf.generation['bio'] == 300).all()
-    rpf.set_parameter(rpf.date, None, None, committed=power)
-    t = rpf.optimize()
+    rpf.set_parameter(rpf.date, pd.DataFrame(), pd.DataFrame(), committed=power)
+    final_power = rpf.optimize()
+    assert (final_power == 300).all()
+
+    # second day
+    rpf.build_model()
+    rpf.set_parameter(rpf.date, pd.DataFrame(), pd.DataFrame(), committed=None)
+    power = rpf.optimize()
+
+    power[2:4] = 0
+    rpf.set_parameter(rpf.date, pd.DataFrame(), pd.DataFrame(), committed=power)
+    final_power = rpf.optimize()
+    assert((power == final_power).all())
+
+

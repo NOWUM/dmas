@@ -335,7 +335,16 @@ if __name__ == "__main__":
     #demand[2:4] = 1
     demand_order = demand_order_book(demand, house)
     # plot demand which is matched by pwp
-    (-demand_order['volume']).plot()
+
+    #### add renewables
+    res_order = demand_order.copy()
+    res_order = res_order.reset_index() 
+    res_order['name'] = 'RES'
+    res_order = res_order.set_index(['block_id', 'hour', 'order_id', 'name'])
+    res_order['volume'] = -0.2 * res_order['volume']
+    res_order['price'] = -0.5
+    res_order['type'] = 'generation'
+    ####
 
     my_market = DayAheadMarket()
 
@@ -343,11 +352,15 @@ if __name__ == "__main__":
     for key, value in demand_order.to_dict(orient='index').items():
         hourly_bid[key] = (value['price'], value['volume'])
 
+    hourly_ask = {}
+    for key, value in res_order.to_dict(orient='index').items():
+        hourly_ask[key] = (value['price'], value['volume'])
+
     linked_orders = {}
     for key, value in o_book.to_dict(orient='index').items():
         linked_orders[key] = (value['price'], value['volume'], value['link'])
 
-    my_market.set_parameter({}, hourly_bid, linked_orders, {})
+    my_market.set_parameter(hourly_ask, hourly_bid, linked_orders, {})
     # optimize and unpack
     result = my_market.optimize()
     prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
@@ -360,6 +373,8 @@ if __name__ == "__main__":
     comm = np.zeros(24)
     comm[committed_power.index] = committed_power
     committed_power.plot()
+    (-demand_order['volume']).plot()
+    (res_order['volume']).plot()
 
     ################# second day ##############
     pwp.committed_power = comm
@@ -405,3 +420,4 @@ if __name__ == "__main__":
     plt.plot(power)
     plt.show()
     my_market.model.use_linked_order.pprint()
+
