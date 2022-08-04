@@ -122,5 +122,15 @@ CREATE TABLE exclusive_results
 );
 ALTER TABLE "exclusive_results"
     ADD PRIMARY KEY ("block_id", "hour", "name");
-
-
+CREATE TABLE orders
+(
+    "time" timestamp without time zone,
+     total double precision,
+     volume double precision,
+     price double precision,
+     block_id integer,
+     agent text,
+     area text
+);
+ALTER TABLE "orders"
+    ADD PRIMARY KEY ("time","agent","block_id");
