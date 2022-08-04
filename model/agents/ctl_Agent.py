@@ -34,6 +34,7 @@ class CtlAgent(BasicAgent):
 
         self.registered_agents = dict()
         self.waiting_list = []
+        self.wait_limit = 1e3
 
         self.cleared = False
         self.simulation_interface.date = self.start_date
@@ -91,9 +92,12 @@ class CtlAgent(BasicAgent):
                 self.simulation_step = SimStep.MARKET_CLEARING
             # -> 2.Step: clear market
             elif self.simulation_step == SimStep.MARKET_CLEARING:
-                if len(self.waiting_list) <= 7 and duration_in_state%4==0:
+                if len(self.waiting_list) <= 15 and duration_in_state%15==0:
                     self.logger.info(self.waiting_list)
-                elif len(self.waiting_list) == 0:
+                elif len(self.waiting_list) == 0 or duration_in_state > self.wait_limit:
+                    if len(self.waiting_list) >0:
+                        self.logger.info(f'aborted waiting list {self.waiting_list}')
+
                     if 'market' in self.registered_agents.keys():
                         await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
                         self.logger.info('send command: clear_market')
@@ -113,7 +117,7 @@ class CtlAgent(BasicAgent):
                 self.simulation_step = SimStep.MARKET_BIDS
                 self.cleared = False
                 self.date += timedelta(days=1)
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(1)
         self.logger.info('finished simulation')
         websockets.broadcast(connected, f"finished {self.date.date()}")
 
@@ -155,5 +159,10 @@ class CtlAgent(BasicAgent):
         @server.route('/agent_count')
         def agent_count():
             return str(len(self.registered_agents)), 200
+
+        @server.route('/wait_limit', methods=['POST'])
+        def wait_duration_limit():
+            self.wait_limit = int(request.form.get('wait_limit', 1e3))
+            return f'set wait_limit to {self.wait_limit}', 200
 
         server.run(debug=False, port=5000, host='0.0.0.0')
