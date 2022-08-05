@@ -2,7 +2,11 @@
 import numpy as np
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
-counter = 4
+counter = 1
+if counter > 100:
+  max_connections = 5000
+else:
+  max_connections = 500
 
 configs = {}
 output = []
@@ -37,7 +41,7 @@ output.append(f'''
       - POSTGRES_USER=dMAS
       - POSTGRES_PASSWORD=dMAS
       - POSTGRES_DB=dmas
-      - TS_TUNE_MAX_CONNS=2000
+      - TS_TUNE_MAX_CONNS={max_connections}
     ports:
       - 5432:5432
     volumes:

@@ -106,7 +106,14 @@ class SimulationInterface:
                                             agent text, area text)'''
             connection.execute(query)
             connection.execute(f'ALTER TABLE orders ADD PRIMARY KEY ("time","agent","block_id");')
-
+        
+        hypertables = ['orders', 'auction_results', 'capacities', 'generation', 'demand']
+        
+        with self.database.connect() as conn, conn.begin():
+            for hypertable in hypertables:
+                query_create_hypertable = f"SELECT create_hypertable('{hypertable}', 'time', if_not_exists => TRUE, migrate_data => TRUE);"
+                print(query_create_hypertable)
+                conn.execute(query_create_hypertable)
 
     def reset_order_book(self):
         with self.database.begin() as connection:

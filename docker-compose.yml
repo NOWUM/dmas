@@ -25,7 +25,7 @@ services:
       - POSTGRES_USER=dMAS
       - POSTGRES_PASSWORD=dMAS
       - POSTGRES_DB=dmas
-      - TS_TUNE_MAX_CONNS=2000
+      - TS_TUNE_MAX_CONNS=500
     ports:
       - 5432:5432
     volumes:
@@ -60,7 +60,7 @@ services:
 
 
   controller:
-    container_name: ctl
+    container_name: controller
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     build: .
     environment:
@@ -79,7 +79,7 @@ services:
         constraints: [node.role == manager]
 
   market:
-    container_name: mrk
+    container_name: market
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       AREA_CODE: 'DE111'
@@ -90,9 +90,11 @@ services:
     configs:
       - source: market_config
         target: /opt/gurobi/gurobi.lic
+    depends_on:
+      - controller
 
 
-  tso:
+  net:
     container_name: net
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
@@ -101,6 +103,8 @@ services:
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+    depends_on:
+      - controller
 
   dem_de111:
     container_name: dem_de111
@@ -111,72 +115,14 @@ services:
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
-
-  dem_de112:
-    container_name: dem_de112
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE112
-      TYPE: 'DEM'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-
-  dem_de113:
-    container_name: dem_de113
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE113
-      TYPE: 'DEM'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-
-  dem_de114:
-    container_name: dem_de114
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE114
-      TYPE: 'DEM'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
+    depends_on:
+      - controller
 
   pwp_de111:
     container_name: pwp_de111
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
       AREA_CODE: DE111
-      TYPE: 'PWP'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-
-  pwp_de112:
-    container_name: pwp_de112
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE112
-      TYPE: 'PWP'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-
-  pwp_de113:
-    container_name: pwp_de113
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE113
-      TYPE: 'PWP'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-
-  pwp_de114:
-    container_name: pwp_de114
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE114
       TYPE: 'PWP'
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
@@ -191,36 +137,8 @@ services:
       MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
-
-  res_de112:
-    container_name: res_de112
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE112
-      TYPE: 'RES'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-
-  res_de113:
-    container_name: res_de113
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE113
-      TYPE: 'RES'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-
-  res_de114:
-    container_name: res_de114
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: DE114
-      TYPE: 'RES'
-      MQTT_HOST: 'rabbitmq'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
+    depends_on:
+      - controller
 configs:
   compute_config:
     file: ./gurobi.lic
