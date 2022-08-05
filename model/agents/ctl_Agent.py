@@ -34,7 +34,7 @@ class CtlAgent(BasicAgent):
 
         self.registered_agents = dict()
         self.waiting_list = []
-        self.wait_limit = 1e3
+        self.wait_limit = 100
 
         self.cleared = False
         self.simulation_interface.date = self.start_date
@@ -84,7 +84,8 @@ class CtlAgent(BasicAgent):
             if self.simulation_step == SimStep.MARKET_BIDS:
                 # initialize waiting list to wait for market clearing
                 for agent_name in self.registered_agents.keys():
-                    if agent_name != 'market' and 'net' not in agent_name:
+                    if (agent_name != 'market' and 
+                        'net' not in agent_name):
                         self.waiting_list.append(agent_name)
 
                 websockets.broadcast(connected, f"optimize_dayAhead {self.date.date()}")
@@ -97,6 +98,7 @@ class CtlAgent(BasicAgent):
                 elif len(self.waiting_list) == 0 or duration_in_state > self.wait_limit:
                     if len(self.waiting_list) >0:
                         self.logger.info(f'aborted waiting list {self.waiting_list}')
+                        self.waiting_list.clear()
 
                     if 'market' in self.registered_agents.keys():
                         await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
@@ -162,7 +164,7 @@ class CtlAgent(BasicAgent):
 
         @server.route('/wait_limit', methods=['POST'])
         def wait_duration_limit():
-            self.wait_limit = int(request.form.get('wait_limit', 1e3))
+            self.wait_limit = int(request.form.get('wait_limit', 100))
             return f'set wait_limit to {self.wait_limit}', 200
 
         server.run(debug=False, port=5000, host='0.0.0.0')

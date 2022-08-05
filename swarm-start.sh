@@ -20,6 +20,11 @@ echo "all containers are up"
 docker service rm dmas_dem_de253
 docker service rm dmas_res_de253
 
+docker service rm dmas_dem_de941
+docker service rm dmas_res_de941
+
+docker service rm dmas_dem_de91c
+
 CONTAINER_COUNT=`echo $(docker stack ps dmas | grep Running | wc -l) - 5 | bc`
 while test " $(curl -s http://localhost:5000/agent_count)" -lt $CONTAINER_COUNT
 do
