@@ -255,9 +255,10 @@ class SimulationInterface:
         df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
         return df
 
-    def get_linked_result(self, name):
+    def get_linked_result(self, names : list[str]):
+        in_string = "','".join(names)
         df = pd.read_sql(f"Select hour, sum(volume) as volume from linked_results "
-                         f"where name = '{name}' group by hour",
+                         f"where name in ('{in_string}') group by hour",
                          self.database)
         return df
 

@@ -16,7 +16,7 @@ class PwpAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         start_time = time.time()
 
-        self.portfolio = PowerPlantPortfolio()
+        self.portfolio : PowerPlantPortfolio = PowerPlantPortfolio()
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 simulation_interface=self.simulation_interface,
@@ -26,10 +26,13 @@ class PwpAgent(BasicAgent):
                                             weather_interface=self.weather_interface)
         self.forecast_counter = 10
 
+        self.pwp_names = []
+
         for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
             power_plants = self.infrastructure_interface.get_power_plant_in_area(self.area, fuel_type=fuel)
             if not power_plants.empty:
                 for system in power_plants.to_dict(orient='records'):
+                    self.pwp_names.append(system['unitID'])
                     self.portfolio.add_energy_system(system)
 
         # Construction power plants
@@ -46,43 +49,25 @@ class PwpAgent(BasicAgent):
         if 'results_dayAhead' in message:
             self.post_day_ahead()
 
-    def get_order_book(self):
-        total_order_book = [system.get_orderbook().reset_index() for system in self.portfolio.energy_systems]
-
-        if len(total_order_book) > 0:
-            df = pd.concat(total_order_book, axis=0)
-        else:
-            df = pd.DataFrame(columns=['block_id', 'hour', 'order_id', 'name',
-                                       'price', 'volume', 'link', 'type'])
-
-        df.set_index(['block_id', 'hour', 'order_id', 'name'], inplace=True)
-
-        if not df.loc[df.isna().any(axis=1)].empty:
-            self.logger.error('Orderbook has NaN values')
-            self.logger.error(df[df.isna()])
-
-            for system in self.portfolio.energy_systems:
-                for k,v in system.optimization_results.items(): self.logger.info(f'{k} : {v}')
-        return df
-
     def _initialize_parameters(self):
             # Step 1: forecast data data and init the model for the coming day
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
+        # use tomorrows price forecast also for aftertomorrow        
         prices = pd.concat([prices, prices.copy()])
         prices.index = pd.date_range(start=self.date, freq='h', periods=48)
 
-        self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
+        return weather, prices
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
         self.logger.info('dayAhead market scheduling started')
         start_time = time.time()
 
-        self._initialize_parameters()
-        self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
+        weather, prices = self._initialize_parameters()
+        self.logger.info(f'initialize forecast in {time.time() - start_time:.2f} seconds')
         # Step 2: optimization
-        self.portfolio.optimize()
+        self.portfolio.optimize(self.date, weather.copy(), prices.copy())
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
@@ -91,7 +76,7 @@ class PwpAgent(BasicAgent):
 
         # Step 3: build orders from optimization results
         start_time = time.time()
-        order_book = self.get_order_book()
+        order_book = self.portfolio.get_order_book()
         self.simulation_interface.set_linked_orders(order_book)
         self.simulation_interface.set_orders(order_book, date=self.date, area=self.area)
         self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
@@ -102,11 +87,12 @@ class PwpAgent(BasicAgent):
 
         if self.portfolio.prices.empty:
             self.logger.info('initialize_parameters in post_day_ahead')
-            self._initialize_parameters()
+            weather, prices = self._initialize_parameters()
         start_time = time.time()
 
-        self.portfolio.build_model(self.simulation_interface.get_linked_result)
-        self.portfolio.optimize()
+        committed_power = self.simulation_interface.get_linked_result(self.pwp_names)
+        self.portfolio.set_committed_power()
+        self.portfolio.optimize_post_market(committed_power)
 
         # save optimization results
         self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
