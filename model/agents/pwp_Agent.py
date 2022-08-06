@@ -91,7 +91,6 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
 
         committed_power = self.simulation_interface.get_linked_result(self.pwp_names)
-        self.portfolio.set_committed_power()
         self.portfolio.optimize_post_market(committed_power)
 
         # save optimization results

@@ -43,13 +43,11 @@ class PowerPlant(EnergySystem):
 
         self.prevented_start = dict(prevent=False, hours=np.zeros(self.T, float), delta=0)
 
-        self.committed_power = None
-
     def set_parameter(self, date, weather=None, prices=None):
         super().set_parameter(date, weather, prices)
         self.base_price = prices.copy()
 
-    def build_model(self):
+    def build_model(self, committed_power=None):
 
         self.model.clear()
 
@@ -146,7 +144,7 @@ class PowerPlant(EnergySystem):
             self.model.profit_function.add(self.model.profit[t] == self.model.p_out[t] * self.prices['power'][t])
 
         # if no day ahead power known run standard optimization
-        if self.committed_power is None:
+        if committed_power is None:
             self.model.obj = Objective(expr=quicksum(self.model.profit[i] - self.model.fuel[i] - self.model.emissions[i]
                                                      - self.model.start_ups[i] for i in self.t), sense=maximize)
         # if day ahead power is known minimize the difference
@@ -164,7 +162,7 @@ class PowerPlant(EnergySystem):
                 self.model.difference.add(self.model.minus[t] + self.model.plus[t]
                                           == self.model.power_difference[t])
 
-                self.model.day_ahead_difference.add(self.committed_power[t] - self.model.p_out[t]
+                self.model.day_ahead_difference.add(committed_power[t] - self.model.p_out[t]
                                                     == -self.model.minus[t] + self.model.plus[t])
                 self.model.difference_cost.add(self.model.delta_cost[t]
                                                == self.model.power_difference[t] * np.abs(self.prices['power'][t] * 2))
@@ -228,8 +226,7 @@ class PowerPlant(EnergySystem):
 
     def optimize_post_market(self, committed_power, steps=None):
         steps = steps or self.steps
-        self.committed_power = committed_power
-        self.build_model()
+        self.build_model(committed_power)
         self.opt.solve(self.model)
         running_since = 0
         off_since = 0
@@ -262,8 +259,6 @@ class PowerPlant(EnergySystem):
         self.power_plant['P0'] = self.power[-1]
         self.power_plant['on'] = running_since
         self.power_plant['off'] = off_since
-
-        self.committed_power = None
 
         return self.power.copy()
 

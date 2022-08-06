@@ -1,5 +1,6 @@
 # third party modules
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import logging
 
@@ -21,7 +22,7 @@ class PowerPlantPortfolio(PortfolioModel):
         self.capacities[str(energy_system['fuel']).replace('_combined', '')] += energy_system['maxPower'] # [kW]
         self.energy_systems.append(model)
 
-    def update_portfolio_sum():
+    def update_portfolio_sum(self):
         try:
             for model in tqdm(self.energy_systems):
                 for key, value in model.generation.items():

@@ -148,6 +148,8 @@ class DayAheadMarket:
         for t in self.t:
             if not self.hourly_bid_orders[t]:
                 self.logger.error(f'no hourly_bids available at hour {t}')
+            elif not (self.hourly_ask_orders[t] or self.hourly_linked_orders[t]):
+                self.logger.error(f'no hourly_bids available at hour {t}')
                 # constraints with 0 <= 0 are not valid
             else:
                 self.model.gen_dem.add(quicksum(self.linked_total[block, t, order, name][1] *
@@ -305,9 +307,8 @@ if __name__ == "__main__":
     prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
 
     pwp = PowerPlant(T=24, steps=steps, **plant)
-    pwp.set_parameter(date='2018-01-01', weather=None,
+    power = pwp.optimize(date='2018-01-01', weather=None,
                       prices=prices)
-    power = pwp.optimize()
     o_book = pwp.get_orderbook()
     # order book for first day without market
     visualize_orderbook(o_book)
@@ -380,17 +381,16 @@ if __name__ == "__main__":
     (-demand_order['volume']).plot()
     (res_order['volume']).plot()
 
+    power = pwp.optimize_post_market(comm)
     ################# second day ##############
-    pwp.committed_power = comm
-    power = pwp.optimize()
+    
     import matplotlib.pyplot as plt
 
     plt.plot(power)
     plt.show()
 
-    pwp.set_parameter(date='2018-01-02', weather=None,
+    power = pwp.optimize(date='2018-01-02', weather=None,
                       prices=prices)
-    power = pwp.optimize()
     o_book = pwp.get_orderbook()
     visualize_orderbook(o_book)
 
@@ -417,8 +417,7 @@ if __name__ == "__main__":
     comm = np.zeros(24)
     comm[committed_power.index] = committed_power
     committed_power.plot()
-    pwp.committed_power = comm
-    power = pwp.optimize()
+    power = pwp.optimize_post_market(comm)
     import matplotlib.pyplot as plt
 
     plt.plot(power)
