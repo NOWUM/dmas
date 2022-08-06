@@ -316,7 +316,6 @@ if __name__ == "__main__":
     house = HouseholdModel(24, 3e6)
     house.set_parameter(date='2018-01-01', weather=None,
                         prices=prices)
-    house.build_model()
     house.optimize()
     demand = house.demand['power']
 
@@ -396,7 +395,6 @@ if __name__ == "__main__":
 
     house.set_parameter(date='2018-01-02', weather=None,
                         prices=prices)
-    house.build_model()
     house.optimize()
     demand = house.demand['power']
 

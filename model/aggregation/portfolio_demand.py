@@ -1,5 +1,6 @@
 # third party modules
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import multiprocessing as mp
 import logging
@@ -50,16 +51,35 @@ class DemandPortfolio(PortfolioModel):
 
         self.energy_systems.append(model)
 
-    def build_model(self, response=None):
-        for model in tqdm(self.energy_systems):
-            model.set_parameter(date=self.date, weather=self.weather.copy(), prices=self.prices.copy())
+    def get_order_book(self, name, power=None):
+        power = power or self.power
+        order_book = {}
+        for t in self.t:
+            if power[t] < 0:
+                order_book[t] = dict(type='demand',
+                                     hour=t,
+                                     order_id=0,
+                                     block_id=t,
+                                     name=name,
+                                     price=3, # €/kWh
+                                     volume=power[t])
+
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        if df.empty:
+            raise Exception(f'no orders found; order_book: {order_book}')
+        return df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
 
-    def optimize(self):
+    def optimize(self, date, weather, prices):
         """
         optimize the portfolio for the day ahead market
         :return: time series in [kW]
         """
+        start_time = time.time()
+        self.set_parameter(date, weather, prices)
+        for model in tqdm(self.energy_systems):
+            model.set_parameter(date=self.date, weather=self.weather.copy(), prices=self.prices.copy())
+        log.info(f'set parameter in {time.time() - start_time:.2f} seconds')
 
         try:
             self.reset_data()  # -> rest time series data

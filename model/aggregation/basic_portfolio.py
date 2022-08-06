@@ -30,24 +30,15 @@ class PortfolioModel:
 
         self.power = None
         self.volume = None
-        self.committed_power = None
 
         self.steps = steps
 
         self.reset_data()
 
-    def set_total_generation(self):
-        fuels = [*self.generation.keys()]
-        fuels.remove('total')
-        self.generation['total'] = np.zeros((self.T,), float)
-        for fuel in fuels:
-            self.generation['total'] += self.generation[fuel]
-
-    def set_parameter(self, date, weather, prices, committed=None):
+    def set_parameter(self, date, weather, prices):
         self.date = pd.to_datetime(date)
         self.weather = weather
         self.prices = prices
-        self.committed_power = committed
 
     def add_energy_system(self, energy_system):
         """
@@ -55,9 +46,6 @@ class PortfolioModel:
         - power values of the EnergySystem are in kW
         - the capacities of the Portfolio is stored in MW
         """
-        pass
-
-    def build_model(self, response=None):
         pass
 
     def optimize(self):
