@@ -146,7 +146,11 @@ class DayAheadMarket:
         # generation must be smaller than demand
         self.model.gen_dem = ConstraintList()
         for t in self.t:
-            self.model.gen_dem.add(quicksum(self.linked_total[block, t, order, name][1] *
+            if not self.hourly_bid_orders[t]:
+                self.logger.error(f'no hourly_bids available at hour {t}')
+                # constraints with 0 <= 0 are not valid
+            else:
+                self.model.gen_dem.add(quicksum(self.linked_total[block, t, order, name][1] *
                                             self.model.use_linked_order[block, t, order, name]
                                             for block, order, name in self.hourly_linked_orders[t])
                                    + quicksum(self.exclusive_total[block, t, name][1] *

@@ -313,7 +313,7 @@ class PowerPlant(EnergySystem):
                 block_number += 1                               # -> increment block number
 
             # -> add linked hour blocks
-            # -> check if current power is higher then the last known power
+            # -> check if current power is higher than the last known power
             if any(result['power'] - last_power > 0):
                 delta = result['power'] - last_power
                 # -> add on top
