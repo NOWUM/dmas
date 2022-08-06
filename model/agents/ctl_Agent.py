@@ -134,7 +134,13 @@ class CtlAgent(BasicAgent):
         self.registered_agents[agent_name] = ws
         self.logger.info(f'{agent_name} connects')
         try:
-            await asyncio.gather(self.receive_message(ws), self.send_message())
+            # messages are broadcasted in market
+            # other websocket only need to handle received messages
+            # this reduces races in logging while waiting
+            if agent_name == 'market':
+                await asyncio.gather(self.receive_message(ws), self.send_message())
+            else:
+                await self.receive_message(ws)
         except websockets.exceptions.ConnectionClosed:
             self.logger.info(f"Agent {agent_name} closed connection")
         except Exception:
