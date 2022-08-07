@@ -43,11 +43,12 @@ class WindModel(EnergySystem):
         self.wind_turbine = None
 
         if isinstance(wind_turbine, list):
-            wind_turbines, heights, numbers = [], [], []
+            wind_turbines, numbers = [], []
             for turbine in wind_turbine:
                 wind_turbines.append(create_windturbine(turbine))
                 numbers.append(1)
             wind_turbine_fleet = pd.DataFrame({'wind_turbine': wind_turbines, 'number_of_turbines': numbers})
+            heights = list((map(lambda x: x.hub_height,wind_turbines)))
 
             efficiency = pd.DataFrame(data=dict(wind_speed=range(30), efficiency=[1 for _ in range(30)]))
 
