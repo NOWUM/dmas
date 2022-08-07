@@ -12,11 +12,10 @@ class PortfolioModel:
         Represents a portfolio of EnergySystems.
         Its capacities, generation and demand is in MW
         '''
-
+        self.T, self.t, self.dt = T, np.arange(T), 1
         self.date = pd.to_datetime(date)
         self.energy_systems: list[EnergySystem] = []
-
-        self.T, self.t, self.dt = T, np.arange(T), 1
+        self.steps = steps
 
         self.weather = pd.DataFrame()
         self.prices = pd.DataFrame()
@@ -24,14 +23,6 @@ class PortfolioModel:
         # capacities are in [kW]
         self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0., solar=0.,
                                water=0., wind=0., storage=0.)
-        self.generation = None
-        self.demand = None
-        self.cash_flow = None
-
-        self.power = None
-        self.volume = None
-
-        self.steps = steps
 
         self.reset_data()
 

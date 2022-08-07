@@ -19,7 +19,7 @@ class ResAgent(BasicAgent):
         # Development of the portfolio with the corresponding ee-systems
         start_time = time.time()
         self.portfolio_eeg = RenewablePortfolio(agentname=self.name+'_eeg', price=-500/1e3)
-        # -500 €/kWh min eex bid
+        # -500 €/MWh min eex bid
         # lower limit of DA auction
         # https://www.epexspot.com/sites/default/files/2022-05/22-05-23_TradingBrochure.pdf
         self.portfolio_mrk = RenewablePortfolio(agentname=self.name+'_mrk', price=1e-4)

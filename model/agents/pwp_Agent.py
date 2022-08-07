@@ -85,9 +85,6 @@ class PwpAgent(BasicAgent):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
 
-        if self.portfolio.prices.empty:
-            self.logger.info('initialize_parameters in post_day_ahead')
-            weather, prices = self._initialize_parameters()
         start_time = time.time()
 
         committed_power = self.simulation_interface.get_linked_result(self.pwp_names)

@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, \
-    Reals, Binary, maximize, value, quicksum, ConstraintList
+    NonNegativeReals, Reals, Binary, maximize, value, quicksum, ConstraintList
 from matplotlib import pyplot as plt
 
 # model modules
@@ -53,7 +53,7 @@ class PowerPlant(EnergySystem):
 
         delta = self.power_plant['maxPower'] - self.power_plant['minPower']
 
-        self.model.p_out = Var(self.t, bounds=(None, self.power_plant['maxPower']), within=Reals)
+        self.model.p_out = Var(self.t, bounds=(0, self.power_plant['maxPower']), within=Reals)
         self.model.p_model = Var(self.t, bounds=(0, delta), within=Reals)
 
         # states (on, ramp up, ramp down)
@@ -63,10 +63,10 @@ class PowerPlant(EnergySystem):
 
         # cash flow variables
         # XXX not opt variable - can be pyomo expression
-        self.model.fuel = Var(self.t, bounds=(0, None), within=Reals)
-        self.model.emissions = Var(self.t, bounds=(0, None), within=Reals)
-        self.model.start_ups = Var(self.t, bounds=(0, None), within=Reals)
-        self.model.profit = Var(self.t, within=Reals)
+        self.model.fuel = Var(self.t, within=NonNegativeReals, initialize=0)
+        self.model.emissions = Var(self.t, within=NonNegativeReals, initialize=0)
+        self.model.start_ups = Var(self.t, within=NonNegativeReals, initialize=0)
+        self.model.profit = Var(self.t, within=Reals, initialize=0)
 
         # define constraint for output power
         self.model.real_power = ConstraintList()

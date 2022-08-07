@@ -257,8 +257,8 @@ class SimulationInterface:
 
     def get_linked_result(self, names : list[str]):
         in_string = "','".join(names)
-        df = pd.read_sql(f"Select hour, sum(volume) as volume from linked_results "
-                         f"where name in ('{in_string}') group by hour",
+        df = pd.read_sql(f"Select hour, sum(volume) as volume, name from linked_results "
+                         f"where name in ('{in_string}') group by hour, name",
                          self.database)
         return df
 

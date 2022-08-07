@@ -66,7 +66,7 @@ class PowerPlantPortfolio(PortfolioModel):
             self.reset_data()
             for model in self.energy_systems:
                 model_cp = np.zeros(24)
-                filtered_cp = committed_power[committed_power['unitID']==model.name]
+                filtered_cp = committed_power[committed_power['name']==model.name]
                 if not filtered_cp.empty:
                     for index, row in filtered_cp.iterrows():
                         model_cp[int(row.hour)] = float(row.volume)
@@ -74,7 +74,8 @@ class PowerPlantPortfolio(PortfolioModel):
                 model.optimize_post_market(model_cp)
             log.info(f'optimized post market results')
         except Exception as e:
-            log.error(f'error in portfolio optimization: {repr(e)}')
+            log.error(f'error in post market optimization: {repr(e)}')
+            log.error('using previous power - 0 scenario')
 
         self.update_portfolio_sum()
 
@@ -95,3 +96,46 @@ class PowerPlantPortfolio(PortfolioModel):
             self.logger.error('Orderbook has NaN values')
             self.logger.error(df[df.isna()])
         return df
+
+
+if __name__ == '__main__':
+    ppp = PowerPlantPortfolio()
+    plant = {'unitID':'x',
+            'fuel':'lignite',
+            'maxPower': 300, # kW
+            'minPower': 100, # kW
+            'eta': 0.4, # Wirkungsgrad
+            'P0': 120,
+            'chi': 0.407/1e3, # t CO2/kWh
+            'stopTime': 12, # hours
+            'runTime': 6, # hours
+            'gradP': 300, # kW/h
+            'gradM': 300, # kW/h
+            'on': 1, # running since
+            'off': 0,
+            'startCost': 1e3 # €/Start
+            }
+    ppp.add_energy_system(plant)
+
+    power_price = [0.0649, 0.0618, 0.0641, 0.064, 0.0644, 0.0597, 0.065, 0.0589, 0.0638, 0.0597, 0.0595, 0.0625, 0.0628, 0.0606, 0.0607, 0.0603, 0.062, 0.0643, 0.0637, 0.0594, 0.0615, 0.0642, 0.06, 0.061, 0.064, 0.0621, 0.0628, 0.0616, 0.0601, 0.0622, 0.0644, 0.0607, 0.0622, 0.0633, 0.0638, 0.065, 0.0615, 0.0635, 0.06, 0.0629, 0.065, 0.0599, 0.0625, 0.0633, 0.062, 0.0617, 0.0631, 0.0619]
+    co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
+    gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
+    lignite = np.ones(48) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
+    coal = np.ones(48) * 0.02  # * np.random.uniform(0.95, 1.05)       # -- Hard Coal Price    [€/kWh]
+    nuc = np.ones(48) * 0.01  # * np.random.uniform(0.95, 1.05)        # -- nuclear Price      [€/kWh]
+
+    prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
+    prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
+
+    power = ppp.optimize('2018-01-01', {}, prices)
+    o_book = ppp.energy_systems[0].get_orderbook()
+    from systems.generation_powerPlant import visualize_orderbook
+    visualize_orderbook(o_book)
+    clean_spread = ppp.energy_systems[0].get_clean_spread()
+    assert clean_spread == 0.0617165
+    assert (power[0:22] >= 100).all() # stay on
+    assert ~power[22:23].all() # two hours off
+
+    df = pd.DataFrame([power, power_price[:24]]).T
+    df['clean_spread'] = clean_spread
+    print(df)
