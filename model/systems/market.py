@@ -127,7 +127,7 @@ class DayAheadMarket:
         for t in self.t:
             if not self.orders['single_bid_index'][t]:
                 self.logger.error(f'no hourly_bids available at hour {t}')
-            elif not (self.orders['single_ask_index'][t] or self.orders['linked_ask_index'][t][t]):
+            elif not (self.orders['single_ask_index'][t] or self.orders['linked_ask_index'][t]):
                 self.logger.error(f'no hourly_asks available at hour {t}')
                 # constraints with 0 <= 0 are not valid
             else:
@@ -159,7 +159,7 @@ class DayAheadMarket:
                 for block, order, name in self.orders[f'{type_}_index'][t]:
                     price = self.model_vars[type_][block, t, order, name].value \
                             * self.orders[type_][block, t, order, name][0]
-                    if price < max_price:
+                    if price > max_price:
                         max_price = price
             prices += [max_price]
         prices = pd.DataFrame(data=dict(price=prices))
@@ -217,6 +217,7 @@ class DayAheadMarket:
 if __name__ == "__main__":
     from systems.generation_powerPlant import PowerPlant, visualize_orderbook
     from systems.demand import HouseholdModel
+    logging.basicConfig()
 
     max_p = 300
     min_p = max_p*0.4
@@ -262,7 +263,7 @@ if __name__ == "__main__":
     house.set_parameter(date='2018-01-01', weather=None,
                         prices=prices)
     house.optimize()
-    demand = house.demand['power'] * 1.2
+    demand = house.demand['power']
 
 
     def demand_order_book(demand, house):
@@ -327,43 +328,43 @@ if __name__ == "__main__":
     (res_order['volume']).plot()
 
     power = pwp.optimize_post_market(comm)
-    ################# second day ##############
-    #
-    # import matplotlib.pyplot as plt
-    #
-    # plt.plot(power)
-    # plt.show()
-    #
-    # power = pwp.optimize(date='2018-01-02', weather=None,
-    #                      prices=prices)
-    # o_book = pwp.get_orderbook()
-    # visualize_orderbook(o_book)
-    #
-    # house.set_parameter(date='2018-01-02', weather=None,
-    #                     prices=prices)
-    # house.optimize()
-    # demand = house.demand['power']
-    #
-    # demand_order = demand_order_book(demand, house)
-    #
-    # hourly_bid = {}
-    # for key, value in demand_order.to_dict(orient='index').items():
-    #     hourly_bid[key] = (value['price'], value['volume'])
-    #
-    # linked_orders = {}
-    # for key, value in o_book.to_dict(orient='index').items():
-    #     linked_orders[key] = (value['price'], value['volume'], value['link'])
-    #
-    # my_market.set_parameter({}, hourly_bid, linked_orders, {})
-    # prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = my_market.optimize()
-    #
-    # committed_power = used_linked_orders.groupby('hour').sum()['volume']
-    # comm = np.zeros(24)
-    # comm[committed_power.index] = committed_power
-    # committed_power.plot()
-    # power = pwp.optimize_post_market(comm)
-    # import matplotlib.pyplot as plt
-    #
-    # plt.plot(power)
-    # plt.show()
-    # my_market.model.use_linked_order.pprint()
+    ################ second day ##############
+    
+    import matplotlib.pyplot as plt
+    
+    plt.plot(power)
+    plt.show()
+    
+    power = pwp.optimize(date='2018-01-02', weather=None,
+                         prices=prices)
+    o_book = pwp.get_orderbook()
+    visualize_orderbook(o_book)
+    
+    house.set_parameter(date='2018-01-02', weather=None,
+                        prices=prices)
+    house.optimize()
+    demand = house.demand['power']
+    
+    demand_order = demand_order_book(demand, house)
+    
+    hourly_bid = {}
+    for key, value in demand_order.to_dict(orient='index').items():
+        hourly_bid[key] = (value['price'], value['volume'])
+    
+    linked_orders = {}
+    for key, value in o_book.to_dict(orient='index').items():
+        linked_orders[key] = (value['price'], value['volume'], value['link'])
+    
+    my_market.set_parameter({}, hourly_bid, linked_orders, {})
+    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = my_market.optimize()
+    
+    committed_power = used_linked_orders.groupby('hour').sum()['volume']
+    comm = np.zeros(24)
+    comm[committed_power.index] = committed_power
+    committed_power.plot()
+    power = pwp.optimize_post_market(comm)
+    import matplotlib.pyplot as plt
+    
+    plt.plot(power)
+    plt.show()
+    my_market.model.use_linked_order.pprint()
