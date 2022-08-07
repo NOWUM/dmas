@@ -15,3 +15,5 @@ build-docker:
   script:
     - docker build -f Dockerfile  -t "$CI_REGISTRY_IMAGE/agent:latest" .
     - docker push $CI_REGISTRY_IMAGE/agent:latest
+  only:
+    - master

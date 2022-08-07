@@ -209,7 +209,7 @@ class DayAheadMarket:
             used_bid_orders.columns = ['price', 'volume']
 
         prices['volume'] = volumes
-        # self._reset_parameter()
+        self._reset_parameter()
         return prices, used_orders['single_ask'], used_orders['linked_ask'],\
                used_orders['exclusive_ask'], used_bid_orders
 
@@ -218,43 +218,25 @@ if __name__ == "__main__":
     from systems.generation_powerPlant import PowerPlant, visualize_orderbook
     from systems.demand import HouseholdModel
 
+    max_p = 300
+    min_p = max_p*0.4
     plant = {'unitID': 'x',
              'fuel': 'coal',
-             'maxPower': 110000,  # kW
-             'minPower': 110000 * 0.4,  # kW
+             'maxPower': max_p,  # kW
+             'minPower': min_p,  # kW
              'eta': 0.4,  # Wirkungsgrad
              'P0': 120,
              'chi': 0.407 / 1e3,  # t CO2/kWh
              'stopTime': 12,  # hours
              'runTime': 6,  # hours
-             'gradP': 110000 * 0.1,  # kW/h
-             'gradM': 110000 * 0.1,  # kW/h
+             'gradP': min_p,  # kW/h
+             'gradM': min_p,  # kW/h
              'on': 1,  # running since
              'off': 0,
              'startCost': 1e3  # €/Start
              }
-
-    plant_gas = {'unitID': 'y',
-                 'fuel': 'gas',
-                 'maxPower': 52000,  # kW
-                 'minPower': 52000 * 0.4,  # kW
-                 'eta': 0.4,  # Wirkungsgrad
-                 'P0': 120,
-                 'chi': 0.202 / 1e3,  # t CO2/kWh
-                 'stopTime': 4,  # hours
-                 'runTime': 4,  # hours
-                 'gradP': 52000 * 0.1,  # kW/h
-                 'gradM': 52000 * 0.1,  # kW/h
-                 'on': 1,  # running since
-                 'off': 0,
-                 'startCost': 1e3  # €/Start
-                 }
     steps = np.array([-100, 0, 100])
 
-    # power_price = [0.0649, 0.0618, 0.0641, 0.064, 0.0644, 0.0597, 0.065, 0.0589, 0.0638, 0.0597, 0.0595, 0.0625, 0.0628,
-    #                0.0606, 0.0607, 0.0603, 0.062, 0.0643, 0.0637, 0.0594, 0.0615, 0.0642, 0.06, 0.061, 0.064, 0.0621,
-    #                0.0628, 0.0616, 0.0601, 0.0622, 0.0644, 0.0607, 0.0622, 0.0633, 0.0638, 0.065, 0.0615, 0.0635, 0.06,
-    #                0.0629, 0.065, 0.0599, 0.0625, 0.0633, 0.062, 0.0617, 0.0631, 0.0619]
     power_price = 50 * np.ones(48)
     co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
     gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
@@ -271,12 +253,6 @@ if __name__ == "__main__":
 
     o_book = pwp.get_orderbook()
 
-    pwp_gas = PowerPlant(T=24, steps=steps, **plant_gas)
-    # pwp_gas.build_model()
-    pwp_gas.optimize(date='2018-01-01', weather=None,
-                     prices=prices)
-
-    o_book_gas = pwp_gas.get_orderbook()
     # min_bid = -500/1e3
     # o_book.loc[o_book['price'] < min_bid, 'price'] = min_bid
     # order book for first day without market
