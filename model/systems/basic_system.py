@@ -61,6 +61,3 @@ class EnergySystem:
 
         self.volume = np.zeros(self.T, float)
         self.power = np.zeros(self.T, float)
-
-    def build_model(self):
-        pass

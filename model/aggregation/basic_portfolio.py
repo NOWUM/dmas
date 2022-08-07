@@ -12,11 +12,10 @@ class PortfolioModel:
         Represents a portfolio of EnergySystems.
         Its capacities, generation and demand is in MW
         '''
-
+        self.T, self.t, self.dt = T, np.arange(T), 1
         self.date = pd.to_datetime(date)
         self.energy_systems: list[EnergySystem] = []
-
-        self.T, self.t, self.dt = T, np.arange(T), 1
+        self.steps = steps
 
         self.weather = pd.DataFrame()
         self.prices = pd.DataFrame()
@@ -24,30 +23,13 @@ class PortfolioModel:
         # capacities are in [kW]
         self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0., solar=0.,
                                water=0., wind=0., storage=0.)
-        self.generation = None
-        self.demand = None
-        self.cash_flow = None
-
-        self.power = None
-        self.volume = None
-        self.committed_power = None
-
-        self.steps = steps
 
         self.reset_data()
 
-    def set_total_generation(self):
-        fuels = [*self.generation.keys()]
-        fuels.remove('total')
-        self.generation['total'] = np.zeros((self.T,), float)
-        for fuel in fuels:
-            self.generation['total'] += self.generation[fuel]
-
-    def set_parameter(self, date, weather, prices, committed=None):
+    def set_parameter(self, date, weather, prices):
         self.date = pd.to_datetime(date)
         self.weather = weather
         self.prices = prices
-        self.committed_power = committed
 
     def add_energy_system(self, energy_system):
         """
@@ -55,9 +37,6 @@ class PortfolioModel:
         - power values of the EnergySystem are in kW
         - the capacities of the Portfolio is stored in MW
         """
-        pass
-
-    def build_model(self, response=None):
         pass
 
     def optimize(self):

@@ -148,6 +148,8 @@ class DayAheadMarket:
         for t in self.t:
             if not self.hourly_bid_orders[t]:
                 self.logger.error(f'no hourly_bids available at hour {t}')
+            elif not (self.hourly_ask_orders[t] or self.hourly_linked_orders[t]):
+                self.logger.error(f'no hourly_asks available at hour {t}')
                 # constraints with 0 <= 0 are not valid
             else:
                 self.model.gen_dem.add(quicksum(self.linked_total[block, t, order, name][1] *
@@ -256,7 +258,6 @@ class DayAheadMarket:
             for block, order, name in self.hourly_bid_orders[t]:
                 volume += (-1) * self.hourly_bid_total[block, t, order, name][1]
             volumes.append(volume)
-        print(sum_magic_source)
         self.logger.info(f'Got {sum_magic_source:.2f} kWh from Magic source')
 
         used_bid_orders = pd.DataFrame.from_dict(used_bid_orders, orient='index')
@@ -278,23 +279,39 @@ if __name__ == "__main__":
     from systems.demand import HouseholdModel
 
     plant = {'unitID': 'x',
-             'fuel': 'lignite',
-             'maxPower': 300,  # kW
-             'minPower': 100,  # kW
+             'fuel': 'coal',
+             'maxPower': 110000,  # kW
+             'minPower': 110000*0.4,  # kW
              'eta': 0.4,  # Wirkungsgrad
              'P0': 120,
              'chi': 0.407 / 1e3,  # t CO2/kWh
              'stopTime': 12,  # hours
              'runTime': 6,  # hours
-             'gradP': 300,  # kW/h
-             'gradM': 300,  # kW/h
+             'gradP': 110000*0.1,  # kW/h
+             'gradM': 110000*0.1,  # kW/h
+             'on': 1,  # running since
+             'off': 0,
+             'startCost': 1e3  # €/Start
+             }
+
+    plant_gas = {'unitID': 'y',
+             'fuel': 'gas',
+             'maxPower': 52000,  # kW
+             'minPower': 52000*0.4,  # kW
+             'eta': 0.4,  # Wirkungsgrad
+             'P0': 120,
+             'chi': 0.202 / 1e3,  # t CO2/kWh
+             'stopTime': 4,  # hours
+             'runTime': 4,  # hours
+             'gradP': 52000*0.1,  # kW/h
+             'gradM': 52000*0.1,  # kW/h
              'on': 1,  # running since
              'off': 0,
              'startCost': 1e3  # €/Start
              }
     steps = np.array([-100, 0, 100])
 
-    power_price = np.ones(48)  # * np.random.uniform(0.95, 1.05, 48) # €/kWh
+    power_price = [0.0649, 0.0618, 0.0641, 0.064, 0.0644, 0.0597, 0.065, 0.0589, 0.0638, 0.0597, 0.0595, 0.0625, 0.0628, 0.0606, 0.0607, 0.0603, 0.062, 0.0643, 0.0637, 0.0594, 0.0615, 0.0642, 0.06, 0.061, 0.064, 0.0621, 0.0628, 0.0616, 0.0601, 0.0622, 0.0644, 0.0607, 0.0622, 0.0633, 0.0638, 0.065, 0.0615, 0.0635, 0.06, 0.0629, 0.065, 0.0599, 0.0625, 0.0633, 0.062, 0.0617, 0.0631, 0.0619]
     co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
     gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
     lignite = np.ones(48) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
@@ -305,19 +322,27 @@ if __name__ == "__main__":
     prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
 
     pwp = PowerPlant(T=24, steps=steps, **plant)
-    pwp.set_parameter(date='2018-01-01', weather=None,
+    power = pwp.optimize(date='2018-01-01', weather=None,
                       prices=prices)
-    power = pwp.optimize()
+    
     o_book = pwp.get_orderbook()
+
+    pwp_gas = PowerPlant(T=24, steps=steps, **plant_gas)
+    pwp_gas.build_model()
+    pwp_gas.optimize(date='2018-01-01', weather=None,
+                      prices=prices)
+    
+    o_book_gas = pwp_gas.get_orderbook()
+    #min_bid = -500/1e3
+    #o_book.loc[o_book['price'] < min_bid, 'price'] = min_bid
     # order book for first day without market
     visualize_orderbook(o_book)
 
     house = HouseholdModel(24, 3e6)
     house.set_parameter(date='2018-01-01', weather=None,
                         prices=prices)
-    house.build_model()
     house.optimize()
-    demand = house.demand['power']
+    demand = house.demand['power'] *1.2
 
 
     def demand_order_book(demand, house):
@@ -371,6 +396,7 @@ if __name__ == "__main__":
     my_market.model.use_linked_order.pprint()
 
     committed_power = used_linked_orders.groupby('hour').sum()['volume']
+    assert committed_power[23] == 300, 'pwp bids negative values'
 
 
     # plot committed power of the pwp for results of first day
@@ -380,23 +406,21 @@ if __name__ == "__main__":
     (-demand_order['volume']).plot()
     (res_order['volume']).plot()
 
+    power = pwp.optimize_post_market(comm)
     ################# second day ##############
-    pwp.committed_power = comm
-    power = pwp.optimize()
+    
     import matplotlib.pyplot as plt
 
     plt.plot(power)
     plt.show()
 
-    pwp.set_parameter(date='2018-01-02', weather=None,
+    power = pwp.optimize(date='2018-01-02', weather=None,
                       prices=prices)
-    power = pwp.optimize()
     o_book = pwp.get_orderbook()
     visualize_orderbook(o_book)
 
     house.set_parameter(date='2018-01-02', weather=None,
                         prices=prices)
-    house.build_model()
     house.optimize()
     demand = house.demand['power']
 
@@ -417,8 +441,7 @@ if __name__ == "__main__":
     comm = np.zeros(24)
     comm[committed_power.index] = committed_power
     committed_power.plot()
-    pwp.committed_power = comm
-    power = pwp.optimize()
+    power = pwp.optimize_post_market(comm)
     import matplotlib.pyplot as plt
 
     plt.plot(power)

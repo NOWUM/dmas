@@ -1,5 +1,6 @@
 # third party modules
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import multiprocessing as mp
 import logging
@@ -23,10 +24,12 @@ def optimize_energy_system(item):
 
 class RenewablePortfolio(PortfolioModel):
 
-    def __init__(self, T=24, date='2020-01-01'):
+    def __init__(self, T=24, date='2020-01-01', agentname='', price=0.0):
         super().__init__(T, date)
         self.lock_generation = True
         self.worker = mp.Pool(4)
+        self.agentname = agentname
+        self.res_price = price
 
     def __del__(self):
         self.worker.close()
@@ -46,79 +49,91 @@ class RenewablePortfolio(PortfolioModel):
 
         self.energy_systems.append(model)
 
-    def build_model(self, response=None):
-        for model in self.energy_systems:
-            model.set_parameter(date=self.date, weather=self.weather.copy(), prices=self.prices.copy())
+    def set_total_generation(self):
+        fuels = [*self.generation.keys()]
+        fuels.remove('total')
+        self.generation['total'] = np.zeros((self.T,), float)
+        for fuel in fuels:
+            self.generation['total'] += self.generation[fuel]
 
-        if response is None:
-            self.lock_generation = False
-            self.generation['total'] = np.zeros((self.T,))
-        else:
-            self.lock_generation = True
-            self.generation['total'] = np.asarray(response, np.float).reshape((-1,))
+    def get_order_book(self, power=None):
+        power = power or self.power
+        order_book = {}
+        for t in np.arange(len(power)):
+            order_book[t] = dict(type='generation',
+                                    hour=t,
+                                    block_id=t,
+                                    order_id=0,
+                                    name=self.agentname,
+                                    price=self.res_price,
+                                    volume=power[t])
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        if df.empty:
+            df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'order_id', 'name', 'price', 'volume'])
+        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
 
-    def optimize(self):
+        return df
+
+    def optimize(self, date, weather, prices):
         """
         optimize the portfolio for the day ahead market
         :return: time series in [kW]
         """
 
-        if self.committed_power is None:
+        self.set_parameter(date, weather, prices)
+        for model in self.energy_systems:
+            model.set_parameter(date=self.date, weather=self.weather.copy(), prices=self.prices.copy())
 
-            try:
-                self.reset_data()  # -> rest time series data
-                self.energy_systems = self.worker.map(optimize_energy_system, tqdm(self.energy_systems))
-                log.info(f'optimized portfolio')
-            except Exception as e:
-                log.error(f'error in portfolio optimization: {repr(e)}')
+        try:
+            self.reset_data()  # -> rest time series data
+            self.energy_systems = self.worker.map(optimize_energy_system, tqdm(self.energy_systems))
+            log.info(f'optimized portfolio')
+        except Exception as e:
+            log.error(f'error in portfolio optimization: {repr(e)}')
 
-            try:
-                for model in tqdm(self.energy_systems):
-                    for key, value in model.generation.items():
-                        self.generation[key] += value # [kW]
-                    for key, value in model.demand.items():
-                        self.demand[key] += value # [kW]
-                    for key, value in model.cash_flow.items():
-                        self.cash_flow[key] += value
+        try:
+            for model in tqdm(self.energy_systems):
+                for key, value in model.generation.items():
+                    self.generation[key] += value # [kW]
+                for key, value in model.demand.items():
+                    self.demand[key] += value # [kW]
+                for key, value in model.cash_flow.items():
+                    self.cash_flow[key] += value
 
-                for key, value in self.generation.items():
-                    if key != 'total':
-                        self.generation['total'] += value
+            for key, value in self.generation.items():
+                if key != 'total':
+                    self.generation['total'] += value
 
-                self.power = self.generation['total'] - self.demand['power']
+            self.power = self.generation['total'] - self.demand['power']
 
-            except Exception as e:
-                log.error(f'error in collecting result: {repr(e)}')
+        except Exception as e:
+            log.error(f'error in collecting result: {repr(e)}')
 
-            return self.power
+        return self.power
 
-        else:
+    def optimize_post_market(self, committed_power):
+        power = self.generation['total'] - self.demand['power']
+        priority_fuel = ['wind', 'bio', 'water', 'solar']
+        to_reduce = power - committed_power
+        log.info(f'need to reduce res by {to_reduce}')
+        for t in self.t:
+            for fuel in priority_fuel:
+                if to_reduce[t] > 1e-9:
+                    # substract delta from generation in priority order
+                    # if first generation is not enough, reduce completely
+                    # and reduce second generation too
+                    if self.generation[fuel][t] - to_reduce[t] < 0:
+                        to_reduce[t] -= self.generation[fuel][t]
+                        self.generation[fuel][t] = 0
+                        log.info(f'reduced {fuel} - {t} still need to reduce {to_reduce[t]}')
+                    else:
+                        self.generation[fuel][t] -= to_reduce[t]
+                        to_reduce[t] = 0
+                        log.info(f'reduced {fuel} - {t}')
+        self.set_total_generation()
+        self.power = self.generation['total']
 
-            power = self.generation['total'] - self.demand['power']
-            priority_fuel = ['wind', 'bio', 'water', 'solar']
-            to_reduce = power - self.committed_power
-            log.info(f'need to reduce res by {to_reduce}')
-            for t in self.t:
-                for fuel in priority_fuel:
-                    if to_reduce[t] > 1e-9:
-                        # substract delta from generation in priority order
-                        # if first generation is not enough, reduce completely
-                        # and reduce second generation too
-                        if self.generation[fuel][t] - to_reduce[t] < 0:
-                            to_reduce[t] -= self.generation[fuel][t]
-                            self.generation[fuel][t] = 0
-                            log.info(f'reduced {fuel} - {t} still need to reduce {to_reduce[t]}')
-                        else:
-                            self.generation[fuel][t] -= to_reduce[t]
-                            to_reduce[t] = 0
-                            log.info(f'reduced {fuel} - {t}')
-
-            self.set_total_generation()
-            self.power = self.generation['total']
-
-            return self.power
-
-
+        return self.power
 
 if __name__ == '__main__':
     rpf = RenewablePortfolio()
@@ -127,24 +142,16 @@ if __name__ == '__main__':
         'maxPower': 300,
     }
     rpf.add_energy_system(bm)
-    rpf.build_model()
     assert rpf.capacities['bio']==300
-    power = rpf.optimize()
+    power = rpf.optimize('2018-01-01', {}, {})
     assert (power == 300).all()
     assert (rpf.generation['total'] == 300).all()
     assert (rpf.generation['bio'] == 300).all()
-    rpf.set_parameter(rpf.date, pd.DataFrame(), pd.DataFrame(), committed=power)
-    final_power = rpf.optimize()
+    final_power = rpf.optimize_post_market(power)
     assert (final_power == 300).all()
 
     # second day
-    rpf.build_model()
-    rpf.set_parameter(rpf.date, pd.DataFrame(), pd.DataFrame(), committed=None)
-    power = rpf.optimize()
-
+    power = rpf.optimize('2018-01-02', {}, {})
     power[2:4] = 0
-    rpf.set_parameter(rpf.date, pd.DataFrame(), pd.DataFrame(), committed=power)
-    final_power = rpf.optimize()
+    final_power = rpf.optimize_post_market(power)
     assert((power == final_power).all())
-
-

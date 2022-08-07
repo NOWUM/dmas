@@ -70,23 +70,6 @@ class DemAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    def get_order_book(self, power):
-        order_book = {}
-        for t in self.portfolio.t:
-            if power[t] < 0:
-                order_book[t] = dict(type='demand',
-                                     hour=t,
-                                     order_id=0,
-                                     block_id=t,
-                                     name=self.name,
-                                     price=3, # €/kWh
-                                     volume=power[t])
-
-        df = pd.DataFrame.from_dict(order_book, orient='index')
-        if df.empty:
-            raise Exception(f'no orders found; order_book: {order_book}')
-        return df.set_index(['block_id', 'hour', 'order_id', 'name'])
-
     def handle_message(self, message):
         if 'set_capacities' in message:
             self.simulation_interface.set_capacities(self.portfolio, self.area, self.date)
@@ -98,19 +81,16 @@ class DemAgent(BasicAgent):
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
-        self.logger.info('starting day ahead optimization')
+        self.logger.info(f'starting day ahead optimization {self.date}')
         start_time = time.time()
-
         # Step 1: forecast data and init the model for the coming day
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
-
-        self.portfolio.set_parameter(self.date, weather.copy(), prices.copy())
-        self.portfolio.build_model()
         self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
+
         start_time = time.time()
         # Step 2: optimization
-        power = self.portfolio.optimize()
+        power = self.portfolio.optimize(self.date, weather.copy(), prices.copy())
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
@@ -119,7 +99,7 @@ class DemAgent(BasicAgent):
 
         # Step 3: build orders
         start_time = time.time()
-        order_book = self.get_order_book(power)
+        order_book = self.portfolio.get_order_book(self.name)
         self.simulation_interface.set_hourly_orders(order_book)
 
         self.logger.info(f'built Orders and send in {time.time() - start_time:.2f} seconds')

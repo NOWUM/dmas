@@ -18,8 +18,14 @@ class ResAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         # Development of the portfolio with the corresponding ee-systems
         start_time = time.time()
-        self.portfolio_eeg = RenewablePortfolio()
-        self.portfolio_mrk = RenewablePortfolio()
+        self.portfolio_eeg = RenewablePortfolio(agentname=self.name+'_eeg', price=-500/1e3)
+        # -500 €/MWh min eex bid
+        # lower limit of DA auction
+        # https://www.epexspot.com/sites/default/files/2022-05/22-05-23_TradingBrochure.pdf
+        self.portfolio_mrk = RenewablePortfolio(agentname=self.name+'_mrk', price=1e-4)
+        # [€/kWh] # this is relevant for negative prices §51 EEG
+        # TODO find argumentative res market price
+
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 simulation_interface=self.simulation_interface,
@@ -82,36 +88,6 @@ class ResAgent(BasicAgent):
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
-    def get_order_book(self, power, type='eeg'):
-        order_book = {}
-        for t in np.arange(len(power)):
-            if type == 'eeg' and power[t] > 0.5:
-                order_book[t] = dict(type='generation',
-                                     hour=t,
-                                     block_id=t,
-                                     order_id=0,
-                                     name=self.name + '_eeg',
-                                     price=-500/1e3, # €/kWh min eex bid
-                                     # lower limit of DA auction
-                                     # https://www.epexspot.com/sites/default/files/2022-05/22-05-23_TradingBrochure.pdf
-                                     volume=power[t])
-            if type == 'mrk' and power[t] > 0.5:
-                order_book[t] = dict(type='generation',
-                                     block_id=t,
-                                     hour=t,
-                                     order_id=0,
-                                     name=self.name + '_mrk',
-                                     # TODO better values
-                                     price=1e-4, # [€/kWh] # this is relevant for negative prices §51 EEG
-                                     volume=power[t])
-
-        df = pd.DataFrame.from_dict(order_book, orient='index')
-        if df.empty:
-            df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'order_id', 'name', 'price', 'volume'])
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
-
-        return df
-
     def handle_message(self, message):
         if 'set_capacities' in message:
             self.simulation_interface.set_capacities([self.portfolio_mrk, self.portfolio_eeg], self.area, self.date)
@@ -130,16 +106,11 @@ class ResAgent(BasicAgent):
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
 
-        self.portfolio_eeg.set_parameter(self.date, weather.copy(),  prices.copy(), committed=None)
-        self.portfolio_eeg.build_model()
-
-        self.portfolio_mrk.set_parameter(self.date, weather.copy(),  prices.copy(), committed=None)
-        self.portfolio_mrk.build_model()
-        self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
+        self.logger.info(f'got forecast in {time.time() - start_time:.2f} seconds')
         start_time = time.time()
         # Step 2: optimization
-        power_eeg = self.portfolio_eeg.optimize()
-        power_mrk = self.portfolio_mrk.optimize()
+        power_eeg = self.portfolio_eeg.optimize(self.date, weather.copy(),  prices.copy())
+        power_mrk = self.portfolio_mrk.optimize(self.date, weather.copy(),  prices.copy())
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
@@ -150,10 +121,11 @@ class ResAgent(BasicAgent):
 
         # Step 3: build orders from optimization results
         start_time = time.time()
-        order_book = self.get_order_book(power_eeg, type='eeg')
-        self.simulation_interface.set_hourly_orders(order_book)
-        order_book = self.get_order_book(power_mrk, type='mrk')
-        self.simulation_interface.set_hourly_orders(order_book)
+        order_book_eeg = self.portfolio_eeg.get_order_book()
+        self.simulation_interface.set_hourly_orders(order_book_eeg)
+
+        order_book_mrk = self.portfolio_mrk.get_order_book()
+        self.simulation_interface.set_hourly_orders(order_book_mrk)
 
         self.logger.info(f'built Orders and send in {time.time() - start_time:.2f} seconds')
 
@@ -162,24 +134,16 @@ class ResAgent(BasicAgent):
         self.logger.info(f'starting day ahead adjustments {self.date}')
         start_time = time.time()
 
-        market_result_eeg = self.simulation_interface.get_hourly_result(self.name+'_eeg')
-        market_result_mrk = self.simulation_interface.get_hourly_result(self.name+'_mrk')
+        def optimize_post_market(portfolio: RenewablePortfolio):
+            market_result = self.simulation_interface.get_hourly_result(portfolio.agentname)
+            power = np.zeros(portfolio.T)
+            for index, row in market_result.iterrows():
+                power[int(row.hour)] = float(row.volume)
+            self.logger.info(f'Committed power for {portfolio.agentname} is: {power}')
+            portfolio.optimize_post_market(power)
 
-        power_mrk = np.zeros(self.portfolio_mrk.T)
-        for index, row in market_result_mrk.iterrows():
-            power_mrk[int(row.hour)] = float(row.volume)
-        power_eeg = np.zeros(self.portfolio_eeg.T)
-        for index, row in market_result_eeg.iterrows():
-            power_eeg[int(row.hour)] = float(row.volume)
-        
-        self.logger.info(f'Committed power is: {power_eeg} and {power_mrk}')
-
-        # -> fist EEG (power > power_eeg -> no adjustments)
-        self.portfolio_eeg.set_parameter(self.date, {}, {}, committed=power_eeg)
-        self.portfolio_eeg.optimize()
-        # -> second MARKET ((power - power_eeg) < power_mrk -> adjustments)
-        self.portfolio_mrk.set_parameter(self.date, {}, {}, committed=power_mrk)
-        self.portfolio_mrk.optimize()
+        optimize_post_market(self.portfolio_eeg)
+        optimize_post_market(self.portfolio_mrk)
 
         # save optimization results
         self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], 'post_dayAhead', self.area, self.date)
