@@ -39,19 +39,25 @@ class MarketAgent(BasicAgent):
         bid = df.loc[df['type'] == 'demand']
         for key, value in bid.to_dict(orient='index').items():
             hourly_bid.update({key: (value['price'], value['volume'])})
+        self.logger.info(f'got hourly_orders in {time.time() - start_time:.2f} seconds')
+        start_time = time.time()
 
         df = self.simulation_interface.get_linked_orders()
         linked_orders = {}
         for key, value in df.to_dict(orient='index').items():
             linked_orders.update({key: (value['price'], value['volume'], value['link'])})
+        self.logger.info(f'got linked_orders in {time.time() - start_time:.2f} seconds')
+        start_time = time.time()
 
         df = self.simulation_interface.get_exclusive_orders()
         exclusive_orders = {}
         for key, value in df.to_dict(orient='index').items():
             exclusive_orders.update({key: (value['price'], value['volume'])})
+        self.logger.info(f'got exclusive_orders in {time.time() - start_time:.2f} seconds')
+        start_time = time.time()
 
         self.market.set_parameter(hourly_ask, hourly_bid, linked_orders, exclusive_orders)
-
+        self.logger.info(f'start market optimization')
         auction_results, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = self.market.optimize()
         market_results = dict(
             hourly_results=used_ask_orders,
@@ -65,5 +71,4 @@ class MarketAgent(BasicAgent):
 
         self.simulation_interface.set_auction_results(auction_results)
         self.simulation_interface.set_market_results(market_results)
-
-        self.logger.info(f'cleared market and saved result in database {self.date}')
+        self.logger.info(f'successfully cleared market in {time.time() - start_time:.2f} seconds for {self.date}')

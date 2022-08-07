@@ -9,6 +9,28 @@ from windpowerlib.wind_farm import WindFarm
 from systems.basic_system import EnergySystem
 os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
+# TODO: Replace default with new data
+default_power_curve = pd.read_csv(r'./systems/data/default_turbine.csv', sep=';', decimal=',')
+default_power_curve['value'] /= max(default_power_curve['value'])
+
+def create_windturbine(turbine):
+    if not turbine['height'] > 0:
+        turbine['height'] = turbine['maxPower']/20
+
+    # small wind systems have no diameter set
+    # causing nan values in generation and therefore in the whole portfolio
+    if not turbine['diameter'] > 0:
+        turbine['diameter'] = turbine['height']
+
+    diameter = min(turbine['diameter'], turbine['height']*2-1)
+    height = max(turbine['diameter']/2+1, turbine['height'])
+    max_power = turbine['maxPower']* 1e3 # [kW] -> [W]
+    pow_c = default_power_curve.copy()
+    pow_c['value'] *= max_power
+    return WindTurbine(hub_height=height,
+            rotor_diameter=diameter,
+            nominal_power=max_power,
+            power_curve=pow_c)
 
 class WindModel(EnergySystem):
 
@@ -19,24 +41,11 @@ class WindModel(EnergySystem):
             wind_turbine = dict(turbine_type='E-82/2300', height=108, diameter=82)
 
         self.wind_turbine = None
-        # TODO: Replace default with new data
-        df = pd.read_csv(r'./systems/data/default_turbine.csv', sep=';', decimal=',')
-        df['value'] /= max(df['value'])
 
         if isinstance(wind_turbine, list):
             wind_turbines, heights, numbers = [], [], []
             for turbine in wind_turbine:
-                diameter = min(turbine['diameter'], turbine['height']/2)
-                height = max(turbine['diameter']*2, turbine['height'])
-                max_power = turbine['maxPower']* 1e3 # [kW] -> [W]
-                pow_c = df.copy()
-                pow_c['value'] *= max_power
-                w = {'hub_height': height,
-                     'rotor_diameter': diameter,
-                     'nominal_power': max_power,
-                     'power_curve': pow_c}
-                heights.append(w['hub_height'])
-                wind_turbines.append(WindTurbine(**w))
+                wind_turbines.append(create_windturbine(turbine))
                 numbers.append(1)
             wind_turbine_fleet = pd.DataFrame({'wind_turbine': wind_turbines, 'number_of_turbines': numbers})
 
@@ -47,16 +56,7 @@ class WindModel(EnergySystem):
             self.wind_turbine = self.wind_turbine.assign_power_curve()
 
         else:
-            # windpowerlib uses Watt [W]
-            diameter = min(wind_turbine['diameter'], wind_turbine['height']/2)
-            height = max(wind_turbine['diameter']*2, wind_turbine['height'])
-            max_power = wind_turbine['maxPower']* 1e3 # [kW] -> [W]
-            pow_c = df.copy()
-            pow_c['value'] *= max_power
-            self.wind_turbine = WindTurbine(hub_height=height,
-                                            rotor_diameter=diameter,
-                                            nominal_power=max_power,
-                                            power_curve=pow_c)
+            self.wind_turbine = create_windturbine(wind_turbine)
 
         self.mc = ModelChain(self.wind_turbine)
 
