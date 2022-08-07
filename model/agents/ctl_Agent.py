@@ -64,7 +64,7 @@ class CtlAgent(BasicAgent):
             name = message.split(' ')[-1]
 
             if 'optimized_dayAhead' in message:
-                if agent_name in self.waiting_list:
+                if name in self.waiting_list:
                     self.waiting_list.remove(name)
                 else:
                     self.logger.error(f'controller went on without waiting for {name}')
