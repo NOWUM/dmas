@@ -48,7 +48,7 @@ class BasicAgent:
         # declare weather data server
         self.weather_interface = WeatherInterface(self.name, kwargs['weather_database_uri'])
 
-        self.logger.info('starting the agent')
+        self.logger.info(f'starting the agent {self.name}')
 
     def __del__(self):
         self.logger.info('shutting down')
