@@ -61,7 +61,7 @@ class PwpAgent(BasicAgent):
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
-        self.logger.info('dayAhead market scheduling started')
+        self.logger.info(f'dayAhead market scheduling started {self.date}')
         start_time = time.time()
 
         weather, prices = self._initialize_parameters()

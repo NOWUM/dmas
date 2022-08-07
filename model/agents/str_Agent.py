@@ -44,7 +44,7 @@ class StrAgent(BasicAgent):
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
-        self.logger.info('dayAhead market scheduling started')
+        self.logger.info(f'dayAhead market scheduling started {self.date}')
 
 
     def post_day_ahead(self):

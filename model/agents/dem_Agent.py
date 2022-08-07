@@ -81,7 +81,7 @@ class DemAgent(BasicAgent):
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
-        self.logger.info('starting day ahead optimization')
+        self.logger.info(f'starting day ahead optimization {self.date}')
         start_time = time.time()
         # Step 1: forecast data and init the model for the coming day
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)

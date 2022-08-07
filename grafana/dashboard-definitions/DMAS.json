@@ -98,6 +98,30 @@
                 }
               }
             ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "price"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
           }
         ]
       },
@@ -129,16 +153,43 @@
           "format": "time_series",
           "group": [],
           "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  \"time\" AS \"time\",\n  1000*price as price\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
+          "rawQuery": false,
+          "rawSql": "SELECT\n  \"time\" AS \"time\",\n  price*1000 AS \"price\",\n  avg(price*1000) OVER (ORDER BY \"time\" ROWS 5 PRECEDING) AS \"price_mean\"\nFROM auction_results\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
           "refId": "A",
           "select": [
             [
               {
                 "params": [
-                  "price"
+                  "price*1000"
                 ],
                 "type": "column"
+              },
+              {
+                "params": [
+                  "price"
+                ],
+                "type": "alias"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "price*1000"
+                ],
+                "type": "column"
+              },
+              {
+                "params": [
+                  "avg",
+                  "5"
+                ],
+                "type": "moving_window"
+              },
+              {
+                "params": [
+                  "price_mean"
+                ],
+                "type": "alias"
               }
             ]
           ],
@@ -2448,7 +2499,7 @@
           ]
         }
       ],
-      "title": "Order Overview",
+      "title": "Order Overview $agent",
       "type": "timeseries"
     },
     {
@@ -2816,11 +2867,11 @@
           ]
         }
       ],
-      "title": "Schedule Generation",
+      "title": "Schedule Generation $agent",
       "type": "timeseries"
     }
   ],
-  "refresh": false,
+  "refresh": "10s",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [],
