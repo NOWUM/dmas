@@ -48,12 +48,17 @@ class WindModel(EnergySystem):
                 wind_turbines.append(create_windturbine(turbine))
                 numbers.append(1)
             wind_turbine_fleet = pd.DataFrame({'wind_turbine': wind_turbines, 'number_of_turbines': numbers})
-            heights = list((map(lambda x: x.hub_height,wind_turbines)))
 
             efficiency = pd.DataFrame(data=dict(wind_speed=range(30), efficiency=[1 for _ in range(30)]))
 
             self.wind_turbine = WindFarm(wind_turbine_fleet, efficiency=efficiency)
-            self.wind_turbine.hub_height = np.mean(heights)
+            
+            # calculates and sets the mean_hub_height
+            # Hub heights of wind turbines with 
+            # higher nominal power weigh more than others.
+            self.wind_turbine.mean_hub_height()
+            # calculates a smoothed average power curve
+            # and assigns it to the windpark
             self.wind_turbine = self.wind_turbine.assign_power_curve()
 
         else:
