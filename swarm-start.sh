@@ -35,4 +35,5 @@ done
 sleep 10
 
 curl -X POST http://localhost:5000/start -d "begin=2018-01-01" -d "end=2018-02-01"
+curl -X POST http://localhost:5000/wait_limit -d "wait_limit=900"
 echo ""

@@ -64,7 +64,11 @@ class CtlAgent(BasicAgent):
             name = message.split(' ')[-1]
 
             if 'optimized_dayAhead' in message:
-                self.waiting_list.remove(name)
+                if agent_name in self.waiting_list:
+                    self.waiting_list.remove(name)
+                else:
+                    self.logger.error(f'controller went on without waiting for {name}')
+                    self.logger.error(f'the wait_limit should be increased')
                 self.logger.info(f'agent {name} set orders')
             if 'cleared market' in message:
                 self.cleared = True
