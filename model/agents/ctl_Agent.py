@@ -50,7 +50,7 @@ class CtlAgent(BasicAgent):
 
     async def async_run(self):
         host, port = self.ws_uri.split(':')
-        server = await websockets.serve(self.handler, host, int(port))
+        server = await websockets.serve(self.handler, host, int(port), ping_timeout=None)
         self.logger.info('finished serving')
         await server.wait_closed()
 

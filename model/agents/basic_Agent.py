@@ -91,7 +91,7 @@ class BasicAgent:
                 await asyncio.sleep(2*i)
                 self.logger.info(f'connecting to {self.ws_uri}')
                 # wait at the beginning
-                async with websockets.connect(self.ws_uri) as ws:
+                async with websockets.connect(self.ws_uri, ping_timeout=None) as ws:
                     await self.message_handler(ws)
             except OSError:
                 i += 1
