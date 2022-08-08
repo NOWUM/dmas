@@ -196,7 +196,7 @@ class PowerPlant(EnergySystem):
             p_out = np.asarray([self.model.p_out[t].value for t in self.t])
             objective_value = value(self.model.obj)
 
-            if p_out[-1] == 0 and step==0:
+            if p_out[-1] == 0 and step == 0:
                 all_off = np.argwhere(p_out == 0).flatten()
                 last_on = np.argwhere(p_out > 0).flatten()
                 last_on = last_on[-1] if len(last_on) > 0 else 0
@@ -304,7 +304,10 @@ class PowerPlant(EnergySystem):
                     links[0] = block_number
                     last_power[0] = result['power'][0]                    # -> set last_power to current power
                 else:
-                    for hour in np.argwhere(result['power'] > 0).flatten():
+                    hours = np.argwhere(result['power'] > 0).flatten()
+                    total_start_cost = result['start'][hours[0]]
+                    result['start'][hours] = total_start_cost / sum(result['power'][hours])
+                    for hour in hours:
                         order_book.update(set_order(result, hour, block_number, 0, links))
                         links[hour] = block_number
                         last_power[hour] = result['power'][hour]          # -> set last_power to current power
