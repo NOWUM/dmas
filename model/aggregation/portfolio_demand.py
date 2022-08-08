@@ -58,7 +58,6 @@ class DemandPortfolio(PortfolioModel):
             if power[t] < 0:
                 order_book[t] = dict(type='demand',
                                      hour=t,
-                                     order_id=0,
                                      block_id=t,
                                      name=name,
                                      price=3, # €/kWh
@@ -67,7 +66,7 @@ class DemandPortfolio(PortfolioModel):
         df = pd.DataFrame.from_dict(order_book, orient='index')
         if df.empty:
             raise Exception(f'no orders found; order_book: {order_book}')
-        return df.set_index(['block_id', 'hour', 'order_id', 'name'])
+        return df.set_index(['block_id', 'hour', 'name'])
 
 
     def optimize(self, date, weather, prices):

@@ -87,10 +87,10 @@ class PowerPlantPortfolio(PortfolioModel):
         if len(total_order_book) > 0:
             df = pd.concat(total_order_book, axis=0)
         else:
-            df = pd.DataFrame(columns=['block_id', 'hour', 'order_id', 'name',
+            df = pd.DataFrame(columns=['block_id', 'hour', 'name',
                                        'price', 'volume', 'link', 'type'])
 
-        df.set_index(['block_id', 'hour', 'order_id', 'name'], inplace=True)
+        df.set_index(['block_id', 'hour', 'name'], inplace=True)
 
         if not df.loc[df.isna().any(axis=1)].empty:
             self.logger.error('Orderbook has NaN values')

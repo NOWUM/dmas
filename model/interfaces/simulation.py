@@ -231,7 +231,7 @@ class SimulationInterface:
 
     def get_hourly_orders(self):
         df = pd.read_sql("Select * from hourly_orders", self.database)
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+        df = df.set_index(['block_id', 'hour', 'name'])
         return df
 
     def get_hourly_result(self, name):
@@ -252,7 +252,7 @@ class SimulationInterface:
 
     def get_linked_orders(self):
         df = pd.read_sql("Select * from linked_orders", self.database)
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+        df = df.set_index(['block_id', 'hour', 'name'])
         return df
 
     def get_linked_result(self, names : list[str]):
