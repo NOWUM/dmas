@@ -40,6 +40,7 @@ class PowerPlant(EnergySystem):
             self.order_split = 10
         else:
             self.order_split = 20
+        # self.order_split = 0
 
         self.optimization_results = {step: dict(power=np.zeros(self.T, float),
                                                 emission=np.zeros(self.T, float),
@@ -355,14 +356,14 @@ class PowerPlant(EnergySystem):
 
         if self.prevented_start['prevent']:
             prevented_hours = len(self.prevented_start['hours'])
-            cost = result['fuel'][hour] + result['emission'][hour] / self.power_plant['minPower']
-            price_reduction = cost - (self.prevented_start['delta'] / self.power_plant['minPower'] / max(prevented_hours,1))
+            price_reduction = (self.prevented_start['delta'] / (self.power_plant['minPower'] * max(prevented_hours, 1)))
+            #cost = (result['fuel'][hour] + result['emission'][hour]) / self.power_plant['minPower']
+            #price_reduction = cost - (self.prevented_start['delta'] / self.power_plant['minPower'] / max(prevented_hours,1))
             # reduction of the price per prevented hour
-
             # find price of hours with a prevented start
             # and substract the price reduction from the base load as it is beneficial to run without a stop
             hours_with_prev_start = df.index.get_level_values('hour').isin(self.prevented_start['hours'])
-            reduced_price = df.loc[:,hours_with_prev_start,:]['price'] - price_reduction
+            reduced_price = df.loc[:, hours_with_prev_start, :]['price'] - price_reduction
             # update the values through df.update as df.loc does not allow updates on a view
             df.update(reduced_price)
         return df
