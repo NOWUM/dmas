@@ -62,11 +62,11 @@ class DayAheadMarket:
 
         # Step 1 initialize binary variables for hourly ask block per agent and id
         self.model.use_hourly_ask = Var(set((block, hour, order_id, agent) for block, hour, order_id, agent
-                                            in self.orders['single_ask'].keys()), within=Binary)
+                                            in self.orders['single_ask'].keys()), within=Reals, bounds=(0, 1))
         self.model_vars['single_ask'] = self.model.use_hourly_ask
         # Step 3 initialize binary variables for ask order in block per agent
         self.model.use_linked_order = Var(set([(block, hour, order, agent) for block, hour, order, agent
-                                               in self.orders['linked_ask'].keys()]), within=Binary)
+                                               in self.orders['linked_ask'].keys()]), within=Reals, bounds=(0, 1))
         self.model_vars['linked_ask'] = self.model.use_linked_order
 
         # Step 4 initialize binary variables for exclusive block and agent
@@ -191,8 +191,18 @@ class DayAheadMarket:
         for type_ in self.model_vars.keys():
             for t in self.t:
                 for block, order, name in self.orders[f'{type_}_index'][t]:
-                    if self.model_vars[type_][block, t, order, name].value:
-                        used_orders[type_].update({(block, t, order, name): self.orders[type_][block, t, order, name]})
+                    if self.model_vars[type_][block, t, order, name].value > 0:
+                        f = self.model_vars[type_][block, t, order, name].value
+                        if 'linked' in type_:
+                            prc, vol, link = self.orders[type_][block, t, order, name]
+                            vol *= f
+                            p = (prc, vol, link)
+                        else:
+                            prc, vol = self.orders[type_][block, t, order, name]
+                            vol *= f
+                            p = (prc, vol)
+
+                        used_orders[type_][(block, t, order, name)] = p
         # -> build dataframe
         for type_ in self.model_vars.keys():
             orders = pd.DataFrame.from_dict(used_orders[type_], orient='index')
