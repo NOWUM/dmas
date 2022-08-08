@@ -34,6 +34,13 @@ class PowerPlant(EnergySystem):
 
         self.steps = steps
 
+        if self.power_plant['maxPower'] < 500:
+            self.order_split = 5
+        elif self.power_plant['maxPower'] < 1000:
+            self.order_split = 10
+        else:
+            self.order_split = 20
+
         self.optimization_results = {step: dict(power=np.zeros(self.T, float),
                                                 emission=np.zeros(self.T, float),
                                                 fuel=np.zeros(self.T, float),
@@ -268,7 +275,7 @@ class PowerPlant(EnergySystem):
                                             + self.power_plant['chi'] * prices['co'].mean())
 
     def get_orderbook(self) -> pd.DataFrame:
-        order_counter = 5
+        order_counter = self.order_split
 
         def set_order(r: dict, h: int, block_nr: int, split: int, link: dict,
                       lst_pwr: np.array = np.zeros(self.T), add: int = 0):
@@ -306,6 +313,7 @@ class PowerPlant(EnergySystem):
                 else:
                     hours = np.argwhere(result['power'] > 0).flatten()
                     total_start_cost = result['start'][hours[0]]
+                    result['power'][hours] = self.power_plant['minPower']
                     result['start'][hours] = total_start_cost / sum(result['power'][hours])
                     for hour in hours:
                         order_book.update(set_order(result, hour, block_number, 0, links))
