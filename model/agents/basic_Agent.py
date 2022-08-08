@@ -98,7 +98,8 @@ class BasicAgent:
                 self.logger.error('could not connect to '+self.ws_uri)
             except websockets.exceptions.ConnectionClosed as e:
                 i += 1
-                self.logger.error(f"Controller was shut down, trying again {i}")
+                self.logger.error(f"Controller was shut down {e}, trying again {i}")
+                self.logger.exception('Error')
 
     def run(self):
         loop = asyncio.get_event_loop()

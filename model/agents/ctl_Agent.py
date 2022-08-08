@@ -145,8 +145,10 @@ class CtlAgent(BasicAgent):
                 await asyncio.gather(self.receive_message(ws), self.send_message())
             else:
                 await self.receive_message(ws)
-        except websockets.exceptions.ConnectionClosed:
+        except websockets.exceptions.ConnectionClosed as e:
+            self.logger.error(f'Error in Connection: {e}')
             self.logger.info(f"Agent {agent_name} closed connection")
+            self.logger.exception('Error')
         except Exception:
             self.logger.exception('Error in Agent Handler')
         finally:
