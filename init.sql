@@ -2,19 +2,17 @@ CREATE TABLE hourly_orders
 (
     hour     bigint,
     block_id bigint,
-    order_id bigint,
     name     text,
     price    double precision,
     volume   double precision,
     type     text
 );
 ALTER TABLE "hourly_orders"
-    ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");
+    ADD PRIMARY KEY ("block_id", "hour", "name");
 CREATE TABLE linked_orders
 (
     block_id bigint,
     hour     bigint,
-    order_id bigint,
     name     text,
     price    double precision,
     volume   double precision,
@@ -22,7 +20,7 @@ CREATE TABLE linked_orders
     type     text
 );
 ALTER TABLE "linked_orders"
-    ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");
+    ADD PRIMARY KEY ("block_id", "hour", "name");
 CREATE TABLE exclusive_orders
 (
     block_id bigint,
@@ -91,19 +89,17 @@ CREATE TABLE hourly_results
 (
     hour     bigint,
     block_id bigint,
-    order_id bigint,
     name     text,
     price    double precision,
     volume   double precision,
     type     text
 );
 ALTER TABLE "hourly_results"
-    ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");
+    ADD PRIMARY KEY ("block_id", "hour", "name");
 CREATE TABLE linked_results
 (
     block_id bigint,
     hour     bigint,
-    order_id bigint,
     name     text,
     price    double precision,
     volume   double precision,
@@ -111,7 +107,7 @@ CREATE TABLE linked_results
     type     text
 );
 ALTER TABLE "linked_results"
-    ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");
+    ADD PRIMARY KEY ("block_id", "hour", "name");
 CREATE TABLE exclusive_results
 (
     block_id bigint,

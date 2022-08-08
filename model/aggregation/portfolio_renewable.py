@@ -63,14 +63,13 @@ class RenewablePortfolio(PortfolioModel):
             order_book[t] = dict(type='generation',
                                     hour=t,
                                     block_id=t,
-                                    order_id=0,
                                     name=self.agentname,
                                     price=self.res_price,
                                     volume=power[t])
         df = pd.DataFrame.from_dict(order_book, orient='index')
         if df.empty:
-            df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'order_id', 'name', 'price', 'volume'])
-        df = df.set_index(['block_id', 'hour', 'order_id', 'name'])
+            df = pd.DataFrame(columns=['type', 'block_id', 'hour', 'name', 'price', 'volume'])
+        df = df.set_index(['block_id', 'hour', 'name'])
 
         return df
 

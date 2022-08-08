@@ -38,12 +38,12 @@ class DayAheadMarket:
         for order_type in self._order_types:
             for t in self.t:
                 for key_tuple in self.orders[order_type].keys():
-                    block, hour, order, name = key_tuple
+                    block, hour, name = key_tuple
                     if hour == t:
-                        self.orders[f'{order_type}_index'][t] += [(block, order, name)]
+                        self.orders[f'{order_type}_index'][t] += [(block, name)]
 
         for key_tuple, val in self.orders['linked_ask'].items():
-            block, _, _, agent = key_tuple
+            block, _, agent = key_tuple
             _, _, parent_id = val
             child_key = (block, agent)
             self.parent_blocks[child_key] = parent_id
@@ -61,11 +61,11 @@ class DayAheadMarket:
         self.model.clear()
 
         # Step 1 initialize binary variables for hourly ask block per agent and id
-        self.model.use_hourly_ask = Var(set((block, hour, order_id, agent) for block, hour, order_id, agent
+        self.model.use_hourly_ask = Var(set((block, hour, agent) for block, hour, agent
                                             in self.orders['single_ask'].keys()), within=Reals, bounds=(0, 1))
         self.model_vars['single_ask'] = self.model.use_hourly_ask
         # Step 3 initialize binary variables for ask order in block per agent
-        self.model.use_linked_order = Var(set([(block, hour, order, agent) for block, hour, order, agent
+        self.model.use_linked_order = Var(set([(block, hour, agent) for block, hour, agent
                                                in self.orders['linked_ask'].keys()]), within=Reals, bounds=(0, 1))
         self.model_vars['linked_ask'] = self.model.use_linked_order
 
@@ -80,20 +80,20 @@ class DayAheadMarket:
         # Step 6 set constraint: If parent block of an agent is used -> enable usage of child block
         self.model.enable_child_block = ConstraintList()
         self.model.mother_bid = ConstraintList()
-        for data in set([(block, agent) for block, _, _, agent in self.orders['linked_ask'].keys()]):
+        for data in set([(block, agent) for block, _, agent in self.orders['linked_ask'].keys()]):
             block, agent = data
             parent_id = self.parent_blocks[block, agent]
             if parent_id != -1:
-                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, :, :, agent]) <=
-                                                  2 * quicksum(self.model.use_linked_order[parent_id, :, :, agent]))
+                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, :, agent]) <=
+                                                  2 * quicksum(self.model.use_linked_order[parent_id, :, agent]))
 
             if block == 0:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
-                mother_bid_counter = len(list(self.model.use_linked_order[0, :, 0, agent]))
-                first_mother_hour = list(self.model.use_linked_order[0, :, 0, agent])[0]
+                mother_bid_counter = len(list(self.model.use_linked_order[0, :, agent]))
+                first_mother_hour = list(self.model.use_linked_order[0, :, agent])[0]
                 self.model.mother_bid.add(
-                    quicksum(self.model.use_linked_order[0, :, 0, agent]) == mother_bid_counter * first_mother_hour)
+                    quicksum(self.model.use_linked_order[0, :, agent]) == mother_bid_counter * first_mother_hour)
 
         # Constraints for exclusive block orders
         # ------------------------------------------------
@@ -106,23 +106,23 @@ class DayAheadMarket:
 
         def get_volume(type_: str, hour: int):
             if type_ != 'single_bid':
-                return quicksum(self.orders[type_][block, hour, order, name][1] *
-                                self.model_vars[type_][block, hour, order, name]
-                                for block, order, name in self.orders[f'{type_}_index'][hour])
+                return quicksum(self.orders[type_][block, hour, name][1] *
+                                self.model_vars[type_][block, hour, name]
+                                for block, name in self.orders[f'{type_}_index'][hour])
             else:
-                return quicksum(self.orders[type_][block, hour, order, name][1]
-                                for block, order, name in self.orders[f'{type_}_index'][hour])
+                return quicksum(self.orders[type_][block, hour, name][1]
+                                for block, name in self.orders[f'{type_}_index'][hour])
 
         def get_cost(type_: str, hour: int):
             if type_ != 'single_bid':
-                return quicksum(self.orders[type_][block, hour, order, name][0] *
-                                self.orders[type_][block, hour, order, name][1] *
-                                self.model_vars[type_][block, hour, order, name]
-                                for block, order, name in self.orders[f'{type_}_index'][hour])
+                return quicksum(self.orders[type_][block, hour, name][0] *
+                                self.orders[type_][block, hour, name][1] *
+                                self.model_vars[type_][block, hour, name]
+                                for block, name in self.orders[f'{type_}_index'][hour])
             else:
-                return quicksum(self.orders[type_][block, hour, order, name][0] *
-                                self.orders[type_][block, hour, order, name][1]
-                                for block, order, name in self.orders[f'{type_}_index'][hour])
+                return quicksum(self.orders[type_][block, hour, name][0] *
+                                self.orders[type_][block, hour, name][1]
+                                for block, name in self.orders[f'{type_}_index'][hour])
 
         magic_source = [-1 * quicksum(get_volume(type_=order_type, hour=t) for order_type in self._order_types)
                         for t in self.t]
@@ -133,24 +133,15 @@ class DayAheadMarket:
             if not self.orders['single_bid_index'][t]:
                 self.logger.error(f'no hourly_bids available at hour {t}')
             elif not (self.orders['single_ask_index'][t] or self.orders['linked_ask_index'][t]):
-                self.logger.error(f'no hourly_asks available at hour {t}')
                 # constraints with 0 <= 0 are not valid
+                self.logger.error(f'no hourly_asks available at hour {t}')
             else:
-
-                #self.model.gen_dem.add(quicksum(get_volume(type_=order_type, hour=t)
-                #                                for order_type in self.model_vars.keys())
-                #                       <= -1 * get_volume(type_='single_bid', hour=t))
-
                 self.model.gen_dem.add(magic_source[t] == self.model.source[t] - self.model.sink[t])
 
         # Step 9 set constraint: Cost for each hour
         generation_cost = quicksum(quicksum(get_cost(type_=order_type, hour=t) for order_type in self._order_types
                                             if 'bid' not in order_type)
                                    + (self.model.source[t] + self.model.sink[t]) * 1e12 for t in self.t)
-        #generation_cost = quicksum(quicksum(get_cost(type_=order_type, hour=t) for order_type in self._order_types
-        #                                    if 'bid' not in order_type)
-        #                           + (magic_source[t]) * 1e6 for t in self.t)
-
 
         self.model.obj = Objective(expr=generation_cost, sense=minimize)
 
@@ -167,9 +158,9 @@ class DayAheadMarket:
         for t in self.t:
             max_price = - 1000
             for type_ in self.model_vars.keys():
-                for block, order, name in self.orders[f'{type_}_index'][t]:
-                    if self.model_vars[type_][block, t, order, name].value:
-                        price = self.orders[type_][block, t, order, name][0]
+                for block, name in self.orders[f'{type_}_index'][t]:
+                    if self.model_vars[type_][block, t, name].value:
+                        price = self.orders[type_][block, t, name][0]
                     else:
                         price = - 1000
                     if price > max_price:
@@ -182,31 +173,31 @@ class DayAheadMarket:
         for t in self.t:
             sum_magic_source += get_real_number(magic_source[t])
             volume = 0
-            for block, order, name in self.orders['single_bid_index'][t]:
-                volume += (-1) * self.orders['single_bid'][block, t, order, name][1]
+            for block, name in self.orders['single_bid_index'][t]:
+                volume += (-1) * self.orders['single_bid'][block, t, name][1]
             volumes.append(volume)
         self.logger.info(f'Got {sum_magic_source:.2f} kWh from Magic source')
         # -> determine used ask orders
         used_orders = {type_: {} for type_ in self.model_vars.keys()}
         for type_ in self.model_vars.keys():
             for t in self.t:
-                for block, order, name in self.orders[f'{type_}_index'][t]:
-                    if self.model_vars[type_][block, t, order, name].value:
-                        f = self.model_vars[type_][block, t, order, name].value
+                for block, name in self.orders[f'{type_}_index'][t]:
+                    if self.model_vars[type_][block, t, name].value:
+                        f = self.model_vars[type_][block, t, name].value
                         if 'linked' in type_:
-                            prc, vol, link = self.orders[type_][block, t, order, name]
+                            prc, vol, link = self.orders[type_][block, t, name]
                             vol *= f
                             p = (prc, vol, link)
                         else:
-                            prc, vol = self.orders[type_][block, t, order, name]
+                            prc, vol = self.orders[type_][block, t, name]
                             vol *= f
                             p = (prc, vol)
 
-                        used_orders[type_][(block, t, order, name)] = p
+                        used_orders[type_][(block, t, name)] = p
         # -> build dataframe
         for type_ in self.model_vars.keys():
             orders = pd.DataFrame.from_dict(used_orders[type_], orient='index')
-            orders.index = pd.MultiIndex.from_tuples(orders.index, names=['block_id', 'hour', 'order_id', 'name'])
+            orders.index = pd.MultiIndex.from_tuples(orders.index, names=['block_id', 'hour', 'name'])
 
             if 'linked' in type_ and orders.empty:
                 orders['price'] = []
@@ -224,7 +215,7 @@ class DayAheadMarket:
         # -> return all bid orders
         used_bid_orders = pd.DataFrame.from_dict(self.orders['single_bid'], orient='index')
         used_bid_orders.index = pd.MultiIndex.from_tuples(used_bid_orders.index,
-                                                          names=['block_id', 'hour', 'order_id', 'name'])
+                                                          names=['block_id', 'hour', 'name'])
         if used_bid_orders.empty:
             used_bid_orders['price'] = []
             used_bid_orders['volume'] = []
@@ -279,8 +270,8 @@ if __name__ == "__main__":
 
     o_book = pwp.get_orderbook()
 
-    # min_bid = -500/1e3
-    # o_book.loc[o_book['price'] < min_bid, 'price'] = min_bid
+    min_bid = -500/1e3
+    o_book.loc[o_book['price'] < min_bid, 'price'] = min_bid
     # order book for first day without market
     # visualize_orderbook(o_book)
 
@@ -290,53 +281,51 @@ if __name__ == "__main__":
     house.optimize()
     demand = house.demand['power']
 
-
     def demand_order_book(demand, house):
         order_book = {}
         for t in house.t:
             if -demand[t] < 0:
                 order_book[t] = dict(type='demand',
                                      hour=t,
-                                     order_id=0,
                                      block_id=t,
                                      name='DEM',
                                      price=3000,  # €/kWh
                                      volume=-demand[t])
 
         demand_order = pd.DataFrame.from_dict(order_book, orient='index')
-        demand_order = demand_order.set_index(['block_id', 'hour', 'order_id', 'name'])
+        demand_order = demand_order.set_index(['block_id', 'hour', 'name'])
         return demand_order
 
-
-    # demand[2:4] = 1
+    demand[2:4] = 1
     demand_order = demand_order_book(demand, house)
     # plot demand which is matched by pwp
-
-    #### add renewables
-    res_order = demand_order.copy()
-    res_order = res_order.reset_index()
-    res_order['name'] = 'RES'
-    res_order = res_order.set_index(['block_id', 'hour', 'order_id', 'name'])
-    res_order['volume'] = -0.2 * res_order['volume']
-    res_order['price'] = -0.5
-    res_order['type'] = 'generation'
-    ####
-
+    #
+    # #### add renewables
+    # res_order = demand_order.copy()
+    # res_order = res_order.reset_index()
+    # res_order['name'] = 'RES'
+    # res_order = res_order.set_index(['block_id', 'hour', 'order_id', 'name'])
+    # res_order['volume'] = -0.2 * res_order['volume']
+    # res_order['price'] = -0.5
+    # res_order['type'] = 'generation'
+    # ####
+    #
     my_market = DayAheadMarket()
 
     hourly_bid = {}
     for key, value in demand_order.to_dict(orient='index').items():
         hourly_bid[key] = (value['price'], value['volume'])
 
-    hourly_ask = {}
-    for key, value in res_order.to_dict(orient='index').items():
-        hourly_ask[key] = (value['price'], value['volume'])
+    # hourly_ask = {}
+    # for key, value in res_order.to_dict(orient='index').items():
+    #     hourly_ask[key] = (value['price'], value['volume'])
 
     linked_orders = {}
     for key, value in o_book.to_dict(orient='index').items():
         linked_orders[key] = (value['price'], value['volume'], value['link'])
-    # print(linked_orders)
-    my_market.set_parameter(hourly_ask, hourly_bid, linked_orders, {})
+
+    # # print(linked_orders)
+    my_market.set_parameter({}, hourly_bid, linked_orders, {})
     # optimize and unpack
     result = my_market.optimize()
     prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
@@ -350,7 +339,7 @@ if __name__ == "__main__":
     comm[committed_power.index] = committed_power
     committed_power.plot()
     (-demand_order['volume']).plot()
-    (res_order['volume']).plot()
+    # (res_order['volume']).plot()
 
     # power = pwp.optimize_post_market(comm)
     ################ second day ##############
