@@ -123,6 +123,8 @@ class CtlAgent(BasicAgent):
                 self.simulation_step = SimStep.MARKET_BIDS
                 self.cleared = False
                 self.date += timedelta(days=1)
+                # wait for set capacities before starting next day
+                await asyncio.sleep(5)
             await asyncio.sleep(1)
         self.logger.info('finished simulation')
         websockets.broadcast(connected, f"finished {self.date.date()}")
