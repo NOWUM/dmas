@@ -191,7 +191,7 @@ class DayAheadMarket:
         for type_ in self.model_vars.keys():
             for t in self.t:
                 for block, order, name in self.orders[f'{type_}_index'][t]:
-                    if self.model_vars[type_][block, t, order, name].value > 0:
+                    if self.model_vars[type_][block, t, order, name].value:
                         f = self.model_vars[type_][block, t, order, name].value
                         if 'linked' in type_:
                             prc, vol, link = self.orders[type_][block, t, order, name]
