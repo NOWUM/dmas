@@ -97,12 +97,15 @@ class DayAheadMarket:
         for order, hours in orders.items():
             block, agent = order
             parent_id = self.parent_blocks[block, agent]
-            if parent_id != -1:
+            # TODO: Check why a agent has no consistent linked orders
+            if (parent_id != -1) and ((parent_id, agent) in orders.keys()):
                 parent_hours = orders[(parent_id, agent)]
                 self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, h, agent]
                                                            for h in hours) <=
                                                   2 * quicksum(self.model.use_linked_order[parent_id, h, agent]
                                                                for h in parent_hours))
+            elif (parent_id, agent) not in orders.keys():
+                self.logger.warning(f'Agent {agent} send invalid linked orders')
             else:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
