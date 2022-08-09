@@ -299,21 +299,14 @@ class SimulationInterface:
 
     def set_orders(self, order_book, date, area):
 
-        mapping = dict(price='max', volume='sum')
-        orders = dict(volume=[], price=[], time=[], block_id=[])
-        for block, dfs in order_book.groupby(level=0):
-            for hour, df in dfs.groupby(level=1):
-                order = df.aggregate(mapping)
-                for key in [k for k in orders.keys() if k != 'block_id']:
-                    orders[key] += [order[key]] if key != 'time' else [date + td(hours=int(hour))]
-                orders['block_id'] += [block]
-
-        orders = pd.DataFrame.from_dict(orders)
-
-        orders['agent'] = self.name
-        orders['area'] = area
+        mapping = dict(price='mean', volume='sum')
+        order_book = order_book.groupby(order_book.index.get_level_values('hour')).aggregate(mapping)
+        order_book.index = [date + td(hours=int(hour)) for hour in order_book.index]
+        order_book.index.name = 'time'
+        order_book['agent'] = self.name
+        order_book['area'] = area
 
         try:
-            orders.to_sql(name='orders', con=self.database, if_exists='append', index=None)
+            order_book.to_sql(name='orders', con=self.database, if_exists='append')
         except IntegrityError:
             self.logger.error(f'orders already exists for {self.name} and {date} - ignoring')

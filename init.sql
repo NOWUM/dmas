@@ -121,10 +121,8 @@ ALTER TABLE "exclusive_results"
 CREATE TABLE orders
 (
     "time" timestamp without time zone,
-     total double precision,
      volume double precision,
      price double precision,
-     block_id integer,
      agent text,
      area text
 );
