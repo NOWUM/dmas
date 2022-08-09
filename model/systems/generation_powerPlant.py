@@ -358,7 +358,8 @@ class PowerPlant(EnergySystem):
             hours_with_prev_start = df.index.get_level_values('hour').isin(self.prevented_start['hours'])
             reduced_price = df.loc[:, hours_with_prev_start, :]['price'] - price_reduction
             reduced_volume = df.loc[:, hours_with_prev_start, :]['volume']
-            reduced_volume.loc[:] = self.power_plant['minPower']
+            reduced_volume.values[:] = self.power_plant['minPower']
+
             # update the values through df.update as df.loc does not allow updates on a view
             df.update(reduced_price)
             df.update(reduced_volume)
@@ -370,19 +371,19 @@ def visualize_orderbook(order_book):
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap
     tab20_cmap = plt.get_cmap("tab20c")
-    ob = order_book.reset_index(level=[0, 2, 3])
+    ob = order_book.reset_index(level=[0, 2])
     idx = np.arange(24)
 
     y_past = np.zeros(24)
-    for i, df_grouped in ob.groupby('order_id'):
-        my_cmap_raw = np.array(tab20_cmap.colors) * (1 - 0.1 * i)
+    for i, df_grouped in ob.groupby('block_id'):
+        my_cmap_raw = np.array(tab20_cmap.colors) * i/24
         my_cmap = ListedColormap(my_cmap_raw)
 
         for j, o in df_grouped.groupby('link'):
             x = idx  # o.index
             ys = np.zeros(24)
             ys[o.index] = o['volume']
-            if len(list(ys)) > 0:
+            if len(list(ys)) > 0 and (ys >0).any():
                 plt.bar(x, ys, bottom=y_past, color=my_cmap.colors[(j + 1) % 20])
             y_past += ys
     plt.title('Orderbook')
