@@ -70,7 +70,8 @@ class MarketAgent(BasicAgent):
 
         auction_results.index = pd.date_range(start=self.date, periods=24, freq='h')
         auction_results.index.name = 'time'
-        self.logger.info(f'saved results in db in {time.time() - t1:.2f} seconds')
+
         self.simulation_interface.set_auction_results(auction_results)
         self.simulation_interface.set_market_results(market_results)
+        self.logger.info(f'saved results in db in {time.time() - t1:.2f} seconds')
         self.logger.info(f'successfully cleared market in {time.time() - start_time:.2f} seconds for {self.date}')
