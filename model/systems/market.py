@@ -22,6 +22,7 @@ class DayAheadMarket:
             self.orders[f'{order_type}_index'] = {t: [] for t in self.t}
 
         self.parent_blocks = {}
+        self.agents_with_linked_block = []
 
         self.model = ConcreteModel()
         if solver_type == 'gurobi':
@@ -45,17 +46,22 @@ class DayAheadMarket:
 
         for key_tuple, val in self.orders['linked_ask'].items():
             block, _, agent = key_tuple
+            self.agents_with_linked_block += [agent]
             _, _, parent_id = val
             child_key = (block, agent)
             self.parent_blocks[child_key] = parent_id
 
+        self.agents_with_linked_block = set(self.agents_with_linked_block)
+
     def _reset_parameter(self):
         self.orders = {}
+
         for order_type in self._order_types:
             self.orders[order_type] = {}
             self.orders[f'{order_type}_index'] = {t: [] for t in self.t}
 
         self.parent_blocks = {}
+        self.agents_with_linked_block = []
 
     def optimize(self):
 
@@ -71,6 +77,8 @@ class DayAheadMarket:
                                                in self.orders['linked_ask'].keys()]), within=Reals, bounds=(0, 1))
         self.model_vars['linked_ask'] = self.model.use_linked_order
 
+        self.model.use_mother_order = Var(self.agents_with_linked_block, within=Binary)
+
         # Step 4 initialize binary variables for exclusive block and agent
         self.model.use_exclusive_block = Var(set([(block, agent) for block, _, agent
                                                   in self.orders['exclusive_ask'].keys()]), within=Binary)
@@ -84,24 +92,26 @@ class DayAheadMarket:
         self.model.mother_bid = ConstraintList()
         orders = defaultdict(lambda: [])
         for block, hour, agent in self.orders['linked_ask'].keys():
-            orders[(block,agent)].append(hour)
+            orders[(block, agent)].append(hour)
+
+        print(orders)
 
         for order, hours in orders.items():
+            print('hours:', hours)
+            print('order:', order)
             block, agent = order
             parent_id = self.parent_blocks[block, agent]
             if parent_id != -1:
                 parent_hours = orders[(parent_id, agent)]
-                self.model.enable_child_block.add(quicksum([self.model.use_linked_order[block, h, agent] for h in hours]) <=
-                                                  2 * quicksum([self.model.use_linked_order[parent_id, h, agent] for h in parent_hours]))
-
-
-            if block == 0:
+                print('parent_id:', parent_hours)
+                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, h, agent] for h in hours) <=
+                                                  2 * quicksum(self.model.use_linked_order[parent_id, h, agent] for h in parent_hours))
+            else:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
                 mother_bid_counter = len(hours)
-                first_mother_hour = hours[0]
-                self.model.mother_bid.add(
-                    quicksum([self.model.use_linked_order[0, h, agent] for h in hours]) == mother_bid_counter * first_mother_hour)
+                self.model.mother_bid.add(quicksum(self.model.use_linked_order[0, h, agent] for h in hours)
+                                          == mother_bid_counter * self.model.use_mother_order[agent])
 
         # Constraints for exclusive block orders
         # ------------------------------------------------
@@ -244,8 +254,8 @@ if __name__ == "__main__":
     from systems.demand import HouseholdModel
     logging.basicConfig()
 
-    max_p = 1501
-    min_p = max_p*0.5
+    max_p = 1500
+    min_p = max_p*0.2
     plant = {'unitID': 'x',
              'fuel': 'coal',
              'maxPower': max_p,  # kW
@@ -257,7 +267,7 @@ if __name__ == "__main__":
              'runTime': 6,  # hours
              'gradP': min_p,  # kW/h
              'gradM': min_p,  # kW/h
-             'on': 6,  # running since
+             'on': 2,  # running since
              'off': 0,
              'startCost': 1e3  # €/Start
              }
@@ -311,14 +321,14 @@ if __name__ == "__main__":
     demand_order = demand_order_book(demand, house)
     # plot demand which is matched by pwp
     #
-    # #### add renewables
-    # res_order = demand_order.copy()
-    # res_order = res_order.reset_index()
-    # res_order['name'] = 'RES'
-    # res_order = res_order.set_index(['block_id', 'hour', 'order_id', 'name'])
-    # res_order['volume'] = -0.2 * res_order['volume']
-    # res_order['price'] = -0.5
-    # res_order['type'] = 'generation'
+    #### add renewables
+    res_order = demand_order.copy()
+    res_order = res_order.reset_index()
+    res_order['name'] = 'RES'
+    res_order = res_order.set_index(['block_id', 'hour', 'name'])
+    res_order['volume'] = -0.2 * res_order['volume']
+    res_order['price'] = -0.5
+    res_order['type'] = 'generation'
     # ####
     #
     my_market = DayAheadMarket()
@@ -340,7 +350,7 @@ if __name__ == "__main__":
     # optimize and unpack
     result = my_market.optimize()
     prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
-    my_market.model.use_linked_order.pprint()
+    # my_market.model.use_linked_order.pprint()
 
     committed_power = used_linked_orders.groupby('hour').sum()['volume']
     # assert committed_power[23] == 300, 'pwp bids negative values'
