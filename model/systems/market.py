@@ -5,6 +5,7 @@ from pyomo.environ import Var, Objective, SolverFactory, ConcreteModel, Reals, B
 from pyomo.environ import value as get_real_number
 import time
 import logging
+from collections import defaultdict
 
 
 class DayAheadMarket:
@@ -81,20 +82,26 @@ class DayAheadMarket:
         # Step 6 set constraint: If parent block of an agent is used -> enable usage of child block
         self.model.enable_child_block = ConstraintList()
         self.model.mother_bid = ConstraintList()
-        for data in set([(block, agent) for block, _, agent in self.orders['linked_ask'].keys()]):
-            block, agent = data
+        orders = defaultdict(lambda: [])
+        for block, hour, agent in self.orders['linked_ask'].keys():
+            orders[(block,agent)].append(hour)
+
+        for order, hours in orders.items():
+            block, agent = order
             parent_id = self.parent_blocks[block, agent]
             if parent_id != -1:
-                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, :, agent]) <=
-                                                  2 * quicksum(self.model.use_linked_order[parent_id, :, agent]))
+                parent_hours = orders[(parent_id, agent)]
+                self.model.enable_child_block.add(quicksum([self.model.use_linked_order[block, h, agent] for h in hours]) <=
+                                                  2 * quicksum([self.model.use_linked_order[parent_id, h, agent] for h in parent_hours]))
+
 
             if block == 0:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
-                mother_bid_counter = len(list(self.model.use_linked_order[0, :, agent]))
-                first_mother_hour = list(self.model.use_linked_order[0, :, agent])[0]
+                mother_bid_counter = len(hours)
+                first_mother_hour = hours[0]
                 self.model.mother_bid.add(
-                    quicksum(self.model.use_linked_order[0, :, agent]) == mother_bid_counter * first_mother_hour)
+                    quicksum([self.model.use_linked_order[0, h, agent] for h in hours]) == mother_bid_counter * first_mother_hour)
 
         # Constraints for exclusive block orders
         # ------------------------------------------------
