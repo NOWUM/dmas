@@ -59,6 +59,8 @@ class MarketAgent(BasicAgent):
         self.market.set_parameter(hourly_ask, hourly_bid, linked_orders, exclusive_orders)
         self.logger.info(f'start market optimization')
         auction_results, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = self.market.optimize()
+        self.logger.info('get market results')
+        t1 = time.time()
         market_results = dict(
             hourly_results=used_ask_orders,
             linked_results=used_linked_orders,
@@ -68,7 +70,7 @@ class MarketAgent(BasicAgent):
 
         auction_results.index = pd.date_range(start=self.date, periods=24, freq='h')
         auction_results.index.name = 'time'
-
+        self.logger.info(f'saved results in db in {round(time.time()-t1, 2)}')
         self.simulation_interface.set_auction_results(auction_results)
         self.simulation_interface.set_market_results(market_results)
         self.logger.info(f'successfully cleared market in {time.time() - start_time:.2f} seconds for {self.date}')

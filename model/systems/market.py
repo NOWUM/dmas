@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-import pyomo.core
 from pyomo.environ import Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
     minimize, quicksum, ConstraintList
 from pyomo.environ import value as get_real_number
+import time
 import logging
 
 
@@ -59,7 +59,8 @@ class DayAheadMarket:
     def optimize(self):
 
         self.model.clear()
-
+        self.logger.info('start building model')
+        t1 = time.time()
         # Step 1 initialize binary variables for hourly ask block per agent and id
         self.model.use_hourly_ask = Var(set((block, hour, agent) for block, hour, agent
                                             in self.orders['single_ask'].keys()), within=Reals, bounds=(0, 1))
@@ -144,7 +145,9 @@ class DayAheadMarket:
                                    + (self.model.source[t] + self.model.sink[t]) * 1e12 for t in self.t)
 
         self.model.obj = Objective(expr=generation_cost, sense=minimize)
-
+        self.logger.info(f'built model in {round(time.time()-t1), 2 }')
+        self.logger.info(f'start optimization/market clearing')
+        t1 = time.time()
         try:
             r = self.opt.solve(self.model, options={'MIPGap': 0.1, 'TimeLimit': 60})
             print(r)
@@ -152,6 +155,7 @@ class DayAheadMarket:
             self.logger.exception('error solving optimization problem')
             self.logger.error(f'Model: {self.model}')
             self.logger.error(f'{repr(e)}')
+        self.logger.info(f'cleared market in {round(time.time()-t1), 2}')
 
         # -> determine price at each hour
         prices = []
