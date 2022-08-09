@@ -357,8 +357,12 @@ class PowerPlant(EnergySystem):
             # and substract the price reduction from the base load as it is beneficial to run without a stop
             hours_with_prev_start = df.index.get_level_values('hour').isin(self.prevented_start['hours'])
             reduced_price = df.loc[:, hours_with_prev_start, :]['price'] - price_reduction
+            reduced_volume = df.loc[:, hours_with_prev_start, :]['volume']
+            reduced_volume.loc[:] = self.power_plant['minPower']
             # update the values through df.update as df.loc does not allow updates on a view
             df.update(reduced_price)
+            df.update(reduced_volume)
+            # df.update(reduced_power)
         return df
 
 
