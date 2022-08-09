@@ -145,7 +145,7 @@ class DayAheadMarket:
                                    + (self.model.source[t] + self.model.sink[t]) * 1e12 for t in self.t)
 
         self.model.obj = Objective(expr=generation_cost, sense=minimize)
-        self.logger.info(f'built model in {round(time.time()-t1), 2 }')
+        self.logger.info(f'built model in {time.time() - t1:.2f} seconds')
         self.logger.info(f'start optimization/market clearing')
         t1 = time.time()
         try:
@@ -155,7 +155,7 @@ class DayAheadMarket:
             self.logger.exception('error solving optimization problem')
             self.logger.error(f'Model: {self.model}')
             self.logger.error(f'{repr(e)}')
-        self.logger.info(f'cleared market in {round(time.time()-t1), 2}')
+        self.logger.info(f'cleared market in {time.time() - t1:.2f} seconds')
 
         # -> determine price at each hour
         prices = []
