@@ -356,14 +356,37 @@ class PowerPlant(EnergySystem):
             # find price of hours with a prevented start
             # and substract the price reduction from the base load as it is beneficial to run without a stop
             hours_with_prev_start = df.index.get_level_values('hour').isin(self.prevented_start['hours'])
-            reduced_price = df.loc[:, hours_with_prev_start, :]['price'] - price_reduction
-            reduced_volume = df.loc[:, hours_with_prev_start, :]['volume']
-            reduced_volume.values[:] = self.power_plant['minPower']
 
-            # update the values through df.update as df.loc does not allow updates on a view
-            df.update(reduced_price)
-            df.update(reduced_volume)
-            # df.update(reduced_power)
+            normal_volume = df.loc[:, hours_with_prev_start, :]['volume']
+            normal_price = df.loc[:, hours_with_prev_start, :]['price']
+
+            df = df.loc[~df.index.get_level_values('hour').isin(self.prevented_start['hours'])]
+
+            last_block = max(df.index.get_level_values('block_id').values)
+
+            prev_order = {}
+            block_number = last_block + 1
+            reduced_price = np.mean((normal_price.values - price_reduction))
+            for hour in self.prevented_start['hours']:
+                prev_order[(block_number, hour, self.name)] = (reduced_price, self.power_plant['minPower'],
+                                                               last_block, 'generation')
+            last_block = block_number
+            block_number += 1
+            for index in normal_volume.index:
+                vol = normal_volume.loc[index] - self.power_plant['minPower']
+                prc = normal_price.loc[index]
+                _, hour, _ = index
+                if vol > 0:
+                    prev_order[(block_number, hour, self.name)] = (prc, vol, last_block, 'generation')
+                    block_number += 1
+
+            df_prev = pd.DataFrame.from_dict(prev_order, orient='index')
+            df_prev.columns = ['price', 'volume', 'link', 'type']
+            print(df_prev)
+            df_prev.index = pd.MultiIndex.from_tuples(df_prev.index, names=['block_id', 'hour', 'name'])
+
+            df = pd.concat([df, df_prev], axis=0)
+
         return df
 
 
