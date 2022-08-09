@@ -94,18 +94,15 @@ class DayAheadMarket:
         for block, hour, agent in self.orders['linked_ask'].keys():
             orders[(block, agent)].append(hour)
 
-        print(orders)
-
         for order, hours in orders.items():
-            print('hours:', hours)
-            print('order:', order)
             block, agent = order
             parent_id = self.parent_blocks[block, agent]
             if parent_id != -1:
                 parent_hours = orders[(parent_id, agent)]
-                print('parent_id:', parent_hours)
-                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, h, agent] for h in hours) <=
-                                                  2 * quicksum(self.model.use_linked_order[parent_id, h, agent] for h in parent_hours))
+                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, h, agent]
+                                                           for h in hours) <=
+                                                  2 * quicksum(self.model.use_linked_order[parent_id, h, agent]
+                                                               for h in parent_hours))
             else:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
@@ -275,7 +272,7 @@ if __name__ == "__main__":
 
     power_price = 50 * np.ones(48)
     power_price[18:24] = 0
-    power_price[24:] = 50
+    power_price[24:] = 20
     co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
     gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
     lignite = np.ones(48) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
