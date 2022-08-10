@@ -382,7 +382,6 @@ class PowerPlant(EnergySystem):
 
             df_prev = pd.DataFrame.from_dict(prev_order, orient='index')
             df_prev.columns = ['price', 'volume', 'link', 'type']
-            print(df_prev)
             df_prev.index = pd.MultiIndex.from_tuples(df_prev.index, names=['block_id', 'hour', 'name'])
 
             df = pd.concat([df, df_prev], axis=0)

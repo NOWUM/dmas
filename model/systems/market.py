@@ -105,7 +105,12 @@ class DayAheadMarket:
                                                   2 * quicksum(self.model.use_linked_order[parent_id, h, agent]
                                                                for h in parent_hours))
             elif (parent_id, agent) not in orders.keys():
-                self.logger.warning(f'Agent {agent} send invalid linked orders')
+                self.logger.warning(f'Agent {agent} send invalid linked orders '
+                                    f'- block {block} has no parent_id {parent_id}')
+                print('Block, Hour, Agent, Price, Volume, Link')
+                for key, data in self.orders['linked_ask'].items():
+                    if key[2] == agent:
+                        print(key[0], key[1], key[2], data[0], data[1], data[2])
             else:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
@@ -348,18 +353,18 @@ if __name__ == "__main__":
     # # print(linked_orders)
     my_market.set_parameter({}, hourly_bid, linked_orders, {})
     # optimize and unpack
-    result = my_market.optimize()
-    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
-    # my_market.model.use_linked_order.pprint()
-
-    committed_power = used_linked_orders.groupby('hour').sum()['volume']
-    # assert committed_power[23] == 300, 'pwp bids negative values'
-
-    # plot committed power of the pwp for results of first day
-    comm = np.zeros(24)
-    comm[committed_power.index] = committed_power
-    committed_power.plot()
-    (-demand_order['volume']).plot()
+    # result = my_market.optimize()
+    # prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
+    # # my_market.model.use_linked_order.pprint()
+    #
+    # committed_power = used_linked_orders.groupby('hour').sum()['volume']
+    # # assert committed_power[23] == 300, 'pwp bids negative values'
+    #
+    # # plot committed power of the pwp for results of first day
+    # comm = np.zeros(24)
+    # comm[committed_power.index] = committed_power
+    # committed_power.plot()
+    # (-demand_order['volume']).plot()
     # (res_order['volume']).plot()
 
     # power = pwp.optimize_post_market(comm)
