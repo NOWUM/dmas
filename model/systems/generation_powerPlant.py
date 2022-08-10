@@ -215,7 +215,7 @@ class PowerPlant(EnergySystem):
                 percentage = delta / objective_value if objective_value else 0
                 if prevent_start and percentage > 0.05:
                     self.prevented_start = dict(prevent=True, hours=prevented_off_hours,
-                                                delta=delta / len(prevented_off_hours))
+                                                delta=delta / (len(prevented_off_hours) * self.power_plant['minPower']))
                 self.t = np.arange(self.T)
 
             if step == 0:
@@ -224,7 +224,7 @@ class PowerPlant(EnergySystem):
                                       start_ups=self.optimization_results[step]['start'],
                                       profit=self.optimization_results[step]['profit'])
                 self.generation[str(self.power_plant['fuel']).replace('_combined', '')] = \
-                self.optimization_results[step]['power']
+                    self.optimization_results[step]['power']
                 self.power = self.optimization_results[step]['power']
         return self.power
 
@@ -273,7 +273,7 @@ class PowerPlant(EnergySystem):
 
     def get_orderbook(self) -> pd.DataFrame:
 
-        def set_order(r: dict, h: int, block_nr: int, link: dict,  mother: bool = False,
+        def set_order(r: dict, h: int, block_nr: int, link: dict, mother: bool = False,
                       lst_pwr: np.array = np.zeros(self.T), add: int = 0):
             book = {}
             pwr = r['power'][h]
@@ -350,28 +350,28 @@ class PowerPlant(EnergySystem):
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'name'])
 
         if self.prevented_start['prevent']:
-            prevented_hours = len(self.prevented_start['hours'])
-            price_reduction = (self.prevented_start['delta'] / (self.power_plant['minPower'] * max(prevented_hours, 1)))
-            # reduction of the price per prevented hour
-            # find price of hours with a prevented start
-            # and substract the price reduction from the base load as it is beneficial to run without a stop
-            hours_with_prev_start = df.index.get_level_values('hour').isin(self.prevented_start['hours'])
 
-            normal_volume = df.loc[:, hours_with_prev_start, :]['volume']
-            normal_price = df.loc[:, hours_with_prev_start, :]['price']
+            hours = self.prevented_start['hours']
+            # -> get cost for running on minPower
+            fuel_prices = self.prices[str(self.power_plant['fuel']).replace('_combined', '')].values
+            em_prices = self.prices['co'].values
+            fuel = (self.power_plant['minPower'] / self.power_plant['eta']) * fuel_prices
+            emission = ((self.power_plant['minPower'] / self.power_plant['eta']) * self.power_plant['chi']) * em_prices
+            min_price = np.mean(fuel[hours] + emission[hours]) - self.prevented_start['delta']
+            # -> volume and price which is already in orderbook
+            normal_volume = df.loc[:, df.index.get_level_values('hour').isin(hours), :]['volume']
+            normal_price = df.loc[:, df.index.get_level_values('hour').isin(hours), :]['price']
+            # -> drop this volume and build new orders
+            df = df.loc[~df.index.get_level_values('hour').isin(hours)]
+            # -> get last block to link on
+            last_block = max(df.index.get_level_values('block_id').values) if len(df) > 0 else -1
 
-            df = df.loc[~df.index.get_level_values('hour').isin(self.prevented_start['hours'])]
-
-            if len(df) > 0:
-                last_block = max(df.index.get_level_values('block_id').values)
-            else:
-                last_block = -1
-
+            # -> build new orders
             prev_order = {}
             block_number = last_block + 1
-            reduced_price = np.mean((normal_price.values - price_reduction))
-            for hour in self.prevented_start['hours']:
-                prev_order[(block_number, hour, self.name)] = (reduced_price, self.power_plant['minPower'],
+            # -> for each hour build one block with minPower
+            for hour in hours:
+                prev_order[(block_number, hour, self.name)] = (min_price, self.power_plant['minPower'],
                                                                last_block, 'generation')
             last_block = block_number
             block_number += 1
@@ -386,8 +386,9 @@ class PowerPlant(EnergySystem):
             df_prev = pd.DataFrame.from_dict(prev_order, orient='index')
             df_prev.columns = ['price', 'volume', 'link', 'type']
             df_prev.index = pd.MultiIndex.from_tuples(df_prev.index, names=['block_id', 'hour', 'name'])
-
+            # -> limit to market price range
             df = pd.concat([df, df_prev], axis=0)
+            df.loc[df['price'] < -500/1e3, 'price'] = -500/1e3
 
         return df
 
@@ -401,14 +402,14 @@ def visualize_orderbook(order_book):
 
     y_past = np.zeros(24)
     for i, df_grouped in ob.groupby('block_id'):
-        my_cmap_raw = np.array(tab20_cmap.colors) * i/24
+        my_cmap_raw = np.array(tab20_cmap.colors) * i / 24
         my_cmap = ListedColormap(my_cmap_raw)
 
         for j, o in df_grouped.groupby('link'):
             x = idx  # o.index
             ys = np.zeros(24)
             ys[o.index] = o['volume']
-            if len(list(ys)) > 0 and (ys >0).any():
+            if len(list(ys)) > 0 and (ys > 0).any():
                 plt.bar(x, ys, bottom=y_past, color=my_cmap.colors[(j + 1) % 20])
             y_past += ys
     plt.title('Orderbook')
