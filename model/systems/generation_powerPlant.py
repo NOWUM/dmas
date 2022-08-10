@@ -362,7 +362,10 @@ class PowerPlant(EnergySystem):
 
             df = df.loc[~df.index.get_level_values('hour').isin(self.prevented_start['hours'])]
 
-            last_block = max(df.index.get_level_values('block_id').values)
+            if len(df) > 0:
+                last_block = max(df.index.get_level_values('block_id').values)
+            else:
+                last_block = -1
 
             prev_order = {}
             block_number = last_block + 1
