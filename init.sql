@@ -127,7 +127,7 @@ CREATE TABLE orders
      area text
 );
 ALTER TABLE "orders"
-    ADD PRIMARY KEY ("time","agent","block_id");
+    ADD PRIMARY KEY ("time","agent");
 
 SELECT create_hypertable('orders', 'time', if_not_exists => TRUE, migrate_data => TRUE);
 SELECT create_hypertable('auction_results', 'time', if_not_exists => TRUE, migrate_data => TRUE);
