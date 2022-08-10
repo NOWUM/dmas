@@ -250,6 +250,7 @@ class DayAheadMarket:
             used_bid_orders.columns = ['price', 'volume']
 
         prices['volume'] = volumes
+        prices['magic_source'] = [get_real_number(m) for m in magic_source]
         self._reset_parameter()
         return prices, used_orders['single_ask'], used_orders['linked_ask'],\
                used_orders['exclusive_ask'], used_bid_orders
@@ -354,7 +355,7 @@ if __name__ == "__main__":
     # # print(linked_orders)
     my_market.set_parameter({}, hourly_bid, linked_orders, {})
     # optimize and unpack
-    # result = my_market.optimize()
+    result = my_market.optimize()
     # prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
     # # my_market.model.use_linked_order.pprint()
     #
