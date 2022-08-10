@@ -311,3 +311,17 @@ class SimulationInterface:
             order_book.to_sql(name='orders', con=self.database, if_exists='append')
         except IntegrityError:
             self.logger.error(f'orders already exists for {self.name} and {date} - ignoring')
+
+    def set_cash_flow(self, portfolio, area, date):
+
+        data_frame = pd.DataFrame(index=pd.date_range(start=date, freq='h', periods=24),
+                                  data=portfolio.cash_flow)
+
+        data_frame['agent'] = self.name
+        data_frame['area'] = area
+        data_frame.index.name = 'time'
+
+        try:
+            data_frame.to_sql(name='cash_flows', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.error(f'orders already exists for {self.name} and {date} - ignoring')

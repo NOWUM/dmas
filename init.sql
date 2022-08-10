@@ -82,7 +82,8 @@ CREATE TABLE auction_results
 (
     "time" timestamp without time zone,
     price  double precision,
-    volume double precision
+    volume double precision,
+    magic_source double precision
 );
 ALTER TABLE "auction_results"
     ADD PRIMARY KEY ("time");
@@ -129,6 +130,20 @@ CREATE TABLE orders
 );
 ALTER TABLE "orders"
     ADD PRIMARY KEY ("time","agent");
+CREATE TABLE cash_flows
+(
+    "time" timestamp without time zone,
+     profit double precision,
+     emission double precision,
+     fuel double precision,
+     start_ups double precision,
+     agent text,
+     area text
+);
+ALTER TABLE "orders"
+    ADD PRIMARY KEY ("time","agent");
+
+
 
 SELECT create_hypertable('orders', 'time', if_not_exists => TRUE, migrate_data => TRUE);
 SELECT create_hypertable('auction_results', 'time', if_not_exists => TRUE, migrate_data => TRUE);

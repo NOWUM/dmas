@@ -72,6 +72,11 @@ class PowerPlantPortfolio(PortfolioModel):
                         model_cp[int(row.hour)] = float(row.volume)
                         self.generation['allocation'][int(row.hour)] += float(row.volume)
                 model.optimize_post_market(model_cp)
+                self.cash_flow['fuel'] += model.cash_flow['fuel']
+                self.cash_flow['emission'] += model.cash_flow['emission']
+                self.cash_flow['start_ups'] += model.cash_flow['start_ups']
+                self.cash_flow['profit'] += model.cash_flow['profit']
+
             log.info(f'optimized post market results')
         except Exception as e:
             log.error(f'error in post market optimization: {repr(e)}')

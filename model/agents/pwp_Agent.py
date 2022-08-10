@@ -94,6 +94,7 @@ class PwpAgent(BasicAgent):
         # save optimization results
         self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
+        self.simulation_interface.set_cash_flow(self.portfolio, self.area, self.date)
 
         self.weather_forecast.collect_data(self.date)
         self.price_forecast.collect_data(self.date)
