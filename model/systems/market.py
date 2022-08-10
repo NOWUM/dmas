@@ -98,19 +98,20 @@ class DayAheadMarket:
             block, agent = order
             parent_id = self.parent_blocks[block, agent]
             # TODO: Check why a agent has no consistent linked orders
-            if (parent_id != -1) and ((parent_id, agent) in orders.keys()):
-                parent_hours = orders[(parent_id, agent)]
-                self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, h, agent]
-                                                           for h in hours) <=
-                                                  2 * quicksum(self.model.use_linked_order[parent_id, h, agent]
-                                                               for h in parent_hours))
-            elif (parent_id, agent) not in orders.keys():
-                self.logger.warning(f'Agent {agent} send invalid linked orders '
-                                    f'- block {block} has no parent_id {parent_id}')
-                print('Block, Hour, Agent, Price, Volume, Link')
-                for key, data in self.orders['linked_ask'].items():
-                    if key[2] == agent:
-                        print(key[0], key[1], key[2], data[0], data[1], data[2])
+            if parent_id != -1:
+                if (parent_id, agent) in orders.keys():
+                    parent_hours = orders[(parent_id, agent)]
+                    self.model.enable_child_block.add(quicksum(self.model.use_linked_order[block, h, agent]
+                                                               for h in hours) <=
+                                                      2 * quicksum(self.model.use_linked_order[parent_id, h, agent]
+                                                                   for h in parent_hours))
+                else:
+                    self.logger.warning(f'Agent {agent} send invalid linked orders '
+                                        f'- block {block} has no parent_id {parent_id}')
+                    print('Block, Hour, Agent, Price, Volume, Link')
+                    for key, data in self.orders['linked_ask'].items():
+                        if key[2] == agent:
+                            print(key[0], key[1], key[2], data[0], data[1], data[2])
             else:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
