@@ -111,6 +111,7 @@ class RenewablePortfolio(PortfolioModel):
         return self.power
 
     def optimize_post_market(self, committed_power):
+        self.generation['allocation'] = committed_power
         power = self.generation['total'] - self.demand['power']
         priority_fuel = ['wind', 'bio', 'water', 'solar']
         to_reduce = power - committed_power

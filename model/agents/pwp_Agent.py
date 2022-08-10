@@ -1,5 +1,7 @@
 # third party modules
 import time
+
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -16,7 +18,7 @@ class PwpAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         start_time = time.time()
 
-        self.portfolio : PowerPlantPortfolio = PowerPlantPortfolio()
+        self.portfolio: PowerPlantPortfolio = PowerPlantPortfolio()
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 simulation_interface=self.simulation_interface,
@@ -89,7 +91,6 @@ class PwpAgent(BasicAgent):
 
         committed_power = self.simulation_interface.get_linked_result(self.pwp_names)
         self.portfolio.optimize_post_market(committed_power)
-
         # save optimization results
         self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)

@@ -66,11 +66,11 @@ class PowerPlantPortfolio(PortfolioModel):
             self.reset_data()
             for model in self.energy_systems:
                 model_cp = np.zeros(24)
-                filtered_cp = committed_power[committed_power['name']==model.name]
+                filtered_cp = committed_power[committed_power['name'] == model.name]
                 if not filtered_cp.empty:
                     for index, row in filtered_cp.iterrows():
                         model_cp[int(row.hour)] = float(row.volume)
-
+                        self.generation['allocation'][int(row.hour)] += float(row.volume)
                 model.optimize_post_market(model_cp)
             log.info(f'optimized post market results')
         except Exception as e:

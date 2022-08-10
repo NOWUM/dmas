@@ -75,7 +75,8 @@ class SimulationInterface:
             query = '''CREATE TABLE generation ("time" timestamp without time zone, total double precision,
                                                 solar double precision, wind double precision, water double precision,
                                                 bio double precision, lignite double precision, coal double precision,
-                                                gas double precision, nuclear double precision, step text,
+                                                gas double precision, nuclear double precision, 
+                                                allocation double precision, step text,
                                                 agent text, area text)'''
             connection.execute(query)
             connection.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')

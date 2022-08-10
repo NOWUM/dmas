@@ -52,7 +52,8 @@ class PortfolioModel:
                                lignite=np.zeros((self.T,), float),
                                coal=np.zeros((self.T,), float),
                                gas=np.zeros((self.T,), float),
-                               nuclear=np.zeros((self.T,), float))
+                               nuclear=np.zeros((self.T,), float),
+                               allocation=np.zeros((self.T,), float))
 
         self.demand = dict(power=np.zeros((self.T,), float),
                            heat=np.zeros((self.T,), float))
