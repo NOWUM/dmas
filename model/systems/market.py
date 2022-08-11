@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from pyomo.environ import Var, Objective, SolverFactory, ConcreteModel, Reals, Binary, \
+from pyomo.environ import Var, Objective, SolverFactory, ConcreteModel, NonNegativeReals, Reals, Binary, \
     minimize, quicksum, ConstraintList
 from pyomo.environ import value as get_real_number
 import time
