@@ -1,7 +1,8 @@
+./generate_simulation_stack.py
 docker compose down --remove-orphans && docker compose build && docker compose up -d
 
-CONTAINER_COUNT=`echo $(docker compose ps | wc -l) - 5 | bc`
 sleep 10;
+CONTAINER_COUNT=`echo $(docker compose ps | wc -l) - 5 | bc`
 
 while test " $(curl -s http://localhost:5000/agent_count)" -lt $CONTAINER_COUNT
 do

@@ -36,3 +36,16 @@ datasources:
     postgresVersion: 1200
     timescaledb: true
   editable: true
+
+- name: Entsoe
+  type: postgres
+  url: 10.13.10.41:5432
+  user: readonly
+  database: entsoe
+  secureJsonData:
+    password: readonly
+  jsonData:
+    sslmode: "disable"
+    postgresVersion: 1200
+    timescaledb: true
+  editable: true
