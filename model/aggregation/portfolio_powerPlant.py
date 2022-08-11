@@ -57,7 +57,7 @@ class PowerPlantPortfolio(PortfolioModel):
 
         return self.power
 
-    def optimize_post_market(self, committed_power):
+    def optimize_post_market(self, committed_power, power_prices):
         """
         optimize the portfolio after receiving market results
         :return: time series in [kW] of actual generation
@@ -71,7 +71,7 @@ class PowerPlantPortfolio(PortfolioModel):
                     for index, row in filtered_cp.iterrows():
                         model_cp[int(row.hour)] = float(row.volume)
                         self.generation['allocation'][int(row.hour)] += float(row.volume)
-                model.optimize_post_market(model_cp)
+                model.optimize_post_market(model_cp, power_prices)
                 self.cash_flow['fuel'] += model.cash_flow['fuel']
                 self.cash_flow['emission'] += model.cash_flow['emission']
                 self.cash_flow['start_ups'] += model.cash_flow['start_ups']

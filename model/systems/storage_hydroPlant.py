@@ -88,7 +88,8 @@ class Storage(EnergySystem):
             # set new objective
             self.model.obj = Objective(expr=quicksum(self.model.profit[i] - self.model.delta_cost[i]
                                                      for i in self.t), sense=maximize)
-    def optimize(self):
+
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
 
         if self.committed_power is None:
             self.build_model()

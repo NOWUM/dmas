@@ -16,7 +16,7 @@ class PvBatModel(es):
         self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower), surface_tilt=tilt, surface_azimuth=azimuth)
         self.battery_system = dict(v0=V0, v_max=VMax, efficiency=eta, maxPower=batPower, vt=np.zeros((self.T,)))
 
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         """
         :return: timer series in [kW]
         """

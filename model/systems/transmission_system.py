@@ -22,7 +22,7 @@ class TransmissionSystem(EnergySystem):
     def set_parameter(self, date, *args, **kwargs):
         pass
 
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         result_set = []
 
         for t in self.t:

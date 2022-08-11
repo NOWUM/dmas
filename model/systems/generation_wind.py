@@ -75,7 +75,7 @@ class WindModel(EnergySystem):
         self.weather = pd.DataFrame(np.asarray(data).T, index=index, columns=[np.asarray(names), np.asarray(heights)])
         self.prices = prices
 
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         self.mc.run_model(self.weather)
         # windpowerlib calculated in [W]
         self.generation['wind'] = np.asarray(self.mc.power_output, dtype=np.float64)/ 1e3 # [W] -> [kW]

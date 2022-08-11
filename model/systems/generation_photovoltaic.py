@@ -12,7 +12,7 @@ class PvModel(es):
 
         self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower), surface_tilt=tilt, surface_azimuth=azimuth)
 
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         irradiance = self.pv_system.get_irradiance(solar_zenith=self.weather['zenith'],
                                                    solar_azimuth=self.weather['azimuth'],
                                                    dni=self.weather['dni'],

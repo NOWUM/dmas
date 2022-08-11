@@ -9,8 +9,7 @@ class HouseholdModel(EnergySystem):
         super().__init__(T)
         self.profile_generator = StandardLoadProfile(demandP, type='household')
 
-
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         """
         run profile generator for current day
         :return: timer series in [kW]
@@ -26,8 +25,7 @@ class BusinessModel(EnergySystem):
         super().__init__(T)
         self.profile_generator = StandardLoadProfile(demandP, type='business')
 
-
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         """
         run profile generator for current day
         :return: timer series in [kW]
@@ -43,8 +41,7 @@ class IndustryModel(EnergySystem):
         super().__init__(T)
         self.profile_generator = StandardLoadProfile(demandP, type='industry')
 
-
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         """
         run profile generator for current day
         :return: timer series in [kW]

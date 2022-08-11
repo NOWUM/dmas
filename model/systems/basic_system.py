@@ -36,7 +36,10 @@ class EnergySystem:
         self.weather = weather
         self.prices = prices
 
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
+        pass
+
+    def optimize_post_market(self, committed_power, power_prices=None):
         pass
 
     def reset_data(self):

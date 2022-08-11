@@ -16,7 +16,7 @@ class HouseholdPvModel(EnergySystem):
         self.demand_system = StandardLoadProfile(type='household', demandP=demandP)
         self.pv_system = PVSystem(module_parameters=dict(pdc0=maxPower), surface_tilt=tilt, surface_azimuth=azimuth)
 
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         """
         :return: timer series in [kW]
         """

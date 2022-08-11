@@ -89,7 +89,8 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
 
         committed_power = self.simulation_interface.get_linked_result(self.pwp_names)
-        self.portfolio.optimize_post_market(committed_power)
+        result = self.simulation_interface.get_auction_results(self.date)
+        self.portfolio.optimize_post_market(committed_power, result['price'].values)
         # save optimization results
         self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)

@@ -13,7 +13,7 @@ class BioMassModel(EnergySystem):
 
         self.bio_mass = dict(maxPower=maxPower)
 
-    def optimize(self):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         """
         :return: timer series in [kW]
         """

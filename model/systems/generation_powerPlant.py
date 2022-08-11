@@ -161,7 +161,7 @@ class PowerPlant(EnergySystem):
 
         # -> emission costs
         em_prices = self.prices['co'].values
-        self.opt_results['emission'] = power / self.power_plant['eta'] * self.power_plant['chi'] * em_prices
+        self.opt_results[step]['emission'] = power / self.power_plant['eta'] * self.power_plant['chi'] * em_prices
         # -> fuel costs
         fl_prices = self.prices[str(self.power_plant['fuel']).replace('_combined', '')].values
         self.opt_results[step]['fuel'] = power / self.power_plant['eta'] * fl_prices
@@ -181,7 +181,7 @@ class PowerPlant(EnergySystem):
             self.generation[str(self.power_plant['fuel']).replace('_combined', '')] = self.opt_results[step]['power']
             self.power = self.opt_results[step]['power']
 
-    def optimize(self, date, weather=None, prices=None, steps=None):
+    def optimize(self, date=None, weather=None, prices=None, steps=None):
         self.set_parameter(date, weather, prices)
         self.prevented_start = dict(prevent=False, hours=np.zeros(self.T, float), delta=0)
         steps = steps or self.steps
@@ -218,8 +218,9 @@ class PowerPlant(EnergySystem):
 
         return self.power
 
-    def optimize_post_market(self, committed_power, steps=None):
-        steps = steps or self.steps
+    def optimize_post_market(self, committed_power, power_prices=None):
+        if power_prices is not None:
+            self.prices['power'].values[:len(power_prices)] = power_prices
         self.build_model(committed_power)
         self.opt.solve(self.model)
         running_since = 0
