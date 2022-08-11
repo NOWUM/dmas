@@ -1,8 +1,7 @@
 # third party modules
 import numpy as np
-import pandas as pd
 from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, \
-    Reals, Binary, maximize, value, quicksum, ConstraintList
+    Reals, Binary, maximize, quicksum, ConstraintList
 
 # model modules
 from systems.basic_system import EnergySystem
@@ -101,6 +100,3 @@ class Storage(EnergySystem):
                 self.volume = self.model.volume[t].value
 
         return self.power
-
-
-

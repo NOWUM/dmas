@@ -3,7 +3,6 @@ import time as time
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-from websockets import WebSocketClientProtocol as wsClientPrtl
 
 # model modules
 from forecasts.weather import WeatherForecast

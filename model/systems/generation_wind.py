@@ -1,5 +1,4 @@
 # third party modules
-import os
 import pandas as pd
 import numpy as np
 from windpowerlib import WindTurbine, ModelChain
@@ -7,7 +6,6 @@ from windpowerlib.wind_farm import WindFarm
 
 # model modules
 from systems.basic_system import EnergySystem
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 # TODO: Replace default with new data
 default_power_curve = pd.read_csv(r'./systems/data/default_turbine.csv', sep=';', decimal=',')
@@ -52,9 +50,9 @@ class WindModel(EnergySystem):
             efficiency = pd.DataFrame(data=dict(wind_speed=range(30), efficiency=[1 for _ in range(30)]))
 
             self.wind_turbine = WindFarm(wind_turbine_fleet, efficiency=efficiency)
-            
+
             # calculates and sets the mean_hub_height
-            # Hub heights of wind turbines with 
+            # Hub heights of wind turbines with
             # higher nominal power weigh more than others.
             self.wind_turbine.mean_hub_height()
             # calculates a smoothed average power curve

@@ -1,7 +1,6 @@
 # third party modules
 import time
 
-import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -55,7 +54,7 @@ class PwpAgent(BasicAgent):
             # Step 1: forecast data data and init the model for the coming day
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
-        # use tomorrows price forecast also for aftertomorrow        
+        # use tomorrows price forecast also for aftertomorrow
         prices = pd.concat([prices, prices.copy()])
         prices.index = pd.date_range(start=self.date, freq='h', periods=48)
 

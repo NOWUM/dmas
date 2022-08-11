@@ -1,12 +1,8 @@
 # third party modules
-import os
-import numpy as np
-import pandas as pd
 from pvlib.pvsystem import PVSystem
 
 # model modules
 from systems.basic_system import EnergySystem as es
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 
 class PvModel(es):

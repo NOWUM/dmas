@@ -1,9 +1,6 @@
 # third party modules
 import time as time
-import pandas as pd
-import numpy as np
 from tqdm import tqdm
-from websockets import WebSocketClientProtocol as wsClientPrtl
 
 # model modules
 from forecasts.weather import WeatherForecast
@@ -113,4 +110,3 @@ class DemAgent(BasicAgent):
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
 
         self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')
-

@@ -1,11 +1,7 @@
 # third party modules
-import time
-import pandas as pd
-from flask import Flask, request, redirect
 from dash import dcc
 from dash import html
 import plotly.express as px
-from dash.dependencies import Input, Output
 
 
 class Dashboard:

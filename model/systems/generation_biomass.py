@@ -1,5 +1,4 @@
 # third party modules
-import os
 import numpy as np
 
 # model modules
@@ -23,7 +22,3 @@ class BioMassModel(EnergySystem):
         self.power = power_bio.flatten()
 
         return self.power
-
-
-
-

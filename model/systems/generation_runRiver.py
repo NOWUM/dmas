@@ -1,12 +1,8 @@
 # third party modules
-import os
 import numpy as np
-import statsmodels.api as sm
-
 
 # model modules
 from systems.basic_system import EnergySystem
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 
 class RunRiverModel(EnergySystem):
@@ -25,4 +21,3 @@ class RunRiverModel(EnergySystem):
         self.power = power_water.flatten()
 
         return self.power
-

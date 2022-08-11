@@ -139,9 +139,9 @@ class PowerPlant(EnergySystem):
             self.model.obj = Objective(expr=quicksum(cashflow), sense=maximize)
         # if day ahead power is known minimize the difference
         else:
-            self.model.power_difference = Var(self.t, bounds=(0, None), within=Reals)
-            self.model.minus = Var(self.t, bounds=(0, None), within=Reals)
-            self.model.plus = Var(self.t, bounds=(0, None), within=Reals)
+            self.model.power_difference = Var(self.t, within=NonNegativeReals)
+            self.model.minus = Var(self.t, within=NonNegativeReals)
+            self.model.plus = Var(self.t, within=NonNegativeReals)
 
             difference = [self.model.minus[t] + self.model.plus[t] for t in self.t]
             self.model.difference = ConstraintList()

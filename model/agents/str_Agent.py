@@ -1,8 +1,6 @@
 # third party modules
 import time as time
 import pandas as pd
-import numpy as np
-from websockets import WebSocketClientProtocol as wsClientPrtl
 
 
 # model modules
@@ -50,4 +48,3 @@ class StrAgent(BasicAgent):
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
-

@@ -2,10 +2,8 @@
 import time
 import pandas as pd
 from datetime import timedelta
-from flask import Flask, request, redirect
+from flask import Flask, request
 import threading
-import numpy as np
-from tqdm import tqdm
 import websockets
 import asyncio
 from enum import Enum
@@ -88,7 +86,7 @@ class CtlAgent(BasicAgent):
             if self.simulation_step == SimStep.MARKET_BIDS:
                 # initialize waiting list to wait for market clearing
                 for agent_name in self.registered_agents.keys():
-                    if (agent_name != 'market' and 
+                    if (agent_name != 'market' and
                         'net' not in agent_name):
                         self.waiting_list.append(agent_name)
 

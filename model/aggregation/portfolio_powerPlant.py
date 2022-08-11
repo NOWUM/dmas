@@ -98,8 +98,8 @@ class PowerPlantPortfolio(PortfolioModel):
         df.set_index(['block_id', 'hour', 'name'], inplace=True)
 
         if not df.loc[df.isna().any(axis=1)].empty:
-            self.logger.error('Orderbook has NaN values')
-            self.logger.error(df[df.isna()])
+            log.error('Orderbook has NaN values')
+            log.error(df[df.isna()])
         return df
 
 

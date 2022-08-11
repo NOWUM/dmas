@@ -84,7 +84,6 @@ output.append(f'''
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'CTL'
-      MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: '0.0.0.0'
     ports:
@@ -104,7 +103,6 @@ output.append(f'''
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'MRK'
-      MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
     configs:
@@ -124,7 +122,6 @@ output.append(f'''
     environment:
       AREA_CODE: 'DE111'
       TYPE: 'NET'
-      MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
     depends_on:
@@ -140,7 +137,6 @@ for agent in agents[:counter]:
     environment:
       AREA_CODE: {agent}
       TYPE: 'DEM'
-      MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
     depends_on:
@@ -156,7 +152,6 @@ for agent in agents[:counter]:
     environment:
       AREA_CODE: {agent}
       TYPE: 'PWP'
-      MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
 ''')
@@ -170,7 +165,6 @@ for agent in agents[:counter]:
     environment:
       AREA_CODE: {agent}
       TYPE: 'RES'
-      MQTT_HOST: 'rabbitmq'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
     depends_on:

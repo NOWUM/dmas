@@ -1,8 +1,6 @@
 # third party modules
 import time as time
 import pandas as pd
-import numpy as np
-from websockets import WebSocketClientProtocol as wsClientPrtl
 
 # model modules
 from systems.market import DayAheadMarket
