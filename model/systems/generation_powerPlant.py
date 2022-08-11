@@ -353,19 +353,12 @@ class PowerPlant(EnergySystem):
 
             hours = self.prevented_start['hours']
             # -> get cost for running on minPower
-            print(self.power_plant)
             fuel_prices = self.prices[str(self.power_plant['fuel']).replace('_combined', '')].values
-            print('Fuel Prices: ', fuel_prices)
             em_prices = self.prices['co'].values
-            print('Emission Prices: ', em_prices)
             fuel = (self.power_plant['minPower'] / self.power_plant['eta']) * fuel_prices
             emission = ((self.power_plant['minPower'] / self.power_plant['eta']) * self.power_plant['chi']) * em_prices
-            print('Power Plant: ', self.name)
-            print('fuel cost: ', fuel[hours])
-            print('emission cost: ', emission[hours])
-            print('delta: ',  self.prevented_start['delta'])
-            min_price = np.mean(fuel[hours] + emission[hours]) - self.prevented_start['delta']
-            print('Pirce: ', min_price)
+            min_cost = np.mean(fuel[hours] + emission[hours]) / self.power_plant['minPower']
+            min_price = min_cost - self.prevented_start['delta']
 
             # -> volume and price which is already in orderbook
             normal_volume = df.loc[:, df.index.get_level_values('hour').isin(hours), :]['volume']
