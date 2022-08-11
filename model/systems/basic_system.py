@@ -23,7 +23,7 @@ class EnergySystem:
 
         self.generation = None
         self.demand = None
-        self.cash_flow = None
+        self.cash_flow = {}
 
         self.power = None
 
