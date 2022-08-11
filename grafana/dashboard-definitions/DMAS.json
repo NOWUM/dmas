@@ -1214,7 +1214,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#ffffff",
+                  "fixedColor": "text",
                   "mode": "fixed"
                 }
               },
@@ -1222,6 +1222,30 @@
                 "id": "custom.lineStyle",
                 "value": {
                   "fill": "solid"
+                }
+              }
+            ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "price_mean"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
                 }
               }
             ]
@@ -1910,7 +1934,6 @@
               "options": {
                 "mode": "exclude",
                 "names": [
-                  "coal",
                   "nuclear"
                 ],
                 "prefix": "All except:",
@@ -2044,8 +2067,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -2088,7 +2110,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#fcfcfc",
+                  "fixedColor": "text",
                   "mode": "fixed"
                 }
               },
@@ -2107,7 +2129,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#b4b4b4",
+                  "fixedColor": "text",
                   "mode": "fixed"
                 }
               },
@@ -2321,8 +2343,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2424,6 +2445,21 @@
                 "id": "color",
                 "value": {
                   "fixedColor": "dark-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "allocation pwp_de122"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
                   "mode": "fixed"
                 }
               }
@@ -2652,8 +2688,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2811,7 +2846,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "10s",
+  "refresh": "30s",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [],
@@ -2863,6 +2898,6 @@
   "timezone": "utc",
   "title": "DMAS",
   "uid": "VdwbNAX72",
-  "version": 4,
+  "version": 5,
   "weekStart": "monday"
 }
