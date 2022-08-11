@@ -61,7 +61,8 @@ class PortfolioModel:
         self.cash_flow = dict(profit=np.zeros((self.T,), float),
                               fuel=np.zeros((self.T,), float),
                               emission=np.zeros((self.T,), float),
-                              start_ups=np.zeros((self.T,), float))
+                              start_ups=np.zeros((self.T,), float),
+                              forecast=np.zeros((self.T,), float))
 
         self.power = np.zeros(self.T, float)
         self.volume = np.zeros(self.T, float)
