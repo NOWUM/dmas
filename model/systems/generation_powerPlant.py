@@ -357,11 +357,15 @@ class PowerPlant(EnergySystem):
             em_prices = self.prices['co'].values
             fuel = (self.power_plant['minPower'] / self.power_plant['eta']) * fuel_prices
             emission = ((self.power_plant['minPower'] / self.power_plant['eta']) * self.power_plant['chi']) * em_prices
+            print('fuel cost: ', fuel)
+            print('emission cost: ', fuel)
             min_price = np.mean(fuel[hours] + emission[hours]) - self.prevented_start['delta']
+            print(min_price)
+
             # -> volume and price which is already in orderbook
             normal_volume = df.loc[:, df.index.get_level_values('hour').isin(hours), :]['volume']
             normal_price = df.loc[:, df.index.get_level_values('hour').isin(hours), :]['price']
-            # -> drop this volume and build new orders
+            # -> drop volume and price in these hours and build new orders
             df = df.loc[~df.index.get_level_values('hour').isin(hours)]
             # -> get last block to link on
             last_block = max(df.index.get_level_values('block_id').values) if len(df) > 0 else -1
