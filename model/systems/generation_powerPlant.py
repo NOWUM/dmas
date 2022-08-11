@@ -353,7 +353,7 @@ class PowerPlant(EnergySystem):
 
             hours = self.prevented_start['hours']
             # -> get cost for running on minPower
-
+            print(self.power_plant)
             fuel_prices = self.prices[str(self.power_plant['fuel']).replace('_combined', '')].values
             print('Fuel Prices: ', fuel_prices)
             em_prices = self.prices['co'].values
