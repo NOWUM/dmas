@@ -141,7 +141,7 @@ CREATE TABLE cash_flows
      agent text,
      area text
 );
-ALTER TABLE "orders"
+ALTER TABLE "cash_flows"
     ADD PRIMARY KEY ("time","agent");
 
 
