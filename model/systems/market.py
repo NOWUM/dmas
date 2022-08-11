@@ -84,8 +84,8 @@ class DayAheadMarket:
                                                   in self.orders['exclusive_ask'].keys()]), within=Binary)
         self.model_vars['exclusive_ask'] = self.model.use_exclusive_block
 
-        self.model.sink = Var(self.t, within=Reals, bounds=(0, None))
-        self.model.source = Var(self.t, within=Reals, bounds=(0, None))
+        self.model.sink = Var(self.t, within=NonNegativeReals)
+        self.model.source = Var(self.t, within=NonNegativeReals)
 
         # Step 6 set constraint: If parent block of an agent is used -> enable usage of child block
         self.model.enable_child_block = ConstraintList()

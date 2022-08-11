@@ -183,6 +183,7 @@ class PowerPlant(EnergySystem):
 
     def optimize(self, date, weather=None, prices=None, steps=None):
         self.set_parameter(date, weather, prices)
+        self.prevented_start = dict(prevent=False, hours=np.zeros(self.T, float), delta=0)
         steps = steps or self.steps
         prices_24h = self.base_price.iloc[:24, :].copy()
         prices_48h = self.base_price.iloc[:48, :].copy()
