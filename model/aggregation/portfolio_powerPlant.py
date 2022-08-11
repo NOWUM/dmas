@@ -22,23 +22,6 @@ class PowerPlantPortfolio(PortfolioModel):
         self.capacities[str(energy_system['fuel']).replace('_combined', '')] += energy_system['maxPower'] # [kW]
         self.energy_systems.append(model)
 
-    def update_portfolio_sum(self):
-        try:
-            for model in tqdm(self.energy_systems):
-                for key, value in model.generation.items():
-                    self.generation[str(model.power_plant['fuel']).replace('_combined', '')] += value
-                for key, value in model.demand.items():
-                    self.demand[key] += value
-                for key, value in model.cash_flow.items():
-                    self.cash_flow[key] += value
-            for key, value in self.generation.items():
-                if key != 'total':
-                    self.generation['total'] += value
-
-            self.power = self.generation['total'] - self.demand['power']
-        except Exception as e:
-            log.error(f'error in collecting result: {repr(e)}')
-
 
     def optimize(self, date, weather, prices):
         """
@@ -47,13 +30,16 @@ class PowerPlantPortfolio(PortfolioModel):
         """
         try:
             self.reset_data()
+            self.prices = prices
             for model in self.energy_systems:
                 model.optimize(date, weather, prices)
+                for key, value in model.generation.items():
+                    self.generation[key] += value
             log.info(f'optimized portfolio')
         except Exception as e:
             log.error(f'error in portfolio optimization: {repr(e)}')
 
-        self.update_portfolio_sum()
+        self.power = self.generation['total']
 
         return self.power
 
@@ -72,17 +58,23 @@ class PowerPlantPortfolio(PortfolioModel):
                         model_cp[int(row.hour)] = float(row.volume)
                         self.generation['allocation'][int(row.hour)] += float(row.volume)
                 model.optimize_post_market(model_cp, power_prices)
+                # -> update cashflow
                 self.cash_flow['fuel'] += model.cash_flow['fuel']
                 self.cash_flow['emission'] += model.cash_flow['emission']
                 self.cash_flow['start_ups'] += model.cash_flow['start_ups']
                 self.cash_flow['profit'] += model.cash_flow['profit']
+                # -> update generation
+                for key, value in model.generation.items():
+                    self.generation[key] += value
+
+            self.cash_flow['forecast'] = self.prices['power'].values[:self.T].copy()
 
             log.info(f'optimized post market results')
         except Exception as e:
             log.error(f'error in post market optimization: {repr(e)}')
             log.error('using previous power - 0 scenario')
 
-        self.update_portfolio_sum()
+        self.power = self.generation['total']
 
         return self.power
 
@@ -135,7 +127,7 @@ if __name__ == '__main__':
     power = ppp.optimize('2018-01-01', {}, prices)
     o_book = ppp.energy_systems[0].get_orderbook()
     from systems.generation_powerPlant import visualize_orderbook
-    visualize_orderbook(o_book)
+    # visualize_orderbook(o_book)
     clean_spread = ppp.energy_systems[0].get_clean_spread()
     assert clean_spread == 0.0617165
     assert (power[0:22] >= 100).all() # stay on
@@ -143,4 +135,9 @@ if __name__ == '__main__':
 
     df = pd.DataFrame([power, power_price[:24]]).T
     df['clean_spread'] = clean_spread
-    print(df)
+    # print(df)
+    comm_power = pd.DataFrame(dict(volume=power))
+    comm_power['name'] = 'x'
+    comm_power['hour'] = range(len(power))
+    ppp.optimize_post_market(comm_power, np.ones_like(power))
+    pass

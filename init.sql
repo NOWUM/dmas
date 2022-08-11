@@ -137,6 +137,7 @@ CREATE TABLE cash_flows
      emission double precision,
      fuel double precision,
      start_ups double precision,
+     forecast double precision,
      agent text,
      area text
 );
