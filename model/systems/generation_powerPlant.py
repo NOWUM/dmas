@@ -179,6 +179,7 @@ class PowerPlant(EnergySystem):
             self.cash_flow['start_ups'] = self.opt_results[step]['start']
             self.cash_flow['profit'] = self.opt_results[step]['profit']
             self.generation[str(self.power_plant['fuel']).replace('_combined', '')] = self.opt_results[step]['power']
+            self.generation['total'] = self.opt_results[step]['power']
             self.power = self.opt_results[step]['power']
 
     def optimize(self, date=None, weather=None, prices=None, steps=None):
