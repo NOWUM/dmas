@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, \
     NonNegativeReals, Reals, Binary, maximize, value, quicksum, ConstraintList
-from matplotlib import pyplot as plt
 
 # model modules
 from systems.basic_system import EnergySystem
@@ -252,12 +251,12 @@ class PowerPlant(EnergySystem):
 
         def get_cost(p: float, t: int):
             f = self.prices[self.power_plant['fuel'].replace('_combined', '')].values[t]
-            e = self.prices['co'].values[hour]
+            e = self.prices['co'].values[t]
             return (p / self.power_plant['eta']) * (f + e * self.power_plant['chi'])
 
         def get_marginal(p0: float, p1: float, t: int):
             marginal = (get_cost(p=p0, t=t) - get_cost(p=p1, t=t)) / (p0-p1)
-            return marginal, p0-p1
+            return marginal, p1-p0
 
         order_book, last_power, block_number = {}, np.zeros(self.T), 0
         links = {i: None for i in self.t}
@@ -272,7 +271,7 @@ class PowerPlant(EnergySystem):
                     price, power = get_marginal(p0=last_power[0], p1=result['power'][0], t=0)
                     order_book.update({(block_number, 0, self.name): (price, power, -1)})
                     links[0] = block_number
-                    last_power[0] = result['power'][0]
+                    last_power[0] += result['power'][0]
                 else:
                     hours = np.argwhere(result['power'] > 0).flatten()
                     total_start_cost = result['start'][hours[0]]
@@ -282,11 +281,12 @@ class PowerPlant(EnergySystem):
                         price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
                         order_book.update({(block_number, hour, self.name): (price, power, -1)})
                         links[hour] = block_number
-                        last_power[hour] = result['power'][hour]
+                        last_power[hour] += result['power'][hour]
 
                 block_number += 1  # -> increment block number
 
             # -> stack on top
+            # XXX bitwise and operator
             hours = np.argwhere((result['power'] - last_power > 0) & (last_power > 0)).flatten()
             for hour in hours:
                 price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
@@ -323,7 +323,6 @@ class PowerPlant(EnergySystem):
         df['type'] = 'generation'
         df.columns = ['price', 'volume', 'link', 'type']
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'name'])
-        df['volume'] *= -1
 
         if self.prevented_start['prevent']:
             hours = self.prevented_start['hours']
@@ -371,10 +370,11 @@ def visualize_orderbook(order_book):
     tab20_cmap = plt.get_cmap("tab20c")
     ob = order_book.reset_index(level=[0, 2])
     idx = np.arange(24)
+    max_block_count = max(ob['block_id'])
 
     y_past = np.zeros(24)
     for i, df_grouped in ob.groupby('block_id'):
-        my_cmap_raw = np.array(tab20_cmap.colors) * i / 24
+        my_cmap_raw = np.array(tab20_cmap.colors) * i / max_block_count
         my_cmap = ListedColormap(my_cmap_raw)
 
         for j, o in df_grouped.groupby('link'):

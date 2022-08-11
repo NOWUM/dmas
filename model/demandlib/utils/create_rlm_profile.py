@@ -3,7 +3,6 @@ from demandlib.electric_profile import StandardLoadProfile, get_holidays
 
 from sqlalchemy.engine import create_engine
 import pandas as pd
-import matplotlib.pyplot as plt
 
 winter = np.asarray(np.load(open(r'./demandlib/data/winter.pkl', 'rb')))
 summer = np.asarray(np.load(open(r'./demandlib/data/summer.pkl', 'rb')))
