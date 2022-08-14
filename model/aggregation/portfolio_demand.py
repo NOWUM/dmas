@@ -3,7 +3,7 @@ import pandas as pd
 
 # model modules
 from systems.prosumer import Prosumer
-from systems.basic_system import EnergySystem
+from systems.basic_system import EnergySystem, CONSUMER_TYPES
 from aggregation.basic_portfolio import PortfolioModel
 
 
@@ -14,7 +14,7 @@ class DemandPortfolio(PortfolioModel):
 
     def add_energy_system(self, energy_system: dict) -> None:
 
-        if energy_system['type'] in ['household', 'business', 'industry', 'agriculture']:
+        if energy_system['type'] in CONSUMER_TYPES:
             model = EnergySystem(demand_type=energy_system['type'], **energy_system)
         else:
             model = Prosumer(T=self.T, **energy_system)

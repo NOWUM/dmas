@@ -1,8 +1,8 @@
 # third party modules
 import numpy as np
 import pandas as pd
-
-from systems.basic_system import EnergySystem
+from systems.basic_system import (CASH_TYPES, DEMAND_TYPES, FUEL_TYPES,
+                                  EnergySystem)
 
 
 class PortfolioModel:
@@ -19,17 +19,13 @@ class PortfolioModel:
         self.T, self.t, self.dt = T, np.arange(T), 1
 
         # -> Generation Configuration
-        self._fuel_types = ['solar', 'wind', 'water', 'bio', 'lignite', 'coal', 'gas', 'nuclear']
-        self.generation = {fuel: np.zeros(T) for fuel in self._fuel_types + ['total']}
-        self.capacities = {fuel: 0 for fuel in self._fuel_types}
+        self.generation = {fuel: np.zeros(T) for fuel in FUEL_TYPES + ['total']}
+        self.capacities = {fuel: 0 for fuel in FUEL_TYPES}
 
         # -> Demand Configuration
-        self._demand_types = ['power', 'heat']
-        self._consumer_types = ['household', 'business', 'industry', 'agriculture']
-        self.demand = {demand: np.zeros(T) for demand in self._demand_types}
+        self.demand = {demand: np.zeros(T) for demand in DEMAND_TYPES}
 
-        self._cash_types = ['profit', 'fuel', 'emission', 'start_ups', 'forecast']
-        self.cash_flow = {cash: np.zeros(T) for cash in self._cash_types}
+        self.cash_flow = {cash: np.zeros(T) for cash in CASH_TYPES}
 
         self.power = np.zeros(T)
         self.volume = np.zeros(T)
@@ -92,11 +88,11 @@ class PortfolioModel:
         return self.power
 
     def _reset_data(self) -> None:
-        for fuel in self._fuel_types + ['total']:
+        for fuel in FUEL_TYPES + ['total']:
             self.generation[fuel] = np.zeros(self.T)
-        for demand in self._demand_types:
+        for demand in DEMAND_TYPES:
             self.demand[demand] = np.zeros(self.T)
-        for cash in self._cash_types:
+        for cash in CASH_TYPES:
             self.cash_flow[cash] = np.zeros(self.T)
 
         self.volume = np.zeros(self.T)

@@ -1,10 +1,15 @@
 # third party modules
 import numpy as np
 import pandas as pd
-from pvlib.pvsystem import PVSystem
-
 # model modules
 from demandlib.electric_profile import StandardLoadProfile
+from pvlib.pvsystem import PVSystem
+
+FUEL_TYPES = ['solar', 'wind', 'water', 'bio',
+              'lignite', 'coal', 'gas', 'nuclear']
+DEMAND_TYPES = ['power', 'heat']
+CONSUMER_TYPES = ['household', 'business', 'industry', 'agriculture']
+CASH_TYPES = ['profit', 'fuel', 'emission', 'start_ups', 'forecast']
 
 
 def get_solar_generation(generation_system: PVSystem, weather: pd.DataFrame) -> np.array:
@@ -16,8 +21,8 @@ def get_solar_generation(generation_system: PVSystem, weather: pd.DataFrame) -> 
 
 class EnergySystem:
 
-    def __init__(self, T: int = 24, maxPower: float = 0, fuel_type: str = None,
-                 demandP: float = 0, demand_type: str = None, *args, **kwargs):
+    def __init__(self, T: int = 24, maxPower: float = 0, fuel_type: str = '',
+                 demandP: float = 0, demand_type: str = '', *args, **kwargs):
         """
         Describes a basic EnergySystem which behaves dependent from weather and prices.
         It has generation, demand and power in kW.
@@ -28,15 +33,12 @@ class EnergySystem:
         self.T, self.t, self.dt = T, np.arange(T), 1
 
         # -> Generation Configuration
-        self._fuel_types = ['solar', 'wind', 'water', 'bio', 'lignite', 'coal', 'gas', 'nuclear']
-        self.generation = {fuel: np.zeros(T) for fuel in self._fuel_types + ['total']}
+        self.generation = {fuel: np.zeros(T) for fuel in FUEL_TYPES + ['total']}
         self.fuel_type = fuel_type
         self.generation_system = dict(maxPower=maxPower)
 
         # -> Demand Configuration
-        self._demand_types = ['power', 'heat']
-        self._consumer_types = ['household', 'business', 'industry', 'agriculture']
-        self.demand = {demand: np.zeros(T) for demand in self._demand_types}
+        self.demand = {demand: np.zeros(T) for demand in DEMAND_TYPES}
         self.demand_type = demand_type
 
         if self.demand_type is not None:
@@ -44,8 +46,7 @@ class EnergySystem:
         else:
             self.demand_generator = None
 
-        self._cash_types = ['profit', 'fuel', 'emission', 'start_ups', 'forecast']
-        self.cash_flow = {cash: np.zeros(T) for cash in self._cash_types}
+        self.cash_flow = {cash: np.zeros(T) for cash in CASH_TYPES}
 
         self.power = np.zeros(T)
         self.volume = np.zeros(T)
@@ -55,7 +56,7 @@ class EnergySystem:
         self.date = pd.Timestamp(2022, 1, 1)
 
     def _set_total_generation(self):
-        for fuel in self._fuel_types:
+        for fuel in FUEL_TYPES:
             self.generation['total'] += self.generation[fuel]
 
     def _set_parameter(self, date: pd.Timestamp, weather: pd.DataFrame = None, prices: pd.DataFrame = None):
@@ -88,11 +89,11 @@ class EnergySystem:
         pass
 
     def _reset_data(self) -> None:
-        for fuel in self._fuel_types + ['total']:
+        for fuel in FUEL_TYPES + ['total']:
             self.generation[fuel] = np.zeros(self.T)
-        for demand in self._demand_types:
+        for demand in DEMAND_TYPES:
             self.demand[demand] = np.zeros(self.T)
-        for cash in self._cash_types:
+        for cash in CASH_TYPES:
             self.cash_flow[cash] = np.zeros(self.T)
 
         self.volume = np.zeros(self.T)
