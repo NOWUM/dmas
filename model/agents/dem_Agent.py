@@ -15,7 +15,7 @@ class DemAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         # Portfolio with the corresponding households, trade and industry
         start_time = time.time()
-        self.portfolio = DemandPortfolio()
+        self.portfolio = DemandPortfolio(name=self.name)
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 simulation_interface=self.simulation_interface,
                                                 weather_interface=self.weather_interface)
@@ -46,6 +46,8 @@ class DemAgent(BasicAgent):
         household_demand = demands['household'].values[0] * 1e6
         household_demand -= demand
 
+        business_demand = demands['business'].values[0] * 1e6
+
         rlm_demand = demands['business'].values[0] + demands['industry'].values[0] + demands['agriculture'].values[0]
         rlm_demand *= 1e6
 
@@ -54,7 +56,7 @@ class DemAgent(BasicAgent):
         self.logger.info('H0 added')
 
         # Construction Standard Consumer G0
-        #self.portfolio.add_energy_system({'unitID': 'business', 'demandP': business_demand, 'type': 'business'})
+        self.portfolio.add_energy_system({'unitID': 'business', 'demandP': business_demand, 'type': 'business'})
         self.logger.info('G0 added')
 
         # Construction Standard Consumer RLM
@@ -62,7 +64,7 @@ class DemAgent(BasicAgent):
         self.logger.info('RLM added')
 
         # Construction Standard Consumer agriculture
-        #self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
+        # self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
         self.logger.info('Agriculture added')
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
@@ -96,7 +98,7 @@ class DemAgent(BasicAgent):
 
         # Step 3: build orders
         start_time = time.time()
-        order_book = self.portfolio.get_order_book(self.name)
+        order_book = self.portfolio.get_bid_orders()
         self.simulation_interface.set_hourly_orders(order_book)
 
         self.logger.info(f'built Orders and send in {time.time() - start_time:.2f} seconds')

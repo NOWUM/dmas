@@ -7,31 +7,49 @@ from systems.basic_system import EnergySystem
 
 class PortfolioModel:
 
-    def __init__(self, T=24, date='2020-01-01', steps=(0,)):
-        '''
+    def __init__(self, T: int = 24, date: pd.Timestamp = pd.to_datetime('2020-01-01'),
+                 steps: tuple = (0,), name: str = None):
+        """
         Represents a portfolio of EnergySystems.
         Its capacities, generation and demand is in MW
-        '''
+        """
+
+        self.name = name
+
         self.T, self.t, self.dt = T, np.arange(T), 1
-        self.date = pd.to_datetime(date)
+
+        # -> Generation Configuration
+        self._fuel_types = ['solar', 'wind', 'water', 'bio', 'lignite', 'coal', 'gas', 'nuclear']
+        self.generation = {fuel: np.zeros(T) for fuel in self._fuel_types + ['total']}
+        self.capacities = {fuel: 0 for fuel in self._fuel_types}
+
+        # -> Demand Configuration
+        self._demand_types = ['power', 'heat']
+        self._consumer_types = ['household', 'business', 'industry', 'agriculture']
+        self.demand = {demand: np.zeros(T) for demand in self._demand_types}
+
+        self._cash_types = ['profit', 'fuel', 'emission', 'start_ups', 'forecast']
+        self.cash_flow = {cash: np.zeros(T) for cash in self._cash_types}
+
+        self.power = np.zeros(T)
+        self.volume = np.zeros(T)
+
+        self.weather = pd.DataFrame()
+        self.prices = pd.DataFrame()
+        self.date = date
+
         self.energy_systems: list[EnergySystem] = []
         self.steps = steps
 
         self.weather = pd.DataFrame()
         self.prices = pd.DataFrame()
 
-        # capacities are in [kW]
-        self.capacities = dict(bio=0., coal=0., gas=0., lignite=0., nuclear=0., solar=0.,
-                               water=0., wind=0., storage=0.)
-
-        self.reset_data()
-
-    def set_parameter(self, date, weather, prices):
-        self.date = pd.to_datetime(date)
+    def _set_parameter(self, date: pd.Timestamp, weather: pd.DataFrame, prices: pd.DataFrame) -> None:
+        self.date = date
         self.weather = weather
         self.prices = prices
 
-    def add_energy_system(self, energy_system):
+    def add_energy_system(self, energy_system) -> None:
         """
         adds an energy system to the portfolio
         - power values of the EnergySystem are in kW
@@ -39,31 +57,49 @@ class PortfolioModel:
         """
         pass
 
-    def optimize(self):
-        power = np.zeros((self.T,))
-        return power
+    def get_bid_orders(self, price: float = 3) -> pd.DataFrame:
+        order_book = {t: dict(type='demand', hour=t, block_id=t, name=self.name, price=price,
+                              volume=self.demand['power'][t] - self.generation['total'][t]) for t in self.t}
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        df = df.set_index(['block_id', 'hour', 'name'])
+        return df
 
-    def reset_data(self):
-        self.generation = dict(total=np.zeros((self.T,), float),
-                               solar=np.zeros((self.T,), float),
-                               wind=np.zeros((self.T,), float),
-                               water=np.zeros((self.T,), float),
-                               bio=np.zeros((self.T,), float),
-                               lignite=np.zeros((self.T,), float),
-                               coal=np.zeros((self.T,), float),
-                               gas=np.zeros((self.T,), float),
-                               nuclear=np.zeros((self.T,), float),
-                               allocation=np.zeros((self.T,), float))
+    def get_ask_orders(self, price: float = -0.5) -> pd.DataFrame:
+        order_book = {t: dict(type='generation', hour=t, block_id=t, name=self.name, price=price,
+                              volume=self.generation['total'][t] - self.demand['power'][t]) for t in self.t}
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        df = df.set_index(['block_id', 'hour', 'name'])
+        return df
 
-        self.demand = dict(power=np.zeros((self.T,), float),
-                           heat=np.zeros((self.T,), float))
+    def optimize(self, date: pd.Timestamp, weather: pd.DataFrame, prices: pd.DataFrame) -> np.array:
+        """
+        optimize the portfolio for the day ahead market
+        :return: time series in [kW]
+        """
+        self._reset_data()
+        self._set_parameter(date, weather, prices)
+        for model in self.energy_systems:
+            model.optimize(date=date, weather=weather.copy(), prices=prices.copy())
+            for key, value in model.generation.items():
+                self.generation[key] += value           # [kW]
+            for key, value in model.demand.items():
+                self.demand[key] += value               # [kW]
+            for key, value in model.cash_flow.items():
+                self.cash_flow[key] += value            # [ct]
 
-        self.cash_flow = dict(profit=np.zeros((self.T,), float),
-                              fuel=np.zeros((self.T,), float),
-                              emission=np.zeros((self.T,), float),
-                              start_ups=np.zeros((self.T,), float),
-                              forecast=np.zeros((self.T,), float))
+        self.power = self.generation['total'] - self.demand['power']
 
-        self.power = np.zeros(self.T, float)
-        self.volume = np.zeros(self.T, float)
+        return self.power
+
+    def _reset_data(self) -> None:
+        for fuel in self._fuel_types + ['total']:
+            self.generation[fuel] = np.zeros(self.T)
+        for demand in self._demand_types:
+            self.demand[demand] = np.zeros(self.T)
+        for cash in self._cash_types:
+            self.cash_flow[cash] = np.zeros(self.T)
+
+        self.volume = np.zeros(self.T)
+        self.power = np.zeros(self.T)
+
 
