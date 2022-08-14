@@ -17,14 +17,13 @@ class ResAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         # Development of the portfolio with the corresponding ee-systems
         start_time = time.time()
-        self.portfolio_eeg = RenewablePortfolio(agentname=self.name+'_eeg', price=-500/1e3)
+        self.portfolio_eeg = RenewablePortfolio(name=self.name+'_eeg')
         # -500 €/MWh min eex bid
         # lower limit of DA auction
         # https://www.epexspot.com/sites/default/files/2022-05/22-05-23_TradingBrochure.pdf
-        self.portfolio_mrk = RenewablePortfolio(agentname=self.name+'_mrk', price=1e-4)
+        self.portfolio_mrk = RenewablePortfolio(name=self.name+'_mrk')
         # [€/kWh] # this is relevant for negative prices §51 EEG
         # TODO find argumentative res market price
-
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 simulation_interface=self.simulation_interface,
@@ -120,10 +119,10 @@ class ResAgent(BasicAgent):
 
         # Step 3: build orders from optimization results
         start_time = time.time()
-        order_book_eeg = self.portfolio_eeg.get_order_book()
+        order_book_eeg = self.portfolio_eeg.get_ask_orders(price=-0.5)
         self.simulation_interface.set_hourly_orders(order_book_eeg)
 
-        order_book_mrk = self.portfolio_mrk.get_order_book()
+        order_book_mrk = self.portfolio_mrk.get_ask_orders(price=-0.001)
         self.simulation_interface.set_hourly_orders(order_book_mrk)
 
         self.logger.info(f'built Orders and send in {time.time() - start_time:.2f} seconds')
@@ -134,11 +133,11 @@ class ResAgent(BasicAgent):
         start_time = time.time()
 
         def optimize_post_market(portfolio: RenewablePortfolio):
-            market_result = self.simulation_interface.get_hourly_result(portfolio.agentname)
+            market_result = self.simulation_interface.get_hourly_result(portfolio.name)
             power = np.zeros(portfolio.T)
             for index, row in market_result.iterrows():
                 power[int(row.hour)] = float(row.volume)
-            self.logger.info(f'Committed power for {portfolio.agentname} is: {power}')
+            self.logger.info(f'Committed power for {portfolio.name} is: {power}')
             portfolio.optimize_post_market(power)
 
         optimize_post_market(self.portfolio_eeg)

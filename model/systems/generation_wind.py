@@ -76,6 +76,7 @@ class WindModel(EnergySystem):
         self.prices = prices
 
     def optimize(self, date=None, weather=None, prices=None, steps=None):
+        self.set_parameter(date, weather, prices)
         self.mc.run_model(self.weather)
         # windpowerlib calculated in [W]
         self.generation['wind'] = np.asarray(self.mc.power_output, dtype=np.float64)/ 1e3 # [W] -> [kW]
