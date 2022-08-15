@@ -13,8 +13,9 @@ log.setLevel('INFO')
 
 class PowerPlantPortfolio(PortfolioModel):
 
-    def __init__(self, T=24, date='2020-01-01', steps=np.array([-10, -5, 0, 5, 100, 1e9])/1e3):
-        super().__init__(T, date, steps)
+    def __init__(self, T: int = 24, date: pd.Timestamp = pd.Timestamp(2022, 1, 1),
+                 steps=(-10/1e3, -5/1e3, 0, 5/1e3, 100/1e3, 1e6)):
+        super().__init__(T=T, date=date, steps=steps)
 
     def add_energy_system(self, energy_system):
         model = PowerPlant(T=self.T, steps=self.steps, **energy_system)

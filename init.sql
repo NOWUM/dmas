@@ -71,6 +71,7 @@ CREATE TABLE generation
     coal    double precision,
     gas     double precision,
     nuclear double precision,
+    storage double precision,
     allocation double precision,
     step    text,
     agent   text,

@@ -43,7 +43,7 @@ class PwpAgent(BasicAgent):
 
     def handle_message(self, message):
         if 'set_capacities' in message:
-            self.simulation_interface.set_capacities(self.portfolio,self.area, self.date)
+            self.simulation_interface.set_capacities(self.portfolio, self.area, self.date)
         if 'optimize_dayAhead' in message:
             self.optimize_day_ahead()
             return f'optimized_dayAhead {self.name}'
@@ -51,7 +51,7 @@ class PwpAgent(BasicAgent):
             self.post_day_ahead()
 
     def _initialize_parameters(self):
-            # Step 1: forecast data data and init the model for the coming day
+        # Step 1: forecast data and init the model for the coming day
         weather = self.weather_forecast.forecast_for_area(self.date, self.area)
         prices = self.price_forecast.forecast(self.date)
         # use tomorrows price forecast also for aftertomorrow
@@ -78,6 +78,7 @@ class PwpAgent(BasicAgent):
         # Step 3: build orders from optimization results
         start_time = time.time()
         order_book = self.portfolio.get_ask_orders()
+        print(order_book)
         self.simulation_interface.set_linked_orders(order_book)
         self.simulation_interface.set_orders(order_book, date=self.date, area=self.area)
         self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')

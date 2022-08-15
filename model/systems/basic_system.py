@@ -7,7 +7,7 @@ from demandlib.electric_profile import StandardLoadProfile
 from pvlib.pvsystem import PVSystem
 
 FUEL_TYPES = ['solar', 'wind', 'water', 'bio',
-              'lignite', 'coal', 'gas', 'nuclear']
+              'lignite', 'coal', 'gas', 'nuclear', 'storage']
 DEMAND_TYPES = ['power', 'heat']
 CONSUMER_TYPES = ['household', 'business', 'industry', 'agriculture']
 CASH_TYPES = ['profit', 'fuel', 'emission', 'start_ups', 'forecast']

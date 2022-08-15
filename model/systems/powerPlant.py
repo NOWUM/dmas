@@ -246,7 +246,7 @@ class PowerPlant(EnergySystem):
         pwp, prices = self.generation_system, prices or self.prices
         return 1 / pwp['eta'] * (prices[pwp['fuel'].replace('_combined', '')].mean() + pwp['chi'] * prices['co'].mean())
 
-    def get_ask_orders(self) -> pd.DataFrame:
+    def get_ask_orders(self, price: float = -0.5) -> pd.DataFrame:
 
         def get_cost(p: float, t: int):
             f = self.prices[self.generation_system['fuel'].replace('_combined', '')].values[t]
