@@ -106,7 +106,7 @@ class Storage(EnergySystem):
         for result, num in zip(self.opt_results.items(), range(len(self.opt_results))):
             key, power = result
             prc = PRICE_FUNCS[key](self.prices['power'].values)
-            order_book = {t: dict(type='exclusive', hour=t, block_id=num, name=self.name,
+            order_book = {t: dict(hour=t, block_id=num, name=self.name,
                                   price=prc[t], volume=power[t])
                           for t in self.t}
             df = pd.DataFrame.from_dict(order_book, orient='index')
