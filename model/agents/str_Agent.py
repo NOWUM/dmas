@@ -1,6 +1,7 @@
 # third party modules
 import time as time
 import pandas as pd
+from uuid import uuid1
 
 
 # model modules
@@ -32,6 +33,8 @@ class StrAgent(BasicAgent):
         if storages is not None:
             for _, data in storages.iterrows():
                 system = data.to_dict()
+                if system['unitID'] in self.storage_names:
+                    system['unitID'] = str(uuid1())
                 self.storage_names.append(system['unitID'])
                 self.portfolio.add_energy_system(system)
 
