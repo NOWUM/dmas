@@ -5,10 +5,10 @@ from main import init_dict, type_mapping
 
 if __name__ == '__main__':
 
-    test_agent = 'PWP'
+    test_agent = 'STR'
 
     init_dict['type'] = test_agent
-    init_dict['area'] = 'DE111'
+    init_dict['area'] = 'DE13A'
     agent_class = type_mapping[init_dict['type']]
     agent = agent_class(**init_dict)
     agent.optimize_day_ahead()

@@ -4,6 +4,8 @@ import pandas as pd
 
 
 # model modules
+from forecasts.price import PriceForecast
+from forecasts.weather import WeatherForecast
 from aggregation.portfolio_storage import StrPort
 from agents.basic_Agent import BasicAgent
 
@@ -14,20 +16,26 @@ class StrAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         start_time = time.time()
 
-        self.portfolio = StrPort(T=24)
+        self.portfolio = StrPort(name=self.name)
 
-        self.max_volume = 0
-        # Construction storages
+        self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                                simulation_interface=self.simulation_interface,
+                                                weather_interface=self.weather_interface)
+        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
+                                            simulation_interface=self.simulation_interface,
+                                            weather_interface=self.weather_interface)
+        self.forecast_counter = 10
+
+        self.storage_names = []
+
         storages = self.infrastructure_interface.get_water_storage_systems(self.area)
         if storages is not None:
             for _, data in storages.iterrows():
-                self.portfolio.add_energy_system(data.to_dict())
+                system = data.to_dict()
+                self.storage_names.append(system['unitID'])
+                self.portfolio.add_energy_system(system)
 
         self.logger.info('Storages added')
-
-        df = pd.DataFrame(index=[pd.to_datetime(self.date)], data=self.portfolio.capacities)
-        df['agent'] = self.name
-        df.to_sql(name='installed capacities', con=self.simulation_database, if_exists='replace')
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
@@ -43,8 +51,39 @@ class StrAgent(BasicAgent):
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
         self.logger.info(f'dayAhead market scheduling started {self.date}')
+        start_time = time.time()
 
+        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
+        prices = self.price_forecast.forecast(self.date)
+        self.logger.info(f'initialize forecast in {time.time() - start_time:.2f} seconds')
+        # Step 2: optimization
+        self.portfolio.optimize(self.date, weather.copy(), prices.copy())
+        self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
+        # save optimization results
+        self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area, self.date)
+        self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area, self.date)
+
+        # Step 3: build orders from optimization results
+        start_time = time.time()
+        order_book = self.portfolio.get_exclusive_orders()
+        self.simulation_interface.set_exclusive_orders(order_book)
+        # self.simulation_interface.set_orders(order_book, date=self.date, area=self.area)
+        self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
 
     def post_day_ahead(self):
         """Scheduling after DayAhead Market"""
         self.logger.info('starting day ahead adjustments')
+
+        start_time = time.time()
+        committed_power = self.simulation_interface.get_exclusive_result(self.storage_names)
+        print(committed_power)
+        result = self.simulation_interface.get_auction_results(self.date)
+
+        self.weather_forecast.collect_data(self.date)
+        self.price_forecast.collect_data(self.date)
+        self.forecast_counter -= 1
+
+        if self.forecast_counter == 0:
+            self.price_forecast.fit_model()
+            self.forecast_counter = 10
+            self.logger.info(f'fitted price forecast with R²: {self.price_forecast.score}')

@@ -385,9 +385,9 @@ class InfrastructureInterface:
                         f'"SpeMastrNummer" as "storageID", ' \
                         f'"NameStromerzeugungseinheit" as "name", ' \
                         f'COALESCE("Inbetriebnahmedatum", \'2018-01-01\') as "startDate", ' \
-                        f'"Nettonennleistung" as "P-_max", ' \
+                        f'"Nettonennleistung" as "PMinus_max", ' \
                         f'"NutzbareSpeicherkapazitaet" as "VMax", ' \
-                        f'"PumpbetriebLeistungsaufnahme" as "P+_max", ' \
+                        f'"PumpbetriebLeistungsaufnahme" as "PPlus_max", ' \
                         f'COALESCE("Laengengrad", {longitude}) as "lon", ' \
                         f'COALESCE("Breitengrad", {latitude}) as "lat" ' \
                         f'FROM "EinheitenStromSpeicher"' \
@@ -401,9 +401,9 @@ class InfrastructureInterface:
                 # If the response Dataframe is not empty set technical parameter
                 if not df.empty:
                     # set charge and discharge power
-                    df['P+_max'] = df['P+_max'].fillna(df['P-_max'])            # fill na with Rated Power
-                    df['P-_min'] = 0                                            # set min to zero
-                    df['P+_min'] = 0                                            # set min to zero
+                    df['PPlus_max'] = df['PPlus_max'].fillna(df['PMinus_max'])  # fill na with Rated Power
+                    # df['PMinus_max'] = 0                                        # set min to zero
+                    # df['PPlus_max'] = 0                                         # set min to zero
 
                     # fill nan values with default from wiki
                     df['VMax'] = df['VMax'].fillna(0)
@@ -412,23 +412,24 @@ class InfrastructureInterface:
                         # TODO validate that storage_volumes is in [kW]
                         for key, value in storage_volumes.iterrows():
                             if key in row['name']:
-                                df.at[index, 'VMax'] = value['volume']
+                                df.at[index, 'VMax'] = value['volume'] * 1e3
 
                     storages = []
                     for id_ in df['storageID'].unique():
                         data = df[df['storageID'] == id_]
                         storage = {'unitID': id_,
                                    'startDate': pd.to_datetime(data['startDate'].to_numpy()[0]),
-                                   'P-_max': data['P-_max'].sum(),
-                                   'P+_max': data['P+_max'].sum(),
+                                   'PMinus_max': data['PMinus_max'].sum(),
+                                   'PPlus_max': data['PPlus_max'].sum(),
                                    'VMax': data['VMax'].to_numpy()[0],
                                    'VMin': 0,
                                    'V0': data['VMax'].to_numpy()[0]/2,
                                    'lat': data['lat'].to_numpy()[0],
                                    'lon': data['lon'].to_numpy()[0],
-                                   'eta+': 0.85,
-                                   'eta-': 0.80}
-                        storages.append(storage)
+                                   'eta_plus': 0.85,
+                                   'eta_minus': 0.80}
+                        if storage['VMax'] > 0:
+                            storages.append(storage)
                     data_frames.append(pd.DataFrame(storages))
 
         return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
