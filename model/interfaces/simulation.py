@@ -271,7 +271,7 @@ class SimulationInterface:
         try:
             order_book.to_sql('exclusive_orders', con=self.database, if_exists='append')
         except IntegrityError:
-            self.logger.error(f'orders already exists for {self.name} - ignoring')
+            self.logger.error(f'exclusive orders already exists for {self.name} - ignoring')
 
     def get_exclusive_orders(self):
         df = pd.read_sql("Select * from exclusive_orders", self.database)
