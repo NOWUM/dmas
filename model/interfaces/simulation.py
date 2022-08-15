@@ -156,7 +156,6 @@ class SimulationInterface:
             data_frame.to_sql(name='capacities', con=self.database, if_exists='append')
         except IntegrityError:
             self.logger.error(f'capacities already exist for {area} and {date} - ignoring')
-        
 
     def get_global_capacities(self, date):
         query = f"SELECT sum(bio) as bio, " \
@@ -270,7 +269,8 @@ class SimulationInterface:
     def set_exclusive_orders(self, order_book):
         try:
             order_book.to_sql('exclusive_orders', con=self.database, if_exists='append')
-        except IntegrityError:
+        except IntegrityError as e:
+            print(e)
             self.logger.error(f'exclusive orders already exists for {self.name} - ignoring')
 
     def get_exclusive_orders(self):
