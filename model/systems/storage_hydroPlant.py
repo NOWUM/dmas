@@ -42,7 +42,7 @@ class Storage(EnergySystem):
         self.model = ConcreteModel()
         self.opt = SolverFactory('glpk')
 
-    def build_model(self):
+    def build_model(self, committed_power: np.array = None):
 
         self.model.clear()
 
@@ -67,14 +67,50 @@ class Storage(EnergySystem):
             discharge = self.model.p_minus[t] / self.storage_system['eta-']
             if t == 0:
                 self.model.vol_con.add(expr=self.model.volume[t] == self.storage_system['V0'] + charged - discharge)
+            elif t == 23:
+                self.model.vol_con.add(expr=self.model.volume[t] + charged - discharge >= self.storage_system['V0']/3)
             else:
                 self.model.vol_con.add(expr=self.model.volume[t] == self.model.volume[t - 1] + charged - discharge)
 
-        p_out = [-self.model.p_plus[t] + self.model.p_minus[t] for t in self.t]
-        profit = [p_out[t] * self.prices['power'][t] for t in self.t]
+        # if no day ahead power known run standard optimization
+        if committed_power is None:
+            p_out = [-self.model.p_plus[t] + self.model.p_minus[t] for t in self.t]
+            profit = [p_out[t] * self.prices['power'][t] for t in self.t]
 
-        # set new objective
+        # if day ahead power is known minimize the difference
+        else:
+            p_out = [-self.model.p_plus[t] + self.model.p_minus[t] for t in self.t]
+            self.model.power_difference = Var(self.t, within=NonNegativeReals)
+            self.model.minus = Var(self.t, within=NonNegativeReals)
+            self.model.plus = Var(self.t, within=NonNegativeReals)
+
+            difference = [self.model.minus[t] + self.model.plus[t] for t in self.t]
+            self.model.difference = ConstraintList()
+            for t in self.t:
+                self.model.difference.add(committed_power[t] - p_out[t]
+                                          == -self.model.minus[t] + self.model.plus[t])
+            difference_cost = [difference[t] * np.abs(self.prices['power'][t] * 2) for t in self.t]
+            profit = [p_out[t] * self.prices['power'][t] - difference_cost[t] for t in self.t]
+            # set new objective
+
         self.model.obj = Objective(expr=quicksum(profit[t] for t in self.t), sense=maximize)
+
+    def optimize_post_market(self, committed_power: np.array, power_prices: np.array = None):
+        if power_prices is not None:
+            self.prices['power'].values[:len(power_prices)] = power_prices
+
+        self.build_model(committed_power)
+        self.opt.solve(self.model)
+
+        power = np.asarray([self.model.p_plus[t].value - self.model.p_minus[t].value for t in self.t])
+
+        self.power = power
+        self.volume = np.asarray([self.model.volume[t] for t in self.t])
+        self.generation['total'][self.power < 0] = self.power[self.power < 0]
+        self.demand['power'][self.power > 0] = self.power[self.power > 0]
+        self.generation['storage'] = self.power
+
+        self.generation_system['VO'] = self.volume[-1]
 
     def optimize(self, date: pd.Timestamp = None, weather: pd.DataFrame = None, prices: pd.DataFrame = None,
                  steps: tuple = None):
@@ -91,7 +127,7 @@ class Storage(EnergySystem):
             power = np.asarray([self.model.p_plus[t].value - self.model.p_minus[t].value for t in self.t])
             self.opt_results[key] = power
             if key == 'normal':
-                self.power = self.power
+                self.power = power
                 self.volume = np.asarray([self.model.volume[t] for t in self.t])
                 self.generation['total'][self.power < 0] = self.power[self.power < 0]
                 self.demand['power'][self.power > 0] = self.power[self.power > 0]

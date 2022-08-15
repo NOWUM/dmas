@@ -34,3 +34,34 @@ class StrPort(PortfolioModel):
 
         return df
 
+    def optimize_post_market(self, committed_power, power_prices):
+        """
+        optimize the portfolio after receiving market results
+        :return: time series in [kW] of actual generation
+        """
+
+        def get_committed_power(m):
+            p = np.zeros(24)
+            filtered_cp = committed_power[committed_power['name'] == m.name]
+            if not filtered_cp.empty:
+                for index, row in filtered_cp.iterrows():
+                    p[int(row.hour)] = float(row.volume)
+
+            return p
+
+        for model in self.energy_systems:
+            model.optimize_post_market(get_committed_power(model), power_prices)
+
+        self._reset_data()
+
+        for model in self.energy_systems:
+            for key, value in model.generation.items():
+                self.generation[key] += value           # [kW]
+            for key, value in model.demand.items():
+                self.demand[key] += value               # [kW]
+            for key, value in model.cash_flow.items():
+                self.cash_flow[key] += value            # [ct]
+
+        self.power = self.generation['total'] - self.demand['power']
+
+        return self.power

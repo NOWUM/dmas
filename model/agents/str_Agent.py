@@ -81,6 +81,11 @@ class StrAgent(BasicAgent):
         committed_power = self.simulation_interface.get_exclusive_result(self.storage_names)
         print(committed_power)
         result = self.simulation_interface.get_auction_results(self.date)
+        self.portfolio.optimize_post_market(committed_power, result['price'].values)
+        # save optimization results
+        self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
+        self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
+        self.simulation_interface.set_cash_flow(self.portfolio, self.area, self.date)
 
         self.weather_forecast.collect_data(self.date)
         self.price_forecast.collect_data(self.date)
