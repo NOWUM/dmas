@@ -103,6 +103,9 @@ class EnergySystem:
         df = df.set_index(['block_id', 'hour', 'name'])
         return df
 
+    def get_exclusive_orders(self) -> pd.DataFrame:
+        return pd.DataFrame()
+
     def _reset_data(self) -> None:
         for fuel in FUEL_TYPES + ['total']:
             self.generation[fuel] = np.zeros(self.T)

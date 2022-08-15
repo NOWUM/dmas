@@ -72,13 +72,13 @@ class PwpAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
+        print(self.portfolio.generation)
         self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area, self.date)
 
         # Step 3: build orders from optimization results
         start_time = time.time()
         order_book = self.portfolio.get_ask_orders()
-        print(order_book)
         self.simulation_interface.set_linked_orders(order_book)
         self.simulation_interface.set_orders(order_book, date=self.date, area=self.area)
         self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')
@@ -90,7 +90,9 @@ class PwpAgent(BasicAgent):
         start_time = time.time()
 
         committed_power = self.simulation_interface.get_linked_result(self.pwp_names)
+        print(committed_power)
         result = self.simulation_interface.get_auction_results(self.date)
+        print(result)
         self.portfolio.optimize_post_market(committed_power, result['price'].values)
         # save optimization results
         self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
