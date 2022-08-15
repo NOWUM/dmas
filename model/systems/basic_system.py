@@ -1,6 +1,7 @@
 # third party modules
 import numpy as np
 import pandas as pd
+
 # model modules
 from demandlib.electric_profile import StandardLoadProfile
 from pvlib.pvsystem import PVSystem
@@ -21,8 +22,8 @@ def get_solar_generation(generation_system: PVSystem, weather: pd.DataFrame) -> 
 
 class EnergySystem:
 
-    def __init__(self, T: int = 24, maxPower: float = 0, fuel_type: str = '',
-                 demandP: float = 0, demand_type: str = '', *args, **kwargs):
+    def __init__(self, T: int = 24, maxPower: float = 0, fuel_type: str = None,
+                 demandP: float = 0, demand_type: str = None, *args, **kwargs):
         """
         Describes a basic EnergySystem which behaves dependent from weather and prices.
         It has generation, demand and power in kW.
@@ -87,6 +88,20 @@ class EnergySystem:
 
     def optimize_post_market(self, committed_power: np.array, power_prices: np.array = None):
         pass
+
+    def get_bid_orders(self, price: float = 3) -> pd.DataFrame:
+        order_book = {t: dict(type='demand', hour=t, block_id=t, name=self.name, price=price,
+                              volume=self.demand['power'][t] - self.generation['total'][t]) for t in self.t}
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        df = df.set_index(['block_id', 'hour', 'name'])
+        return df
+
+    def get_ask_orders(self, price: float = -0.5) -> pd.DataFrame:
+        order_book = {t: dict(type='generation', hour=t, block_id=t, name=self.name, price=price,
+                              volume=self.generation['total'][t] - self.demand['power'][t]) for t in self.t}
+        df = pd.DataFrame.from_dict(order_book, orient='index')
+        df = df.set_index(['block_id', 'hour', 'name'])
+        return df
 
     def _reset_data(self) -> None:
         for fuel in FUEL_TYPES + ['total']:

@@ -1,10 +1,11 @@
 from main import init_dict, type_mapping
 
 # run docker-compose up -d simulationdb rabbitmq grafana
-from systems.generation_wind import WindModel
+
+
 if __name__ == '__main__':
 
-    test_agent = 'RES'
+    test_agent = 'PWP'
 
     init_dict['type'] = test_agent
     init_dict['area'] = 'DE111'
@@ -31,6 +32,11 @@ if __name__ == '__main__':
         generation = agent.portfolio_eeg.generation['total']
         assert all(ask_volume == generation)
         # agent.post_day_ahead()
+    elif test_agent == 'PWP':
+        ask_orders = agent.portfolio.get_ask_orders()
+        total_power = sum([system.generation['total'] for system in agent.portfolio.energy_systems])
+        agent.post_day_ahead()
+
 
     # wp = res_agent.portfolio_mrk.energy_systems[0]
     # for wp in res_agent.portfolio_mrk.energy_systems:

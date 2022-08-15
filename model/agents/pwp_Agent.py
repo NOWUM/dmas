@@ -77,7 +77,7 @@ class PwpAgent(BasicAgent):
 
         # Step 3: build orders from optimization results
         start_time = time.time()
-        order_book = self.portfolio.get_order_book()
+        order_book = self.portfolio.get_ask_orders()
         self.simulation_interface.set_linked_orders(order_book)
         self.simulation_interface.set_orders(order_book, date=self.date, area=self.area)
         self.logger.info(f'built Orders in {time.time() - start_time:.2f} seconds')

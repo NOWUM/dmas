@@ -249,7 +249,10 @@ class SimulationInterface:
 
     # linked orders
     def set_linked_orders(self, order_book):
-        order_book.to_sql('linked_orders', con=self.database, if_exists='append')
+        try:
+            order_book.to_sql('linked_orders', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.error(f'orders already exists for {self.name} - ignoring')
 
     def get_linked_orders(self):
         df = pd.read_sql("Select * from linked_orders", self.database)
@@ -265,7 +268,10 @@ class SimulationInterface:
 
     # exclusive orders
     def set_exclusive_orders(self, order_book):
-        order_book.to_sql('exclusive_orders', con=self.database, if_exists='append')
+        try:
+            order_book.to_sql('exclusive_orders', con=self.database, if_exists='append')
+        except IntegrityError:
+            self.logger.error(f'orders already exists for {self.name} - ignoring')
 
     def get_exclusive_orders(self):
         df = pd.read_sql("Select * from exclusive_orders", self.database)
