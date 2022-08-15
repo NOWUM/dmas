@@ -1,5 +1,5 @@
 from main import init_dict, type_mapping
-
+import numpy as np
 # run docker-compose up -d simulationdb rabbitmq grafana
 
 
@@ -36,8 +36,14 @@ if __name__ == '__main__':
         ask_orders = agent.portfolio.get_ask_orders()
         total_power = sum([system.generation['total'] for system in agent.portfolio.energy_systems])
         agent.post_day_ahead()
-
-
+    elif test_agent == 'STR':
+        ex_orders = agent.portfolio.get_exclusive_orders()
+        ex_orders = ex_orders.reset_index()
+        power = ex_orders.loc[ex_orders['block_id'] == 2, ['hour', 'name', 'volume']]
+        power['volume'] *= 0.8
+        agent.portfolio.optimize_post_market(power, power_prices=None)
+        print(agent.portfolio.energy_systems[0].generation['storage'])
+        print(power.loc[power['name'] == agent.portfolio.energy_systems[0].name, 'volume'].values)
     # wp = res_agent.portfolio_mrk.energy_systems[0]
     # for wp in res_agent.portfolio_mrk.energy_systems:
     #     if isinstance(wp, WindModel):
