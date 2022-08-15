@@ -55,7 +55,7 @@ class PortfolioModel:
 
     def get_bid_orders(self, price: float = 3) -> pd.DataFrame:
         order_book = {t: dict(type='demand', hour=t, block_id=t, name=self.name, price=price,
-                              volume=self.demand['power'][t] - self.generation['total'][t]) for t in self.t}
+                              volume=-max(self.demand['power'][t] - self.generation['total'][t], 0)) for t in self.t}
         df = pd.DataFrame.from_dict(order_book, orient='index')
         df = df.set_index(['block_id', 'hour', 'name'])
         return df
