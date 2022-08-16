@@ -215,6 +215,10 @@ class DayAheadMarket:
             volume = 0
             for block, name in self.orders['single_bid_index'][t]:
                 volume += (-1) * self.orders['single_bid'][block, t, name][1]
+            for block, name in self.orders['exclusive_ask_index'][t]:
+                if self.model.use_exclusive_block[block, name].value \
+                        and self.orders['exclusive_ask'][block, t, name][1] < 0:
+                    volume += (-1) * self.orders['exclusive_ask'][block, t, name][1]
             volumes.append(volume)
         self.logger.info(f'Got {sum_magic_source:.2f} kWh from Magic source')
         # -> determine used ask orders

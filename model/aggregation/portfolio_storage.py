@@ -46,7 +46,6 @@ class StrPort(PortfolioModel):
             if not filtered_cp.empty:
                 for index, row in filtered_cp.iterrows():
                     p[int(row.hour)] = float(row.volume)
-
             return p
 
         for model in self.energy_systems:

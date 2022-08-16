@@ -86,7 +86,7 @@ class Storage(EnergySystem):
         if power_prices is not None:
             self.prices['power'].values[:len(power_prices)] = power_prices
 
-        self.build_model(committed_power)
+        self.build_model(-committed_power)
         r = self.opt.solve(self.model)
         power = np.asarray([self.model.p_out[t].value for t in self.t])
 
@@ -151,9 +151,11 @@ if __name__ == "__main__":
     storage_prices = get_test_prices()
     storage_prices['power'][:8] = 100
     pw1 = sys.optimize(prices=storage_prices)
-
+    plt.plot(sys.generation['storage'])
     orders = sys.get_exclusive_orders()
-    pw2 = sys.optimize_post_market(pw1 * 0.8)
+    market_result = orders.loc[orders.index.get_level_values('block_id') == 0, 'volume'].values
+    pw2 = sys.optimize_post_market(market_result * 0.8)
+    plt.plot(sys.generation['storage'])
 
-    plt.plot(pw1)
-    plt.plot(pw2)
+    # plt.plot(pw1)
+    # plt.plot(pw2)

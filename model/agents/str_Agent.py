@@ -80,7 +80,6 @@ class StrAgent(BasicAgent):
 
         start_time = time.time()
         committed_power = self.simulation_interface.get_exclusive_result(self.storage_names)
-        print(committed_power)
         result = self.simulation_interface.get_auction_results(self.date)
         self.portfolio.optimize_post_market(committed_power, result['price'].values)
         # save optimization results
