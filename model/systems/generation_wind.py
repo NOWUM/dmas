@@ -30,10 +30,11 @@ def create_windturbine(turbine):
             nominal_power=max_power,
             power_curve=pow_c)
 
+
 class WindModel(EnergySystem):
 
     def __init__(self, T, wind_turbine=None):
-        super().__init__(T)
+        super().__init__(T=T, fuel_type='wind')
 
         if wind_turbine is None:
             wind_turbine = dict(turbine_type='E-82/2300', height=108, diameter=82)
@@ -80,6 +81,7 @@ class WindModel(EnergySystem):
         self.mc.run_model(self.weather)
         # windpowerlib calculated in [W]
         self.generation['wind'] = np.asarray(self.mc.power_output, dtype=np.float64)/ 1e3 # [W] -> [kW]
-        self.power = self.generation['wind']
+        self.generation['total'] = self.generation['wind'].copy()
+        self.power = self.generation['wind'].copy()
 
         return self.power
