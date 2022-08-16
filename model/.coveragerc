@@ -1,0 +1,9 @@
+[run]
+omit = tests/*
+source = .
+
+
+[report]
+# https://stackoverflow.com/a/5850364
+exclude_lines =
+    if __name__ == .__main__.:

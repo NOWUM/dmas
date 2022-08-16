@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # agent_class = type_mapping[init_dict['type']]
     # pwp_agent = agent_class(**init_dict)
     # pwp_agent.optimize_day_ahead()
-    # pwp_orderbook = pwp_agent.get_order_book()
+    # pwp_orderbook = pwp_agent.get_ask_orders()
     # pwp_agent.portfolio.capacities
     #
     # pwp = pwp_agent.portfolio.energy_systems[0]
