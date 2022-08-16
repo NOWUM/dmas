@@ -389,12 +389,14 @@ class InfrastructureInterface:
                         f'LEFT JOIN "AnlagenStromSpeicher" ON "EinheitMastrNummer" = "VerknuepfteEinheitenMastrNummern" ' \
                         f'WHERE "Postleitzahl" = {plz_code} AND ' \
                         f'"EinheitBetriebsstatus" = 35 AND "Technologie" = 1537 AND "EinheitSystemstatus"=472 AND "Land"=84 ' \
-                        f'AND "Nettonennleistung" > 500' \
-
+                        f'AND "Nettonennleistung" > 500'
+                # print(query)
                 # Get Data from Postgres
                 df = pd.read_sql(query, self.database_mastr)
+
                 # If the response Dataframe is not empty set technical parameter
                 if not df.empty:
+                    print(df['name'])
                     # set charge and discharge power
                     df['PPlus_max'] = df['PPlus_max'].fillna(df['PMinus_max'])  # fill na with Rated Power
                     # df['PMinus_max'] = 0                                        # set min to zero
@@ -495,18 +497,18 @@ class InfrastructureInterface:
     def get_grid_edges(self):
         return {}
 
+
 if __name__ == "__main__":
     import os
     x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
-
-    interface = InfrastructureInterface('test', structure_data_server=x, structure_data_credential=y)
-    x = interface.get_power_plant_in_area(area='DEA2D', fuel_type='gas')
+    uri = f'postgresql://{y}@{x}'
+    interface = InfrastructureInterface('test', uri)
+    # x = interface.get_power_plant_in_area(area='DEA2D', fuel_type='gas')
     #y = interface.get_water_storage_systems(area=415)
     #z = interface.get_solar_storage_systems_in_area(area=415)
     #a = interface.get_run_river_systems_in_area(area='DE111')
     keys = np.unique(plz_nuts['NUTS3'].to_numpy())
-
 
     # pwp_agents = []
     # for plz in keys:
@@ -522,18 +524,18 @@ if __name__ == "__main__":
     # pwp_agents = np.asarray(pwp_agents)
     # np.save('pwp_agents', pwp_agents)
     #
-    res_agents = []
-    for plz in keys:
-        print(plz)
-        plants = False
-        wind = interface.get_wind_turbines_in_area(area=plz)
-        solar = interface.get_solar_storage_systems_in_area(area=plz)
-        bio = interface.get_biomass_systems_in_area(area=plz)
-        water = interface.get_run_river_systems_in_area(area=plz)
-        if any([not wind.empty,not solar.empty,not bio.empty, not water.empty]):
-            res_agents.append(plz)
-
-    res_agents = np.asarray(res_agents)
+    # res_agents = []
+    # for plz in keys:
+    #     print(plz)
+    #     plants = False
+    #     wind = interface.get_wind_turbines_in_area(area=plz)
+    #     solar = interface.get_solar_storage_systems_in_area(area=plz)
+    #     bio = interface.get_biomass_systems_in_area(area=plz)
+    #     water = interface.get_run_river_systems_in_area(area=plz)
+    #     if any([not wind.empty,not solar.empty,not bio.empty, not water.empty]):
+    #         res_agents.append(plz)
+    #
+    # res_agents = np.asarray(res_agents)
     # np.save('res_agents', res_agents)
     #
     # dem_agents = []
@@ -542,12 +544,15 @@ if __name__ == "__main__":
     # dem_agents = np.asarray(dem_agents)
     # np.save('dem_agents', dem_agents)
 
-    # str_agents = []
-    # for plz in keys:
-    #     print(plz)
-    #     str = interface.get_water_storage_systems(plz)
-    #     if not str.empty:
-    #         str_agents.append(plz)
-    #
-    # str_agents = np.asarray(str_agents)
+    str_agents = []
+    for plz in keys:
+        print(plz)
+        str = interface.get_water_storage_systems(plz)
+        if not str.empty:
+            # print(str['name'])
+            if any(str['PMinus_max'] > 1) and any(str['VMax'] > 1):
+                print(f'add {plz}')
+                str_agents.append(plz)
+
+    str_agents = np.asarray(str_agents)
     # np.save('str_agents', str_agents)
