@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, \
-    Reals, Binary, maximize, quicksum, ConstraintList, NonNegativeReals, minimize, value
+    Reals, Binary, maximize, quicksum, ConstraintList, value
 
 # model modules
 from systems.basic_system import EnergySystem
@@ -46,71 +46,59 @@ class Storage(EnergySystem):
 
         self.model.clear()
 
-        self.model.p_plus = Var(self.t, within=NonNegativeReals)
-        self.model.p_minus = Var(self.t, within=NonNegativeReals)
-        self.model.volume = Var(self.t, within=NonNegativeReals)
-        self.model.switch = Var(self.t, within=Binary)
+        self.model.p_out = Var(self.t, within=Reals, bounds=(-self.storage_system['P-_Max'],
+                                                             self.storage_system['P+_Max']))
+        self.model.volume = Var(self.t, within=Reals, bounds=(0, self.storage_system['VMax']))
 
-        self.model.plus_con = ConstraintList()
-        self.model.minus_con = ConstraintList()
         self.model.vol_con = ConstraintList()
-        self.model.profit_function = ConstraintList()
 
         for t in self.t:
-            self.model.plus_con.add(self.model.p_plus[t] <= self.model.switch[t] * self.storage_system['P+_Max'])
-            self.model.minus_con.add(
-                self.model.p_minus[t] <= (1 - self.model.switch[t]) * self.storage_system['P-_Max'])
-            self.model.vol_con.add(self.model.volume[t] <= self.storage_system['VMax'])
-
-        for t in self.t:
-            charged = self.storage_system['eta+'] * self.model.p_plus[t]
-            discharge = self.model.p_minus[t] / self.storage_system['eta-']
+            eff = self.storage_system['eta+'] * self.storage_system['eta-']
             if t == 0:
-                self.model.vol_con.add(expr=self.model.volume[t] == self.storage_system['V0'] + charged - discharge)
-            elif t == 23:
-                self.model.vol_con.add(expr=self.model.volume[t] + charged - discharge >= self.storage_system['V0']/3)
+                self.model.vol_con.add(expr=self.model.volume[t] == self.storage_system['V0'] + self.model.p_out[t] * eff)
             else:
-                self.model.vol_con.add(expr=self.model.volume[t] == self.model.volume[t - 1] + charged - discharge)
+                self.model.vol_con.add(expr=self.model.volume[t] == self.model.volume[t - 1] + self.model.p_out[t] * eff)
+        self.model.vol_con.add(expr=self.model.volume[self.T-1] == self.storage_system['VMax'] / 2)
 
         # if no day ahead power known run standard optimization
         if committed_power is None:
-            p_out = [-self.model.p_plus[t] + self.model.p_minus[t] for t in self.t]
-            profit = [p_out[t] * self.prices['power'][t] for t in self.t]
+            profit = [-self.model.p_out[t] * self.prices['power'][t] for t in self.t]
 
         # if day ahead power is known minimize the difference
         else:
-            p_out = [-self.model.p_plus[t] + self.model.p_minus[t] for t in self.t]
-            self.model.power_difference = Var(self.t, within=NonNegativeReals)
-            self.model.minus = Var(self.t, within=NonNegativeReals)
-            self.model.plus = Var(self.t, within=NonNegativeReals)
+            self.model.power_difference = Var(self.t, within=Reals)
+            self.model.minus = Var(self.t, within=Reals, bounds=(0, None))
+            self.model.plus = Var(self.t, within=Reals, bounds=(0, None))
 
-            difference = [self.model.minus[t] + self.model.plus[t] for t in self.t]
+            difference = [committed_power[t] - self.model.p_out[t] for t in self.t]
+
             self.model.difference = ConstraintList()
             for t in self.t:
-                self.model.difference.add(committed_power[t] - p_out[t]
-                                          == -self.model.minus[t] + self.model.plus[t])
-            difference_cost = [difference[t] * np.abs(self.prices['power'][t] * 2) for t in self.t]
-            profit = [p_out[t] * self.prices['power'][t] - difference_cost[t] for t in self.t]
-            # set new objective
+                self.model.difference.add(self.model.plus[t]-self.model.minus[t] == difference[t])
+            abs_difference = [self.model.plus[t]+self.model.minus[t] for t in self.t]
+            costs = [abs_difference[t] * np.abs(self.prices['power'][t] * 2) for t in self.t]
+
+            profit = [-self.model.p_out[t] * self.prices['power'][t] - costs[t] for t in self.t]
 
         self.model.obj = Objective(expr=quicksum(profit[t] for t in self.t), sense=maximize)
 
-    def optimize_post_market(self, committed_power: np.array, power_prices: np.array = None):
+    def optimize_post_market(self, committed_power: np.array, power_prices: np.array = None) -> np.array:
         if power_prices is not None:
             self.prices['power'].values[:len(power_prices)] = power_prices
 
         self.build_model(committed_power)
-        self.opt.solve(self.model)
-
-        power = np.asarray([self.model.p_plus[t].value - self.model.p_minus[t].value for t in self.t])
+        r = self.opt.solve(self.model)
+        power = np.asarray([self.model.p_out[t].value for t in self.t])
 
         self.power = power
-        self.volume = np.asarray([self.model.volume[t] for t in self.t])
+        self.volume = np.asarray([self.model.volume[t].value for t in self.t])
         self.generation['total'][self.power < 0] = self.power[self.power < 0]
         self.demand['power'][self.power > 0] = self.power[self.power > 0]
         self.generation['storage'] = self.power
 
         self.generation_system['VO'] = self.volume[-1]
+
+        return self.power
 
     def optimize(self, date: pd.Timestamp = None, weather: pd.DataFrame = None, prices: pd.DataFrame = None,
                  steps: tuple = None):
@@ -123,12 +111,12 @@ class Storage(EnergySystem):
         for key, func in PRICE_FUNCS.items():
             self.prices['power'] = func(base_price['power'].values)
             self.build_model()
-            self.opt.solve(self.model)
-            power = np.asarray([self.model.p_plus[t].value - self.model.p_minus[t].value for t in self.t])
+            r = self.opt.solve(self.model)
+            power = np.asarray([self.model.p_out[t].value for t in self.t])
             self.opt_results[key] = power
             if key == 'normal':
                 self.power = power
-                self.volume = np.asarray([self.model.volume[t] for t in self.t])
+                self.volume = np.asarray([self.model.volume[t].value for t in self.t])
                 self.generation['total'][self.power < 0] = self.power[self.power < 0]
                 self.demand['power'][self.power > 0] = self.power[self.power > 0]
                 self.generation['storage'] = self.power
@@ -143,7 +131,7 @@ class Storage(EnergySystem):
             key, power = result
             prc = PRICE_FUNCS[key](self.prices['power'].values)
             order_book = {t: dict(hour=t, block_id=num, name=self.name,
-                                  price=prc[t], volume=power[t])
+                                  price=prc[t], volume=-power[t])
                           for t in self.t}
             df = pd.DataFrame.from_dict(order_book, orient='index')
             total_orders += [df]
@@ -153,46 +141,19 @@ class Storage(EnergySystem):
 
 
 if __name__ == "__main__":
+    from utils import get_test_prices
+    from matplotlib import pyplot as plt
+
     storage = {"eta_plus": 0.8, "eta_minus": 0.87, "fuel": "water", "PPlus_max": 10,
-               "PMinus_max": 10, "V0": 0, "VMin": 0, "VMax": 100}
+               "PMinus_max": 10, "V0": 50, "VMin": 0, "VMax": 100}
 
     sys = Storage(T=24, unitID='x', **storage)
-
-    power_price = np.ones(48)  # * np.random.uniform(0.95, 1.05, 48) # €/kWh
-    power_price[12:] = 3
-
-    co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
-    gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
-    lignite = np.ones(48) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
-    coal = np.ones(48) * 0.02  # * np.random.uniform(0.95, 1.05)       # -- Hard Coal Price    [€/kWh]
-    nuc = np.ones(48) * 0.01  # * np.random.uniform(0.95, 1.05)        # -- nuclear Price      [€/kWh]
-
-    prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
-    prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
-
-    pw = sys.optimize(prices=prices)
+    storage_prices = get_test_prices()
+    storage_prices['power'][:8] = 100
+    pw1 = sys.optimize(prices=storage_prices)
 
     orders = sys.get_exclusive_orders()
+    pw2 = sys.optimize_post_market(pw1 * 0.8)
 
-    # # if no day ahead power known run standard optimization
-    # # if self.committed_power is None:
-    #     self.model.obj = Objective(expr=quicksum(self.model.profit[i] for i in self.t), sense=maximize)
-    # else:
-    #     self.model.power_difference = Var(self.t, bounds=(0, None), within=Reals)
-    #     self.model.delta_cost = Var(self.t, bounds=(0, None), within=Reals)
-    #     self.model.minus = Var(self.t, bounds=(0, None), within=Reals)
-    #     self.model.plus = Var(self.t, bounds=(0, None), within=Reals)
-    #
-    #     self.model.difference = ConstraintList()
-    #     self.model.day_ahead_difference = ConstraintList()
-    #     self.model.difference_cost = ConstraintList()
-    #
-    #
-    #     for t in self.t:
-    #         self.model.difference.add(self.model.minus[t] + self.model.plus[t]
-    #                                   == self.model.power_difference[t])
-    #
-    #         self.model.day_ahead_difference.add(self.committed_power[t] - self.model.p_out[t]
-    #                                             == -self.model.minus[t] + self.model.plus[t])
-    #         self.model.difference_cost.add(self.model.delta_cost[t]
-    #                                        # == self.model.power_difference[t] * np.abs(self.prices['power'][t] * 2))
+    plt.plot(pw1)
+    plt.plot(pw2)
