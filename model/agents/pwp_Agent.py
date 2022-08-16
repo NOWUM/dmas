@@ -72,6 +72,7 @@ class PwpAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
+        self.portfolio.cash_flow['forecast'] = prices['power'].values[:self.portfolio.T]
         self.simulation_interface.set_generation(self.portfolio, 'optimize_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand(self.portfolio, 'optimize_dayAhead', self.area, self.date)
 
