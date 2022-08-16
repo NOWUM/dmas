@@ -3,6 +3,13 @@ import numpy as np
 import pandas as pd
 from systems.basic_system import (CASH_TYPES, DEMAND_TYPES, FUEL_TYPES,
                                   EnergySystem)
+from multiprocessing import Pool
+from tqdm import tqdm
+
+def optimize_energy_system(data):
+    item, date, weather, prices = data
+    item.optimize(date, weather, prices)
+    return item
 
 
 class PortfolioModel:
@@ -37,8 +44,13 @@ class PortfolioModel:
         self.energy_systems: list[EnergySystem] = []
         self.steps = steps
 
+        self.pool = Pool(4)
+
         self.weather = pd.DataFrame()
         self.prices = pd.DataFrame()
+
+    def __del__(self):
+        self.pool.close()
 
     def _set_parameter(self, date: pd.Timestamp, weather: pd.DataFrame, prices: pd.DataFrame) -> None:
         self.date = date
@@ -74,8 +86,14 @@ class PortfolioModel:
         """
         self._reset_data()
         self._set_parameter(date, weather, prices)
+
+        params = []
+        date, weather, prices = date, weather.copy(), prices.copy()
+        for system in self.energy_systems:
+            params.append((system, date, weather, prices))
+        self.energy_systems = self.pool.map(optimize_energy_system, tqdm(params))
+
         for model in self.energy_systems:
-            model.optimize(date=date, weather=weather.copy(), prices=prices.copy())
             for key, value in model.generation.items():
                 self.generation[key] += value           # [kW]
             for key, value in model.demand.items():
