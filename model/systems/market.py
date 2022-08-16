@@ -23,7 +23,7 @@ class DayAheadMarket:
             self.orders[f'{order_type}_index'] = {t: [] for t in self.t}
 
         self.parent_blocks = {}
-        self.agents_with_linked_block = []
+        self.start_block = []
 
         self.model = ConcreteModel()
         if solver_type == 'gurobi':
@@ -48,12 +48,13 @@ class DayAheadMarket:
 
         for key_tuple, val in self.orders['linked_ask'].items():
             block, _, agent = key_tuple
-            self.agents_with_linked_block += [agent]
             _, _, parent_id = val
             child_key = (block, agent)
             self.parent_blocks[child_key] = parent_id
+            if parent_id == -1:
+                self.start_block.append((block, agent))
 
-        self.agents_with_linked_block = set(self.agents_with_linked_block)
+        self.start_block = set(self.start_block)
 
     def _reset_parameter(self):
         self.orders = {}
@@ -63,7 +64,7 @@ class DayAheadMarket:
             self.orders[f'{order_type}_index'] = {t: [] for t in self.t}
 
         self.parent_blocks = {}
-        self.agents_with_linked_block = []
+        self.start_block = []
 
     def optimize(self):
 
@@ -79,8 +80,7 @@ class DayAheadMarket:
                                                in self.orders['linked_ask'].keys()]), within=Reals, bounds=(0, 1))
         self.model_vars['linked_ask'] = self.model.use_linked_order
 
-        self.model.use_mother_order = Var(
-            self.agents_with_linked_block, within=Binary)
+        self.model.use_mother_order = Var(self.start_block, within=Binary)
 
         # Step 4 initialize binary variables for exclusive block and agent
         self.model.use_exclusive_block = Var(set([(block, agent) for block, _, agent
@@ -119,8 +119,8 @@ class DayAheadMarket:
                 # mother bid must exist with at least one entry
                 # either the whole mother bid can be used or none
                 mother_bid_counter = len(hours)
-                self.model.mother_bid.add(quicksum(self.model.use_linked_order[0, h, agent] for h in hours)
-                                          == mother_bid_counter * self.model.use_mother_order[agent])
+                self.model.mother_bid.add(quicksum(self.model.use_linked_order[block, h, agent] for h in hours)
+                                          == mother_bid_counter * self.model.use_mother_order[(block, agent)])
 
         # Constraints for exclusive block orders
         # ------------------------------------------------
@@ -289,3 +289,47 @@ class DayAheadMarket:
                 used_orders['linked_ask'],
                 used_orders['exclusive_ask'],
                 used_bid_orders)
+
+
+if __name__ == "__main__":
+    from systems.powerPlant import PowerPlant
+    from systems.storage_hydroPlant import Storage
+    from systems.utils import get_test_prices, get_test_storage, get_test_power_plant, get_test_demand_orders
+
+    market = DayAheadMarket()
+
+    power_plant = get_test_power_plant()
+    power_plant['runTime'], power_plant['stopTime'] = 4, 4
+    power_plant = PowerPlant(T=24, steps=(0, 1, 100), **power_plant)
+    pwp_prices = get_test_prices(num=48)
+    pwp_prices['power'] /= 10
+    pwp_prices['power'][8:12] = -100
+    pwp_prices['power'][22:24] = -10
+    power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=pwp_prices, weather=pd.DataFrame())
+    pwp_orders = power_plant.get_ask_orders()
+
+    storage = get_test_storage()
+    storage = Storage(T=24, **storage)
+    storage_prices = get_test_prices(num=24)
+    storage_prices['power'][:8] = 100
+    storage_prices['power'] /= 1e4
+    storage.optimize(date=pd.Timestamp(2018, 1, 1), prices=storage_prices, weather=pd.DataFrame())
+    storage_orders = storage.get_exclusive_orders()
+
+    bid_orders = get_test_demand_orders(4000 * np.ones(24))
+
+    hourly_bid = {}
+    for key, value in bid_orders.to_dict(orient='index').items():
+        hourly_bid[key] = (value['price'], value['volume'])
+
+    linked_orders = {}
+    for key, value in pwp_orders.to_dict(orient='index').items():
+        linked_orders[key] = (value['price'], value['volume'], value['link'])
+
+    exclusive_orders = {}
+    for key, value in storage_orders.to_dict(orient='index').items():
+        exclusive_orders.update({key: (value['price'], value['volume'])})
+
+    market.set_parameter({}, hourly_bid, linked_orders, exclusive_orders)
+    result = market.optimize()
+    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
