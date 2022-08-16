@@ -5,6 +5,46 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 
+def get_test_prices(num: int = 24):
+
+    power_price = 50 * np.ones(num)
+    # power_price[18:24] = 0
+    # power_price[24:] = 20
+    co = np.ones(num) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
+    gas = np.ones(num) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
+    lignite = np.ones(num) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
+    coal = np.ones(num) * 0.02  # * np.random.uniform(0.95, 1.05)       # -- Hard Coal Price    [€/kWh]
+    nuc = np.ones(num) * 0.01  # * np.random.uniform(0.95, 1.05)        # -- nuclear Price      [€/kWh]
+
+    prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
+    prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=num))
+
+    return prices
+
+
+def get_test_power_plant(p_max: float = 1500):
+    max_p, min_p = p_max, p_max * 0.2
+    plant = {'unitID': 'x', 'fuel': 'coal', 'maxPower': max_p, 'minPower': min_p,
+             'eta': 0.4, 'P0': 0, 'chi': 0.407 / 1e3, 'stopTime': 12, 'runTime': 6,
+             'gradP': min_p, 'gradM': min_p, 'on': 2, 'off': 0, 'startCost': 1e3}
+    return plant
+
+
+def get_test_storage(v_max: float = 200):
+    storage = {"unitID": "y", "eta_plus": 0.8, "eta_minus": 0.87, "fuel": "water", "PPlus_max": v_max/10,
+               "PMinus_max": v_max/10, "V0": v_max/2, "VMin": 0, "VMax": v_max}
+    return storage
+
+
+def get_test_demand_orders(power: np.array):
+    order_book = {}
+    for t in range(24):
+        order_book[t] = dict(type='demand', hour=t, block_id=t, name='DEM', price=3, volume=-power[t])
+    demand_order = pd.DataFrame.from_dict(order_book, orient='index')
+    demand_order = demand_order.set_index(['block_id', 'hour', 'name'])
+    return demand_order
+
+
 def visualize_orderbook(order_book):
     tab20_cmap = plt.get_cmap("tab20c")
     ob = order_book.reset_index(level=[0, 2])

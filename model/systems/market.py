@@ -133,7 +133,7 @@ class DayAheadMarket:
                                     self.model_vars[type_][block, hour, name]
                                     for block, name in self.orders[f'{type_}_index'][hour])
                 else:
-                    return quicksum(-self.orders[type_][block, hour, name][1] *
+                    return quicksum(self.orders[type_][block, hour, name][1] *
                                     self.model_vars[type_][block, name]
                                     for block, name in self.orders[f'{type_}_index'][hour])
             else:
@@ -278,109 +278,48 @@ class DayAheadMarket:
 if __name__ == "__main__":
     from systems.powerPlant import PowerPlant
     from systems.storage_hydroPlant import Storage
-    from aggregation.portfolio_powerPlant import PowerPlantPortfolio
-    logging.basicConfig()
+    from systems.utils import get_test_prices, get_test_storage, get_test_power_plant, get_test_demand_orders
 
-    max_p = 1500
-    min_p = max_p*0.2
-    plant = {'unitID': 'x',
-             'fuel': 'coal',
-             'maxPower': max_p,  # kW
-             'minPower': min_p,  # kW
-             'eta': 0.4,  # Wirkungsgrad
-             'P0': 0,
-             'chi': 0.407 / 1e3,  # t CO2/kWh
-             'stopTime': 12,  # hours
-             'runTime': 6,  # hours
-             'gradP': min_p,  # kW/h
-             'gradM': min_p,  # kW/h
-             'on': 2,  # running since
-             'off': 0,
-             'startCost': 1e3  # €/Start
-             }
-    steps = (-100, 0, 100)
+    market = DayAheadMarket()
 
-    portfolio = PowerPlantPortfolio()
-    portfolio.add_energy_system(plant)
+    power_plant = get_test_power_plant()
+    power_plant = PowerPlant(T=24, steps=(-100, 0, 100), **power_plant)
+    pwp_prices = get_test_prices(num=48)
+    power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=pwp_prices, weather=pd.DataFrame())
+    pwp_orders = power_plant.get_ask_orders()
 
-    power_price = 50 * np.ones(48)
-    power_price[18:24] = 0
-    power_price[24:] = 20
-    co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
-    gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
-    lignite = np.ones(48) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
-    coal = np.ones(48) * 0.02  # * np.random.uniform(0.95, 1.05)       # -- Hard Coal Price    [€/kWh]
-    nuc = np.ones(48) * 0.01  # * np.random.uniform(0.95, 1.05)        # -- nuclear Price      [€/kWh]
+    storage = get_test_storage()
+    storage = Storage(T=24, **storage)
+    storage_prices = get_test_prices(num=24)
+    storage_prices['power'][:8] = 100
+    storage_prices['power'] /= 1e4
+    storage.optimize(date=pd.Timestamp(2018, 1, 1), prices=storage_prices, weather=pd.DataFrame())
+    storage_orders = storage.get_exclusive_orders()
 
-    prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
-    prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
-
-    pwp = PowerPlant(T=24, steps=steps, **plant)
-    power = pwp.optimize(date=pd.Timestamp(2018, 1, 1), weather=None,
-                         prices=prices)
-
-    portfolio.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
-
-    o_book = portfolio.get_ask_orders()
-
-    min_bid = -500/1e3
-    o_book.loc[o_book['price'] < min_bid, 'price'] = min_bid
-    # order book for first day without market
-    # visualize_orderbook(o_book)
-
-    demand = np.ones(24) * 4000
-    demand[6:9] = 5000
-    demand[16:20] = 5000
-
-    def demand_order_book(demand):
-        order_book = {}
-        for t in range(24):
-            if -demand[t] < 0:
-                order_book[t] = dict(type='demand',
-                                     hour=t,
-                                     block_id=t,
-                                     name='DEM',
-                                     price=3,  # €/kWh
-                                     volume=-demand[t])
-
-        demand_order = pd.DataFrame.from_dict(order_book, orient='index')
-        demand_order = demand_order.set_index(['block_id', 'hour', 'name'])
-        return demand_order
-
-    demand_order = demand_order_book(demand)
-
-    storage = {"eta_plus": 0.8, "eta_minus": 0.87, "fuel": "water", "PPlus_max": 1000,
-               "PMinus_max": 1000, "V0": 4000, "VMin": 0, "VMax": 8000}
-
-    sys = Storage(T=24, unitID='x', **storage)
-    str_prices = prices.copy()
-    str_prices['power'] /= 1000
-    sys.optimize(pd.Timestamp(2018, 1, 1), prices=str_prices, weather=pd.DataFrame())
-    ex_orders = sys.get_exclusive_orders()
-
-    my_market = DayAheadMarket()
+    bid_orders = get_test_demand_orders(4000 * np.ones(24))
 
     hourly_bid = {}
-    for key, value in demand_order.to_dict(orient='index').items():
+    for key, value in bid_orders.to_dict(orient='index').items():
         hourly_bid[key] = (value['price'], value['volume'])
 
-    # hourly_ask = {}
-    # for key, value in res_order.to_dict(orient='index').items():
-    #     hourly_ask[key] = (value['price'], value['volume'])
-
     linked_orders = {}
-    for key, value in o_book.to_dict(orient='index').items():
+    for key, value in pwp_orders.to_dict(orient='index').items():
         linked_orders[key] = (value['price'], value['volume'], value['link'])
 
     exclusive_orders = {}
-    for key, value in ex_orders.to_dict(orient='index').items():
+    for key, value in storage_orders.to_dict(orient='index').items():
         exclusive_orders.update({key: (value['price'], value['volume'])})
 
-    # # print(linked_orders)
-    my_market.set_parameter({}, hourly_bid, linked_orders, exclusive_orders)
-    # optimize and unpack
-    result = my_market.optimize()
+    market.set_parameter({}, hourly_bid, linked_orders, exclusive_orders)
+    result = market.optimize()
     prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
+
+
+    # # # print(linked_orders)
+    # my_market.set_parameter({}, hourly_bid, linked_orders, exclusive_orders)
+    # # optimize and unpack
+    # result = my_market.optimize()
+    # prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
     # my_market.model.use_linked_order.pprint()
 
     # committed_power = used_linked_orders.groupby('hour').sum()['volume']
