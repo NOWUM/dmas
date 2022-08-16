@@ -92,7 +92,7 @@ class Storage(EnergySystem):
 
         self.power = power
         self.volume = np.asarray([self.model.volume[t].value for t in self.t])
-        self.generation['total'][self.power < 0] = self.power[self.power < 0]
+        self.generation['total'][self.power < 0] = - self.power[self.power < 0]
         self.demand['power'][self.power > 0] = self.power[self.power > 0]
         self.generation['storage'] = self.power
 
@@ -117,7 +117,7 @@ class Storage(EnergySystem):
             if key == 'normal':
                 self.power = power
                 self.volume = np.asarray([self.model.volume[t].value for t in self.t])
-                self.generation['total'][self.power < 0] = self.power[self.power < 0]
+                self.generation['total'][self.power < 0] = - self.power[self.power < 0]
                 self.demand['power'][self.power > 0] = self.power[self.power > 0]
                 self.generation['storage'] = self.power
 
