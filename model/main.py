@@ -43,7 +43,6 @@ type_mapping = {
 }
 
 if __name__ == "__main__":
-    
 
     try:
         agent_class = type_mapping[init_dict['type']]
