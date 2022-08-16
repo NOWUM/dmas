@@ -22,21 +22,18 @@ def get_lon_lat(area):
 def get_plz_codes(area):
     return plz_nuts.loc[plz_nuts['NUTS3'] == area, 'CODE'].to_numpy()
 
-
-
-
 class InfrastructureInterface:
 
-    def __init__(self, name, structure_data_server, structure_data_credential,
+    def __init__(self, name, db_server_uri,
                  structure_databases=('mastr', 'oep', 'windmodel')):
 
-        server_uri = f'postgresql://{structure_data_credential}@{structure_data_server}'
+        db_server_uri = f'postgresql://{structure_data_credential}@{structure_data_server}'
 
-        self.database_mastr = create_engine(f'{server_uri}/{structure_databases[0]}',
+        self.database_mastr = create_engine(f'{db_server_uri}/{structure_databases[0]}',
                                             connect_args={"application_name": name})
-        self.database_oep = create_engine(f'{server_uri}/{structure_databases[1]}',
+        self.database_oep = create_engine(f'{db_server_uri}/{structure_databases[1]}',
                                           connect_args={"application_name": name})
-        self.database_wind = create_engine(f'{server_uri}/{structure_databases[2]}',
+        self.database_wind = create_engine(f'{db_server_uri}/{structure_databases[2]}',
                                            connect_args={"application_name": name})
 
 

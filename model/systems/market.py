@@ -342,7 +342,7 @@ if __name__ == "__main__":
     #
     # power = pwp.optimize(date='2018-01-02', weather=None,
     #                      prices=prices)
-    # o_book = pwp.get_orderbook()
+    # o_book = pwp.get_ask_orders()
     # visualize_orderbook(o_book)
     #
     # house.set_parameter(date='2018-01-02', weather=None,

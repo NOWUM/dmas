@@ -18,7 +18,7 @@ init_dict = {
     'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
     'area': os.getenv('AREA_CODE', 'DEA2D'),
     'type': os.getenv('TYPE', 'CTL'),
-    # mqtt default parameter
+    # Websocket default parameter
     'ws_host': os.getenv('WS_HOST', 'localhost'),
     'ws_port': int(os.getenv('WS_PORT', 4000)),
     # simulation data server default parameter

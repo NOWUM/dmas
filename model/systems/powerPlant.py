@@ -1,13 +1,14 @@
 # third party modules
+import logging
+
 import numpy as np
 import pandas as pd
-from pyomo.environ import Constraint, Var, Objective, SolverFactory, ConcreteModel, \
-    NonNegativeReals, Reals, Binary, maximize, value, quicksum, ConstraintList
+from pyomo.environ import (Binary, ConcreteModel, Constraint, ConstraintList,
+                           NonNegativeReals, Objective, Reals, SolverFactory,
+                           Var, maximize, quicksum, value)
 
 # model modules
 from systems.basic_system import EnergySystem
-
-import logging
 
 log = logging.getLogger('powerplant_gen')
 
