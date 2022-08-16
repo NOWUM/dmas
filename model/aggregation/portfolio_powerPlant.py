@@ -50,6 +50,7 @@ class PowerPlantPortfolio(PortfolioModel):
             for key, value in model.cash_flow.items():
                 self.cash_flow[key] += value            # [ct]
 
+        self.cash_flow['forecast'] = self.prices['power'].values[:self.T]
         self.power = self.generation['total'] - self.demand['power']
 
         return self.power

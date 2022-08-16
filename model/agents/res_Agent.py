@@ -112,8 +112,6 @@ class ResAgent(BasicAgent):
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results
-        # self.portfolio_eeg.cash_flow['forecast'] = prices['power'].values[:self.portfolio_eeg.T]
-        # self.portfolio_mrk.cash_flow['forecast'] = prices['power'].values[:self.portfolio_mrk.T]
         self.simulation_interface.set_generation([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead',
                                                  area=self.area, date=self.date)
         self.simulation_interface.set_demand([self.portfolio_mrk, self.portfolio_eeg], step='optimize_dayAhead',
