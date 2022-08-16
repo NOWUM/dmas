@@ -32,7 +32,6 @@ class RenewablePortfolio(PortfolioModel):
         adjust power generation after day ahead clearing
         :return: time series in [kW]
         """
-        self.generation['allocation'] = committed_power
         to_reduce = self.power - committed_power
         for t in self.t:
             for fuel in self.priority_fuel:
@@ -40,17 +39,22 @@ class RenewablePortfolio(PortfolioModel):
                     for system in self.energy_systems:
                         if system.fuel_type == fuel:
                             if system.generation[fuel][t] - to_reduce[t] < 0:
+                                # print(f'reduced {fuel} to zero')
                                 to_reduce[t] -= system.generation[fuel][t]
                                 system.generation[fuel][t] = 0
                                 system.power[t] = 0
                                 system.generation['total'][t] = 0
                             else:
+                                # print(f'reduced {fuel} by {to_reduce[t]}')
                                 system.generation[fuel][t] -= to_reduce[t]
-                                system.power[t] -= to_reduce[t]
+                                system.power[t] = system.generation[fuel][t]
                                 system.generation['total'][t] = system.generation[fuel][t]
                                 to_reduce[t] = 0
 
         self._reset_data()
+
+        self.generation['allocation'] = committed_power
+        self.cash_flow['forecast'] = self.prices['power'].values[:self.T]
 
         for model in self.energy_systems:
             for key, value in model.generation.items():
