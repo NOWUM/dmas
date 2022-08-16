@@ -93,7 +93,7 @@ def test_minimize_diff():
     steps = (-100, 0, 100)
     pwp = PowerPlant(T=24, steps=steps, **plant)
     power = pwp.optimize(pd.Timestamp(2018, 1, 1), None, prices)
-    expected = np.array([120., 240., 300., 300., 300., 300., 300., 
+    expected = np.array([120., 240., 300., 300., 300., 300., 300.,
        300., 300., 300., 300.,
        300., 300., 300., 300., 300., 300., 300., 180.,   0.,   0.,   0.,
          0.,   0.])
