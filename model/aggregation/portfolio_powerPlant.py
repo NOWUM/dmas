@@ -46,9 +46,13 @@ class PowerPlantPortfolio(PortfolioModel):
         self._reset_data()
 
         allocation = committed_power.groupby('hour').sum().fillna(0)
-        alloc = np.array(pd.DataFrame(index=range(self.T), data=allocation))
 
-        self.generation['allocation'] = np.zeros(self.T) + alloc.flatten()
+        alloc = np.zeros(24)
+        if not allocation.empty:
+            for index, row in allocation.iterrows():
+                alloc[int(row.name)] = float(row.volume)
+
+        self.generation['allocation'] = alloc
         self.cash_flow['forecast'] = self.prices['power'].values[:self.T]
 
         for model in self.energy_systems:
