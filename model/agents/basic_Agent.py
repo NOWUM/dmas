@@ -31,18 +31,11 @@ class BasicAgent:
         self.connection_tries = 30
 
         # declare simulation data server
-        self.simulation_data_server = kwargs['simulation_server']
-        self.simulation_data_credential = kwargs['simulation_credential']
-        self.simulation_database = kwargs['simulation_database']
-        self.simulation_interface = SimulationInterface(self.name, self.simulation_data_server,
-                                                        self.simulation_data_credential,
-                                                        self.simulation_database,
-                                                        kwargs['ws_host'])
+        simulation_db_uri = f"postgresql://{kwargs['simulation_credential']}@{kwargs['simulation_server']}/{kwargs['simulation_database']}"
+        self.simulation_interface = SimulationInterface(self.name, simulation_db_uri)
         # declare structure data sever
-        self.structure_data_server = kwargs['structure_server']
-        self.structure_data_credential = kwargs['structure_credential']
-        self.infrastructure_interface = InfrastructureInterface(self.name, self.structure_data_server,
-                                                                self.structure_data_credential)
+        infra_db_server_uri = f"postgresql://{kwargs['structure_credential']}@{kwargs['structure_server']}"
+        self.infrastructure_interface = InfrastructureInterface(self.name, infra_db_server_uri)
         self.longitude, self.latitude = get_lon_lat(self.area)
 
         # declare weather data server

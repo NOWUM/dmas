@@ -14,14 +14,11 @@ def get_interval(start):
 
 class SimulationInterface:
 
-    def __init__(self, name, simulation_data_server, simulation_data_credential,
-                 simulation_db, mqtt_server):
-        self.database = create_engine(f'postgresql://{simulation_data_credential}@{simulation_data_server}/'
-                                      f'{simulation_db}',
+    def __init__(self, name, simulation_db_uri):
+        self.database = create_engine(simulation_db_uri,
                                       connect_args={"application_name": name})
         self.name = name
         self.logger = logging.getLogger('simulation')
-        self.mqtt_server = mqtt_server
 
     def initialize_tables(self):
         with self.database.begin() as connection:
@@ -75,7 +72,7 @@ class SimulationInterface:
             query = '''CREATE TABLE generation ("time" timestamp without time zone, total double precision,
                                                 solar double precision, wind double precision, water double precision,
                                                 bio double precision, lignite double precision, coal double precision,
-                                                gas double precision, nuclear double precision, 
+                                                gas double precision, nuclear double precision,
                                                 allocation double precision, step text,
                                                 agent text, area text)'''
             connection.execute(query)
@@ -107,12 +104,12 @@ class SimulationInterface:
                                             agent text, area text)'''
             connection.execute(query)
             connection.execute(f'ALTER TABLE orders ADD PRIMARY KEY ("time","agent","block_id");')
-        
+
         hypertables = ['orders', 'auction_results', 'capacities', 'generation', 'demand']
-        
-        with self.database.connect() as conn, conn.begin():
-            for hypertable in hypertables:
-                query_create_hypertable = f"SELECT create_hypertable('{hypertable}', 'time', if_not_exists => TRUE, migrate_data => TRUE);"
+
+        for hypertable in hypertables:
+            query_create_hypertable = f"SELECT create_hypertable('{hypertable}', 'time', if_not_exists => TRUE, migrate_data => TRUE);"
+            with self.database.connect() as conn, conn.begin():
                 print(query_create_hypertable)
                 conn.execute(query_create_hypertable)
 
@@ -151,7 +148,7 @@ class SimulationInterface:
         data_frame['agent'] = self.name
         data_frame['area'] = area
         data_frame.index.name = 'time'
-        
+
         try:
             data_frame.to_sql(name='capacities', con=self.database, if_exists='append')
         except IntegrityError:
