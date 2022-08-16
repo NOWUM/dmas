@@ -27,8 +27,6 @@ class InfrastructureInterface:
     def __init__(self, name, db_server_uri,
                  structure_databases=('mastr', 'oep', 'windmodel')):
 
-        db_server_uri = f'postgresql://{structure_data_credential}@{structure_data_server}'
-
         self.database_mastr = create_engine(f'{db_server_uri}/{structure_databases[0]}',
                                             connect_args={"application_name": name})
         self.database_oep = create_engine(f'{db_server_uri}/{structure_databases[1]}',
