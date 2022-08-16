@@ -27,6 +27,9 @@ class PowerPlantPortfolio(PortfolioModel):
         optimize the portfolio after receiving market results
         :return: time series in [kW] of actual generation
         """
+        if self.prices.empty:
+            log.error('Optimize Post Market without Prices - agent started mid simulation?')
+            return self.power
 
         def get_committed_power(m):
             p = np.zeros(24)
@@ -42,7 +45,10 @@ class PowerPlantPortfolio(PortfolioModel):
 
         self._reset_data()
 
-        self.generation['allocation'] = committed_power
+        allocation = committed_power.groupby('hour').sum().fillna(0)
+        alloc = np.array(pd.DataFrame(index=range(self.T), data=allocation))
+
+        self.generation['allocation'] = np.zeros(self.T) + alloc.flatten()
         self.cash_flow['forecast'] = self.prices['power'].values[:self.T]
 
         for model in self.energy_systems:
@@ -58,6 +64,8 @@ class PowerPlantPortfolio(PortfolioModel):
         return self.power
 
     def get_ask_orders(self, price: float = -0.5) -> pd.DataFrame:
+        if len(self.energy_systems) < 1:
+            raise Exception('no systems to get orders from')
         total_order_book = [system.get_ask_orders().reset_index() for system in self.energy_systems]
 
         df = pd.concat(total_order_book, axis=0)
