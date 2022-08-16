@@ -5,5 +5,4 @@ model/.idea
 *.grb
 gurobi.lic
 .spyproject
-.vscode
 model/logs
