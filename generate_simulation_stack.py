@@ -170,6 +170,21 @@ for agent in agents[:counter]:
     depends_on:
       - controller
 ''')
+# Build Storage Agents
+agents = np.load('str_agents.npy')
+for agent in agents[:counter]:
+    output.append(f'''
+  dem_{agent.lower()}:
+    container_name: str_{agent.lower()}
+    image: {image_repo}agent:latest
+    environment:
+      AREA_CODE: {agent}
+      TYPE: 'STR'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+    depends_on:
+      - controller
+''')
 output.append('configs:')
 for config, location in configs.items():
   output.append(f'''
