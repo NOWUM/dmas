@@ -265,22 +265,26 @@ class PowerPlant(EnergySystem):
 
             # -> get optimization result for key (block) and step
             result = self.opt_results[step]
+            # if we are in hour 0
             if any(result['power'] > 0) and block_number == 0:
                 hours_needed_to_run = (self.generation_system['runTime'] - self.generation_system['on'])
+                # do we need to start?
                 if hours_needed_to_run < 1 and result['power'][0] > 0:
                     price, power = get_marginal(p0=last_power[0], p1=result['power'][0], t=0)
                     order_book.update({(block_number, 0, self.name): (price, power, -1)})
                     links[0] = block_number
                     last_power[0] += result['power'][0]
                 else:
+                    # we need to start the powerplant
                     hours = np.argwhere(result['power'] > 0).flatten()
                     total_start_cost = result['start'][hours[0]]
-                    result['start'][hours] = total_start_cost / sum(result['power'][hours])
+                    result['start'][hours] = total_start_cost / (self.generation_system['minPower']*len(hours))
                     result['power'][hours] = self.generation_system['minPower']
                     for hour in hours[:hours_needed_to_run]:
                         price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
-                        order_book.update({(block_number, hour, self.name): (price, power, -1)})
+                        order_book.update({(block_number, hour, self.name): (price+result['start'][hour], power, -1)})
                         links[hour] = block_number
+
                         last_power[hour] += result['power'][hour]
 
                 block_number += 1  # -> increment block number
@@ -310,8 +314,12 @@ class PowerPlant(EnergySystem):
             last_on_hours = list(hours[hours > last_on_hour])
             for hour in last_on_hours:
                 if links[hour-1] is None:
+                    # we need to start mid day
                     last_mother_hour_index = min(hour + self.generation_system['runTime'], self.T)
-                    for t in range(hour, last_mother_hour_index):
+                    mother_bid_hours = list(range(hour, last_mother_hour_index))
+                    total_start_cost = result['start'][hour]
+                    result['start'][mother_bid_hours] = total_start_cost / (self.generation_system['minPower']*len(mother_bid_hours))
+                    for t in mother_bid_hours:
                         price, power = get_marginal(p0=last_power[t], p1=self.generation_system['minPower'], t=t)
                         order_book.update({(block_number, t, self.name): (price, power, -1)})
                         links[t] = block_number
