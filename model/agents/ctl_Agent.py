@@ -77,7 +77,7 @@ class CtlAgent(BasicAgent):
         previous_state = self.simulation_step
         while self.date != self.stop_date:
             if previous_state != self.simulation_step:
-                self.logger(f'waited {duration_in_state} timesteps in step {previous_state}')
+                self.logger.info(f'waited {duration_in_state} timesteps in step {previous_state}')
                 duration_in_state = 0
                 previous_state = self.simulation_step
             duration_in_state +=1
