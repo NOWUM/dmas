@@ -120,5 +120,4 @@ class PortfolioModel:
 
     def optimize_post_market(self, committed_power) -> np.array:
         if self.prices.empty:
-            self.logger.error('Optimize Post Market without Prices - agent started mid simulation?')
-            return self.power
+            raise Exception('Optimize Post Market without Prices - agent started mid simulation?')

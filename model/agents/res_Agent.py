@@ -138,7 +138,10 @@ class ResAgent(BasicAgent):
             for index, row in market_result.iterrows():
                 power[int(row.hour)] = float(row.volume)
             self.logger.info(f'Committed power for {portfolio.name} is: {power}')
-            portfolio.optimize_post_market(power)
+            try:
+                portfolio.optimize_post_market(power)
+            except Exception as e:
+                self.logger.error(repr(e))
 
         optimize_post_market(self.portfolio_eeg)
         optimize_post_market(self.portfolio_mrk)
