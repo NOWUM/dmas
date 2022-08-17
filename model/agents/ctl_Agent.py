@@ -67,7 +67,7 @@ class CtlAgent(BasicAgent):
                 else:
                     self.logger.error(f'controller went on without waiting for {name}')
                     self.logger.error(f'the wait_limit should be increased')
-                self.logger.info(f'agent {name} set orders')
+                self.logger.debug(f'agent {name} set orders')
             if 'cleared market' in message:
                 self.cleared = True
                 self.logger.info('market has cleared the market')
@@ -77,6 +77,7 @@ class CtlAgent(BasicAgent):
         previous_state = self.simulation_step
         while self.date != self.stop_date:
             if previous_state != self.simulation_step:
+                self.logger(f'waited {duration_in_state} timesteps in step {previous_state}')
                 duration_in_state = 0
                 previous_state = self.simulation_step
             duration_in_state +=1
@@ -101,7 +102,6 @@ class CtlAgent(BasicAgent):
                     if len(self.waiting_list) >0:
                         self.logger.info(f'aborted waiting list {self.waiting_list}')
                         self.waiting_list.clear()
-
                     if 'market' in self.registered_agents.keys():
                         await self.registered_agents['market'].send(f'clear_market {self.date.date()}')
                         self.logger.info('send command: clear_market')
