@@ -160,15 +160,26 @@ class CtlAgent(BasicAgent):
     def start_sim_server(self):
 
         @server.route('/start', methods=['POST'])
-        def start_post():
+        def start_sim():
             if self.simulation_step == SimStep.READY:
                 self.start_date = pd.to_datetime(request.form.get('begin'))
                 self.date = self.start_date
                 self.stop_date = pd.to_datetime(request.form.get('end'))
                 self.simulation_step = SimStep.MARKET_BIDS
+                self.logger.info(f'start sim {self.start_date} to {self.stop_date}')
                 return 'OK', 200
             else:
                 return 'Simulation already running', 409
+
+        @server.route('/stop', methods=['GET'])
+        def stop_sim():
+            if self.simulation_step != SimStep.READY:
+                self.simulation_step = SimStep.READY
+                self.logger.info(f'stopped sim - last date was {self.date}')
+
+                return 'stopped', 200
+            else:
+                return 'Simulation not running', 409
 
         @server.route('/agent_count')
         def agent_count():
