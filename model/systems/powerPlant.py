@@ -317,6 +317,9 @@ class PowerPlant(EnergySystem):
                     # we need to start mid day
                     last_mother_hour_index = min(hour + self.generation_system['runTime'], self.T)
                     mother_bid_hours = list(range(hour, last_mother_hour_index))
+                    if not mother_bid_hours:
+                        log.error('no hour in mother_bid_hours: {hour}')
+                        mother_bid_hours = [hour]
                     total_start_cost = result['start'][hour]
                     result['start'][mother_bid_hours] = total_start_cost / (self.generation_system['minPower']*len(mother_bid_hours))
                     for t in mother_bid_hours:

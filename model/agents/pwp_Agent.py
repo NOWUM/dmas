@@ -92,8 +92,10 @@ class PwpAgent(BasicAgent):
         result = self.simulation_interface.get_auction_results(self.date)
         try:
             self.portfolio.optimize_post_market(committed_power, result['price'].values)
-        except Exception as e:
+        except ValueError as e:
             self.logger.error(repr(e))
+        except Exception:
+            self.logger.exception('Error in PostMarket')
         # save optimization results
         self.simulation_interface.set_generation(self.portfolio, 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)

@@ -9,8 +9,12 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 def optimize_energy_system(data):
-    item, date, weather, prices = data
-    item.optimize(date, weather, prices)
+    try:
+        item, date, weather, prices = data
+        item.optimize(date, weather, prices)
+    except Exception as e:
+        print('Error in optimize_energy_system')
+
     return item
 
 
@@ -120,4 +124,4 @@ class PortfolioModel:
 
     def optimize_post_market(self, committed_power) -> np.array:
         if self.prices.empty:
-            raise Exception('Optimize Post Market without Prices - agent started mid simulation?')
+            raise ValueError('Optimize Post Market without Prices - agent started mid simulation?')
