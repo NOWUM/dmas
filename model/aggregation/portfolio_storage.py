@@ -51,6 +51,15 @@ class StrPort(PortfolioModel):
         for model in self.energy_systems:
             model.optimize_post_market(get_committed_power(model), power_prices)
 
+        allocation = committed_power.groupby('hour').sum().fillna(0)
+
+        alloc = np.zeros(24)
+        if not allocation.empty:
+            for index, row in allocation.iterrows():
+                alloc[int(row.name)] = float(row.volume)
+
+        self.generation['allocation'] = alloc
+
         self._reset_data()
 
         for model in self.energy_systems:
