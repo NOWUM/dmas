@@ -153,10 +153,11 @@ class DayAheadMarket:
                                     self.model_vars[type_][block, hour, name]
                                     for block, name in self.orders[f'{type_}_index'][hour])
                 else:
-                    return quicksum(-self.orders[type_][block, hour, name][0] *
+                    return quicksum(self.orders[type_][block, hour, name][0] *
                                     self.orders[type_][block, hour, name][1] *
                                     self.model_vars[type_][block, name]
-                                    for block, name in self.orders[f'{type_}_index'][hour])
+                                    for block, name in self.orders[f'{type_}_index'][hour]
+                                    if self.orders[type_][block, hour, name][1] > 0)
             else:
                 return quicksum(self.orders[type_][block, hour, name][0] *
                                 self.orders[type_][block, hour, name][1]
