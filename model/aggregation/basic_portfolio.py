@@ -1,4 +1,6 @@
 # third party modules
+import logging
+
 import numpy as np
 import pandas as pd
 from systems.basic_system import (CASH_TYPES, DEMAND_TYPES, FUEL_TYPES,
@@ -20,7 +22,7 @@ class PortfolioModel:
         Represents a portfolio of EnergySystems.
         Its capacities, generation and demand is in MW
         """
-
+        self.logger = logging.getLogger(f'portfolio_{name}')
         self.name = name
 
         self.T, self.t, self.dt = T, np.arange(T), 1
@@ -116,4 +118,7 @@ class PortfolioModel:
         self.volume = np.zeros(self.T)
         self.power = np.zeros(self.T)
 
-
+    def optimize_post_market(self, committed_power) -> np.array:
+        if self.prices.empty:
+            self.logger.error('Optimize Post Market without Prices - agent started mid simulation?')
+            return self.power

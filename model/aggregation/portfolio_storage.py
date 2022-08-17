@@ -39,6 +39,7 @@ class StrPort(PortfolioModel):
         optimize the portfolio after receiving market results
         :return: time series in [kW] of actual generation
         """
+        super().optimize_post_market(committed_power)
 
         def get_committed_power(m):
             p = np.zeros(24)

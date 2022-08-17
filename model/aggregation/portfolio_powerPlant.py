@@ -1,15 +1,10 @@
 # third party modules
 import numpy as np
 import pandas as pd
-import logging
 
 # model modules
 from systems.powerPlant import PowerPlant
 from aggregation.basic_portfolio import PortfolioModel
-
-log = logging.getLogger('power_plant_portfolio')
-log.setLevel('INFO')
-
 
 class PowerPlantPortfolio(PortfolioModel):
 
@@ -27,10 +22,7 @@ class PowerPlantPortfolio(PortfolioModel):
         optimize the portfolio after receiving market results
         :return: time series in [kW] of actual generation
         """
-        if self.prices.empty:
-            log.error('Optimize Post Market without Prices - agent started mid simulation?')
-            return self.power
-
+        super().optimize_post_market(committed_power)
         def get_committed_power(m):
             p = np.zeros(24)
             filtered_cp = committed_power[committed_power['name'] == m.name]
@@ -76,8 +68,8 @@ class PowerPlantPortfolio(PortfolioModel):
         df.set_index(['block_id', 'hour', 'name'], inplace=True)
 
         if not df.loc[df.isna().any(axis=1)].empty:
-            log.error('Orderbook has NaN values')
-            log.error(df[df.isna()])
+            self.logger.error('Orderbook has NaN values')
+            self.logger.error(df[df.isna()])
 
         return df
 

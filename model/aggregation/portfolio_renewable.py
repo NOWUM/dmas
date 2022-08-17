@@ -32,6 +32,7 @@ class RenewablePortfolio(PortfolioModel):
         adjust power generation after day ahead clearing
         :return: time series in [kW]
         """
+        super().optimize_post_market(committed_power)
         to_reduce = self.power - committed_power
         for t in self.t:
             for fuel in self.priority_fuel:
