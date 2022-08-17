@@ -41,6 +41,7 @@ class Storage(EnergySystem):
 
         self.model = ConcreteModel()
         self.opt = SolverFactory('glpk')
+        self._efficiency = self.storage_system['eta+'] * self.storage_system['eta-']
 
     def build_model(self, committed_power: np.array = None):
 
@@ -127,14 +128,20 @@ class Storage(EnergySystem):
 
     def get_exclusive_orders(self) -> pd.DataFrame:
         total_orders = []
-        for result, num in zip(self.opt_results.items(), range(len(self.opt_results))):
-            key, power = result
-            prc = PRICE_FUNCS[key](self.prices['power'].values)
-            order_book = {t: dict(hour=t, block_id=num, name=self.name,
-                                  price=prc[t], volume=-power[t])
-                          for t in self.t}
-            df = pd.DataFrame.from_dict(order_book, orient='index')
-            total_orders += [df]
+        mean_price = self.prices['power'].mean()
+        block_id = 0
+        for key, power in self.opt_results.items():
+            for shifting in np.arange(0.5, 1.75, 0.25):
+                order_book = {}
+                for t in self.t:
+                    prc = mean_price * shifting
+                    prc = prc / self._efficiency if power[t] < 0 else prc * self._efficiency
+                    order_book[t] = dict(hour=t, block_id=block_id, name=self.name,
+                                         price=prc, volume=-power[t])
+                block_id += 1
+                df = pd.DataFrame.from_dict(order_book, orient='index')
+                total_orders += [df]
+
         df = pd.concat(total_orders, axis=0)
         df = df.set_index(['block_id', 'hour', 'name'])
         return df
@@ -153,9 +160,9 @@ if __name__ == "__main__":
     pw1 = sys.optimize(prices=storage_prices)
     plt.plot(sys.generation['storage'])
     orders = sys.get_exclusive_orders()
-    market_result = orders.loc[orders.index.get_level_values('block_id') == 0, 'volume'].values
-    pw2 = sys.optimize_post_market(market_result * 0.8)
-    plt.plot(sys.generation['storage'])
+    # market_result = orders.loc[orders.index.get_level_values('block_id') == 0, 'volume'].values
+    # pw2 = sys.optimize_post_market(market_result * 0.8)
+    # plt.plot(sys.generation['storage'])
 
     # plt.plot(pw1)
     # plt.plot(pw2)
