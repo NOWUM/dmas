@@ -221,11 +221,16 @@ class PowerPlant(EnergySystem):
         if power_prices is not None:
             self.prices['power'].values[:len(power_prices)] = power_prices
         self.build_model(committed_power)
-        self.opt.solve(self.model)
+        r = self.opt.solve(self.model)
         running_since = 0
         off_since = 0
 
-        self._set_results(step=0)
+        try:
+            self._set_results(step=0)
+        except Exception:
+            log.error(r)
+            log.error(self.opt_results[0])
+            log.error(self.model.p_out.pprint())
 
         for t in self.t:
 
