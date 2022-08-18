@@ -41,29 +41,31 @@ class Storage(EnergySystem):
 
         self.model = ConcreteModel()
         self.opt = SolverFactory('glpk')
-        self._efficiency = self.storage_system['eta+'] * self.storage_system['eta-']
 
     def build_model(self, committed_power: np.array = None):
 
         self.model.clear()
 
-        self.model.p_out = Var(self.t, within=Reals, bounds=(-self.storage_system['P-_Max'],
-                                                             self.storage_system['P+_Max']))
+        self.model.p_plus = Var(self.t, within=Reals, bounds=(0, self.storage_system['P+_Max']))
+        self.model.p_minus = Var(self.t, within=Reals, bounds=(0, self.storage_system['P-_Max']))
         self.model.volume = Var(self.t, within=Reals, bounds=(0, self.storage_system['VMax']))
+
+        power = [-self.model.p_minus[t]/self.storage_system['eta-'] + self.model.p_plus[t] * self.storage_system['eta+']
+                 for t in self.t]
 
         self.model.vol_con = ConstraintList()
 
         for t in self.t:
-            eff = self.storage_system['eta+'] * self.storage_system['eta-']
             if t == 0:
-                self.model.vol_con.add(expr=self.model.volume[t] == self.storage_system['V0'] + self.model.p_out[t] * eff)
+                self.model.vol_con.add(expr=self.model.volume[t] == self.storage_system['V0'] + power[t])
             else:
-                self.model.vol_con.add(expr=self.model.volume[t] == self.model.volume[t - 1] + self.model.p_out[t] * eff)
+                self.model.vol_con.add(expr=self.model.volume[t] == self.model.volume[t - 1] + power[t])
+
         self.model.vol_con.add(expr=self.model.volume[self.T-1] == self.storage_system['VMax'] / 2)
 
         # if no day ahead power known run standard optimization
         if committed_power is None:
-            profit = [-self.model.p_out[t] * self.prices['power'][t] for t in self.t]
+            profit = [-power[t] * self.prices['power'][t] for t in self.t]
 
         # if day ahead power is known minimize the difference
         else:
@@ -71,7 +73,7 @@ class Storage(EnergySystem):
             self.model.minus = Var(self.t, within=Reals, bounds=(0, None))
             self.model.plus = Var(self.t, within=Reals, bounds=(0, None))
 
-            difference = [committed_power[t] - self.model.p_out[t] for t in self.t]
+            difference = [committed_power[t] - power[t] for t in self.t]
 
             self.model.difference = ConstraintList()
             for t in self.t:
@@ -79,7 +81,7 @@ class Storage(EnergySystem):
             abs_difference = [self.model.plus[t]+self.model.minus[t] for t in self.t]
             costs = [abs_difference[t] * np.abs(self.prices['power'][t] * 2) for t in self.t]
 
-            profit = [-self.model.p_out[t] * self.prices['power'][t] - costs[t] for t in self.t]
+            profit = [-power[t] * self.prices['power'][t] - costs[t] for t in self.t]
 
         self.model.obj = Objective(expr=quicksum(profit[t] for t in self.t), sense=maximize)
 
@@ -89,7 +91,8 @@ class Storage(EnergySystem):
 
         self.build_model(-committed_power)
         r = self.opt.solve(self.model)
-        power = np.asarray([self.model.p_out[t].value for t in self.t])
+        power = np.asarray([-self.model.p_minus[t].value/self.storage_system['eta-']
+                            + self.model.p_plus[t].value * self.storage_system['eta+'] for t in self.t])
 
         self.power = power
         self.volume = np.asarray([self.model.volume[t].value for t in self.t])
@@ -113,7 +116,8 @@ class Storage(EnergySystem):
             self.prices['power'] = func(base_price['power'].values)
             self.build_model()
             r = self.opt.solve(self.model)
-            power = np.asarray([self.model.p_out[t].value for t in self.t])
+            power = np.asarray([-self.model.p_minus[t].value / self.storage_system['eta-']
+                                + self.model.p_plus[t].value * self.storage_system['eta+'] for t in self.t])
             self.opt_results[key] = power
             if key == 'normal':
                 self.power = power
@@ -135,13 +139,13 @@ class Storage(EnergySystem):
                 order_book = {}
                 for t in self.t:
                     prc = mean_price * shifting
-                    prc = prc / self._efficiency if power[t] < 0 else prc * self._efficiency
+                    prc = prc / self.storage_system['eta+'] if power[t] < 0 \
+                        else prc * self.storage_system['eta-']
                     order_book[t] = dict(hour=t, block_id=block_id, name=self.name,
                                          price=prc, volume=-power[t])
                 block_id += 1
                 df = pd.DataFrame.from_dict(order_book, orient='index')
                 total_orders += [df]
-
         df = pd.concat(total_orders, axis=0)
         df = df.set_index(['block_id', 'hour', 'name'])
         return df
@@ -158,11 +162,11 @@ if __name__ == "__main__":
     storage_prices = get_test_prices()
     storage_prices['power'][:8] = 100
     pw1 = sys.optimize(prices=storage_prices)
-    plt.plot(sys.generation['storage'])
+    # plt.plot(sys.generation['storage'])
     orders = sys.get_exclusive_orders()
-    # market_result = orders.loc[orders.index.get_level_values('block_id') == 0, 'volume'].values
-    # pw2 = sys.optimize_post_market(market_result * 0.8)
+    market_result = orders.loc[orders.index.get_level_values('block_id') == 0, 'volume'].values
+    pw2 = sys.optimize_post_market(market_result * 0.8)
     # plt.plot(sys.generation['storage'])
 
-    # plt.plot(pw1)
-    # plt.plot(pw2)
+    plt.plot(pw1)
+    plt.plot(pw2)
