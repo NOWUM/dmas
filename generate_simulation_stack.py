@@ -1,12 +1,20 @@
 #!/usr/bin/python3
 import numpy as np
+import random
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 counter = 1
 if counter > 100:
-  max_connections = 5000
+    max_connections = 5000
+    structure_servers = ['10.13.10.54:4321', '10.13.10.55:4321', '10.13.10.56:4321']
 else:
-  max_connections = 500
+    max_connections = 500
+    structure_servers = ['10.13.10.41:5432']
+
+
+def random_structure_server():
+    return random.choice(structure_servers)
+
 
 configs = {}
 output = []
@@ -138,6 +146,7 @@ for agent in agents[:counter]:
       AREA_CODE: {agent}
       TYPE: 'DEM'
       SIMULATION_SOURCE: 'simulationdb:5432'
+      STRUCTURE_SERVER: '{random_structure_server()}'
       WS_HOST: 'controller'
     depends_on:
       - controller
@@ -154,6 +163,7 @@ for agent in agents[:counter]:
       TYPE: 'PWP'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+      STRUCTURE_SERVER: '{random_structure_server()}'
 ''')
 # Build Renewable Energy Agents
 agents = np.load('res_agents.npy')
@@ -167,6 +177,7 @@ for agent in agents[:counter]:
       TYPE: 'RES'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+      STRUCTURE_SERVER: '{random_structure_server()}'
     depends_on:
       - controller
 ''')
@@ -182,6 +193,7 @@ for agent in agents[:counter]:
       TYPE: 'STR'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+      STRUCTURE_SERVER: '{random_structure_server()}'
     depends_on:
       - controller
 ''')
