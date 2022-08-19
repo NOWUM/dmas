@@ -6,6 +6,7 @@ import pandas as pd
 from pyomo.environ import (Binary, ConcreteModel, Constraint, ConstraintList,
                            NonNegativeReals, Objective, Reals, SolverFactory,
                            Var, maximize, quicksum, value)
+from pyomo.opt import SolverStatus, TerminationCondition
 
 # model modules
 from systems.basic_system import EnergySystem
@@ -191,29 +192,42 @@ class PowerPlant(EnergySystem):
             self.prices = prices_24h
             self.prices.loc[:, 'power'] = self.base_price.iloc[:24]['power'] + step
             self.build_model()
-            self.opt.solve(self.model)
+            r = self.opt.solve(self.model)
+            if (r.solver.status == SolverStatus.ok) & (r.solver.termination_condition == TerminationCondition.optimal):
+                log.info(f'find optimal solution in step: {step}')
 
-            self._set_results(step=step)
+                self._set_results(step=step)
 
-            if self.opt_results[step]['power'][-1] == 0 and step == 0:
-                all_off = np.argwhere(self.opt_results[step]['power'] == 0).flatten()
-                last_on = np.argwhere(self.opt_results[step]['power'] > 0).flatten()
-                last_on = last_on[-1] if len(last_on) > 0 else 0
-                prevented_off_hours = all_off[all_off > last_on]
+                if self.opt_results[step]['power'][-1] == 0 and step == 0:
+                    all_off = np.argwhere(self.opt_results[step]['power'] == 0).flatten()
+                    last_on = np.argwhere(self.opt_results[step]['power'] > 0).flatten()
+                    last_on = last_on[-1] if len(last_on) > 0 else 0
+                    prevented_off_hours = all_off[all_off > last_on]
 
-                self.t = np.arange(48)
-                self.prices = prices_48h
-                self.prices.loc[:, 'power'] = self.base_price.iloc[:48]['power']
-                self.build_model()
-                self.opt.solve(self.model)
-                power_check = np.asarray([self.model.p_out[t].value for t in self.t])
-                prevent_start = all(power_check[prevented_off_hours] > 0)
-                delta = value(self.model.obj) - self.opt_results[step]['obj']
-                percentage = delta / self.opt_results[step]['obj'] if self.opt_results[step]['obj'] else 0
-                if prevent_start and percentage > 0.05:
-                    self.prevented_start = dict(prevent=True, hours=prevented_off_hours,
-                                                delta=delta / (len(prevented_off_hours) * pwp['minPower']))
-                self.t = np.arange(self.T)
+                    self.t = np.arange(48)
+                    self.prices = prices_48h
+                    self.prices.loc[:, 'power'] = self.base_price.iloc[:48]['power']
+                    self.build_model()
+                    self.opt.solve(self.model)
+                    power_check = np.asarray([self.model.p_out[t].value for t in self.t])
+                    prevent_start = all(power_check[prevented_off_hours] > 0)
+                    delta = value(self.model.obj) - self.opt_results[step]['obj']
+                    percentage = delta / self.opt_results[step]['obj'] if self.opt_results[step]['obj'] else 0
+                    if prevent_start and percentage > 0.05:
+                        self.prevented_start = dict(prevent=True, hours=prevented_off_hours,
+                                                    delta=delta / (len(prevented_off_hours) * pwp['minPower']))
+                    self.t = np.arange(self.T)
+
+            elif r.solver.termination_condition == TerminationCondition.infeasible:
+                log.error(f'infeasible model in step: {step}')
+                for key in ['power', 'emission', 'fuel', 'start', 'profit']:
+                    self.opt_results[step][key] = np.zeros(self.T)
+                self.opt_results[step]['obj'] = 0
+            else:
+                log.error(r.solver)
+                for key in ['power', 'emission', 'fuel', 'start', 'profit']:
+                    self.opt_results[step][key] = np.zeros(self.T)
+                self.opt_results[step]['obj'] = 0
 
         return self.power
 
@@ -222,27 +236,32 @@ class PowerPlant(EnergySystem):
             self.prices['power'].values[:len(power_prices)] = power_prices
         self.build_model(committed_power)
         r = self.opt.solve(self.model)
-        running_since = 0
-        off_since = 0
 
-        try:
+        if (r.solver.status == SolverStatus.ok) & (r.solver.termination_condition == TerminationCondition.optimal):
+            log.info(f'find optimal solution in step: dayAhead adjustment')
             self._set_results(step=0)
-        except Exception:
-            log.error(r)
-            log.error(self.opt_results[0])
-            log.error(self.model.p_out.pprint())
+            running_since, off_since = 0, 0
+            for t in self.t:
+                # find count of last 1s and 0s
+                if self.model.z[t].value > 0:
+                    running_since += 1
+                    off_since = 0
+                else:
+                    running_since = 0
+                    off_since += 1
 
-        for t in self.t:
+            last_power = self.power[-1]
 
-            # find count of last 1s and 0s
-            if self.model.z[t].value > 0:
-                running_since += 1
-                off_since = 0
-            else:
-                running_since = 0
-                off_since += 1
+        elif r.solver.termination_condition == TerminationCondition.infeasible:
+            log.error(f'infeasible model in step: dayAhead adjustment')
+            running_since, off_since = 1, 0
+            last_power = self.generation_system['minPower']
+        else:
+            log.error(r.solver)
+            running_since, off_since = 1, 0
+            last_power = self.generation_system['minPower']
 
-        self.generation_system['P0'] = self.power[-1]
+        self.generation_system['P0'] = last_power
         self.generation_system['on'] = running_since
         self.generation_system['off'] = off_since
 
