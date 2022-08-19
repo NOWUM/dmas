@@ -292,7 +292,7 @@ class PowerPlant(EnergySystem):
             # if we are in hour 0
             if any(result['power'] > 0) and block_number == 0:
                 hours_needed_to_run = (self.generation_system['runTime'] - self.generation_system['on'])
-                # do we need to start?
+                # pwp is on and must runtime is reached
                 if hours_needed_to_run < 1 and result['power'][0] > 0:
                     price, power = get_marginal(p0=last_power[0], p1=result['power'][0], t=0)
                     order_book.update({(block_number, 0, self.name): (price, power, -1)})
@@ -304,6 +304,8 @@ class PowerPlant(EnergySystem):
                     total_start_cost = result['start'][hours[0]]
                     result['start'][hours] = total_start_cost / (self.generation_system['minPower']*len(hours))
                     result['power'][hours] = self.generation_system['minPower']
+                    # pwp is on and must runtime is not reached or it is turned off and started later
+                    hours_needed_to_run = hours_needed_to_run if result['power'][0] > 0 else self.generation_system['runTime']
                     for hour in hours[:hours_needed_to_run]:
                         price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
                         order_book.update({(block_number, hour, self.name): (price+result['start'][hour], power, -1)})
@@ -326,13 +328,39 @@ class PowerPlant(EnergySystem):
             hours = np.argwhere((result['power'] - last_power > 0.1) & (last_power == 0)).flatten()
             first_on_hour = np.argwhere(last_power > 0)[0][0] if len(np.argwhere(last_power > 0)) else 0
             first_hours = list(hours[hours < first_on_hour])
-            first_hours.reverse()
-            for hour in first_hours:
-                price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
-                order_book.update({(block_number, hour, self.name): (price, power, links[hour+1])})
-                last_power[hour] += power
-                links[hour] = block_number
-                block_number += 1
+            # -> no gap between current (mother) block and new block on the left side
+            if first_hours:
+                if first_on_hour - first_hours[-1] == 1:
+                    first_hours.reverse()
+                    for hour in first_hours:
+                        price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
+                        order_book.update({(block_number, hour, self.name): (price, power, links[hour+1])})
+                        last_power[hour] += power
+                        links[hour] = block_number
+                        block_number += 1
+                else:
+                    total_start_cost = result['start'][first_hours[0]]
+                    result['start'][first_hours] = total_start_cost / (self.generation_system['minPower'] *
+                                                                       len(first_hours))
+                    # -> add new mother block before another mother block
+                    # -> this means that a new start is added before a start in a previous step
+                    for hour in first_hours:
+                        price, power = get_marginal(p0=last_power[hour], p1=self.generation_system['minPower'], t=hour)
+                        order_book.update({(block_number, hour, self.name): (price, power, -1)})
+                        last_power[hour] += self.generation_system['minPower']
+                        links[hour] = block_number
+                    block_number += 1
+
+                    for hour in first_hours:
+                        if result['power'][hour] > last_power[hour]:
+                            price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
+                            order_book.update({(block_number, hour, self.name): (price, power, links[hour - 1])})
+                            last_power[hour] += power
+                            links[hour] = block_number
+                            block_number += 1
+
+
+
             # -> stack behind
             last_on_hour = np.argwhere(last_power > 0)[-1][0] if len(np.argwhere(last_power > 0)) else self.t[-1]
             last_on_hours = list(hours[hours > last_on_hour])
@@ -411,35 +439,20 @@ class PowerPlant(EnergySystem):
 
 
 if __name__ == "__main__":
-    plant = {'unitID': 'x',
-             'fuel': 'lignite',
-             'maxPower': 300,  # kW
-             'minPower': 100,  # kW
-             'eta': 0.4,  # Wirkungsgrad
-             'P0': 120,
-             'chi': 0.407 / 1e3,  # t CO2/kWh
-             'stopTime': 4,  # hours
-             'runTime': 4,  # hours
-             'gradP': 300,  # kW/h
-             'gradM': 300,  # kW/h
-             'on': 1,  # running since
-             'off': 0,
-             'startCost': 1e3  # €/Start
-             }
-    steps = (0, 1, 100)
+    from systems.utils import get_test_power_plant, get_test_prices, visualize_orderbook
+    plant = get_test_power_plant()
+    plant['on'] = 4
+    plant['runTime'],plant['stopTime'] = 4, 5
+    steps = (-100, -1, 0, 6)
+    power_plant = PowerPlant(T=24, steps=steps, **plant)
+    prices = get_test_prices(num=48)
 
-    power_price = 5 * np.ones(48)  # * np.random.uniform(0.95, 1.05, 48) # €/kWh
-    power_price[8:12] = -100
-    power_price[22:24] = -1
-    co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
-    gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
-    lignite = np.ones(48) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
-    coal = np.ones(48) * 0.02  # * np.random.uniform(0.95, 1.05)       # -- Hard Coal Price    [€/kWh]
-    nuc = np.ones(48) * 0.01  # * np.random.uniform(0.95, 1.05)        # -- nuclear Price      [€/kWh]
+    prices['power'].values[:6] = -5
+    prices['power'].values[6:12] = -50
+    prices['power'].values[12:] = 10
+    # prices['power'].values[] = -6
+    prices['power'].values[24:] = 5
 
-    prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
-    prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
-
-    pwp = PowerPlant(T=24, steps=steps, **plant)
-    pwp.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
-    order_book = pwp.get_ask_orders()
+    power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
+    order_book = power_plant.get_ask_orders()
+    visualize_orderbook(order_book)
