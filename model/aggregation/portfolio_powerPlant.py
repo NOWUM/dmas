@@ -65,7 +65,7 @@ class PowerPlantPortfolio(PortfolioModel):
         total_order_book = []
         for system in self.energy_systems:
             ask_orders = system.get_ask_orders()
-            link = ask_orders['link'].values()
+            link = ask_orders['link'].values
             if all([l in ask_orders.index.get_level_values('block_id') for l in link if l != -1]):
                 total_order_book = [ask_orders.reset_index()]
             else:
