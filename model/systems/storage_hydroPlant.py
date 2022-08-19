@@ -20,11 +20,25 @@ def shift(prc, type_: str = 'first'):
     return np.asarray(new_prices)
 
 
+def shaping(prc, type_: str = 'peak'):
+    if type_ == 'peak':
+        prc[8:20] /= 0.6
+    elif type_ == 'pv':
+        prc[10:14] *= 0.6
+    elif type_ == 'demand':
+        prc[6:10] /= 0.6
+        prc[16:20] /= 0.6
+    return prc
+
+
 PRICE_FUNCS = {'left': lambda prc: np.roll(prc, -1),
                'right': lambda prc: np.roll(prc, 1),
                'normal': lambda prc: prc,
                'first': lambda prc: shift(prc, type_='first'),
-               'last': lambda prc: shift(prc, type_='last')}
+               'last': lambda prc: shift(prc, type_='last'),
+               'peak_off_peak': lambda prc: shaping(prc, type_='peak'),
+               'pv_sink:': lambda prc: shaping(prc, type_='pv'),
+               'demand': lambda prc: shaping(prc, type_='demand')}
 
 
 class Storage(EnergySystem):
@@ -160,7 +174,7 @@ if __name__ == "__main__":
 
     sys = Storage(T=24, unitID='x', **storage)
     storage_prices = get_test_prices()
-    storage_prices['power'][:8] = 100
+    # storage_prices['power'][:8] = 100
     pw1 = sys.optimize(prices=storage_prices)
     # plt.plot(sys.generation['storage'])
     orders = sys.get_exclusive_orders()
