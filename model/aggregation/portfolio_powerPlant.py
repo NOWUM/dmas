@@ -9,8 +9,8 @@ from aggregation.basic_portfolio import PortfolioModel
 class PowerPlantPortfolio(PortfolioModel):
 
     def __init__(self, T: int = 24, date: pd.Timestamp = pd.Timestamp(2022, 1, 1),
-                 steps=(-10/1e3, -5/1e3, 0, 5/1e3, 100/1e3, 1e6)):
-        super().__init__(T=T, date=date, steps=steps)
+                 steps=(-10/1e3, -5/1e3, 0, 5/1e3, 100/1e3, 1e6), name: str = 'powerPlant Portfolio'):
+        super().__init__(T=T, date=date, steps=steps, name=name)
 
     def add_energy_system(self, energy_system):
         model = PowerPlant(T=self.T, steps=self.steps, **energy_system)
@@ -62,7 +62,15 @@ class PowerPlantPortfolio(PortfolioModel):
     def get_ask_orders(self, price: float = -0.5) -> pd.DataFrame:
         if len(self.energy_systems) < 1:
             raise Exception('no systems to get orders from')
-        total_order_book = [system.get_ask_orders().reset_index() for system in self.energy_systems]
+        total_order_book = []
+        for system in self.energy_systems:
+            ask_orders = system.get_ask_orders()
+            link = ask_orders['link'].values()
+            if all([l in ask_orders.index.get_level_values('block_id') for l in link if l != -1]):
+                total_order_book = [ask_orders.reset_index()]
+            else:
+                self.logger.error(f'invalid orderbook for system {system} and agent {self.name}')
+                print(ask_orders)
 
         df = pd.concat(total_order_book, axis=0)
         df.set_index(['block_id', 'hour', 'name'], inplace=True)

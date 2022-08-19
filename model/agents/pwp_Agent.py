@@ -17,7 +17,7 @@ class PwpAgent(BasicAgent):
         super().__init__(*args, **kwargs)
         start_time = time.time()
 
-        self.portfolio: PowerPlantPortfolio = PowerPlantPortfolio()
+        self.portfolio: PowerPlantPortfolio = PowerPlantPortfolio(name=self.name)
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 simulation_interface=self.simulation_interface,
