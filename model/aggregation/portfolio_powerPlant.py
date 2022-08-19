@@ -69,8 +69,9 @@ class PowerPlantPortfolio(PortfolioModel):
             if all([l in ask_orders.index.get_level_values('block_id') for l in link if l != -1]):
                 total_order_book += [ask_orders.reset_index()]
             else:
-                self.logger.error(f'invalid orderbook for system {system} and agent {self.name}')
-                print(ask_orders)
+                self.logger.error(f'invalid orderbook for system {system.name} and agent {self.name}')
+                print('orders:', ask_orders)
+                print('prevented start:', system.prevented_start['hours'])
 
         df = pd.concat(total_order_book, axis=0)
         df.set_index(['block_id', 'hour', 'name'], inplace=True)
