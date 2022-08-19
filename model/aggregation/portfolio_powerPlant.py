@@ -67,7 +67,7 @@ class PowerPlantPortfolio(PortfolioModel):
             ask_orders = system.get_ask_orders()
             link = ask_orders['link'].values
             if all([l in ask_orders.index.get_level_values('block_id') for l in link if l != -1]):
-                total_order_book = [ask_orders.reset_index()]
+                total_order_book += [ask_orders.reset_index()]
             else:
                 self.logger.error(f'invalid orderbook for system {system} and agent {self.name}')
                 print(ask_orders)
