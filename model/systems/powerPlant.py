@@ -95,6 +95,7 @@ class PowerPlant(EnergySystem):
             self.model.model_min.add(0 <= self.model.p_model[t])
             self.model.model_max.add(self.model.z[t] * delta >= self.model.p_model[t])
             # ramping (gradients)
+            # TODO: Ramping
             if t == 0:
                 self.model.ramping_up_0 = Constraint(expr=self.model.p_out[0] <= pwp['P0'] + pwp['gradP'])
                 self.model.ramping_down_0 = Constraint(expr=self.model.p_out[0] >= pwp['P0'] - pwp['gradM'])
@@ -331,15 +332,22 @@ class PowerPlant(EnergySystem):
             first_hours = list(hours[hours < first_on_hour])
             # -> no gap between current (mother) block and new block on the left side
             if first_hours:
-                if first_on_hour - first_hours[-1] == 1:
+                set_hours = []
+                delta_hour = first_on_hour - first_hours[-1]
+                if delta_hour == 1:
                     first_hours.reverse()
                     for hour in first_hours:
-                        price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
-                        order_book.update({(block_number, hour, self.name): (price, power, links[hour+1])})
-                        last_power[hour] += power
-                        links[hour] = block_number
-                        block_number += 1
-                else:
+                        if links[hour+1] is not None:
+                            price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
+                            order_book.update({(block_number, hour, self.name): (price, power, links[hour+1])})
+                            last_power[hour] += power
+                            links[hour] = block_number
+                            block_number += 1
+                            set_hours += [hour]
+                        else:
+                            break
+                first_hours = list(set(first_hours) - set(set_hours))
+                if delta_hour > 1 or len(first_hours) > 0:
                     total_start_cost = result['start'][first_hours[0]]
                     result['start'][first_hours] = total_start_cost / (self.generation_system['minPower'] *
                                                                        len(first_hours))
@@ -359,8 +367,6 @@ class PowerPlant(EnergySystem):
                             last_power[hour] += power
                             links[hour] = block_number
                             block_number += 1
-
-
 
             # -> stack behind
             last_on_hour = np.argwhere(last_power > 0)[-1][0] if len(np.argwhere(last_power > 0)) else self.t[-1]
@@ -470,5 +476,5 @@ if __name__ == "__main__":
 
     power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
     order_book = power_plant.get_ask_orders()
-    # visualize_orderbook(order_book)
-    print(power_plant)
+    visualize_orderbook(order_book)
+    # print(power_plant)
