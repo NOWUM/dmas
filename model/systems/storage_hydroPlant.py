@@ -130,8 +130,8 @@ class Storage(EnergySystem):
             self.prices['power'] = func(base_price['power'].values)
             self.build_model()
             r = self.opt.solve(self.model)
-            power = np.asarray([-self.model.p_minus[t].value / self.storage_system['eta-']
-                                + self.model.p_plus[t].value * self.storage_system['eta+'] for t in self.t])
+            power = np.asarray([-self.model.p_minus[t].value * self.storage_system['eta-']
+                                + self.model.p_plus[t].value / self.storage_system['eta+'] for t in self.t])
             self.opt_results[key] = power
             if key == 'normal':
                 self.power = power
@@ -179,8 +179,11 @@ if __name__ == "__main__":
     # plt.plot(sys.generation['storage'])
     orders = sys.get_exclusive_orders()
     market_result = orders.loc[orders.index.get_level_values('block_id') == 0, 'volume'].values
-    pw2 = sys.optimize_post_market(market_result * 0.8)
+    # pw2 = sys.optimize_post_market(market_result * 0.8)
     # plt.plot(sys.generation['storage'])
 
-    plt.plot(pw1)
-    plt.plot(pw2)
+    for k in range(20,39):
+        plt.plot(orders.loc[orders.index.get_level_values('block_id') == k, 'volume'].values)
+
+    #plt.plot(pw1)
+    #plt.plot(pw2)
