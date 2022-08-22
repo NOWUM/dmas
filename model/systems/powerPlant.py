@@ -439,7 +439,7 @@ class PowerPlant(EnergySystem):
 
     def __str__(self):
         status = f'power plant: {self.generation_system}, \n\n' \
-                 f'prices: {self.prices} \n\n'
+                 f'prevented start: {self.prevented_start} \n\n'
 
         status += 'optimization results: \n'
 

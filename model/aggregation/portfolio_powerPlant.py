@@ -70,8 +70,13 @@ class PowerPlantPortfolio(PortfolioModel):
                 total_order_book += [ask_orders.reset_index()]
             else:
                 self.logger.error(f'invalid orderbook for system {system.name} and agent {self.name}')
+                print('Orderbook:')
                 print(ask_orders)
+                print('System Parameter:')
                 print(system)
+                print('Prices:')
+                print(self.prices)
+
 
         df = pd.concat(total_order_book, axis=0)
         df.set_index(['block_id', 'hour', 'name'], inplace=True)
