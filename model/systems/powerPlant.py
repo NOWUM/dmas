@@ -154,6 +154,7 @@ class PowerPlant(EnergySystem):
         # -> output power
         power = np.asarray([self.model.p_out[t].value for t in self.t])
         self.opt_results[step]['power'] = power
+        self.opt_results[step]['power'][power < 0.1] = 0
 
         # -> emission costs
         em_prices = self.prices['co'].values
