@@ -437,6 +437,20 @@ class PowerPlant(EnergySystem):
 
         return df
 
+    def __str__(self):
+        status = f'power plant: {self.generation_system}, \n\n' \
+                 f'prices: {self.prices} \n\n'
+
+        status += 'optimization results: \n'
+
+        for key, value in self.opt_results.items():
+            status += f'Optimization Result for Step: {key}: \n ' \
+                      f'power: {np.round(value["power"], 2)}, \n ' \
+                      f'emission: {np.round(value["emission"], 2)}, \n ' \
+                      f'fuel: {np.round(value["fuel"], 2)}, \n ' \
+                      f'start: {np.round(value["start"], 2)} \n\n ' \
+
+        return status
 
 if __name__ == "__main__":
     from systems.utils import get_test_power_plant, get_test_prices, visualize_orderbook
@@ -455,4 +469,5 @@ if __name__ == "__main__":
 
     power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
     order_book = power_plant.get_ask_orders()
-    visualize_orderbook(order_book)
+    # visualize_orderbook(order_book)
+    print(power_plant)
