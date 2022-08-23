@@ -95,7 +95,6 @@ class PowerPlant(EnergySystem):
             self.model.model_min.add(0 <= self.model.p_model[t])
             self.model.model_max.add(self.model.z[t] * delta >= self.model.p_model[t])
             # ramping (gradients)
-            # TODO: Ramping
             if t == 0:
                 self.model.ramping_up_0 = Constraint(expr=self.model.p_out[0] <= pwp['P0'] + pwp['gradP'])
                 self.model.ramping_down_0 = Constraint(expr=self.model.p_out[0] >= pwp['P0'] - pwp['gradM'])
@@ -103,7 +102,7 @@ class PowerPlant(EnergySystem):
                 self.model.ramping_up.add(self.model.p_model[t] - self.model.p_model[t - 1]
                                           <= pwp['gradP'] * self.model.z[t - 1])
                 self.model.ramping_down.add(self.model.p_model[t - 1] - self.model.p_model[t]
-                                            <= pwp['gradM'] * self.model.z[t - 1])
+                                            <= pwp['gradM'] * self.model.z[t])
             # minimal run and stop time
             if t > pwp['stopTime']:
                 self.model.stop_time.add(1 - self.model.z[t]
@@ -463,7 +462,8 @@ if __name__ == "__main__":
     from systems.utils import get_test_power_plant, get_test_prices, visualize_orderbook
     plant = get_test_power_plant()
     plant['on'] = 4
-    plant['runTime'],plant['stopTime'] = 4, 5
+    plant['P0'] = 0
+    plant['runTime'], plant['stopTime'] = 4, 5
     steps = (-100, -1, 0, 6)
     power_plant = PowerPlant(T=24, steps=steps, **plant)
     prices = get_test_prices(num=48)
