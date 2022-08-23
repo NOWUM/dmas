@@ -130,7 +130,6 @@ class Storage(EnergySystem):
             self.prices['power'] = func(base_price['power'].values)
             self.build_model()
             r = self.opt.solve(self.model)
-
             power = np.asarray([-self.model.p_minus[t].value * self.storage_system['eta-']
                                 + self.model.p_plus[t].value for t in self.t])
             self.opt_results[key] = power

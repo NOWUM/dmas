@@ -205,9 +205,13 @@ class DayAheadMarket:
                 for block, name in self.orders[f'{type_}_index'][t]:
                     if type_ == 'exclusive_ask':
                         order_used = self.model_vars[type_][block, name].value
+                        # -> disable price by storage if the storage is on the demand side
+                        if order_used and self.orders[type_][block, t, name][1] > 0:
+                            order_used = True
+                        else:
+                            order_used = False
                     else:
-                        order_used = self.model_vars[type_][block,
-                                                            t, name].value
+                        order_used = self.model_vars[type_][block, t, name].value
                     if order_used:
                         price = self.orders[type_][block, t, name][0]
                     else:
