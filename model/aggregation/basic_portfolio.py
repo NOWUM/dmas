@@ -94,9 +94,8 @@ class PortfolioModel:
         self._set_parameter(date, weather, prices)
 
         params = []
-        date, weather, prices = date, weather.copy(), prices.copy()
         for system in self.energy_systems:
-            params.append((system, date, weather, prices))
+            params.append((system, date, weather.copy(), prices.copy()))
         self.energy_systems = self.pool.map(optimize_energy_system, tqdm(params))
 
         for model in self.energy_systems:

@@ -546,7 +546,7 @@ def get_dem_agents():
 
 if __name__ == "__main__":
     import os
-    x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432')
+    x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.56:4321')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
     uri = f'postgresql://{y}@{x}'
     interface = InfrastructureInterface('test', uri)
@@ -555,15 +555,17 @@ if __name__ == "__main__":
     #z = interface.get_solar_storage_systems_in_area(area=415)
     #a = interface.get_run_river_systems_in_area(area='DE111')
     keys = np.unique(plz_nuts['NUTS3'].to_numpy())
-    
-    dem_agents = get_dem_agents(interface)
-    np.save('dem_agents', dem_agents)
 
-    res_agents = get_res_agents(interface)
-    np.save('res_agents', res_agents)
+    dem = interface.get_demand_in_area(area='DE731')
 
-    str_agents = get_storage_agents(interface)
-    np.save('str_agents', str_agents)
-
-    pwp_agents = get_pwp_agents(interface)    
-    np.save('pwp_agents', pwp_agents)
+    # dem_agents = get_dem_agents(interface)
+    # np.save('dem_agents', dem_agents)
+    #
+    # res_agents = get_res_agents(interface)
+    # np.save('res_agents', res_agents)
+    #
+    # str_agents = get_storage_agents(interface)
+    # np.save('str_agents', str_agents)
+    #
+    # pwp_agents = get_pwp_agents(interface)
+    # np.save('pwp_agents', pwp_agents)
