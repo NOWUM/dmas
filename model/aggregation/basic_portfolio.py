@@ -21,7 +21,7 @@ def optimize_energy_system(data):
 class PortfolioModel:
 
     def __init__(self, T: int = 24, date: pd.Timestamp = pd.to_datetime('2020-01-01'),
-                 steps: tuple = (0,), name: str = None):
+                 steps: tuple = (0,), name: str = None, run_multi_processing: bool = True):
         """
         Represents a portfolio of EnergySystems.
         Its capacities, generation and demand is in MW
@@ -51,6 +51,8 @@ class PortfolioModel:
         self.steps = steps
 
         self.pool = Pool(4)
+        self.run_multi_processing = run_multi_processing
+
 
         self.weather = pd.DataFrame()
         self.prices = pd.DataFrame()
@@ -92,11 +94,14 @@ class PortfolioModel:
         """
         self._reset_data()
         self._set_parameter(date, weather, prices)
-
-        params = []
-        for system in self.energy_systems:
-            params.append((system, date, weather.copy(), prices.copy()))
-        self.energy_systems = self.pool.map(optimize_energy_system, tqdm(params))
+        if self.run_multi_processing:
+            params = []
+            for system in self.energy_systems:
+                params.append((system, date, weather.copy(), prices.copy()))
+            self.energy_systems = self.pool.map(optimize_energy_system, tqdm(params))
+        else:
+            for system in self.energy_systems:
+                system.optimize(date, weather.copy(), prices.copy())
 
         for model in self.energy_systems:
             for key, value in model.generation.items():

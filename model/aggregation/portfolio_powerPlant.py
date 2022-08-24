@@ -10,7 +10,7 @@ class PowerPlantPortfolio(PortfolioModel):
 
     def __init__(self, T: int = 24, date: pd.Timestamp = pd.Timestamp(2022, 1, 1),
                  steps=(-10/1e3, -5/1e3, 0, 5/1e3, 100/1e3, 1e6), name: str = 'powerPlant Portfolio'):
-        super().__init__(T=T, date=date, steps=steps, name=name)
+        super().__init__(T=T, date=date, steps=steps, name=name, run_multi_processing=False)
 
     def add_energy_system(self, energy_system):
         model = PowerPlant(T=self.T, steps=self.steps, **energy_system)
