@@ -22,12 +22,12 @@ def shift(prc, type_: str = 'first'):
 
 def shaping(prc, type_: str = 'peak'):
     if type_ == 'peak':
-        prc[8:20] /= 0.6
+        prc[8:20] *= 1.5
     elif type_ == 'pv':
-        prc[10:14] *= 0.6
+        prc[11:13] *= 0.6
     elif type_ == 'demand':
-        prc[6:10] /= 0.6
-        prc[16:20] /= 0.6
+        prc[6:9] *= 1.5
+        prc[17:20] *= 1.5
     return prc
 
 
@@ -36,7 +36,7 @@ PRICE_FUNCS = {'left': lambda prc: np.roll(prc, -1),
                'normal': lambda prc: prc,
                'first': lambda prc: shift(prc, type_='first'),
                'last': lambda prc: shift(prc, type_='last'),
-               'peak_off_peak': lambda prc: shaping(prc, type_='peak'),
+                # 'peak_off_peak': lambda prc: shaping(prc, type_='peak'),
                'pv_sink:': lambda prc: shaping(prc, type_='pv'),
                'demand': lambda prc: shaping(prc, type_='demand')}
 
@@ -145,23 +145,35 @@ class Storage(EnergySystem):
         return self.power
 
     def get_exclusive_orders(self) -> pd.DataFrame:
-        total_orders = []
-        mean_price = self.prices['power'].mean()
+        total_orders = {}
         block_id = 0
+        power_prices = self.prices['power'].copy()
         for key, power in self.opt_results.items():
-            for shifting in np.arange(0.5, 1.75, 0.25):
-                order_book = {}
-                for t in self.t:
-                    prc = mean_price * shifting
-                    prc = prc / self.storage_system['eta+'] if power[t] < 0 \
-                        else prc * self.storage_system['eta-']
-                    order_book[t] = dict(hour=t, block_id=block_id, name=self.name,
-                                         price=prc, volume=-power[t])
+            prc = np.zeros(self.T)
+            bid_hours = np.argwhere(power < 0).flatten()
+            ask_hours = np.argwhere(power > 0).flatten()
+            max_charging_price = power_prices.values[bid_hours].max()
+            min_discharging_price = max_charging_price / (self.storage_system['eta+'] * self.storage_system['eta-'])
+            prc[ask_hours] = (power_prices[ask_hours] + min_discharging_price) / 2
+            prc[bid_hours] = power_prices.values[bid_hours]
+            add = True
+            for orders in total_orders.values():
+                if any(prc != orders['price']) or any(power != orders['volume']):
+                    add = False
+            if add:
+                total_orders[block_id] = dict(price=prc, volume=power)
                 block_id += 1
-                df = pd.DataFrame.from_dict(order_book, orient='index')
-                total_orders += [df]
-        df = pd.concat(total_orders, axis=0)
-        df = df.set_index(['block_id', 'hour', 'name'])
+        dfs = []
+        for key, values in total_orders.items():
+            df = pd.DataFrame(data=values)
+            df['name'] = self.name
+            df['block_id'] = key
+            df['hour'] = self.t
+            df = df.set_index(['block_id', 'hour', 'name'])
+            dfs.append(df)
+
+        df = pd.concat(dfs)
+
         return df
 
 
