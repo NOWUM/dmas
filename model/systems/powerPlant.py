@@ -225,6 +225,7 @@ class PowerPlant(EnergySystem):
                     self.opt_results[step][key] = np.zeros(self.T)
                 self.opt_results[step]['obj'] = 0
             else:
+                print(step)
                 log.error(r.solver)
                 for key in ['power', 'emission', 'fuel', 'start', 'profit']:
                     self.opt_results[step][key] = np.zeros(self.T)
