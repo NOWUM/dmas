@@ -304,7 +304,7 @@ class PowerPlant(EnergySystem):
         links = {i: None for i in self.t}
 
         yesterday = self.date.date() - td(days=1)
-
+        print(yesterday)
         for step in self.steps:
 
             # -> get optimization result for key (block) and step
@@ -326,6 +326,7 @@ class PowerPlant(EnergySystem):
                         price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
                         order_book.update({(block_number, hour, self.name): (price - reduction, power, -1)})
                         last_power[hour] += self.generation_system['minPower']
+                        links[hour] = block_number
                     self.reduction_next_day = dict()
                 else:
                     # we need to start the powerplant
