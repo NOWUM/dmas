@@ -83,7 +83,7 @@ class PriceForecast(BasicForecast):
 
     def forecast(self, date):
         if not self.fitted:
-            power_price = default_power_price
+            power_price = default_power_price * np.random.uniform(low=0.95, high=1.05, size=24)
         else:
             input = []
             input.append(self.demand_model.forecast(date))
