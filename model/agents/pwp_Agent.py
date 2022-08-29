@@ -25,7 +25,6 @@ class PwpAgent(BasicAgent):
         self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                             simulation_interface=self.simulation_interface,
                                             weather_interface=self.weather_interface)
-        self.forecast_counter = 10
 
         self.pwp_names = []
 
