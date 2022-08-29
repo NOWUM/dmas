@@ -214,7 +214,7 @@ class PowerPlant(EnergySystem):
                     prevent_start = all(power_check[prevented_off_hours] > 0)
                     delta = value(self.model.obj) - self.opt_results[step]['obj']
                     percentage = delta / self.opt_results[step]['obj'] if self.opt_results[step]['obj'] else 0
-                    if prevent_start and percentage > 0.05:
+                    if prevent_start and percentage > 0.15:
                         self.prevented_start = dict(prevent=True, hours=prevented_off_hours,
                                                     delta=delta / (len(prevented_off_hours) * pwp['minPower']))
                     self.t = np.arange(self.T)
@@ -406,7 +406,13 @@ class PowerPlant(EnergySystem):
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'name'])
 
         if self.prevented_start['prevent']:
-            hours = self.prevented_start['hours']
+            hours = list(self.prevented_start['hours'])
+            if len(hours) < self.generation_system['runTime']:
+                hours_to_add = len(hours) - self.generation_system['runTime']
+                first_hour = hours[0] - 1
+                for h in range(first_hour, first_hours-hours_to_add, -1):
+                    hours += [h]
+
             get_marginals = lambda x: get_marginal(p0=0, p1=self.generation_system['minPower'], t=x)
             min_price = np.mean([price for price, _ in map(get_marginals, hours)]) - self.prevented_start['delta']
 
