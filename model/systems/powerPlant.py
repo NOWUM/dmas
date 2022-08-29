@@ -408,11 +408,11 @@ class PowerPlant(EnergySystem):
         if self.prevented_start['prevent']:
             hours = list(self.prevented_start['hours'])
             if len(hours) < self.generation_system['runTime']:
-                hours_to_add = len(hours) - self.generation_system['runTime']
+                hours_to_add = self.generation_system['runTime'] - len(hours)
                 first_hour = hours[0] - 1
-                for h in range(first_hour, first_hours-hours_to_add, -1):
+                for h in range(first_hour, first_hour-hours_to_add, -1):
                     hours += [h]
-
+            hours.reverse()
             get_marginals = lambda x: get_marginal(p0=0, p1=self.generation_system['minPower'], t=x)
             min_price = np.mean([price for price, _ in map(get_marginals, hours)]) - self.prevented_start['delta']
 
@@ -465,6 +465,7 @@ class PowerPlant(EnergySystem):
 
         return status
 
+
 if __name__ == "__main__":
     from systems.utils import get_test_power_plant, get_test_prices, visualize_orderbook
     plant = get_test_power_plant()
@@ -475,11 +476,11 @@ if __name__ == "__main__":
     power_plant = PowerPlant(T=24, steps=steps, **plant)
     prices = get_test_prices(num=48)
 
-    prices['power'].values[:6] = -5
-    prices['power'].values[6:12] = -50
-    prices['power'].values[12:] = 10
-    # prices['power'].values[] = -6
-    prices['power'].values[24:] = 5
+    # prices['power'].values[:6] = -5
+    # prices['power'].values[6:12] = -50
+    # prices['power'].values[12:] = 10
+    prices['power'].values[23] = -10
+    # prices['power'].values[24:] = 5
 
     power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
     order_book = power_plant.get_ask_orders()
