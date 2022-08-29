@@ -205,7 +205,7 @@ class PowerPlant(EnergySystem):
                     all_off = np.argwhere(self.opt_results[step]['power'] == 0).flatten()
                     last_on = np.argwhere(self.opt_results[step]['power'] > 0).flatten()
                     last_on = last_on[-1] if len(last_on) > 0 else 0
-                    prevented_off_hours = all_off[all_off > last_on]
+                    prevented_off_hours = list(all_off[all_off > last_on])
 
                     self.t = np.arange(48)
                     self.prices = prices_48h
@@ -224,7 +224,6 @@ class PowerPlant(EnergySystem):
                         if len(prevented_off_hours) < self.generation_system['runTime']:
                             hours_to_add = int(self.generation_system['runTime']/2 - len(prevented_off_hours))
                             first_hour = prevented_off_hours[0] - 1
-                            prevented_off_hours = list(prevented_off_hours)
                             for h in range(first_hour, first_hour - hours_to_add, -1):
                                 prevented_off_hours += [h]
                         prevented_off_hours.reverse()
@@ -323,7 +322,7 @@ class PowerPlant(EnergySystem):
                     hours = int(self.generation_system['runTime']/2)
                     reduction = self.reduction_next_day[yesterday]
                     for hour in range(hours):
-                        price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
+                        price, power = get_marginal(p0=last_power[hour], p1=self.generation_system['minPower'], t=hour)
                         order_book.update({(block_number, hour, self.name): (price - reduction, power, -1)})
                         last_power[hour] += self.generation_system['minPower']
                         links[hour] = block_number
@@ -335,7 +334,6 @@ class PowerPlant(EnergySystem):
                     result['start'][hours] = total_start_cost / (self.generation_system['minPower']*len(hours))
                     result['power'][hours] = self.generation_system['minPower']
                     # pwp is on and must runtime is not reached or it is turned off and started later
-                    hours_needed_to_run = hours_needed_to_run if result['power'][0] > 0 else self.generation_system['runTime']
                     for hour in hours[:hours_needed_to_run]:
                         price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
                         order_book.update({(block_number, hour, self.name): (price+result['start'][hour], power, -1)})
@@ -492,7 +490,8 @@ if __name__ == "__main__":
     from systems.utils import get_test_power_plant, get_test_prices, visualize_orderbook
     plant = get_test_power_plant()
     plant['on'] = 4
-    plant['P0'] = 0
+    plant['off'] = 0
+    plant['P0'] = 500
     plant['runTime'], plant['stopTime'] = 4, 5
     steps = (-100, -1, 0, 6)
     power_plant = PowerPlant(T=24, steps=steps, **plant)
