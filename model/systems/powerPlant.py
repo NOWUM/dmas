@@ -215,8 +215,12 @@ class PowerPlant(EnergySystem):
                     delta = value(self.model.obj) - self.opt_results[step]['obj']
                     percentage = delta / self.opt_results[step]['obj'] if self.opt_results[step]['obj'] else 0
                     if prevent_start and percentage > 0.15:
+                        # -> it does not make sense to relate the profit only to the previous day, because the
+                        # power plant must also be drawn in all hours with low price.
+                        # -> relate profit to the hours which are not profitable.
+                        # -> simple assumption use 50 % for each day
                         self.prevented_start = dict(prevent=True, hours=prevented_off_hours,
-                                                    delta=delta / (len(prevented_off_hours) * pwp['minPower']))
+                                                    delta=0.5 * delta / (len(prevented_off_hours) * pwp['minPower']))
                     self.t = np.arange(self.T)
 
             elif r.solver.termination_condition == TerminationCondition.infeasible:
