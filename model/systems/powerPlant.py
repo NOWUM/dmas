@@ -1,6 +1,6 @@
 # third party modules
 import logging
-
+from datetime import timedelta as td
 import numpy as np
 import pandas as pd
 from pyomo.environ import (Binary, ConcreteModel, Constraint, ConstraintList,
@@ -41,6 +41,8 @@ class PowerPlant(EnergySystem):
                                        obj=0) for step in steps}
 
         self.prevented_start = dict(prevent=False, hours=np.zeros(self.T, float), delta=0)
+        self.reduction_next_day = dict()
+
 
     def set_parameter(self, date: pd.Timestamp, weather: pd.DataFrame = None, prices: pd.DataFrame = None) -> None:
         super()._set_parameter(date, weather, prices)
@@ -219,8 +221,18 @@ class PowerPlant(EnergySystem):
                         # power plant must also be drawn in all hours with low price.
                         # -> relate profit to the hours which are not profitable.
                         # -> simple assumption use 50 % for each day
-                        self.prevented_start = dict(prevent=True, hours=prevented_off_hours,
-                                                    delta=0.5 * delta / (len(prevented_off_hours) * pwp['minPower']))
+                        if len(prevented_off_hours) < self.generation_system['runTime']:
+                            hours_to_add = int(self.generation_system['runTime']/2 - len(prevented_off_hours))
+                            first_hour = prevented_off_hours[0] - 1
+                            prevented_off_hours = list(prevented_off_hours)
+                            for h in range(first_hour, first_hour - hours_to_add, -1):
+                                prevented_off_hours += [h]
+                        prevented_off_hours.reverse()
+                        reduction_this_day = delta / (len(prevented_off_hours) * pwp['minPower']) / 2
+                        self.reduction_next_day[self.date.date()] = reduction_this_day
+
+                        self.prevented_start = dict(prevent=True, hours=prevented_off_hours, delta=reduction_this_day)
+
                     self.t = np.arange(self.T)
 
             elif r.solver.termination_condition == TerminationCondition.infeasible:
@@ -291,6 +303,8 @@ class PowerPlant(EnergySystem):
         order_book, last_power, block_number = {}, np.zeros(self.T), 0
         links = {i: None for i in self.t}
 
+        yesterday = self.date.date() - td(days=1)
+
         for step in self.steps:
 
             # -> get optimization result for key (block) and step
@@ -299,11 +313,20 @@ class PowerPlant(EnergySystem):
             if any(result['power'] > 0) and block_number == 0:
                 hours_needed_to_run = (self.generation_system['runTime'] - self.generation_system['on'])
                 # pwp is on and must runtime is reached
-                if hours_needed_to_run < 1 and result['power'][0] > 0:
+
+                if hours_needed_to_run < 1 and result['power'][0] > 0 and yesterday not in self.reduction_next_day.keys():
                     price, power = get_marginal(p0=last_power[0], p1=result['power'][0], t=0)
                     order_book.update({(block_number, 0, self.name): (price, power, -1)})
                     links[0] = block_number
                     last_power[0] += result['power'][0]
+                elif yesterday in self.reduction_next_day.keys() and result['power'][0] > 0:
+                    hours = int(self.generation_system['runTime']/2)
+                    reduction = self.reduction_next_day[yesterday]
+                    for hour in range(hours):
+                        price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
+                        order_book.update({(block_number, hour, self.name): (price - reduction, power, -1)})
+                        last_power[hour] += self.generation_system['minPower']
+                    self.reduction_next_day = dict()
                 else:
                     # we need to start the powerplant
                     hours = np.argwhere(result['power'] > 0).flatten()
@@ -410,13 +433,7 @@ class PowerPlant(EnergySystem):
         df.index = pd.MultiIndex.from_tuples(df.index, names=['block_id', 'hour', 'name'])
 
         if self.prevented_start['prevent']:
-            hours = list(self.prevented_start['hours'])
-            if len(hours) < self.generation_system['runTime']:
-                hours_to_add = self.generation_system['runTime'] - len(hours)
-                first_hour = hours[0] - 1
-                for h in range(first_hour, first_hour-hours_to_add, -1):
-                    hours += [h]
-            hours.reverse()
+            hours = self.prevented_start['hours']
             get_marginals = lambda x: get_marginal(p0=0, p1=self.generation_system['minPower'], t=x)
             min_price = np.mean([price for price, _ in map(get_marginals, hours)]) - self.prevented_start['delta']
 
