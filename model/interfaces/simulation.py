@@ -287,8 +287,17 @@ class SimulationInterface:
         for key, value in results.items():
             value.to_sql(key, self.database, if_exists='replace')
 
-    def set_auction_results(self, auction_results):
+    def set_auction_results(self, auction_results: pd.DataFrame, merit_order: dict = None):
+        date = auction_results.index[0]
         auction_results.to_sql('auction_results', self.database, if_exists='append')
+        for hour_values in merit_order.values():
+            data = pd.DataFrame.from_dict(hour_values)
+            data['time'] = date
+            date['hour'] = date.hour
+            data.to_sql('merit_order', self.database, if_exists='append', index=False)
+            date += td(hours=1)
+
+
 
     def get_auction_results(self, date):
         start_date, end_date = get_interval(date)

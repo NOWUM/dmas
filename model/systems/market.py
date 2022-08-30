@@ -189,7 +189,7 @@ class DayAheadMarket:
         t1 = time.time()
         try:
             r = self.opt.solve(self.model, options={
-                               'MIPGap': 0.1, 'TimeLimit': 60})
+                'MIPGap': 0.1, 'TimeLimit': 60})
             print(r)
         except Exception as e:
             self.logger.exception('error solving optimization problem')
@@ -289,11 +289,40 @@ class DayAheadMarket:
         prices['volume'] = volumes
         prices['magic_source'] = [get_real_number(m) for m in magic_source]
 
+        # -> build merit order
+        merit_order = {hour: dict(price=[], volume=[], type=[]) for hour in range(24)}
+
+        def add_to_merit_order(hour, price, volume, type):
+            merit_order[hour]['price'].append(price)
+            merit_order[hour]['volume'].append(volume)
+            merit_order[hour]['type'].append(type)
+
+        for index, values in self.orders['linked_ask'].items():
+            price, volume, _ = values
+            _, hour, _ = index
+            add_to_merit_order(hour, price, volume, 'ask')
+        for index, values in self.orders['exclusive_ask'].items():
+            price, volume = values
+            _, hour, _ = index
+            if volume > 0:
+                add_to_merit_order(hour, price, volume, 'ask')
+            else:
+                add_to_merit_order(hour, price, -volume, 'bid')
+        for index, values in self.orders['single_ask'].items():
+            price, volume = values
+            _, hour, _ = index
+            add_to_merit_order(hour, price, volume, 'ask')
+        for index, values in self.orders['single_bid'].items():
+            price, volume = values
+            _, hour, _ = index
+            add_to_merit_order(hour, price, -volume, 'bid')
+
         self._reset_parameter()
         return (prices, used_orders['single_ask'],
                 used_orders['linked_ask'],
                 used_orders['exclusive_ask'],
-                used_bid_orders)
+                used_bid_orders,
+                merit_order)
 
 
 if __name__ == "__main__":
@@ -337,4 +366,4 @@ if __name__ == "__main__":
 
     market.set_parameter({}, hourly_bid, linked_orders, exclusive_orders)
     result = market.optimize()
-    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
+    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders, merit_order = result

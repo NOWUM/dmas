@@ -145,6 +145,15 @@ CREATE TABLE cash_flows
 ALTER TABLE "cash_flows"
     ADD PRIMARY KEY ("time","agent");
 
+CREATE TABLE merit_order
+(
+    "time" timestamp without time zone,
+     price double precision,
+     volume double precision,
+     type double precision,
+     hour integer
+);
+ALTER TABLE "merit_order"
 
 
 SELECT create_hypertable('orders', 'time', if_not_exists => TRUE, migrate_data => TRUE);
