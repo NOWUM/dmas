@@ -299,7 +299,7 @@ class PowerPlant(EnergySystem):
             marginal = (get_cost(p=p0, t=t) - get_cost(p=p1, t=t)) / (p0-p1)
             return marginal, p1-p0
 
-        def get_maximal_profit_hours_for_mother():
+        def get_maximal_profit_hours():
             max_profit, start_hour = 0, 0
             run_time = self.generation_system['runTime']
             for t in range(self.T - run_time):
@@ -312,46 +312,39 @@ class PowerPlant(EnergySystem):
         order_book, last_power, block_number = {}, np.zeros(self.T), 0
         links = {i: None for i in self.t}
 
+        min_time = self.generation_system['runTime']
+        min_power = self.generation_system['minPower']
+        max_hours = get_maximal_profit_hours()
+        start_cost = self.start_cost / (min_power * min_power)
+
         yesterday = self.date.date() - td(days=1)
 
-        for step in self.steps:
+        index = 0
+
+        while index < len(self.steps):
+            step = self.steps[index]
 
             # -> get optimization result for key (block) and step
             result = self.opt_results[step]
             # if we are in hour 0
             if any(result['power'] > 0) and block_number == 0:
-                hours_needed_to_run = (self.generation_system['runTime'] - self.generation_system['on'])
                 # pwp is on and must runtime is reached
-
-                if hours_needed_to_run < 1 and result['power'][0] > 0 and yesterday not in self.reduction_next_day.keys():
-                    price, power = get_marginal(p0=last_power[0], p1=result['power'][0], t=0)
-                    order_book.update({(block_number, 0, self.name): (price, power, -1)})
-                    links[0] = block_number
-                    last_power[0] += result['power'][0]
-
-                elif yesterday in self.reduction_next_day.keys() and result['power'][0] > 0:
-                    hours = int(self.generation_system['runTime']/2)
-                    reduction = self.reduction_next_day[yesterday]
-                    for hour in range(hours):
-                        price, power = get_marginal(p0=last_power[hour], p1=self.generation_system['minPower'], t=hour)
-                        order_book.update({(block_number, hour, self.name): (price - reduction, power, -1)})
-                        last_power[hour] += self.generation_system['minPower']
-                        links[hour] = block_number
-                    self.reduction_next_day = dict()
-                else:
-                    # we need to start the powerplant
-                    hours = np.argwhere(result['power'] > 0).flatten()
-                    max_profit_mother_hours = get_maximal_profit_hours_for_mother()
-                    hours_needed_to_run = len(max_profit_mother_hours)
-                    if all([hour in hours for hour in max_profit_mother_hours]):
-                        result['start'][hours] = self.start_cost / (self.generation_system['minPower']*hours_needed_to_run)
-                        result['power'][hours] = self.generation_system['minPower']
-                        # pwp is on and must runtime is not reached or it is turned off and started later
-                        for hour in max_profit_mother_hours:
-                            price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
-                            order_book.update({(block_number, hour, self.name): (price+result['start'][hour], power, -1)})
-                            links[hour] = block_number
-                            last_power[hour] += result['power'][hour]
+                if result['power'][0] > 0 and self.generation_system['P0'] > 0:
+                    reduction = 0
+                    hours_needed_to_run = (self.generation_system['runTime'] - self.generation_system['on'])
+                    hours = [*range(hours_needed_to_run)] if hours_needed_to_run > 0 else [0]
+                    # -> a start is prevented
+                    if yesterday in self.reduction_next_day.keys():
+                        reduction = self.reduction_next_day[yesterday]
+                        self.reduction_next_day = dict()
+                elif self.generation_system['P0'] == 0:
+                    hours = max_hours
+                    reduction = -start_cost
+                for hour in hours:
+                    price, power = get_marginal(p0=last_power[0], p1=min_power, t=hour)
+                    order_book.update({(block_number, hour, self.name): (price - reduction, power, -1)})
+                    links[hour] = block_number
+                    last_power[hour] += min_power
 
                 block_number += 1  # -> increment block number
 
@@ -366,7 +359,8 @@ class PowerPlant(EnergySystem):
                 block_number += 1
             # -> stack before
             hours = np.argwhere((result['power'] - last_power > 0.1) & (last_power == 0)).flatten()
-            first_on_hour = np.argwhere(last_power > 0)[0][0] if len(np.argwhere(last_power > 0)) else 0
+            first_on_hour = np.argwhere(last_power == 0)[-1][0] + 1 if len(np.argwhere(last_power == 0)) else 0
+            first_on_hour = 0 if first_on_hour > 23 else first_on_hour
             first_hours = list(hours[hours < first_on_hour])
             # -> no gap between current (mother) block and new block on the left side
             if first_hours:
@@ -412,20 +406,16 @@ class PowerPlant(EnergySystem):
             for hour in last_on_hours:
                 if links[hour-1] is None:
                     # we need to start mid day
-
-                    max_profit_mother_hours = get_maximal_profit_hours_for_mother()
-                    if all(result['power'][max_profit_mother_hours] > 0):
-                        result['start'][hours] = self.start_cost / (self.generation_system['minPower']*len(max_profit_mother_hours))
-                        result['power'][hours] = self.generation_system['minPower']
+                    if all(result['power'][max_hours] > 0):
                         # pwp is on and must runtime is not reached or it is turned off and started later
-                        for hour in max_profit_mother_hours:
-                            price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
-                            order_book.update({(block_number, hour, self.name): (price+result['start'][hour], power, -1)})
-                            links[hour] = block_number
-                            last_power[hour] += result['power'][hour]
-
-
+                        for t in max_hours:
+                            price, power = get_marginal(p0=last_power[t], p1=min_power, t=t)
+                            order_book.update({(block_number, t, self.name): (price + start_cost, power, -1)})
+                            links[t] = block_number
+                            last_power[t] += min_power
                     block_number += 1
+                    index -= 1
+                    break
                 else:
                     if result['power'][hour] > last_power[hour]:
                         price, power = get_marginal(p0=last_power[hour], p1=result['power'][hour], t=hour)
@@ -433,7 +423,7 @@ class PowerPlant(EnergySystem):
                         last_power[hour] += power
                         links[hour] = block_number
                         block_number += 1
-
+            index += 1
         if order_book:
             df = pd.DataFrame.from_dict(order_book, orient='index')
         else:
@@ -507,19 +497,19 @@ if __name__ == "__main__":
         default_power_price = np.load(file).reshape((24,))
 
     plant = get_test_power_plant()
-    plant['on'] = 4
-    plant['off'] = 0
-    plant['P0'] = 500
+    plant['on'] = 0
+    plant['off'] = 3
+    plant['P0'] = 0
     plant['runTime'], plant['stopTime'] = 4, 5
     steps = (-100, -1, 0, 6)
     power_plant = PowerPlant(T=24, steps=steps, **plant)
     prices = get_test_prices(num=48)
     prices['power'] = np.asarray(2*[default_power_price]).flatten()
 
-    # prices['power'].values[:6] = -5
+    prices['power'].values[:6] = -400
     # prices['power'].values[6:12] = -50
     # prices['power'].values[12:] = 10
-    prices['power'].values[23] = -10
+    # prices['power'].values[23] = -10
     # prices['power'].values[24:] = 5
 
     power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
