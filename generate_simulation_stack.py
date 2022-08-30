@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 import random
+import pickle
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 counter = 1
@@ -15,6 +16,9 @@ else:
 def random_structure_server():
     return random.choice(structure_servers)
 
+
+# Build Demand Agents
+agents = pickle.load(file=open(r'./agents.pkl', 'rb'))
 
 configs = {}
 output = []
@@ -136,8 +140,7 @@ output.append(f'''
       - controller
 ''')
 # Build Demand Agents
-agents = np.load('dem_agents.npy')
-for agent in agents[:counter]:
+for agent in agents['dem'][:counter]:
     output.append(f'''
   dem_{agent.lower()}:
     container_name: dem_{agent.lower()}
@@ -152,8 +155,7 @@ for agent in agents[:counter]:
       - controller
 ''')
 # Build Power Plant Agents
-agents = np.load('pwp_agents.npy')
-for agent in agents[:counter]:
+for agent in agents['pwp'][:counter]:
     output.append(f'''
   pwp_{agent.lower()}:
     container_name: pwp_{agent.lower()}
@@ -166,8 +168,7 @@ for agent in agents[:counter]:
       STRUCTURE_SERVER: '{random_structure_server()}'
 ''')
 # Build Renewable Energy Agents
-agents = np.load('res_agents.npy')
-for agent in agents[:counter]:
+for agent in agents['res'][:counter]:
     output.append(f'''
   res_{agent.lower()}:
     container_name: res_{agent.lower()}
@@ -182,8 +183,7 @@ for agent in agents[:counter]:
       - controller
 ''')
 # Build Storage Agents
-agents = np.load('str_agents.npy')
-for agent in agents[:counter]:
+for agent in agents['str'][:counter]:
     output.append(f'''
   dem_{agent.lower()}:
     container_name: str_{agent.lower()}
