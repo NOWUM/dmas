@@ -337,8 +337,14 @@ class PowerPlant(EnergySystem):
                         reduction = self.reduction_next_day[yesterday]
                         self.reduction_next_day = dict()
                 elif self.generation_system['P0'] == 0:
+                    # pwp is off
                     hours = max_hours
                     reduction = -start_cost
+                else:
+                    # pwp was on but turned off in first hour
+                    hours = max_hours
+                    reduction = -start_cost
+
                 for hour in hours:
                     price, power = get_marginal(p0=last_power[hour], p1=min_power, t=hour)
                     order_book.update({(block_number, hour, self.name): (price - reduction, power, -1)})
