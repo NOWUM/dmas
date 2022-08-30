@@ -341,7 +341,7 @@ class PowerPlant(EnergySystem):
                     hours = max_hours
                     reduction = -start_cost
                 for hour in hours:
-                    price, power = get_marginal(p0=last_power[0], p1=min_power, t=hour)
+                    price, power = get_marginal(p0=last_power[hour], p1=min_power, t=hour)
                     order_book.update({(block_number, hour, self.name): (price - reduction, power, -1)})
                     links[hour] = block_number
                     last_power[hour] += min_power
@@ -497,16 +497,16 @@ if __name__ == "__main__":
         default_power_price = np.load(file).reshape((24,))
 
     plant = get_test_power_plant()
-    plant['on'] = 0
-    plant['off'] = 3
-    plant['P0'] = 0
+    plant['on'] = 5
+    plant['off'] = 0
+    plant['P0'] = 600
     plant['runTime'], plant['stopTime'] = 4, 5
     steps = (-100, -1, 0, 6)
     power_plant = PowerPlant(T=24, steps=steps, **plant)
     prices = get_test_prices(num=48)
     prices['power'] = np.asarray(2*[default_power_price]).flatten()
 
-    prices['power'].values[:6] = -400
+    # prices['power'].values[:6] = -400
     # prices['power'].values[6:12] = -50
     # prices['power'].values[12:] = 10
     # prices['power'].values[23] = -10
