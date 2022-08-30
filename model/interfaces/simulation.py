@@ -292,6 +292,13 @@ class SimulationInterface:
         auction_results.to_sql('auction_results', self.database, if_exists='append')
         for hour_values in merit_order.values():
             data = pd.DataFrame.from_dict(hour_values)
+            ask = data.loc[data['type'] == 'ask'].sort_values('price')
+            ask['volume'] = ask['volume'].cumsum()
+            bid = data.loc[data['type'] == 'bid'].sort_values('price', ascending=False)
+            bid['volume'] = bid['volume'].cumsum()
+
+            data = pd.concat([ask, bid], axis=1)
+
             data['time'] = date
             data['hour'] = date.hour
             data.to_sql('merit_order', self.database, if_exists='append', index=False)
