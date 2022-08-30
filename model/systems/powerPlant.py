@@ -307,12 +307,11 @@ class PowerPlant(EnergySystem):
                 if p > max_profit:
                     max_profit = p
                     start_hour = t
-            return [*range(start_hour, max(start_hour + self.generation_system['runTime'], self.T))]
+            return [*range(start_hour, min(start_hour + self.generation_system['runTime'], self.T))]
 
         order_book, last_power, block_number = {}, np.zeros(self.T), 0
         links = {i: None for i in self.t}
 
-        min_time = self.generation_system['runTime']
         min_power = self.generation_system['minPower']
         max_hours = get_maximal_profit_hours()
         start_cost = self.start_cost / (min_power * min_power)
@@ -506,10 +505,10 @@ if __name__ == "__main__":
     prices = get_test_prices(num=48)
     prices['power'] = np.asarray(2*[default_power_price]).flatten()
 
-    # prices['power'].values[:6] = -400
+    prices['power'].values[:6] = -400
     # prices['power'].values[6:12] = -50
     # prices['power'].values[12:] = 10
-    # prices['power'].values[23] = -10
+    prices['power'].values[18:] = -10
     # prices['power'].values[24:] = 5
 
     power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
