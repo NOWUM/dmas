@@ -74,14 +74,14 @@ class ResAgent(BasicAgent):
         run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(self.area)
         run_river_data['type'] = 'water'
         for system in tqdm(run_river_data.to_dict(orient='records')):
-            self.portfolio_eeg.add_energy_system(system)
+            self.portfolio_mrk.add_energy_system(system)
         self.logger.info('Run River Power Plants added')
 
         # Construction Biomass
         bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(self.area)
         bio_mass_data['type'] = 'bio'
         for system in tqdm(bio_mass_data.to_dict(orient='records')):
-            self.portfolio_eeg.add_energy_system(system)
+            self.portfolio_mrk.add_energy_system(system)
         self.logger.info('Biomass Power Plants added')
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
