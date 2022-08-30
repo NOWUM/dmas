@@ -297,7 +297,7 @@ class SimulationInterface:
             bid = data.loc[data['type'] == 'bid'].sort_values('price', ascending=False)
             bid['volume'] = bid['volume'].cumsum()
 
-            data = pd.concat([ask, bid], axis=1)
+            data = pd.concat([ask, bid], axis=0)
 
             data['time'] = date
             data['hour'] = date.hour
