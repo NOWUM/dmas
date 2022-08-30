@@ -150,7 +150,7 @@ CREATE TABLE merit_order
     "time" timestamp without time zone,
      price double precision,
      volume double precision,
-     type double precision,
+     type text,
      hour integer
 );
 
