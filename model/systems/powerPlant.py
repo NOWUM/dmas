@@ -202,10 +202,31 @@ class PowerPlant(EnergySystem):
                 self._set_results(step=step)
 
                 if self.opt_results[step]['power'][-1] == 0 and step == 0:
+                    initial_p0 = self.generation_system['P0']
+                    initial_on = self.generation_system['on']
+                    initial_off = self.generation_system['off']
                     all_off = np.argwhere(self.opt_results[step]['power'] == 0).flatten()
                     last_on = np.argwhere(self.opt_results[step]['power'] > 0).flatten()
                     last_on = last_on[-1] if len(last_on) > 0 else 0
                     prevented_off_hours = list(all_off[all_off > last_on])
+                    self.prices.loc[:, 'power'] = self.base_price['power'].values[24:]
+
+                    self.generation_system['P0'] = 0
+                    self.generation_system['off'] = len(prevented_off_hours)
+                    self.generation_system['on'] = 0
+                    self.build_model()
+                    self.opt.solve(self.model)
+                    total_obj_single = self.opt_results[step]['obj'] + value(self.model.obj)
+                    power_day1 = list(self.opt_results[step]['power'])
+                    power_day2 = [self.model.p_out[t].value for t in self.t]
+                    total_single_power = np.asarray(power_day1 + power_day2)
+
+                    all_off = np.argwhere(total_single_power == 0).flatten()
+                    prevented_off_hours = np.asarray(list(all_off[all_off > last_on]))
+
+                    self.generation_system['P0'] = initial_p0
+                    self.generation_system['off'] = initial_off
+                    self.generation_system['on'] = initial_on
 
                     self.t = np.arange(48)
                     self.prices = prices_48h
@@ -214,23 +235,13 @@ class PowerPlant(EnergySystem):
                     self.opt.solve(self.model)
                     power_check = np.asarray([self.model.p_out[t].value for t in self.t])
                     prevent_start = all(power_check[prevented_off_hours] > 0)
-                    delta = value(self.model.obj) - self.opt_results[step]['obj']
-                    percentage = delta / self.opt_results[step]['obj'] if self.opt_results[step]['obj'] else 0
-                    if prevent_start and percentage > 0.15:
-                        # -> it does not make sense to relate the profit only to the previous day, because the
-                        # power plant must also be drawn in all hours with low price.
-                        # -> relate profit to the hours which are not profitable.
-                        # -> simple assumption use 50 % for each day
-                        if len(prevented_off_hours) < self.generation_system['runTime']:
-                            hours_to_add = int(self.generation_system['runTime']/2 - len(prevented_off_hours))
-                            first_hour = prevented_off_hours[0] - 1
-                            for h in range(first_hour, first_hour - hours_to_add, -1):
-                                prevented_off_hours += [h]
-                        prevented_off_hours.reverse()
-                        reduction_this_day = delta / (len(prevented_off_hours) * pwp['minPower']) / 2
-                        self.reduction_next_day[self.date.date()] = reduction_this_day
-
-                        self.prevented_start = dict(prevent=True, hours=prevented_off_hours, delta=reduction_this_day)
+                    delta = value(self.model.obj) - total_obj_single
+                    delta /= sum(power_check[prevented_off_hours])
+                    if prevent_start and delta > 0:
+                        prevent_start_today = prevented_off_hours[prevented_off_hours < self.T]
+                        self.prevented_start = dict(prevent=True, hours=prevent_start_today, delta=delta)
+                        prevent_start_tomorrow = prevented_off_hours[prevented_off_hours >= self.T] - self.T
+                        self.reduction_next_day[self.date.date()] = (delta, prevent_start_tomorrow)
 
                     self.t = np.arange(self.T)
 
@@ -334,7 +345,7 @@ class PowerPlant(EnergySystem):
                     hours = [*range(hours_needed_to_run)] if hours_needed_to_run > 0 else [0]
                     # -> a start is prevented
                     if yesterday in self.reduction_next_day.keys():
-                        reduction = self.reduction_next_day[yesterday]
+                        reduction, hours = self.reduction_next_day[yesterday]
                         self.reduction_next_day = dict()
                 elif self.generation_system['P0'] == 0:
                     # pwp is off
@@ -502,22 +513,33 @@ if __name__ == "__main__":
         default_power_price = np.load(file).reshape((24,))
 
     plant = get_test_power_plant()
-    plant['on'] = 5
-    plant['off'] = 0
-    plant['P0'] = 600
-    plant['runTime'], plant['stopTime'] = 4, 5
+    plant['on'] = 0
+    plant['off'] = 5
+    plant['P0'] = 0
+    plant['runTime'], plant['stopTime'] = 3, 8
     steps = (-100, -1, 0, 6)
     power_plant = PowerPlant(T=24, steps=steps, **plant)
     prices = get_test_prices(num=48)
     prices['power'] = np.asarray(2*[default_power_price]).flatten()
 
-    prices['power'].values[:6] = -400
+    # prices['power'].values[:6] = -400
     # prices['power'].values[6:12] = -50
     # prices['power'].values[12:] = 10
     prices['power'].values[18:] = -10
-    # prices['power'].values[24:] = 5
+    prices['power'].values[24:] = 100
 
     power_plant.optimize(date=pd.Timestamp(2018, 1, 1), prices=prices, weather=pd.DataFrame())
     order_book = power_plant.get_ask_orders()
-    visualize_orderbook(order_book)
+    # visualize_orderbook(order_book)
     # print(power_plant)
+    comm_power = list(order_book.groupby(order_book.index.get_level_values('hour')).sum()['volume'].values)
+    comm_power = np.asarray(7*[0] + comm_power)
+    power_plant.optimize_post_market(comm_power, prices['power'].values[:24])
+    prices = prices.loc[prices.index >= pd.Timestamp(2018, 1, 2)]
+    pr = prices.copy()
+    pr.index = pd.date_range(start='2018-01-03', periods=24, freq='h')
+    prices = pd.concat([prices, pr])
+
+    power_plant.optimize(date=pd.Timestamp(2018, 1, 2), prices=prices, weather=pd.DataFrame())
+    order_book = power_plant.get_ask_orders()
+    visualize_orderbook(order_book)
