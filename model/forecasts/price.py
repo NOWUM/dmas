@@ -36,10 +36,16 @@ exog = pd.read_pickle(r'./forecasts/data/historic_exog.pkl')
 exog['demand'] = exog['demand'] / exog['demand'].max()
 y = pd.read_pickle(r'./forecasts/data/historic_y.pkl') / 1e3    # prices in €/MWh elek -> convert to €/kWh
 
+real_prices = pd.read_csv(r'./forecasts/data/history_price_15_22.csv', sep=',', decimal='.', parse_dates=True,
+                          index_col=0)
+real_prices.columns = ['price']
+real_prices /= 1e3
+
 
 class PriceForecast:
 
-    def __init__(self, use_historic_data: bool = True, starting_date: pd.Timestamp = pd.Timestamp(2018, 1, 1)):
+    def __init__(self, use_historic_data: bool = True, starting_date: pd.Timestamp = pd.Timestamp(2018, 1, 1),
+                 use_real_data: bool = False):
 
         # initialize neural network and corresponding scaler
         model = MLPRegressor(hidden_layer_sizes=(15, 15,), activation='identity', early_stopping=True,
@@ -54,6 +60,7 @@ class PriceForecast:
         self.output = deque(maxlen=400)
         self.fitted = False
         self._historic_range = []
+        self.use_real_prices = use_real_data
 
         if use_historic_data:
             np.unique(exog.index.date)
@@ -129,8 +136,11 @@ class PriceForecast:
 
         noise = lambda x: np.random.uniform(0.95, 1.05, x)
 
-        if not self.fitted:
+        if not self.fitted and not self.use_real_prices:
             power_price = np.repeat(default_power_price, int(steps / 24)) * noise(steps)
+        elif self.use_real_prices:
+            power_price = pd.concat([real_prices.loc[real_prices.index.date == d.date()] for d in range_], axis=0)
+            power_price = power_price.values.flatten()
         else:
             data = {column: weather[column].values.flatten() for column in weather.columns}
             data['demand'] = demand.values.flatten()
