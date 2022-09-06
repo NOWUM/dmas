@@ -236,8 +236,8 @@ class PowerPlant(EnergySystem):
                     power_check = np.asarray([self.model.p_out[t].value for t in self.t])
                     prevent_start = all(power_check[prevented_off_hours] > 0)
                     delta = value(self.model.obj) - total_obj_single
-                    delta /= sum(power_check[prevented_off_hours])
                     if prevent_start and delta > 0:
+                        delta /= sum(power_check[prevented_off_hours])
                         prevent_start_today = prevented_off_hours[prevented_off_hours < self.T]
                         self.prevented_start = dict(prevent=True, hours=prevent_start_today, delta=delta)
                         prevent_start_tomorrow = prevented_off_hours[prevented_off_hours >= self.T] - self.T
