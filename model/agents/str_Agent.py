@@ -54,10 +54,10 @@ class StrAgent(BasicAgent):
         self.logger.info(f'dayAhead market scheduling started {self.date}')
         start_time = time.time()
 
-        weather = self.weather_forecast.forecast(self.date, self.area)
-        global_weather = self.weather_forecast.forecast(self.date)
-        demand = self.demand_forecast.forecast(self.date)
-        prices = self.price_forecast.forecast(self.date,weather=global_weather,demand=demand)
+        weather = self.weather_forecast.forecast(date=self.date, local=self.area)
+        global_weather = self.weather_forecast.forecast(date=self.date)
+        demand = self.demand_forecast.forecast(date=self.date)
+        prices = self.price_forecast.forecast(self.date, weather=global_weather, demand=demand)
         self.logger.info(f'initialize forecast in {time.time() - start_time:.2f} seconds')
         # Step 2: optimization
         self.portfolio.optimize(self.date, weather.copy(), prices.copy())
