@@ -7,6 +7,7 @@ from tqdm import tqdm
 # model modules
 from forecasts.price import PriceForecast
 from forecasts.weather import WeatherForecast
+from forecasts.demand import DemandForecast
 from aggregation.portfolio_powerPlant import PowerPlantPortfolio
 from agents.basic_Agent import BasicAgent
 
@@ -20,11 +21,9 @@ class PwpAgent(BasicAgent):
         self.portfolio: PowerPlantPortfolio = PowerPlantPortfolio(name=self.name)
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                                simulation_interface=self.simulation_interface,
                                                 weather_interface=self.weather_interface)
-        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                            simulation_interface=self.simulation_interface,
-                                            weather_interface=self.weather_interface)
+        self.price_forecast = PriceForecast()
+        self.demand_forecast = DemandForecast()
 
         self.pwp_names = []
 
@@ -51,13 +50,12 @@ class PwpAgent(BasicAgent):
 
     def _initialize_parameters(self):
         # Step 1: forecast data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
-        prices = self.price_forecast.forecast(self.date)
-        # use tomorrows price forecast also for aftertomorrow
-        prices = pd.concat([prices, prices.copy()])
-        prices.index = pd.date_range(start=self.date, freq='h', periods=48)
+        local_weather = self.weather_forecast.forecast(date=self.date, steps=48, local=self.area)
+        global_weather = self.weather_forecast.forecast(self.date, steps=48)
+        demand = self.demand_forecast.forecast(self.date, steps=48)
+        prices = self.price_forecast.forecast(date=self.date, weather=global_weather, demand=demand, steps=48)
 
-        return weather, prices
+        return local_weather, prices
 
     def optimize_day_ahead(self):
         """scheduling for the DayAhead market"""
@@ -100,13 +98,13 @@ class PwpAgent(BasicAgent):
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_cash_flow(self.portfolio, self.area, self.date)
 
-        self.weather_forecast.collect_data(self.date)
-        self.price_forecast.collect_data(self.date)
+        self.price_forecast.collect_data(date=self.date, market_result=result, weather=self.weather_forecast.get_last())
+        self.demand_forecast.collect_data(date=self.date, demand=result['volume'])
         self.forecast_counter -= 1
 
         if self.forecast_counter == 0:
             self.price_forecast.fit_model()
             self.forecast_counter = 10
-            self.logger.info(f'fitted price forecast with R²: {self.price_forecast.score}')
+            self.logger.info(f'fitted price forecast')
 
         self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')
