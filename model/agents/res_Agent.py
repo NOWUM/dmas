@@ -103,8 +103,7 @@ class ResAgent(BasicAgent):
         weather = self.weather_forecast.forecast(date=self.date, local=self.area)
         # demand = self.demand_forecast.forecast(date=self.date)
         # prices = self.price_forecast.forecast(self.date, weather=global_weather, demand=demand)
-        prices = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24), data=np.zeros(24))
-
+        prices = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24), data=dict(power=np.zeros(24)))
         self.logger.info(f'got forecast in {time.time() - start_time:.2f} seconds')
         start_time = time.time()
         # Step 2: optimization
