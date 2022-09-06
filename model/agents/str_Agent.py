@@ -96,4 +96,3 @@ class StrAgent(BasicAgent):
         if self.forecast_counter == 0:
             self.price_forecast.fit_model()
             self.forecast_counter = 10
-            self.logger.info(f'fitted price forecast with R²: {self.price_forecast.score}')
