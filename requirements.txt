@@ -19,3 +19,4 @@ pyomo
 geopandas
 glpk
 websockets
+skforecast
