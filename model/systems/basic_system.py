@@ -1,6 +1,7 @@
 # third party modules
 import numpy as np
 import pandas as pd
+from uuid import uuid1 as create_unique_key
 
 # model modules
 from demandlib.electric_profile import StandardLoadProfile
@@ -29,7 +30,7 @@ class EnergySystem:
         It has generation, demand and power in kW.
         """
 
-        self.name = None
+        self.name = create_unique_key()
 
         self.T, self.t, self.dt = T, np.arange(T), 1
 

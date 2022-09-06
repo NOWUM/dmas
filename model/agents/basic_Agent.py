@@ -43,7 +43,6 @@ class BasicAgent:
 
         self.forecast_counter = 10
 
-
         self.logger.info(f'starting the agent {self.name}')
 
     def __del__(self):

@@ -1,6 +1,5 @@
 # third party modules
 import logging
-
 import numpy as np
 import pandas as pd
 from systems.basic_system import (CASH_TYPES, DEMAND_TYPES, FUEL_TYPES,
@@ -13,6 +12,7 @@ def optimize_energy_system(data):
         item, date, weather, prices = data
         item.optimize(date, weather, prices)
     except Exception as e:
+        print(repr(e))
         print('Error in optimize_energy_system')
 
     return item
@@ -98,6 +98,7 @@ class PortfolioModel:
             params = []
             for system in self.energy_systems:
                 params.append((system, date, weather.copy(), prices.copy()))
+
             self.energy_systems = self.pool.map(optimize_energy_system, tqdm(params))
         else:
             for system in self.energy_systems:

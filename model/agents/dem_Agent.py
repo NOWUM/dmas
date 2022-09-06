@@ -66,6 +66,8 @@ class DemAgent(BasicAgent):
         # self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
         self.logger.info('Agriculture added')
 
+        self.portfolio.add_unique_systems()
+
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def handle_message(self, message):
