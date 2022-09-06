@@ -1,45 +1,62 @@
 import pandas as pd
 import numpy as np
+from pvlib.location import Location
+from datetime import timedelta as td
 
-from forecasts.basic_forecast import BasicForecast
 
+class WeatherForecast:
 
-class WeatherForecast(BasicForecast):
-
-    def __init__(self, position, simulation_interface, weather_interface):
-        super().__init__(position, simulation_interface, weather_interface)
+    def __init__(self, position, weather_interface):
+        self.weather = weather_interface
+        self.position = position
+        self.location = Location(longitude=position['lon'], latitude=position['lat'])
         self.sun_position = self.location.get_solarposition(pd.date_range(start='1972-01-01 00:00', periods=8684,
                                                                           freq='h'))
+        self._weather_params = ['temp_air', 'wind_meridional', 'wind_zonal', 'dhi', 'dni']
+        self._last_weather = pd.DataFrame()
 
-    def forecast(self, date):
-        random_factor = np.random.uniform(low=0.95, high=1.05)
-        temp_air = self.weather.get_temperature(date) * random_factor
-        wind_speed = self.weather.get_wind(date) * random_factor
-        dhi = self.weather.get_direct_radiation(date) * random_factor
-        dni = self.weather.get_diffuse_radiation(date) * random_factor
-        df = pd.concat([temp_air, wind_speed, dhi, dni], axis=1)
-        df['ghi'] = df['dhi'] + df['dni']
-        return df
+    def _get_weather_data(self, date_range: pd.DatetimeIndex, local: str = None):
+        data = {param: [] for param in self._weather_params}
+        if local is not None:
+            data['azimuth'] = []
+            data['zenith'] = []
 
-    def forecast_for_area(self, date, area):
+        for date in date_range:
+            for param in self._weather_params:
+                if local is not None:
+                    df = self.weather.get_param_in_area(param=param, date=date, area=local)
+                else:
+                    df = self.weather.get_param(param=param, date=date)
+                data[param] += list(df.values.flatten())
+            if local:
+                index = self.sun_position.index.day_of_year == date.day_of_year
+                data['azimuth'] += list(self.sun_position.loc[index, 'azimuth'].values.flatten())
+                data['zenith'] += list(self.sun_position.loc[index, 'zenith'].values.flatten())
 
-        azimuth = self.sun_position.loc[self.sun_position.index.day_of_year == date.day_of_year, 'azimuth'].to_numpy()
-        zenith = self.sun_position.loc[self.sun_position.index.day_of_year == date.day_of_year, 'zenith'].to_numpy()
+        data = pd.DataFrame.from_dict(data)
 
-        random_factor = np.random.uniform(low=0.95, high=1.05)
-        temp_air = self.weather.get_temperature_in_area(area, date) * random_factor
-        wind_speed = self.weather.get_wind_in_area(area, date) * random_factor
-        dhi = self.weather.get_direct_radiation_in_area(area, date) * random_factor
-        dni = self.weather.get_diffuse_radiation_in_area(area, date) * random_factor
-        df = pd.concat([temp_air, wind_speed, dhi, dni], axis=1)
-        df['ghi'] = df['dhi'] + df['dni']
-        df['azimuth'] = azimuth
-        df['zenith'] = zenith
+        data['wind_speed'] = (data['wind_meridional'].values ** 2 + data['wind_zonal'].values ** 2) ** 0.5
+        data['ghi'] = data['dhi'] + data['dni']
 
-        return df
+        del data['wind_meridional']
+        del data['wind_zonal']
 
-    def collect_data(self, date):
-        pass
+        return data
 
-    def fit_model(self):
-        pass
+    def forecast(self, date: pd.Timestamp, steps: int = 24, local: str = None):
+        if (steps % 24) > 0:
+            print(f'wrong step size: {steps}')
+            steps -= steps % 24
+            print(f'set step size to {steps}')
+        steps = max(steps, 24)
+        range_ = pd.date_range(start=date, end=date + td(days=int(steps / 24) - 1), freq='d')
+        weather = self._get_weather_data(range_, local)
+        self._last_weather = weather.iloc[:24, :].copy()
+
+        for column in weather.columns:
+            if column not in ['azimuth', 'zenith']:
+                weather[column] *= np.random.uniform(low=0.95, high=1.05, size=len(weather[column]))
+        return weather
+
+    def get_last(self):
+        return self._last_weather
