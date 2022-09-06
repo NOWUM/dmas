@@ -131,7 +131,7 @@ class PriceForecast:
             data.index = pd.date_range(start=date, freq='h', periods=len(data))
             dummies = self._get_dummies(date)
             data = pd.concat([data, dummies], axis=1)
-
+            print(data)
             power_price = self.model.predict(steps=steps, last_window=self.last_window, exog=data).values
 
         prices = dict(
