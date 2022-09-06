@@ -109,13 +109,14 @@ class PriceForecast:
         self.last_price = price
 
     def fit_model(self):
+        input = pd.concat(self.input, axis=0).asfreq('h')
         if len(self._historic_range) > 0:
-            input = pd.concat(self.input, axis=0).asfreq('h')
             index = input.index.isin(self._historic_range)
             input.loc[index, 'demand'] *= input.loc[~index, 'demand'].max()
-        else:
-            self.model.fit(y=pd.concat(self.output, axis=0).asfreq('h'),
-                           exog=pd.concat(self.input, axis=0).asfreq('h'))
+
+        self.model.fit(y=pd.concat(self.output, axis=0).asfreq('h'),
+                       exog=input)
+
         self.fitted = True
 
     def forecast(self, date: pd.Timestamp, demand: pd.Series, weather: pd.DataFrame, steps: int = 24):
