@@ -34,9 +34,9 @@ def shaping(prc, type_: str = 'peak'):
 PRICE_FUNCS = {'left': lambda prc: np.roll(prc, -1),
                'right': lambda prc: np.roll(prc, 1),
                'normal': lambda prc: prc,
-               'first': lambda prc: shift(prc, type_='first'),
-               'last': lambda prc: shift(prc, type_='last'),
-               'peak_off_peak': lambda prc: shaping(prc, type_='peak'),
+               # 'first': lambda prc: shift(prc, type_='first'),
+               # 'last': lambda prc: shift(prc, type_='last'),
+               # 'peak_off_peak': lambda prc: shaping(prc, type_='peak'),
                'pv_sink:': lambda prc: shaping(prc, type_='pv'),
                'demand': lambda prc: shaping(prc, type_='demand')}
 
