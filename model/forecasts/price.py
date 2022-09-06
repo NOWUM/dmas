@@ -120,6 +120,13 @@ class PriceForecast:
         self.fitted = True
 
     def forecast(self, date: pd.Timestamp, demand: pd.Series, weather: pd.DataFrame, steps: int = 24):
+        if (steps % 24) > 0:
+            print(f'wrong step size: {steps}')
+            steps -= steps % 24
+            print(f'set step size to {steps}')
+        steps = max(steps, 24)
+        range_ = pd.date_range(start=date, end=date + td(days=int(steps / 24) - 1), freq='d')
+
         noise = lambda x: np.random.uniform(0.95, 1.05, x)
 
         if not self.fitted:
@@ -127,9 +134,8 @@ class PriceForecast:
         else:
             data = {column: weather[column].values.flatten() for column in weather.columns}
             data['demand'] = demand.values.flatten()
-            data = pd.DataFrame.from_dict(data, orient='index')
-            data.index = pd.date_range(start=date, freq='h', periods=len(data))
-            dummies = self._get_dummies(date)
+            data = pd.DataFrame(data, index=pd.date_range(start=date, freq='h', periods=len(weather)))
+            dummies = pd.concat([self._get_dummies(d) for d in range_], axis=0)
             data = pd.concat([data, dummies], axis=1)
             print(data)
             power_price = self.model.predict(steps=steps, last_window=self.last_window, exog=data).values
