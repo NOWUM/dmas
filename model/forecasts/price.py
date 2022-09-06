@@ -34,7 +34,7 @@ with open(r'./forecasts/data/default_demand.pkl', 'rb') as file:
 
 exog = pd.read_pickle(r'./forecasts/data/historic_exog.pkl')
 exog['demand'] = exog['demand'] / exog['demand'].max()
-y = pd.read_pickle(r'./forecasts/data/historic_y.pkl')
+y = pd.read_pickle(r'./forecasts/data/historic_y.pkl') / 1e3    # prices in €/MWh elek -> convert to €/kWh
 
 
 class PriceForecast:
@@ -137,7 +137,6 @@ class PriceForecast:
             data = pd.DataFrame(data, index=pd.date_range(start=date, freq='h', periods=len(weather)))
             dummies = pd.concat([self._get_dummies(d) for d in range_], axis=0)
             data = pd.concat([data, dummies], axis=1)
-            print(data)
             power_price = self.model.predict(steps=steps, last_window=self.last_window, exog=data).values
 
         prices = dict(
