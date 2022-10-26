@@ -20,7 +20,7 @@ def get_lon_lat(area):
     return longitude[0], latitude[0]
 
 def get_plz_codes(area):
-    return plz_nuts.loc[plz_nuts['NUTS3'] == area, 'CODE'].to_numpy()
+    return plz_nuts.loc[plz_nuts['NUTS3'].str.startswith(area), 'CODE'].to_numpy()
 
 class InfrastructureInterface:
 
@@ -431,14 +431,15 @@ class InfrastructureInterface:
 
         return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
-    def get_demand_in_area(self, area=520):
-        query = f'select sum(sector_consumption_residential) as household, sum(sector_consumption_retail) as business,' \
-                f'sum(sector_consumption_industrial) as industry, sum(sector_consumption_agricultural) as agriculture ' \
-                f'from demand where version=\'v0.4.5\' and nuts = \'{area}\' group by nuts'
+    def get_demand_in_area(self, area):
+        query = f'''select sum(sector_consumption_residential) as household, sum(sector_consumption_retail) as business,
+                sum(sector_consumption_industrial) as industry, sum(sector_consumption_agricultural) as agriculture
+                from demand where version='v0.4.5' and nuts LIKE '{area}%%'
+                '''
         df = pd.read_sql(query, self.database_oep)
         return df
 
-    def get_solar_storage_systems_in_area(self, area=521):
+    def get_solar_storage_systems_in_area(self, area):
 
         data_frames = []
         if area in geo_information['NUTS_ID'].values:
@@ -546,7 +547,7 @@ def get_dem_agents():
 
 if __name__ == "__main__":
     import os
-    x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.56:4321')
+    x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.55:4321')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
     uri = f'postgresql://{y}@{x}'
     interface = InfrastructureInterface('test', uri)
@@ -556,8 +557,8 @@ if __name__ == "__main__":
     #a = interface.get_run_river_systems_in_area(area='DE111')
     keys = np.unique(plz_nuts['NUTS3'].to_numpy())
 
-    dem = interface.get_demand_in_area(area='DE731')
-
+    dem = interface.get_demand_in_area(area='DE1')
+    solar = interface.get_solar_storage_systems_in_area('DE7')
     # dem_agents = get_dem_agents(interface)
     # np.save('dem_agents', dem_agents)
     #
