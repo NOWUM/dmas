@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import numpy as np
 import random
 import pickle
 
@@ -17,15 +16,20 @@ def random_structure_server():
     return random.choice(structure_servers)
 
 
+NUTS_LEVEL = 1
+
 # Build Demand Agents
-agents = pickle.load(file=open(r'./agents.pkl', 'rb'))
+raw_agents = pickle.load(file=open(r'./agents.pkl', 'rb'))
+agents = {}
+for agent_type, agent_list in raw_agents.items():
+    agents[agent_type] = list({a[0:2+NUTS_LEVEL] for a in agent_list})
 
 configs = {}
 output = []
 output.append('version: "3.9"\n')
 output.append('services:\n')
 
-output.append(f'''
+output.append('''
   # gurobi-compute with wls-license
   compute:
     container_name: gurobi-compute
@@ -41,7 +45,7 @@ output.append(f'''
       placement:
         constraints: [node.role == manager]
 ''')
-configs[f'compute_config']= f'./gurobi.lic'
+configs['compute_config'] = './gurobi.lic'
 
 output.append(f'''
   simulationdb:
@@ -206,5 +210,3 @@ for config, location in configs.items():
 ''')
 with open('docker-compose.yml', 'w') as f:
     f.writelines(output)
-
-
