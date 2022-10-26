@@ -1,3 +1,5 @@
+import pandas as pd
+
 from main import init_dict, type_mapping
 import numpy as np
 # run docker-compose up -d simulationdb rabbitmq grafana
@@ -5,12 +7,13 @@ import numpy as np
 
 if __name__ == '__main__':
 
-    test_agent = 'STR'
+    test_agent = 'PWP'
 
     init_dict['type'] = test_agent
-    init_dict['area'] = 'DE13A'
+    init_dict['area'] = 'DE111'
     agent_class = type_mapping[init_dict['type']]
     agent = agent_class(**init_dict)
+    agent.date = pd.Timestamp(2018,1,1)
     agent.optimize_day_ahead()
 
     if test_agent == 'DEM':

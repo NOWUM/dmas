@@ -7,6 +7,7 @@ from tqdm import tqdm
 # model modules
 from forecasts.weather import WeatherForecast
 from forecasts.price import PriceForecast
+from forecasts.demand import DemandForecast
 from aggregation.portfolio_renewable import RenewablePortfolio
 from agents.basic_Agent import BasicAgent
 
@@ -26,11 +27,9 @@ class ResAgent(BasicAgent):
         # TODO find argumentative res market price
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                                simulation_interface=self.simulation_interface,
                                                 weather_interface=self.weather_interface)
-        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                            simulation_interface=self.simulation_interface,
-                                            weather_interface=self.weather_interface)
+        # self.demand_forecast = DemandForecast()
+        # self.price_forecast = PriceForecast()
 
         # Construction Wind energy
         wind_data = self.infrastructure_interface.get_wind_turbines_in_area(self.area, wind_type='on_shore')
@@ -101,9 +100,10 @@ class ResAgent(BasicAgent):
         start_time = time.time()
 
         # Step 1: forecast data data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
-        prices = self.price_forecast.forecast(self.date)
-
+        weather = self.weather_forecast.forecast(date=self.date, local=self.area)
+        # demand = self.demand_forecast.forecast(date=self.date)
+        # prices = self.price_forecast.forecast(self.date, weather=global_weather, demand=demand)
+        prices = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24), data=dict(power=np.zeros(24)))
         self.logger.info(f'got forecast in {time.time() - start_time:.2f} seconds')
         start_time = time.time()
         # Step 2: optimization

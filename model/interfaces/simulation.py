@@ -295,7 +295,8 @@ class SimulationInterface:
             ask = data.loc[data['type'] == 'ask'].sort_values('price')
             ask['volume'] = ask['volume'].cumsum()
             bid = data.loc[data['type'] == 'bid'].sort_values('price', ascending=False)
-            bid['volume'] = bid['volume'].cumsum()
+            bid['volume'] = bid['volume'].sum()
+            bid['price'] = np.linspace(start=3, stop=-0.5, num=len(bid['price'].values))
 
             data = pd.concat([ask, bid], axis=0)
 
@@ -303,8 +304,6 @@ class SimulationInterface:
             data['hour'] = date.hour
             data.to_sql('merit_order', self.database, if_exists='append', index=False)
             date += td(hours=1)
-
-
 
     def get_auction_results(self, date):
         start_date, end_date = get_interval(date)

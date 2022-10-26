@@ -41,8 +41,7 @@ class BasicAgent:
         # declare weather data server
         self.weather_interface = WeatherInterface(self.name, kwargs['weather_database_uri'])
 
-        self.forecast_counter = 20
-
+        self.forecast_counter = 10
 
         self.logger.info(f'starting the agent {self.name}')
 

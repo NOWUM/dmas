@@ -1,6 +1,8 @@
 # third party modules
 import time as time
 from tqdm import tqdm
+import pandas as pd
+import numpy as np
 
 # model modules
 from forecasts.weather import WeatherForecast
@@ -17,11 +19,8 @@ class DemAgent(BasicAgent):
         start_time = time.time()
         self.portfolio = DemandPortfolio(name=self.name)
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                                simulation_interface=self.simulation_interface,
                                                 weather_interface=self.weather_interface)
-        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                            simulation_interface=self.simulation_interface,
-                                            weather_interface=self.weather_interface)
+        # self.price_forecast = PriceForecast()
 
         demand = 0
         # Construction of the prosumer with photovoltaic and battery
@@ -67,6 +66,8 @@ class DemAgent(BasicAgent):
         # self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
         self.logger.info('Agriculture added')
 
+        self.portfolio.add_unique_systems()
+
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
     def handle_message(self, message):
@@ -83,8 +84,9 @@ class DemAgent(BasicAgent):
         self.logger.info(f'starting day ahead optimization {self.date}')
         start_time = time.time()
         # Step 1: forecast data and init the model for the coming day
-        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
-        prices = self.price_forecast.forecast(self.date)
+        weather = self.weather_forecast.forecast(self.date, local=self.area)
+        # prices = self.price_forecast.forecast(self.date)
+        prices = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24), data=np.zeros(24))
         self.logger.info(f'built model in {time.time() - start_time:.2f} seconds')
 
         start_time = time.time()

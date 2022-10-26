@@ -7,6 +7,7 @@ from uuid import uuid1
 # model modules
 from forecasts.price import PriceForecast
 from forecasts.weather import WeatherForecast
+from forecasts.demand import DemandForecast
 from aggregation.portfolio_storage import StrPort
 from agents.basic_Agent import BasicAgent
 
@@ -20,11 +21,9 @@ class StrAgent(BasicAgent):
         self.portfolio = StrPort(name=self.name)
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                                simulation_interface=self.simulation_interface,
                                                 weather_interface=self.weather_interface)
-        self.price_forecast = PriceForecast(position=dict(lat=self.latitude, lon=self.longitude),
-                                            simulation_interface=self.simulation_interface,
-                                            weather_interface=self.weather_interface)
+        self.price_forecast = PriceForecast(use_real_data=True, use_historic_data=False)
+        self.demand_forecast = DemandForecast()
 
         self.storage_names = []
 
@@ -55,8 +54,10 @@ class StrAgent(BasicAgent):
         self.logger.info(f'dayAhead market scheduling started {self.date}')
         start_time = time.time()
 
-        weather = self.weather_forecast.forecast_for_area(self.date, self.area)
-        prices = self.price_forecast.forecast(self.date)
+        weather = self.weather_forecast.forecast(date=self.date, local=self.area)
+        global_weather = self.weather_forecast.forecast(date=self.date)
+        demand = self.demand_forecast.forecast(date=self.date)
+        prices = self.price_forecast.forecast(self.date, weather=global_weather, demand=demand)
         self.logger.info(f'initialize forecast in {time.time() - start_time:.2f} seconds')
         # Step 2: optimization
         self.portfolio.optimize(self.date, weather.copy(), prices.copy())
@@ -88,11 +89,10 @@ class StrAgent(BasicAgent):
         self.simulation_interface.set_demand(self.portfolio, 'post_dayAhead', self.area, self.date)
         self.simulation_interface.set_cash_flow(self.portfolio, self.area, self.date)
 
-        self.weather_forecast.collect_data(self.date)
-        self.price_forecast.collect_data(self.date)
+        self.price_forecast.collect_data(date=self.date, market_result=result, weather=self.weather_forecast.get_last())
+        self.demand_forecast.collect_data(date=self.date, demand=result['volume'])
         self.forecast_counter -= 1
 
         if self.forecast_counter == 0:
             self.price_forecast.fit_model()
             self.forecast_counter = 10
-            self.logger.info(f'fitted price forecast with R²: {self.price_forecast.score}')
