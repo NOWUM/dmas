@@ -22,8 +22,9 @@ class WeatherInterface:
         data_avg = []
         with self.engine.begin() as connection:
             for timestamp in pd.date_range(start=date, periods=24, freq='h'):
-                query = f"SELECT {param} FROM cosmo WHERE time = '{timestamp.isoformat()}'" \
-                        f"AND nuts = \'{area.upper()}\' ;"
+                query = f"""SELECT avg({param}) as {param} FROM cosmo WHERE time = '{timestamp.isoformat()}'
+                        AND nuts LIKE '{area.upper()}%%' ;
+                        """
                 res = connection.execute(query)
                 value = res.fetchall()[0][0]
                 data_avg.append({'time': timestamp, param: value})
@@ -31,14 +32,14 @@ class WeatherInterface:
 
     def get_temperature_in_area(self, area='DE111', date=pd.to_datetime('1995-1-1')):
         return self.get_param_in_area('temp_air', area, date)
-        
 
     def get_wind_in_area(self, area='DE111', date=pd.to_datetime('1995-1-1')):
         data_avg = []
         with self.engine.begin() as connection:
             for timestamp in pd.date_range(start=date, periods=24, freq='h'):
-                query = f"SELECT wind_meridional, wind_zonal FROM cosmo " \
-                        f"WHERE time = '{timestamp.isoformat()}'AND nuts = \'{area.upper()}\' ;"
+                query = f"""SELECT avg(wind_meridional), avg(wind_zonal) FROM cosmo
+                        WHERE time = '{timestamp.isoformat()}'AND nuts LIKE '{area.upper()}%%' ;
+                        """
                 res = connection.execute(query)
 
                 values = res.fetchall()[0]
