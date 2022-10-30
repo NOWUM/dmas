@@ -129,7 +129,7 @@ output.append(f'''
       - controller
 
 ''')
-configs[f'market_config']= f'./market_gurobi.lic'
+configs['market_config']= './market_gurobi.lic'
 
 # Build one TSO
 output.append(f'''
@@ -190,7 +190,7 @@ for agent in agents['res'][:counter]:
 # Build Storage Agents
 for agent in agents['str'][:counter]:
     output.append(f'''
-  dem_{agent.lower()}:
+  str_{agent.lower()}:
     container_name: str_{agent.lower()}
     image: {image_repo}agent:latest
     environment:
@@ -204,7 +204,7 @@ for agent in agents['str'][:counter]:
 ''')
 output.append('configs:')
 for config, location in configs.items():
-  output.append(f'''
+    output.append(f'''
   {config}:
     file: {location}
 ''')
