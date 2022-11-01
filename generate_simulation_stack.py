@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import random
-import pickle
+import json
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 counter = 1
@@ -20,6 +20,10 @@ NUTS_LEVEL = 1
 
 # Build Demand Agents
 raw_agents = pickle.load(file=open(r'./agents.pkl', 'rb'))
+
+with open('./agents.json', 'r') as f:
+    raw_agents = json.load(f)
+  
 agents = {}
 for agent_type, agent_list in raw_agents.items():
     agents[agent_type] = list({a[0:2+NUTS_LEVEL] for a in agent_list})

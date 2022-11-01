@@ -499,54 +499,53 @@ class InfrastructureInterface:
         return {}
 
 
-def get_pwp_agents(interface):
+def get_pwp_agents(interface, areas):
     pwp_agents = []
-    for plz in keys:
-        print(plz)
+    for area in areas:
+        print(area)
         plants = False
         for fuel in ['lignite', 'gas', 'coal', 'nuclear']:
-            df = interface.get_power_plant_in_area(area=plz, fuel_type=fuel)
+            df = interface.get_power_plant_in_area(area=area, fuel_type=fuel)
             if not df.empty:
                 plants = True
                 break
         if plants:
-            pwp_agents.append(plz)
-    pwp_agents = np.asarray(pwp_agents)
+            pwp_agents.append(area)
     return pwp_agents    
 
-def get_res_agents(interface):
+def get_res_agents(interface, areas):
     res_agents = []
-    for plz in keys:
-        print(plz)
+    for area in areas:
+        print(area)
         plants = False
-        wind = interface.get_wind_turbines_in_area(area=plz)
-        solar = interface.get_solar_storage_systems_in_area(area=plz)
-        bio = interface.get_biomass_systems_in_area(area=plz)
-        water = interface.get_run_river_systems_in_area(area=plz)
+        wind = interface.get_wind_turbines_in_area(area=area)
+        solar = interface.get_solar_storage_systems_in_area(area=area)
+        bio = interface.get_biomass_systems_in_area(area=area)
+        water = interface.get_run_river_systems_in_area(area=area)
         if any([not wind.empty,not solar.empty,not bio.empty, not water.empty]):
-            res_agents.append(plz)
+            res_agents.append(area)
     return res_agents
 
-def get_storage_agents(interface):
+def get_storage_agents(interface, areas):
     str_agents = []
-    for plz in keys:
-        print(plz)
-        str = interface.get_water_storage_systems(plz)
+    for area in areas:
+        print(area)
+        str = interface.get_water_storage_systems(area)
         if not str.empty:
             # print(str['name'])
             if any(str['PMinus_max'] > 1) and any(str['VMax'] > 1):
-                print(f'add {plz}')
-                str_agents.append(plz)
+                print(f'add {area}')
+                str_agents.append(area)
     return str_agents
 
-def get_dem_agents():
+def get_dem_agents(areas):
     dem_agents = []
-    for plz in keys:
-        dem_agents.append(plz)
-    return np.asarray(dem_agents)    
+    for area in areas:
+        dem_agents.append(area)
+    return dem_agents
 
 if __name__ == "__main__":
-    import os
+    import os, pickle
     x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.55:4321')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
     uri = f'postgresql://{y}@{x}'
@@ -555,18 +554,42 @@ if __name__ == "__main__":
     #y = interface.get_water_storage_systems(area=415)
     #z = interface.get_solar_storage_systems_in_area(area=415)
     #a = interface.get_run_river_systems_in_area(area='DE111')
-    keys = np.unique(plz_nuts['NUTS3'].to_numpy())
+    areas = np.unique(plz_nuts['NUTS3'].to_numpy())
 
-    dem = interface.get_demand_in_area(area='DE1')
-    solar = interface.get_solar_storage_systems_in_area('DE7')
-    # dem_agents = get_dem_agents(interface)
-    # np.save('dem_agents', dem_agents)
-    #
-    # res_agents = get_res_agents(interface)
-    # np.save('res_agents', res_agents)
-    #
-    # str_agents = get_storage_agents(interface)
-    # np.save('str_agents', str_agents)
-    #
-    # pwp_agents = get_pwp_agents(interface)
-    # np.save('pwp_agents', pwp_agents)
+    import json
+    create_agents = False
+    if create_agents:
+        agents = {}
+        agents['dem'] = get_dem_agents(areas)
+        agents['res'] = get_res_agents(interface, areas)
+        agents['str'] = get_storage_agents(interface, areas)
+        agents['pwp'] = get_pwp_agents(interface, areas)
+        with open('../agents.json','w') as f:
+            json.dump(agents, f, indent=2)
+    else:
+        with open('../agents.json','r') as f:
+            agents = json.load(f)
+    
+    #dem = interface.get_demand_in_area(area='DE11D')
+    #solar = interface.get_solar_storage_systems_in_area('DE7')
+    
+
+    ## test DEM from NUTS2 vs NUTS3:
+    level_3 = agents['dem']
+    level_2 = list({a[0:2+2] for a in level_3})
+    level_1 = list({a[0:2+1] for a in level_3})
+
+    for a in level_2:
+        print(a)
+        l3_a = [ ag for ag in level_3 if ag.startswith(a) ]
+
+        dem_a = interface.get_demand_in_area(area=a)
+        print(dem_a)
+
+        for area in l3_a:
+            df = interface.get_demand_in_area(area=area)
+            #print(area, df)
+            dem_a -= df.fillna(0)
+
+        print(dem_a)
+        assert (dem_a < 1e-10).all().all()

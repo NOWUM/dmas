@@ -63,7 +63,7 @@ class ResAgent(BasicAgent):
         # Construction of the pv systems (h0)
         pv_data = self.infrastructure_interface.get_solar_systems_in_area(self.area, solar_type='roof_top')
         pv_data['type'] = 'solar'
-        for system in tqdm(pvs[pvs['ownConsumption'] == 0].to_dict(orient='records')):
+        for system in tqdm(pv_data[pv_data['ownConsumption'] == 0].to_dict(orient='records')):
             self.portfolio_eeg.add_energy_system(system)
 
         self.logger.info('Household PV added')

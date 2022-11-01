@@ -88,7 +88,7 @@ class CtlAgent(BasicAgent):
                 # initialize waiting list to wait for market clearing
                 for agent_name in self.registered_agents.keys():
                     if (agent_name != 'market' and
-                        'net' not in agent_name):
+                            'net' not in agent_name):
                         self.waiting_list.append(agent_name)
 
                 websockets.broadcast(connected, f"optimize_dayAhead {self.date.date()}")
