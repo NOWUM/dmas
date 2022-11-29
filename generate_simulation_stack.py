@@ -19,8 +19,6 @@ def random_structure_server():
 NUTS_LEVEL = 1
 
 # Build Demand Agents
-raw_agents = pickle.load(file=open(r'./agents.pkl', 'rb'))
-
 with open('./agents.json', 'r') as f:
     raw_agents = json.load(f)
   
