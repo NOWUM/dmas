@@ -9,7 +9,7 @@ from systems.basic_system import EnergySystem, get_solar_generation
 
 class Prosumer(EnergySystem):
 
-    def __init__(self, T: int, demandP: float, maxPower: float, azimuth: int = 180, tilt: int = 35,
+    def __init__(self, T: int, maxPower: float, demandP: float = 0, azimuth: int = 180, tilt: int = 35,
                  storage: bool = False, *args, **kwargs):
         super().__init__(T, demandP=demandP, maxPower=maxPower, fuel_type='solar', demand_type='household')
 

@@ -20,7 +20,7 @@ class RenewablePortfolio(PortfolioModel):
         if energy_system['type'] == 'wind':
             model = WindModel(self.T, energy_system['turbines'])
         elif energy_system['type'] == 'solar':
-            model = Prosumer(self.T, demandP=0, **energy_system)
+            model = Prosumer(self.T, **energy_system)
         else:
             model = EnergySystem(self.T, **energy_system)
 
@@ -76,7 +76,26 @@ if __name__ == '__main__':
     portfolio = RenewablePortfolio(name='MRK')
     portfolio.add_energy_system(dict(type='bio', maxPower=300))
     portfolio.add_energy_system(dict(type='water', maxPower=500))
-    portfolio.optimize(date=pd.Timestamp(2022, 1, 1), prices=pd.DataFrame(), weather=pd.DataFrame())
+    portfolio.add_energy_system(dict(type='wind', maxPower=500,
+        turbines = [{
+            'height': 100, 'diameter': 100,
+            'maxPower': 500
+            }]
+            ))
+    
+    power_price = 50 * np.ones(48)
+    power_price[18:24] = 0
+    power_price[24:] = 20
+    co = np.ones(48) * 23.8  # * np.random.uniform(0.95, 1.05, 48)     # -- Emission Price     [€/t]
+    gas = np.ones(48) * 0.03  # * np.random.uniform(0.95, 1.05, 48)    # -- Gas Price          [€/kWh]
+    lignite = np.ones(48) * 0.015  # * np.random.uniform(0.95, 1.05)   # -- Lignite Price      [€/kWh]
+    coal = np.ones(48) * 0.02  # * np.random.uniform(0.95, 1.05)       # -- Hard Coal Price    [€/kWh]
+    nuc = np.ones(48) * 0.01  # * np.random.uniform(0.95, 1.05)        # -- nuclear Price      [€/kWh]
+
+    prices = dict(power=power_price, gas=gas, co=co, lignite=lignite, coal=coal, nuc=nuc)
+    prices = pd.DataFrame(data=prices, index=pd.date_range(start='2018-01-01', freq='h', periods=48))
+
+    portfolio.optimize(date=pd.Timestamp(2022, 1, 1), prices=prices, weather=pd.DataFrame())
     assert all(portfolio.power == 800)
     ask_orders = portfolio.get_ask_orders(price=0)
     assert len(ask_orders.index == 24)

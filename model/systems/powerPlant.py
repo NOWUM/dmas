@@ -452,7 +452,9 @@ class PowerPlant(EnergySystem):
 
         if self.prevented_start['prevent']:
             hours = self.prevented_start['hours']
-            get_marginals = lambda x: get_marginal(p0=0, p1=self.generation_system['minPower'], t=x)
+
+            def get_marginals(x):
+                return get_marginal(p0=0, p1=self.generation_system['minPower'], t=x)
             min_price = np.mean([price for price, _ in map(get_marginals, hours)]) - self.prevented_start['delta']
 
             # -> volume and price which is already in orderbook
