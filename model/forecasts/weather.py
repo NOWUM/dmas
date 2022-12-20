@@ -50,8 +50,13 @@ class WeatherForecast:
             print(f'set step size to {steps}')
         steps = max(steps, 24)
         range_ = pd.date_range(start=date, end=date + td(days=int(steps / 24) - 1), freq='d')
-        weather = self._get_weather_data(range_, local)
-        self._last_weather = weather.iloc[:24, :].copy()
+        try:
+            weather = self._get_weather_data(range_, local)
+            self._last_weather = weather.iloc[:24, :].copy()
+        except Exception as e:
+            print('ERROR getting WeatherForecast - using last weather')
+            # use last weather on exception (incomplete data in database)
+            weather = self._last_weather
 
         for column in weather.columns:
             if column not in ['azimuth', 'zenith']:
