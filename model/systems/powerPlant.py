@@ -11,7 +11,7 @@ from pyomo.opt import SolverStatus, TerminationCondition
 # model modules
 from systems.basic_system import EnergySystem
 
-log = logging.getLogger('powerplant_gen')
+log = logging.getLogger('powerplant')
 
 
 class PowerPlant(EnergySystem):

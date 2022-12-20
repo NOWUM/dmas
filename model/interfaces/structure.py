@@ -162,7 +162,7 @@ class InfrastructureInterface:
                         df.at[line, 'chi'] = technical_parameter.at[row['type'], 'chi']/1e3 # [t CO2/MWh therm.] -> [t CO2/kWh therm.]
                         df.at[line, 'stopTime'] = technical_parameter.at[row['type'], 'stopTime']
                         df.at[line, 'runTime'] = technical_parameter.at[row['type'], 'runTime']
-                        df.at[line, 'startCost'] = df.at[line, 'maxPower'] * start_cost
+                        df.at[line, 'startCost'] = df.at[line, 'maxPower'] * start_cost * 2 # multiply by 2 to respect heat demand
 
                     data_frames.append(df)
 
