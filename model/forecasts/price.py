@@ -15,22 +15,30 @@ from demandlib.electric_profile import get_holidays
 
 log = logging.getLogger('price_forecast')
 
-with open(r'./forecasts/data/default_price.pkl', 'rb') as file:
-    # load default prices in €/MWh elek -> convert to €/kWh
-    default_power_price = np.load(file).reshape((24,)) / 1e3  # hourly mean values 2015-2018
-with open(r'./forecasts/data/default_gas.pkl', 'rb') as file:
-    # load default prices in €/MWh therm -> convert to €/kWh therm
-    default_gas = np.load(file).reshape((12,)) / 1e3  # month mean values year 2018
-with open(r'./forecasts/data/default_emission.pkl', 'rb') as file:
-    # load default prices in €/t CO2  -> convert to €/t CO2
-    default_emission = np.load(file).reshape((12,))  # month mean values year 2018
+# default_coal = 65.18 / 8.141 / 1e3  # €/ske --> €/MWh -> €/kWh
+# default_lignite = 1.5 / 1e3  # agora Deutsche "Braunkohlewirtschaft" in €/kWh
+# default_nuclear = 1 / 1e3  # no valid source but less then lignite [€/kWh]
+# default_prices = pd.DataFrame()
+# default_prices['gas']=default_gas # month mean values year 2018
+# default_prices['co']=default_emission # month mean emission values per ton year 2018
+# default_prices['coal']=[default_coal] *12
+# default_prices['lignite']=[default_lignite] *12
+# default_prices['nuclear']=[default_nuclear] *12
+# default_prices.index.name = 'Month'
+# default_prices.to_csv('./forecasts/data/monthly_generation_cost.csv')
 
-default_coal = 65.18 / 8.141 / 1e3  # €/ske --> €/MWh -> €/kWh
-default_lignite = 1.5 / 1e3  # agora Deutsche "Braunkohlewirtschaft" in €/kWh
-default_nuclear = 1 / 1e3  # no valid source but less then lignite [€/kWh]
+# monthly prices
+default_prices = pd.read_csv('./forecasts/data/monthly_generation_cost.csv')
 
-with open(r'./forecasts/data/default_demand.pkl', 'rb') as file:
-    default_demand = np.load(file).reshape((24,))
+# daily
+# hourly_prices = pd.DataFrame()
+# hourly_prices['power']=default_power_price # hourly mean values 2015-2018
+# hourly_prices['demand']=default_demand # historic demand
+# hourly_prices.index.name='hour'
+# hourly_prices.to_csv('./forecasts/data/hourly_prices.csv')
+
+hourly_prices = pd.read_csv('./forecasts/data/hourly_prices.csv')
+default_power_price = hourly_prices['power']
 
 exog = pd.read_pickle(r'./forecasts/data/historic_exog.pkl')
 exog['demand'] = exog['demand'] / exog['demand'].max()
@@ -99,8 +107,8 @@ class PriceForecast:
         if len(market_result) != len(weather):
             log.warning('market results are not valid, set default demand and default price.')
             data['demand'] = default_demand
-            price = pd.Series(index=pd.date_range(start=date, freq='h', periods=len(default_power_price)),
-                              data=default_power_price)
+            price = hourly_prices['power'].copy()
+            price.index = pd.date_range(start=date, freq='h', periods=len(df))
         else:
             data['demand'] = market_result['volume'].values.flatten()
             price = market_result['price']
@@ -134,7 +142,8 @@ class PriceForecast:
         steps = max(steps, 24)
         range_ = pd.date_range(start=date, end=date + td(days=int(steps / 24) - 1), freq='d')
 
-        noise = lambda x: np.random.uniform(0.95, 1.05, x)
+        def noise(x):
+            return np.random.uniform(0.95, 1.05, x)
 
         if not self.fitted and not self.use_real_prices:
             power_price = np.repeat(default_power_price, int(steps / 24)) * noise(steps)
@@ -149,19 +158,13 @@ class PriceForecast:
             data = pd.concat([data, dummies], axis=1)
             power_price = self.model.predict(steps=steps, last_window=self.last_window, exog=data).values
 
-        prices = dict(
-            power=power_price,
-            co=np.ones_like(power_price) * default_emission[date.month - 1] * noise(steps),
-            gas=np.ones_like(power_price) * default_gas[date.month - 1] * noise(steps),
-            coal=np.ones_like(power_price) * default_coal * noise(steps),
-            lignite=np.ones_like(power_price) * default_lignite * noise(steps),
-            nuclear=np.ones_like(power_price) * default_nuclear * noise(steps)
-        )
-
-        df = pd.DataFrame(index=pd.date_range(start=date, periods=steps, freq='h'), data=prices)
-        df.index.name = 'time'
-
-        return df
+        def make_day_price(price):
+            return pd.Series(price * (np.ones_like(default_power_price) * noise(steps)))
+        m = date.month-1
+        prices = default_prices.iloc[m, :].apply(make_day_price).T
+        prices.index = pd.date_range(start=date, periods=steps, freq='h')
+        prices.index.name = 'time'
+        return prices
 
 
 if __name__ == "__main__":

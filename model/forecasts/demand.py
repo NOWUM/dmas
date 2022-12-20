@@ -7,10 +7,7 @@ import logging
 
 log = logging.getLogger('demand_forecast')
 
-
-with open(r'./forecasts/data/default_demand.pkl', 'rb') as file:
-    default_demand = np.load(file).reshape((24,))
-
+default_demand = pd.read_csv('./forecasts/data/hourly_prices.csv')['demand']
 
 class DemandForecast:
     def __init__(self):
@@ -22,8 +19,8 @@ class DemandForecast:
     def collect_data(self, date: pd.Timestamp, demand: pd.Series):
         if len(demand) < 24:
             log.warning('market results are not valid, set default demand.')
-            demand = pd.Series(index=pd.date_range(start=date, freq='h', periods=len(default_demand)),
-                               data=default_demand)
+            demand = default_demand.copy()
+            demand.index = pd.date_range(start=date, freq='h', periods=len(demand))
         for i in range(24):
             self.input.append(demand.index[i])
             self.output.append(demand.values[i])
@@ -42,7 +39,7 @@ class DemandForecast:
             demand.index.name = 'time'
         else:
             demand = pd.DataFrame(index=pd.date_range(start=date, freq='h', periods=len(default_demand)),
-                                  data={'demand': default_demand})
+                                  data={'demand': list(default_demand)})
             demand.index.name = 'time'
 
         return demand

@@ -22,24 +22,6 @@ DATABASE_URI = f'postgresql://opendata:opendata@10.13.10.41:5432/weather'
 weather = WeatherInterface(database_url=DATABASE_URI, name='testing')
 weather_params = ['temp_air', 'wind_meridional', 'wind_zonal', 'dhi', 'dni']
 
-
-def get_demand(date_range: pd.DatetimeIndex = None):
-    print('collecting demand...')
-    if date_range is None:
-        date_range = pd.date_range(start='2018-05-01', end='2018-08-01', freq='h')
-    df = pd.read_csv(r'./forecasts/data/history_load.csv', index_col=0, parse_dates=True, sep=',', decimal='.')
-    df.columns = ['demand']
-    return df.loc[date_range]
-
-
-def get_prices(date_range: pd.DatetimeIndex = None):
-    print('collecting prices...')
-    if date_range is None:
-        date_range = pd.date_range(start='2018-05-01', end='2018-08-01', freq='h')
-    df = pd.read_csv(r'./forecasts/data/history_prices.csv', index_col=0, parse_dates=True, sep=';', decimal=',')
-    return df.loc[date_range]
-
-
 def get_dummies(price_data: pd.DataFrame):
     hours = pd.get_dummies(price_data.index.hour)
     hours.columns = [f'hour_{h}' for h in hours.columns]
@@ -78,13 +60,9 @@ def get_weather_data(date_range: pd.DatetimeIndex):
 if __name__ == "__main__":
     hourly_range = pd.date_range(start='2017-01-01', end='2018-12-31 23:00', freq='h')
     days = pd.date_range(start='2017-01-01', end='2018-12-31', freq='d')
-    prices = get_prices(hourly_range)
-    prices.index = hourly_range
     weather_data = get_weather_data(days)
     weather_data.index = prices.index
     dummies = get_dummies(prices)
-    demand = get_demand(hourly_range)
-    demand = demand[~demand.index.duplicated(keep='first')]
     exog = pd.concat([weather_data, demand, dummies], axis=1)
     end_validation = pd.Timestamp(2018, 9, 30)
 
