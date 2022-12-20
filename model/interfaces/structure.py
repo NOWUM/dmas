@@ -432,6 +432,16 @@ class InfrastructureInterface:
         return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_demand_in_area(self, area):
+        if area=='DE91C':
+            # nuts areas changed: https://en.wikipedia.org/wiki/NUTS_statistical_regions_of_Germany#Older_Version
+            # upstream issue: https://github.com/openego/data_processing/issues/379
+            DE915 = self.get_demand_in_area('DE915')
+            DE919 = self.get_demand_in_area('DE919')
+            return DE915+DE919
+        elif area=='DEB1C':
+            return self.get_demand_in_area('DEB16')
+        elif area=='DEB1D':
+            return self.get_demand_in_area('DEB19')
         query = f'''select sum(sector_consumption_residential) as household, sum(sector_consumption_retail) as business,
                 sum(sector_consumption_industrial) as industry, sum(sector_consumption_agricultural) as agriculture
                 from demand where version='v0.4.5' and nuts LIKE '{area}%%'
@@ -570,7 +580,7 @@ if __name__ == "__main__":
         with open('../agents.json','r') as f:
             agents = json.load(f)
     
-    #dem = interface.get_demand_in_area(area='DE11D')
+    dem = interface.get_demand_in_area(area='DE91C')
     #solar = interface.get_solar_storage_systems_in_area('DE7')
     
 
@@ -588,7 +598,7 @@ if __name__ == "__main__":
 
         for area in l3_a:
             df = interface.get_demand_in_area(area=area)
-            #print(area, df)
+            print(area, df)
             dem_a -= df.fillna(0)
 
         print(dem_a)
