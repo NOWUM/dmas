@@ -106,7 +106,7 @@ class PriceForecast:
         data = {column: weather[column].values.flatten() for column in weather.columns}
         if len(market_result) != len(weather):
             log.warning('market results are not valid, set default demand and default price.')
-            data['demand'] = default_demand
+            data['demand'] = hourly_prices['demand'].copy()
             price = hourly_prices['power'].copy()
             price.index = pd.date_range(start=date, freq='h', periods=len(df))
         else:
