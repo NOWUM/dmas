@@ -50,7 +50,7 @@ class DemandForecast:
             steps -= steps % 24
             print(f'set step size to {steps}')
         steps = max(steps, 24)
-        range_ = pd.date_range(start=date, end=date + td(days=int(steps / 24) - 1), freq='d')
+        range_ = pd.date_range(start=date, end=date + td(days=(steps//24) - 1), freq='d')
         demand = pd.concat([self._forecast(date) for date in range_], axis=0)
 
         return demand

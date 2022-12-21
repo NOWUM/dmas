@@ -69,7 +69,7 @@ class WindModel(EnergySystem):
         self.date = date
 
         index = pd.date_range(start=date, periods=self.T, freq='H')
-        data = [0.2 * np.ones_like(self.t), weather['temp_air'], weather['wind_speed']]
+        data = [0.2 * np.ones(self.T), weather['temp_air'], weather['wind_speed']]
         names = ['roughness_length', 'temperature', 'wind_speed']
         heights = [0, 2, 10]
 

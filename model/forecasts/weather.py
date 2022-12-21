@@ -49,7 +49,7 @@ class WeatherForecast:
             steps -= steps % 24
             print(f'set step size to {steps}')
         steps = max(steps, 24)
-        range_ = pd.date_range(start=date, end=date + td(days=int(steps / 24) - 1), freq='d')
+        range_ = pd.date_range(start=date, end=date + td(days=(steps//24) - 1), freq='d')
         try:
             weather = self._get_weather_data(range_, local)
             self._last_weather = weather.iloc[:24, :].copy()

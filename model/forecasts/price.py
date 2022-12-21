@@ -140,13 +140,13 @@ class PriceForecast:
             steps -= steps % 24
             print(f'set step size to {steps}')
         steps = max(steps, 24)
-        range_ = pd.date_range(start=date, end=date + td(days=int(steps / 24) - 1), freq='d')
+        range_ = pd.date_range(start=date, end=date + td(days=(steps//24) - 1), freq='d')
 
         def noise(x):
             return np.random.uniform(0.95, 1.05, x)
 
         if not self.fitted and not self.use_real_prices:
-            power_price = np.repeat(default_power_price, int(steps / 24)) * noise(steps)
+            power_price = np.repeat(default_power_price, steps//24) * noise(steps)
         elif self.use_real_prices:
             power_price = pd.concat([real_prices.loc[real_prices.index.date == d.date()] for d in range_], axis=0)
             power_price = power_price.values.flatten()
@@ -159,7 +159,7 @@ class PriceForecast:
             power_price = self.model.predict(steps=steps, last_window=self.last_window, exog=data).values
 
         def make_day_price(price):
-            return pd.Series(price * (np.ones_like(default_power_price) * noise(steps)))
+            return pd.Series(price * (np.ones(steps)) * noise(steps))
         m = date.month-1
         prices = default_prices.iloc[m, :].apply(make_day_price).T
         prices.index = pd.date_range(start=date, periods=steps, freq='h')
