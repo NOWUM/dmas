@@ -1,13 +1,13 @@
-from forecasts.basic_forecast import BasicForecast
-import numpy as np
-import pandas as pd
-from datetime import timedelta as td
-from collections import deque
 import logging
+from collections import deque
+from datetime import timedelta as td
+
+import pandas as pd
 
 log = logging.getLogger('demand_forecast')
 
 default_demand = pd.read_csv('./forecasts/data/hourly_prices.csv')['demand']
+
 
 class DemandForecast:
     def __init__(self):
@@ -50,8 +50,7 @@ class DemandForecast:
             steps -= steps % 24
             print(f'set step size to {steps}')
         steps = max(steps, 24)
-        range_ = pd.date_range(start=date, end=date + td(days=(steps//24) - 1), freq='d')
+        range_ = pd.date_range(start=date, end=date + td(days=(steps // 24) - 1), freq='d')
         demand = pd.concat([self._forecast(date) for date in range_], axis=0)
 
         return demand
-

@@ -54,12 +54,14 @@ def create_dummies(d):
 
     def get_dummies(x):
         index = pd.date_range(start=x, periods=24, freq='h')
-        hours = [str(i.hour) for i in index]
-        days = [i.day_name() for i in index]
-        months = [i.month_name() for i in index]
-        holidays = [i in get_holidays(x.year) for i in index]
-        seasons = [get_season(i) for i in index]
-        df = pd.DataFrame(index=index, data={'hourofday':hours, 'dayofweek':days, 'monthofyear':months,'holidays':holidays,'seasons':seasons})
+        df_data = {
+            'hourofday': [str(i.hour) for i in index],
+            'dayofweek': [i.day_name() for i in index],
+            'monthofyear': [i.month_name() for i in index],
+            'holidays': [i in get_holidays(x.year) for i in index],
+            'seasons': [get_season(i) for i in index]
+        }
+        df = pd.DataFrame(index=index, data=df_data)
         return df
 
     dummies = pd.concat([get_dummies(x) for x in pd.date_range(start=d, periods=366)])

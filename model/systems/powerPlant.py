@@ -83,7 +83,7 @@ class PowerPlant(EnergySystem):
             fuel_prices = self.prices[str(pwp['fuel']).replace('_combined', '')].values
             emission_prices = self.prices['co'].values
             power_prices = self.prices['power'].values
-        except KeyError as e:
+        except KeyError:
             log.error(f'prices were: {self.prices}')
             raise Exception(f"No Fuel prices given for fuel {pwp['fuel']}")
 

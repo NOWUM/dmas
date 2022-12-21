@@ -1,23 +1,13 @@
-import numpy as np
 import pandas as pd
-from datetime import timedelta as td
-from matplotlib import pyplot as plt
-from interfaces.weather import WeatherInterface
 from demandlib.electric_profile import get_holidays
+from interfaces.weather import WeatherInterface
+from skforecast.ForecasterAutoreg import ForecasterAutoreg
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import make_pipeline
 # from sklearn.linear_model import Ridge
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.neural_network import MLPRegressor
-from sklearn.metrics import mean_squared_error
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 
-from skforecast.ForecasterAutoreg import ForecasterAutoreg
-from skforecast.ForecasterAutoregMultiOutput import ForecasterAutoregMultiOutput
-from skforecast.model_selection import backtesting_forecaster
-from skforecast.model_selection import grid_search_forecaster
-
-
-DATABASE_URI = f'postgresql://opendata:opendata@10.13.10.41:5432/weather'
+DATABASE_URI = 'postgresql://opendata:opendata@10.13.10.41:5432/weather'
 
 weather = WeatherInterface(database_url=DATABASE_URI, name='testing')
 weather_params = ['temp_air', 'wind_meridional', 'wind_zonal', 'dhi', 'dni']
@@ -63,7 +53,7 @@ if __name__ == "__main__":
     weather_data = get_weather_data(days)
     weather_data.index = prices.index
     dummies = get_dummies(prices)
-    exog = pd.concat([weather_data, demand, dummies], axis=1)
+    exog = pd.concat([weather_data, dummies], axis=1)
     end_validation = pd.Timestamp(2018, 9, 30)
 
     print('fitting model...')

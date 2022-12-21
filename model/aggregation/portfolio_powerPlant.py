@@ -88,20 +88,20 @@ class PowerPlantPortfolio(PortfolioModel):
 
 if __name__ == '__main__':
     ppp = PowerPlantPortfolio()
-    plant = {'unitID':'x',
-            'fuel':'lignite',
-            'maxPower': 300, # kW
-            'minPower': 100, # kW
-            'eta': 0.4, # Wirkungsgrad
-            'P0': 120,
-            'chi': 0.407/1e3, # t CO2/kWh
-            'stopTime': 12, # hours
-            'runTime': 6, # hours
-            'gradP': 300, # kW/h
-            'gradM': 300, # kW/h
-            'on': 1, # running since
-            'off': 0,
-            'startCost': 1e3 # €/Start
+    plant = {'unitID': 'x',
+             'fuel':'lignite',
+             'maxPower': 300, # kW
+             'minPower': 100, # kW
+             'eta': 0.4, # Wirkungsgrad
+             'P0': 120,
+             'chi': 0.407/1e3, # t CO2/kWh
+             'stopTime': 12, # hours
+             'runTime': 6, # hours
+             'gradP': 300, # kW/h
+             'gradM': 300, # kW/h
+             'on': 1, # running since
+             'off': 0,
+             'startCost': 1e3 # €/Start
             }
     ppp.add_energy_system(plant)
 

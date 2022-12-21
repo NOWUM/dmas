@@ -1,17 +1,15 @@
-# third party modules
+import logging
+from collections import deque
+from datetime import timedelta as td
+
 import numpy as np
 import pandas as pd
-from datetime import timedelta as td
-from collections import deque
-import logging
 
-from sklearn.preprocessing import MinMaxScaler
+from demandlib.electric_profile import get_holidays
+from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
-from skforecast.ForecasterAutoreg import ForecasterAutoreg
-
-# model modules
-from demandlib.electric_profile import get_holidays
+from sklearn.preprocessing import MinMaxScaler
 
 log = logging.getLogger('price_forecast')
 
@@ -139,13 +137,13 @@ class PriceForecast:
             steps -= steps % 24
             print(f'set step size to {steps}')
         steps = max(steps, 24)
-        range_ = pd.date_range(start=date, end=date + td(days=(steps//24) - 1), freq='d')
+        range_ = pd.date_range(start=date, end=date + td(days=(steps // 24) - 1), freq='d')
 
         def noise(x):
             return np.random.uniform(0.95, 1.05, x)
 
         if not self.fitted and not self.use_real_prices:
-            power_price = np.repeat(hourly_prices['power'], steps//24) * noise(steps)
+            power_price = np.repeat(hourly_prices['power'], steps // 24) * noise(steps)
         elif self.use_real_prices:
             power_price = pd.concat([real_prices.loc[real_prices.index.date == d.date()] for d in range_], axis=0)
             power_price = power_price.values.flatten()
@@ -159,7 +157,7 @@ class PriceForecast:
 
         def make_day_price(price):
             return pd.Series(price * (np.ones(steps)) * noise(steps))
-        m = date.month-1
+        m = date.month - 1
         prices = default_prices.iloc[m, :].apply(make_day_price).T
         prices.index = pd.date_range(start=date, periods=steps, freq='h')
         prices.index.name = 'time'

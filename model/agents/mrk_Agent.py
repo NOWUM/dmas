@@ -56,8 +56,7 @@ class MarketAgent(BasicAgent):
 
         self.market.set_parameter(hourly_ask, hourly_bid, linked_orders, exclusive_orders)
         self.logger.info(f'start market optimization')
-        auction_results, used_ask_orders, used_linked_orders, \
-        used_exclusive_orders, used_bid_orders, merit_order = self.market.optimize()
+        auction_results, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders, merit_order = self.market.optimize()
         self.logger.info('get market results')
         t1 = time.time()
         market_results = dict(

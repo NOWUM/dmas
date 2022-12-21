@@ -20,4 +20,3 @@ class BasicForecast:
 
     def forecast(self, date):
         pass
-

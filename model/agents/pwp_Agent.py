@@ -1,7 +1,6 @@
 # third party modules
 import time
 
-import pandas as pd
 from tqdm import tqdm
 
 # model modules
@@ -105,6 +104,6 @@ class PwpAgent(BasicAgent):
         if self.forecast_counter == 0:
             self.price_forecast.fit_model()
             self.forecast_counter = 10
-            self.logger.info(f'fitted price forecast')
+            self.logger.info('fitted price forecast')
 
         self.logger.info(f'finished day ahead adjustments in {time.time() - start_time:.2f} seconds')
