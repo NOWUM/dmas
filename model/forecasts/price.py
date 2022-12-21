@@ -38,7 +38,6 @@ default_prices = pd.read_csv('./forecasts/data/monthly_generation_cost.csv')
 # hourly_prices.to_csv('./forecasts/data/hourly_prices.csv')
 
 hourly_prices = pd.read_csv('./forecasts/data/hourly_prices.csv')
-default_power_price = hourly_prices['power']
 
 exog = pd.read_pickle(r'./forecasts/data/historic_exog.pkl')
 exog['demand'] = exog['demand'] / exog['demand'].max()
@@ -108,7 +107,7 @@ class PriceForecast:
             log.warning('market results are not valid, set default demand and default price.')
             data['demand'] = hourly_prices['demand'].copy()
             price = hourly_prices['power'].copy()
-            price.index = pd.date_range(start=date, freq='h', periods=len(df))
+            price.index = pd.date_range(start=date, freq='h', periods=len(hourly_prices['power']))
         else:
             data['demand'] = market_result['volume'].values.flatten()
             price = market_result['price']
@@ -146,7 +145,7 @@ class PriceForecast:
             return np.random.uniform(0.95, 1.05, x)
 
         if not self.fitted and not self.use_real_prices:
-            power_price = np.repeat(default_power_price, steps//24) * noise(steps)
+            power_price = np.repeat(hourly_prices['power'], steps//24) * noise(steps)
         elif self.use_real_prices:
             power_price = pd.concat([real_prices.loc[real_prices.index.date == d.date()] for d in range_], axis=0)
             power_price = power_price.values.flatten()
