@@ -159,6 +159,7 @@ class PriceForecast:
             return pd.Series(price * (np.ones(steps)) * noise(steps))
         m = date.month - 1
         prices = default_prices.iloc[m, :].apply(make_day_price).T
+        prices['power'] = power_price
         prices.index = pd.date_range(start=date, periods=steps, freq='h')
         prices.index.name = 'time'
         return prices
