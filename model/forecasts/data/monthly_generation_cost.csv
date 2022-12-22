@@ -1,4 +1,4 @@
-Month,gas,emission,coal,lignite,nuclear
+Month,gas,co,coal,lignite,nuclear
 0,0.0186,8.3,0.008,0.0015,0.001
 1,0.02,9.5,0.008,0.0015,0.001
 2,0.0242,11.5,0.008,0.0015,0.001
