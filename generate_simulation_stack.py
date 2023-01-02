@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 import random
 import json
+import sys
 
 image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
-counter = 1
+counter = int(sys.argv[1])
 if counter > 100:
     max_connections = 5000
-    structure_servers = ['10.13.10.54:4321', '10.13.10.55:4321', '10.13.10.56:4321']
+    structure_servers = ['10.13.10.54:4321', '10.13.10.55:4321', '10.13.10.56:4321', '10.13.10.59:4321']
 else:
     max_connections = 500
     structure_servers = ['10.13.10.41:5432']
@@ -16,7 +17,8 @@ def random_structure_server():
     return random.choice(structure_servers)
 
 
-NUTS_LEVEL = 1
+NUTS_LEVEL = int(sys.argv[2])
+NET = False
 ENTSOE = True
 
 # Build Demand Agents
@@ -136,19 +138,20 @@ output.append(f'''
 ''')
 configs['market_config']= './market_gurobi.lic'
 
-# Build one TSO
-output.append(f'''
-  net:
-    container_name: net
-    image: {image_repo}agent:latest
-    environment:
-      AREA_CODE: DE111
-      TYPE: 'NET'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-    depends_on:
-      - controller
-''')
+if NET:
+  # Build one TSO
+  output.append(f'''
+    net:
+      container_name: net
+      image: {image_repo}agent:latest
+      environment:
+        AREA_CODE: DE111
+        TYPE: 'NET'
+        SIMULATION_SOURCE: 'simulationdb:5432'
+        WS_HOST: 'controller'
+      depends_on:
+        - controller
+  ''')
 # Build Demand Agents
 if ENTSOE:
     output.append(f'''
@@ -157,7 +160,7 @@ if ENTSOE:
     image: {image_repo}agent:latest
     environment:
       AREA_CODE: DE111
-      TYPE: 'DEM'
+      TYPE: 'DEO'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
     depends_on:

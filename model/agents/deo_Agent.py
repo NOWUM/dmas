@@ -35,14 +35,16 @@ class DemEntsoeAgent(BasicAgent):
         start_time = time.time()
 
         end = pd.to_datetime(self.date) + timedelta(hours=self.portfolio.T)
-        demand = self.entsoe_interface.get_demand_in_land('DE', self.date, end)
+        demand = self.entsoe_interface.get_demand_in_land('DE', self.date, end)['actual_load']
 
+        empty = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24), data=np.zeros(24))
+        self.portfolio.optimize(self.date, empty.copy(), empty.copy())
         if self.portfolio.dt == 1:
-            demand = demand.resample('h').sum()[:self.portfolio.T]
+            demand = demand.resample('h').mean()[:self.portfolio.T]
         else:
             raise Exception('not implemented for other frequencies')
 
-        self.portfolio.demand = np.array(demand)
+        self.portfolio.demand['power'] = np.array(demand)
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results

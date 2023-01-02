@@ -8,8 +8,7 @@ from systems.basic_system import EnergySystem
 
 def get_solar_generation(generation_system: PVSystem, weather: pd.DataFrame) -> np.array:
     ir = generation_system.get_irradiance(solar_zenith=weather['zenith'], solar_azimuth=weather['azimuth'],
-                                          dni=weather['dni'], ghi=weather['ghi'], dhi=weather['dhi'],
-                                          tz='Europe/Berlin')
+                                          dni=weather['dni'], ghi=weather['ghi'], dhi=weather['dhi'])
     power = ir['poa_global'] * generation_system.arrays[0].module_parameters['pdc0'] / 1e3
     return np.asarray(power).flatten()
 

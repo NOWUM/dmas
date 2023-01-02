@@ -8,6 +8,7 @@ done
 echo "removal finished, sleeping"
 sleep 10;
 
+./generate_simulation_stack.py 500 1
 docker stack deploy --with-registry-auth -c docker-compose.yml dmas
 
 while test "$(docker service ls | grep 0/1 | wc -l)" -gt 3
@@ -17,16 +18,13 @@ do
 done
 echo "all containers are up"
 
-docker service rm dmas_dem_de253
-docker service rm dmas_res_de253
-
-docker service rm dmas_dem_de941
-docker service rm dmas_res_de941
-
-docker service rm dmas_dem_de91c
-
-docker service rm dmas_dem_deb38
-docker service rm dmas_res_deb38
+# docker service rm dmas_dem_de253
+# docker service rm dmas_res_de253
+# docker service rm dmas_dem_de941
+# docker service rm dmas_res_de941
+# docker service rm dmas_dem_de91c
+# docker service rm dmas_dem_deb38
+# docker service rm dmas_res_deb38
 
 sleep 60;
 

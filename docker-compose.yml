@@ -65,7 +65,7 @@ services:
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     build: .
     environment:
-      AREA_CODE: 'DE111'
+      AREA_CODE: DE111
       TYPE: 'CTL'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: '0.0.0.0'
@@ -84,7 +84,7 @@ services:
     container_name: market
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: 'DE111'
+      AREA_CODE: DE111
       TYPE: 'MRK'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
@@ -95,43 +95,32 @@ services:
       - controller
 
 
-  net:
-    container_name: net
-    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
-    environment:
-      AREA_CODE: 'DE111'
-      TYPE: 'NET'
-      SIMULATION_SOURCE: 'simulationdb:5432'
-      WS_HOST: 'controller'
-    depends_on:
-      - controller
-
   dem:
     container_name: dem
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: 'DE111'
-      TYPE: 'DEM'
+      AREA_CODE: DE111
+      TYPE: 'DEO'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
     depends_on:
       - controller
 
-  pwp_de5:
-    container_name: pwp_de5
+  pwp_dea46:
+    container_name: pwp_dea46
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: DE5
+      AREA_CODE: DEA46
       TYPE: 'PWP'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
       STRUCTURE_SERVER: '10.13.10.41:5432'
 
-  res_de5:
-    container_name: res_de5
+  res_de261:
+    container_name: res_de261
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: DE5
+      AREA_CODE: DE261
       TYPE: 'RES'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
@@ -139,11 +128,11 @@ services:
     depends_on:
       - controller
 
-  str_ded:
-    container_name: str_ded
+  str_dee09:
+    container_name: str_dee09
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: DED
+      AREA_CODE: DEE09
       TYPE: 'STR'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
