@@ -47,6 +47,7 @@ services:
     environment:
       GF_SECURITY_ALLOW_EMBEDDING: "true"
       GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_INSTALL_PLUGINS: volkovlabs-echarts-panel
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
@@ -76,6 +77,8 @@ services:
       replicas: 1
       placement:
         constraints: [node.role == manager]
+    depends_on:
+      - simulationdb
 
   market:
     container_name: market
@@ -103,34 +106,48 @@ services:
     depends_on:
       - controller
 
-  dem_de111:
-    container_name: dem_de111
+  dem:
+    container_name: dem
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: DE111
+      AREA_CODE: 'DE111'
       TYPE: 'DEM'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
     depends_on:
       - controller
 
-  pwp_de111:
-    container_name: pwp_de111
+  pwp_de5:
+    container_name: pwp_de5
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: DE111
+      AREA_CODE: DE5
       TYPE: 'PWP'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+      STRUCTURE_SERVER: '10.13.10.41:5432'
 
-  res_de111:
-    container_name: res_de111
+  res_de5:
+    container_name: res_de5
     image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
     environment:
-      AREA_CODE: DE111
+      AREA_CODE: DE5
       TYPE: 'RES'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
+      STRUCTURE_SERVER: '10.13.10.41:5432'
+    depends_on:
+      - controller
+
+  str_ded:
+    container_name: str_ded
+    image: registry.git.fh-aachen.de/nowum-energy/projects/dmas/agent:latest
+    environment:
+      AREA_CODE: DED
+      TYPE: 'STR'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+      STRUCTURE_SERVER: '10.13.10.41:5432'
     depends_on:
       - controller
 configs:
