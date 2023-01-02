@@ -1,6 +1,5 @@
 # third party modules
 from collections import deque
-from pvlib.location import Location
 
 
 class BasicForecast:
@@ -13,7 +12,6 @@ class BasicForecast:
         self.market = simulation_interface
         self.weather = weather_interface
         self.position = position
-        self.location = Location(longitude=position['lon'], latitude=position['lat'])
 
     def collect_data(self, date):
         pass

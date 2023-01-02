@@ -7,13 +7,16 @@ from agents.str_Agent import StrAgent
 from agents.net_Agent import NetAgent
 from agents.mrk_Agent import MarketAgent
 from agents.ctl_Agent import CtlAgent
+from agents.deo_Agent import DemEntsoeAgent
 
 logging.basicConfig()
 
 weather_server = os.getenv('WEATHER_SERVER', '10.13.10.41:5432')
 weather_credential = os.getenv('WEATHER_CREDENTIAL', 'readonly:readonly')
 weather_database = os.getenv('WEATHER_DATABASE', 'weather')
+entsoe_database = os.getenv('ENTSOE_DATABASE', 'entsoe')
 weather_database_uri = f'postgresql://{weather_credential}@{weather_server}/{weather_database}'
+entsoe_database_uri = f'postgresql://{weather_credential}@{weather_server}/{entsoe_database}'
 init_dict = {
     'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
     'area': os.getenv('AREA_CODE', 'DEA2D'),
@@ -29,7 +32,8 @@ init_dict = {
     'structure_server': os.getenv('STRUCTURE_SERVER', '10.13.10.41:5432'),
     'structure_credential': os.getenv('STRUCTURE_CREDENTIAL', 'readonly:readonly'),
     # weather data server default parameter
-    'weather_database_uri': weather_database_uri
+    'weather_database_uri': weather_database_uri,
+    'entsoe_database_uri': entsoe_database_uri,
 }
 
 type_mapping = {
@@ -40,6 +44,7 @@ type_mapping = {
     'NET': NetAgent,
     'MRK': MarketAgent,
     'CTL': CtlAgent,
+    'DEO': DemEntsoeAgent,
 }
 
 if __name__ == "__main__":
@@ -49,7 +54,7 @@ if __name__ == "__main__":
         agent = agent_class(**init_dict)
 
         agent.run()
-        #agent.optimize_day_ahead()
+        # agent.optimize_day_ahead()
 
-    except Exception as e:
+    except Exception:
         logging.exception(f'Error during Simulation {init_dict["type"]}_{init_dict["area"]}')

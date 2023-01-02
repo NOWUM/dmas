@@ -17,6 +17,7 @@ def random_structure_server():
 
 
 NUTS_LEVEL = 1
+ENTSOE = True
 
 # Build Demand Agents
 with open('./agents.json', 'r') as f:
@@ -101,7 +102,7 @@ output.append(f'''
     image: {image_repo}agent:latest
     build: .
     environment:
-      AREA_CODE: 'DE111'
+      AREA_CODE: DE111
       TYPE: 'CTL'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: '0.0.0.0'
@@ -113,6 +114,8 @@ output.append(f'''
       replicas: 1
       placement:
         constraints: [node.role == manager]
+    depends_on:
+      - simulationdb
 ''')
 # Build one Market
 output.append(f'''
@@ -120,7 +123,7 @@ output.append(f'''
     container_name: market
     image: {image_repo}agent:latest
     environment:
-      AREA_CODE: 'DE111'
+      AREA_CODE: DE111
       TYPE: 'MRK'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
@@ -139,7 +142,7 @@ output.append(f'''
     container_name: net
     image: {image_repo}agent:latest
     environment:
-      AREA_CODE: 'DE111'
+      AREA_CODE: DE111
       TYPE: 'NET'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
@@ -147,8 +150,22 @@ output.append(f'''
       - controller
 ''')
 # Build Demand Agents
-for agent in agents['dem'][:counter]:
+if ENTSOE:
     output.append(f'''
+  dem:
+    container_name: dem
+    image: {image_repo}agent:latest
+    environment:
+      AREA_CODE: DE111
+      TYPE: 'DEM'
+      SIMULATION_SOURCE: 'simulationdb:5432'
+      WS_HOST: 'controller'
+    depends_on:
+      - controller
+''')
+else:
+  for agent in agents['dem'][:counter]:
+      output.append(f'''
   dem_{agent.lower()}:
     container_name: dem_{agent.lower()}
     image: {image_repo}agent:latest

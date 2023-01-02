@@ -20,3 +20,4 @@ geopandas
 glpk
 websockets
 skforecast
+python-dateutil

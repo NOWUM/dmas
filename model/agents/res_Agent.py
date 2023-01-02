@@ -109,8 +109,8 @@ class ResAgent(BasicAgent):
         self.logger.info(f'got forecast in {time.time() - start_time:.2f} seconds')
         start_time = time.time()
         # Step 2: optimization
-        power_eeg = self.portfolio_eeg.optimize(self.date, weather.copy(),  prices.copy())
-        power_mrk = self.portfolio_mrk.optimize(self.date, weather.copy(),  prices.copy())
+        power_eeg = self.portfolio_eeg.optimize(self.date, weather.copy(), prices.copy())
+        power_mrk = self.portfolio_mrk.optimize(self.date, weather.copy(), prices.copy())
         self.logger.info(f'finished day ahead optimization in {time.time() - start_time:.2f} seconds')
 
         # save optimization results

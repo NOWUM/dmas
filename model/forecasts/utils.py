@@ -7,10 +7,9 @@ from sklearn.pipeline import make_pipeline
 # from sklearn.linear_model import Ridge
 from sklearn.preprocessing import MinMaxScaler
 
-DATABASE_URI = 'postgresql://opendata:opendata@10.13.10.41:5432/weather'
+DATABASE_URI = 'postgresql://readonly:readonly@10.13.10.41:5432/weather'
 
-weather = WeatherInterface(database_url=DATABASE_URI, name='testing')
-weather_params = ['temp_air', 'wind_meridional', 'wind_zonal', 'dhi', 'dni']
+weather = WeatherInterface('testing', DATABASE_URI)
 
 def get_dummies(price_data: pd.DataFrame):
     hours = pd.get_dummies(price_data.index.hour)
@@ -30,30 +29,12 @@ def get_dummies(price_data: pd.DataFrame):
     return dummies
 
 
-def get_weather_data(date_range: pd.DatetimeIndex):
-    print('collecting weather...')
-    data = {param: [] for param in weather_params}
-
-    for date in date_range:
-        for param in weather_params:
-            df = weather.get_param(param, date)
-            values = list(df.values.flatten())
-            data[param] += values
-    data = pd.DataFrame.from_dict(data)
-    data['wind_speed'] = (data['wind_meridional'].values**2 + data['wind_zonal'].values**2)**0.5
-    data['ghi'] = data['dni'] + data['dhi']
-    del data['wind_meridional']
-    del data['wind_zonal']
-    return data
-
-
 if __name__ == "__main__":
     hourly_range = pd.date_range(start='2017-01-01', end='2018-12-31 23:00', freq='h')
     days = pd.date_range(start='2017-01-01', end='2018-12-31', freq='d')
-    weather_data = get_weather_data(days)
-    weather_data.index = prices.index
-    dummies = get_dummies(prices)
-    exog = pd.concat([weather_data, dummies], axis=1)
+    # weather_data.index = prices.index
+    # dummies = get_dummies(prices)
+    # exog = pd.concat([weather_data, dummies], axis=1)
     end_validation = pd.Timestamp(2018, 9, 30)
 
     print('fitting model...')

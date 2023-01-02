@@ -11,6 +11,7 @@ from interfaces.structure import InfrastructureInterface, get_lon_lat
 from interfaces.simulation import SimulationInterface
 from functools import partial
 
+
 class BasicAgent:
 
     def __init__(self, area, type, date, *args, **kwargs):
@@ -69,32 +70,32 @@ class BasicAgent:
                 if msg:
                     await ws.send(msg)
             await asyncio.sleep(0.1)
-    
+
     def handle_message(self, message):
         '''
         empty message handler - overwritten in implementation
-        
+
         returns response message
         '''
         pass
-
 
     async def connect(self):
         i = 0
         while i < self.connection_tries:
             try:
-                await asyncio.sleep(2*i)
+                await asyncio.sleep(2 * i)
                 self.logger.info(f'connecting to {self.ws_uri}')
                 # wait at the beginning
                 async with websockets.connect(self.ws_uri, ping_timeout=None) as ws:
                     await self.message_handler(ws)
             except OSError:
-                i += 1
-                self.logger.error('could not connect to '+self.ws_uri)
+                self.logger.error('could not connect to ' + self.ws_uri)
             except websockets.exceptions.ConnectionClosed as e:
-                i += 1
                 self.logger.error(f"Controller was shut down {e}, trying again {i}")
-                self.logger.exception('Error')
+                self.logger.exception('Connection was Closed')
+            except Exception:
+                self.logger.exception('Error while connecting')
+            i += 1
 
     def run(self):
         loop = asyncio.get_event_loop()
