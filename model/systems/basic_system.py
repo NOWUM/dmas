@@ -5,20 +5,12 @@ from uuid import uuid1 as create_unique_key
 
 # model modules
 from demandlib.electric_profile import StandardLoadProfile
-from pvlib.pvsystem import PVSystem
 
 FUEL_TYPES = ['solar', 'wind', 'water', 'bio',
               'lignite', 'coal', 'gas', 'nuclear', 'storage']
 DEMAND_TYPES = ['power', 'heat']
 CONSUMER_TYPES = ['household', 'business', 'industry', 'agriculture']
 CASH_TYPES = ['profit', 'fuel', 'emission', 'start_ups', 'forecast']
-
-
-def get_solar_generation(generation_system: PVSystem, weather: pd.DataFrame) -> np.array:
-    r = generation_system.get_irradiance(solar_zenith=weather['zenith'], solar_azimuth=weather['azimuth'],
-                                         dni=weather['dni'], ghi=weather['ghi'], dhi=weather['dhi'])
-    power = r['poa_global'] * generation_system.arrays[0].module_parameters['pdc0'] / 1e3
-    return np.asarray(power).flatten()
 
 
 class EnergySystem:
@@ -117,4 +109,3 @@ class EnergySystem:
 
         self.volume = np.zeros(self.T)
         self.power = np.zeros(self.T)
-

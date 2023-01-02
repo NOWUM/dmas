@@ -2,9 +2,16 @@
 import numpy as np
 import pandas as pd
 from pvlib.pvsystem import PVSystem
-
 # model modules
-from systems.basic_system import EnergySystem, get_solar_generation
+from systems.basic_system import EnergySystem
+
+
+def get_solar_generation(generation_system: PVSystem, weather: pd.DataFrame) -> np.array:
+    ir = generation_system.get_irradiance(solar_zenith=weather['zenith'], solar_azimuth=weather['azimuth'],
+                                          dni=weather['dni'], ghi=weather['ghi'], dhi=weather['dhi'],
+                                          tz='Europe/Berlin')
+    power = ir['poa_global'] * generation_system.arrays[0].module_parameters['pdc0'] / 1e3
+    return np.asarray(power).flatten()
 
 
 class Prosumer(EnergySystem):

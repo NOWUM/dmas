@@ -3,7 +3,7 @@ pandas
 sqlalchemy
 psycopg2-binary
 gurobipy
-pvlib
+pvlib>=0.9.4 # complete_irradiance
 windpowerlib
 pypsa
 scikit-learn

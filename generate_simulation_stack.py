@@ -22,7 +22,7 @@ ENTSOE = True
 # Build Demand Agents
 with open('./agents.json', 'r') as f:
     raw_agents = json.load(f)
-  
+
 agents = {}
 for agent_type, agent_list in raw_agents.items():
     agents[agent_type] = list({a[0:2+NUTS_LEVEL] for a in agent_list})
