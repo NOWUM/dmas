@@ -74,6 +74,8 @@ class ResAgent(BasicAgent):
         # Construction Run River
         run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(self.area)
         run_river_data['type'] = 'water'
+        # somehow all countries run no more than half of the river production capacity
+        run_river_data['maxPower'] *= 0.45
         for system in tqdm(run_river_data.to_dict(orient='records')):
             self.portfolio_mrk.add_energy_system(system)
         self.logger.info('Run River Power Plants added')
@@ -81,6 +83,9 @@ class ResAgent(BasicAgent):
         # Construction Biomass
         bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(self.area)
         bio_mass_data['type'] = 'bio'
+        # somehow all countries run not much more than half of the bio production capacity
+        # TODO find technical explanation
+        bio_mass_data['maxPower'] *= 0.55
         for system in tqdm(bio_mass_data.to_dict(orient='records')):
             self.portfolio_mrk.add_energy_system(system)
         self.logger.info('Biomass Power Plants added')
