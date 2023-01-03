@@ -12,6 +12,26 @@ def get_interval(start):
     return start_date, end_date
 
 
+def merge_portfolio(portfolio, type, date):
+    data_frames = []
+    for prt in portfolio:
+        if type == 'capacities':
+            data_frames.append(pd.DataFrame(index=[pd.to_datetime(date)], data=prt.capacities))
+        if type == 'generation':
+            data_frames.append(pd.DataFrame(index=pd.date_range(start=date, freq='h',
+                                                                periods=len(prt.generation['total'])),
+                                            data=prt.generation))
+        if type == 'demand':
+            data_frames.append(pd.DataFrame(index=pd.date_range(start=date, freq='h',
+                                                                periods=len(prt.demand['power'])),
+                                            data=prt.demand))
+    data_frame = data_frames[0]
+    for df in data_frames[1:]:
+        for col in df.columns:
+            data_frame[col] += df[col]
+    return data_frame
+
+
 class SimulationInterface:
 
     def __init__(self, name, simulation_db_uri):
@@ -119,29 +139,9 @@ class SimulationInterface:
             connection.execute("DELETE FROM linked_orders")
             connection.execute("DELETE FROM exclusive_orders")
 
-    def merge_portfolio(self, portfolio, type, date):
-        data_frames = []
-        for prt in portfolio:
-            if type == 'capacities':
-                data_frames.append(pd.DataFrame(index=[pd.to_datetime(date)], data=prt.capacities))
-            if type == 'generation':
-                data_frames.append(pd.DataFrame(index=pd.date_range(start=date, freq='h',
-                                                                    periods=len(prt.generation['total'])),
-                                                data=prt.generation))
-            if type == 'demand':
-                data_frames.append(pd.DataFrame(index=pd.date_range(start=date, freq='h',
-                                                                    periods=len(prt.demand['power'])),
-                                                data=prt.demand))
-        data_frame = data_frames[0]
-        for df in data_frames[1:]:
-            for col in df.columns:
-                data_frame[col] += df[col]
-
-        return data_frame
-
     def set_capacities(self, portfolio, area, date):
         if isinstance(portfolio, list):
-            data_frame = self.merge_portfolio(portfolio, type='capacities', date=date)
+            data_frame = merge_portfolio(portfolio, type='capacities', date=date)
         else:
             data_frame = pd.DataFrame(index=[pd.to_datetime(date)], data=portfolio.capacities)
 
@@ -168,7 +168,7 @@ class SimulationInterface:
 
     def set_generation(self, portfolio, step, area, date):
         if isinstance(portfolio, list):
-            data_frame = self.merge_portfolio(portfolio, type='generation', date=date)
+            data_frame = merge_portfolio(portfolio, type='generation', date=date)
         else:
             data_frame = pd.DataFrame(index=pd.date_range(start=date, freq='h', periods=24),
                                       data=portfolio.generation)
@@ -184,11 +184,31 @@ class SimulationInterface:
         except IntegrityError:
             self.logger.error(f'generation already exists for {area} and {date} - ignoring')
 
-    def get_planed_generation(self, agent, date):
+    def get_generation(self, date, agent=None, step='optimize_dayAhead'):
+        '''optimize_dayAhead for planned, results_dayAhead for final'''
         try:
-            df = pd.read_sql(f"select * from generation where step ='optimize_dayAhead "
-                             f"and agent = {agent}'", self.database)
+            query = f"""
+select time,
+sum(total) as total,
+sum(solar) as solar,
+sum(wind) as wind,
+sum(water) as water,
+sum(bio) as bio,
+sum(lignite) as lignite,
+sum(coal) as coal,
+sum(gas) as gas,
+sum(nuclear) as nuclear,
+sum(storage) as storage
+from generation where step ='{step}'"""
+            if agent:
+                query += f"and agent = {agent}'"
+            else:
+                query += "and agent not like '%%dem%%'"
+            query += ' group by time order by time'
+            df = pd.read_sql(query, self.database, index_col="time")
+
         except Exception as e:
+            self.logger.exception(f'error getting generation: {e}')
             df = pd.DataFrame(data=dict(total=np.zeros(24),
                                         water=np.zeros(24),
                                         bio=np.zeros(24),
@@ -198,13 +218,13 @@ class SimulationInterface:
                                         coal=np.zeros(24),
                                         gas=np.zeros(24),
                                         nuclear=np.zeros(24)),
-                              index=pd.date_range(start=date, freq='h', periods=24))
+                              )
         return df
 
     def set_demand(self, portfolio, step, area, date):
 
         if isinstance(portfolio, list):
-            data_frame = self.merge_portfolio(portfolio, type='demand', date=date)
+            data_frame = merge_portfolio(portfolio, type='demand', date=date)
         else:
             data_frame = pd.DataFrame(index=pd.date_range(start=date, freq='h', periods=24),
                                       data=portfolio.demand)
@@ -305,16 +325,16 @@ class SimulationInterface:
             data.to_sql('merit_order', self.database, if_exists='append', index=False)
             date += td(hours=1)
 
+    def get_auction_results_range(self, start, end):
+        query = f"select time, price, volume from auction_results where time >= '{start}'" \
+                f"and time < '{end}'"
+        return pd.read_sql(query, self.database, index_col="time", parse_dates=["time"])
+
     def get_auction_results(self, date):
         start_date, end_date = get_interval(date)
-
-        query = f"select price, volume from auction_results where time >= '{start_date}'" \
-                f"and time < '{end_date}'"
-
-        df = pd.read_sql(query, self.database)
+        df = self.get_auction_results_range(start_date, end_date)
         df.index = pd.date_range(start=start_date, freq='h', periods=len(df))
         df.index.name = 'time'
-
         return df
 
     def set_orders(self, order_book, date, area):
@@ -344,3 +364,8 @@ class SimulationInterface:
             data_frame.to_sql(name='cash_flows', con=self.database, if_exists='append')
         except IntegrityError:
             self.logger.error(f'orders already exists for {self.name} and {date} - ignoring')
+
+    def get_sim_start_and_end(self):
+        start = self.database.execute('select "time" from  capacities order by "time" asc limit 1').fetchall()[0][0]
+        end = self.database.execute('select "time" from  capacities order by "time" desc limit 1').fetchall()[0][0]
+        return start, end

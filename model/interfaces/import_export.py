@@ -3,6 +3,13 @@ import pandas as pd
 import numpy as np
 
 
+ftime_pg = {'day': 'YYYY-MM-DD',
+            'month': 'YYYY-MM-01',
+            'year': 'YYYY-01-01',
+            'hour': 'YYYY-MM-DD hh24:00:00',
+            'minute': 'YYYY-MM-DD hh24:mi:00'}
+
+
 # select column_name from information_schema.columns where table_name='turbineData'
 class EntsoeInfrastructureInterface:
 
@@ -26,20 +33,45 @@ class EntsoeInfrastructureInterface:
 
         return df
 
-    def get_demand_in_land(self, land, begin, end):
-        query = f'select index as "time", actual_load from query_load ' \
-                f"where country = '{land}' and index >= '{begin}' and index < '{end}'"
-        df = pd.read_sql(query, self.database_entsoe, index_col='time')
+    def get_demand_in_land(self, land, begin, end, groupby='hour'):
+        query = f"select to_char(index, '{ftime_pg[groupby]}') as time, avg(actual_load) as actual_load from query_load " \
+                f"where country = '{land}' and index >= '{begin}' and index < '{end}' group by time order by time"
+        df = pd.read_sql(query, self.database_entsoe, index_col='time', parse_dates=['time'])
         df['actual_load'] *= 1e3  # [MW] -> [kW]
 
         return df
 
-    def get_demand_in_land(self, land, begin, end):
-        query = f'select index as "time", actual_load from query_load ' \
-                f"where country = '{land}' and index >= '{begin}' and index < '{end}'"
-        df = pd.read_sql(query, self.database_entsoe, index_col='time')
-        df['actual_load'] *= 1e3  # [MW] -> [kW]
+    def get_generation_in_land(self, land, begin, end, groupby='hour'):
 
+        query = f'''
+SELECT to_char(index, '{ftime_pg[groupby]}') as time, 
+avg(biomass) as bio,
+avg("hydro_water_reservoir"+"hydro_run-of-river_and_poundage") as water,
+avg("wind_offshore"+"wind_onshore") as wind,
+avg(solar) as solar,
+avg(nuclear) as nuclear,
+avg("fossil_brown_coal/lignite") as lignite,
+avg(fossil_oil+fossil_hard_coal) as coal,
+avg(fossil_gas+"fossil_coal-derived_gas") as gas,
+avg(hydro_pumped_storage) as storage,
+avg(geothermal+other+other_renewable+waste) as other
+from query_generation
+where country = '{land}' and index >= '{begin}' and index < '{end}'
+group by time
+order by time
+'''
+        df = pd.read_sql(query, self.database_entsoe, index_col='time', parse_dates=['time'])
+        return df * 1e3
+
+    def get_price_in_land(self, land, begin, end, groupby='hour'):
+        query = f"""
+select to_char(index, '{ftime_pg[groupby]}') as time, avg("0") as "da_price" 
+from query_day_ahead_prices
+where country like '{land}%%' and index >= '{begin}' and index < '{end}'
+group by time
+"""
+        df = pd.read_sql(query, self.database_entsoe, index_col='time', parse_dates=['time'])
+        df['da_price']  # [€/MWh]
         return df
 
     def get_global_capacities(self, year):
@@ -70,3 +102,6 @@ if __name__ == '__main__':
     dem = entsoe.get_demand_in_land('DE', begin.date(), end.date())
 
     capacities = entsoe.get_global_capacities(2019)
+
+    generation = entsoe.get_generation_in_land('DE', begin.date(), end.date())
+    price = entsoe.get_price_in_land('DE', begin.date(), end.date())
