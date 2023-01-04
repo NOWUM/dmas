@@ -57,7 +57,7 @@ class ResAgent(BasicAgent):
             self.portfolio_eeg.add_energy_system(system)
         for system in tqdm(pvs[pvs['eeg'] == 0].to_dict(orient='records')):
             self.portfolio_mrk.add_energy_system(system)
-        self.logger.info('Solar power plant added')
+        self.logger.info(f'Added {pvs.size} Solar power plants')
         # Freiflächen-PV-Anlage
 
         # Construction of the pv systems (h0)
@@ -68,27 +68,28 @@ class ResAgent(BasicAgent):
             for system in tqdm(pv_data[pv_data['ownConsumption'] == 0].to_dict(orient='records')):
                 self.portfolio_eeg.add_energy_system(system)
 
-        self.logger.info('Household PV added')
+        self.logger.info(f'Added {pv_data.size} Household PVs')
         self.pv_data = pv_data
 
         # Construction Run River
         run_river_data = self.infrastructure_interface.get_run_river_systems_in_area(self.area)
         run_river_data['type'] = 'water'
         # somehow all countries run no more than half of the river production capacity
-        run_river_data['maxPower'] *= 0.45
-        for system in tqdm(run_river_data.to_dict(orient='records')):
-            self.portfolio_mrk.add_energy_system(system)
-        self.logger.info('Run River Power Plants added')
+        if not run_river_data.empty:
+            run_river_data['maxPower'] *= 0.45
+            for system in tqdm(run_river_data.to_dict(orient='records')):
+                self.portfolio_mrk.add_energy_system(system)
+        self.logger.info(f'Added {run_river_data.size} Run River Power Plants')
 
         # Construction Biomass
         bio_mass_data = self.infrastructure_interface.get_biomass_systems_in_area(self.area)
         bio_mass_data['type'] = 'bio'
         # somehow all countries run not much more than half of the bio production capacity
-        # TODO find technical explanation
-        bio_mass_data['maxPower'] *= 0.55
-        for system in tqdm(bio_mass_data.to_dict(orient='records')):
-            self.portfolio_mrk.add_energy_system(system)
-        self.logger.info('Biomass Power Plants added')
+        if not bio_mass_data.empty:
+            bio_mass_data['maxPower'] *= 0.55
+            for system in tqdm(bio_mass_data.to_dict(orient='records')):
+                self.portfolio_mrk.add_energy_system(system)
+        self.logger.info(f'Added {bio_mass_data.size} Biomass Power Plants')
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
