@@ -178,7 +178,7 @@ class Storage(EnergySystem):
 
 
 if __name__ == "__main__":
-    from utils import get_test_prices
+    from systems.utils import get_test_prices
     from matplotlib import pyplot as plt
 
     storage = {"eta_plus": 0.8, "eta_minus": 0.87, "fuel": "water", "PPlus_max": 10,
@@ -186,6 +186,9 @@ if __name__ == "__main__":
 
     sys = Storage(T=24, unitID='x', **storage)
     storage_prices = get_test_prices()
+    # hourly_prices = pd.read_csv('./forecasts/data/hourly_prices.csv')
+    # storage_prices.power = hourly_prices['power'].values
+
     # storage_prices['power'][:8] = 100
     pw1 = sys.optimize(prices=storage_prices)
     # plt.plot(sys.generation['storage'])
@@ -194,8 +197,8 @@ if __name__ == "__main__":
     # pw2 = sys.optimize_post_market(market_result * 0.8)
     # plt.plot(sys.generation['storage'])
 
-    for k in range(20,39):
+    for k in range(20, 39):
         plt.plot(orders.loc[orders.index.get_level_values('block_id') == k, 'volume'].values)
 
-    #plt.plot(pw1)
-    #plt.plot(pw2)
+    # plt.plot(pw1)
+    # plt.plot(pw2)

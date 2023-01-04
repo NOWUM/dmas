@@ -423,8 +423,9 @@ class InfrastructureInterface:
                                    'V0': data['VMax'].to_numpy()[0]/2,
                                    'lat': data['lat'].to_numpy()[0],
                                    'lon': data['lon'].to_numpy()[0],
-                                   'eta_plus': 0.85,
-                                   'eta_minus': 0.80}
+                                   'eta_plus': 0.88,
+                                   'eta_minus': 0.92}
+                        # https://energie.ch/pumpspeicherkraftwerk/
                         if storage['VMax'] > 0:
                             storages.append(storage)
                     data_frames.append(pd.DataFrame(storages))
