@@ -432,15 +432,15 @@ class InfrastructureInterface:
         return pd.concat(data_frames) if len(data_frames) else pd.DataFrame()
 
     def get_demand_in_area(self, area):
-        if area=='DE91C':
+        if area == 'DE91C':
             # nuts areas changed: https://en.wikipedia.org/wiki/NUTS_statistical_regions_of_Germany#Older_Version
             # upstream issue: https://github.com/openego/data_processing/issues/379
             DE915 = self.get_demand_in_area('DE915')
             DE919 = self.get_demand_in_area('DE919')
-            return DE915+DE919
-        elif area=='DEB1C':
+            return DE915 + DE919
+        elif area == 'DEB1C':
             return self.get_demand_in_area('DEB16')
-        elif area=='DEB1D':
+        elif area == 'DEB1D':
             return self.get_demand_in_area('DEB19')
         query = f'''select sum(sector_consumption_residential) as household, sum(sector_consumption_retail) as business,
                 sum(sector_consumption_industrial) as industry, sum(sector_consumption_agricultural) as agriculture
@@ -521,7 +521,7 @@ def get_pwp_agents(interface, areas):
                 break
         if plants:
             pwp_agents.append(area)
-    return pwp_agents    
+    return pwp_agents
 
 def get_res_agents(interface, areas):
     res_agents = []
@@ -548,22 +548,24 @@ def get_storage_agents(interface, areas):
                 str_agents.append(area)
     return str_agents
 
+
 def get_dem_agents(areas):
     dem_agents = []
     for area in areas:
         dem_agents.append(area)
     return dem_agents
 
+
 if __name__ == "__main__":
-    import os, pickle
+    import os
     x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.55:4321')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
     uri = f'postgresql://{y}@{x}'
     interface = InfrastructureInterface('test', uri)
     # x = interface.get_power_plant_in_area(area='DEA2D', fuel_type='gas')
-    #y = interface.get_water_storage_systems(area=415)
-    #z = interface.get_solar_storage_systems_in_area(area=415)
-    #a = interface.get_run_river_systems_in_area(area='DE111')
+    # y = interface.get_water_storage_systems(area=415)
+    # z = interface.get_solar_storage_systems_in_area(area=415)
+    # a = interface.get_run_river_systems_in_area(area='DE111')
     areas = np.unique(plz_nuts['NUTS3'].to_numpy())
 
     import json
@@ -574,20 +576,27 @@ if __name__ == "__main__":
         agents['res'] = get_res_agents(interface, areas)
         agents['str'] = get_storage_agents(interface, areas)
         agents['pwp'] = get_pwp_agents(interface, areas)
-        with open('../agents.json','w') as f:
+        with open('../agents.json', 'w') as f:
             json.dump(agents, f, indent=2)
     else:
-        with open('../agents.json','r') as f:
+        with open('../agents.json', 'r') as f:
             agents = json.load(f)
-    
+
     dem = interface.get_demand_in_area(area='DE91C')
-    #solar = interface.get_solar_storage_systems_in_area('DE7')
-    
+    # solar = interface.get_solar_storage_systems_in_area('DE7')
+
 
     ## test DEM from NUTS2 vs NUTS3:
     level_3 = agents['dem']
     level_2 = list({a[0:2+2] for a in level_3})
     level_1 = list({a[0:2+1] for a in level_3})
+
+    summe=0
+    for a in level_1:
+        print(a)
+        dem_a = interface.get_demand_in_area(area=a)
+        summe+=dem_a
+    print(summe)
 
     for a in level_2:
         print(a)

@@ -47,7 +47,7 @@ class DemAgent(BasicAgent):
 
         business_demand = demands['business'].values[0] * 1e6
 
-        rlm_demand = demands['business'].values[0] + demands['industry'].values[0] + demands['agriculture'].values[0]
+        rlm_demand = demands['industry'].values[0] + demands['agriculture'].values[0]
         rlm_demand *= 1e6
 
         # Construction Standard Consumer H0
@@ -64,7 +64,7 @@ class DemAgent(BasicAgent):
 
         # Construction Standard Consumer agriculture
         # self.portfolio.add_energy_system({'unitID': 'agriculture', 'demandP': agriculture_demand, 'type': 'agriculture'})
-        self.logger.info('Agriculture added')
+        # self.logger.info('Agriculture added')
 
         self.portfolio.add_unique_systems()
 
