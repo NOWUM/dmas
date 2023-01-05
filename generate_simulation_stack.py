@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import random
 import json
 import sys
 
@@ -7,14 +6,19 @@ image_repo = 'registry.git.fh-aachen.de/nowum-energy/projects/dmas/'
 counter = int(sys.argv[1])
 if counter > 100:
     max_connections = 5000
-    structure_servers = ['10.13.10.54:4321', '10.13.10.55:4321', '10.13.10.56:4321', '10.13.10.59:4321']
+    structure_servers = ['10.13.10.54:4321', '10.13.10.55:4321', '10.13.10.56:4321', '10.13.10.58:4321', '10.13.10.59:4321']
 else:
     max_connections = 500
     structure_servers = ['10.13.10.41:5432']
 
+structure_index = 0
 
-def random_structure_server():
-    return random.choice(structure_servers)
+
+def structure_server():
+    global structure_index
+    idx = structure_index % len(structure_servers)
+    structure_index += 1
+    return structure_servers[idx]
 
 
 NUTS_LEVEL = int(sys.argv[2])
@@ -176,7 +180,7 @@ else:
       AREA_CODE: {agent}
       TYPE: 'DEM'
       SIMULATION_SOURCE: 'simulationdb:5432'
-      STRUCTURE_SERVER: '{random_structure_server()}'
+      STRUCTURE_SERVER: '{structure_server()}'
       WS_HOST: 'controller'
     depends_on:
       - controller
@@ -192,7 +196,7 @@ for agent in agents['pwp'][:counter]:
       TYPE: 'PWP'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
-      STRUCTURE_SERVER: '{random_structure_server()}'
+      STRUCTURE_SERVER: '{structure_server()}'
 ''')
 # Build Renewable Energy Agents
 for agent in agents['res'][:counter]:
@@ -205,7 +209,7 @@ for agent in agents['res'][:counter]:
       TYPE: 'RES'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
-      STRUCTURE_SERVER: '{random_structure_server()}'
+      STRUCTURE_SERVER: '{structure_server()}'
     depends_on:
       - controller
 ''')
@@ -220,7 +224,7 @@ for agent in agents['str'][:counter]:
       TYPE: 'STR'
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
-      STRUCTURE_SERVER: '{random_structure_server()}'
+      STRUCTURE_SERVER: '{structure_server()}'
     depends_on:
       - controller
 ''')
