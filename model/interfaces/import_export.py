@@ -44,7 +44,7 @@ class EntsoeInfrastructureInterface:
     def get_generation_in_land(self, land, begin, end, groupby='hour'):
 
         query = f'''
-SELECT to_char(index, '{ftime_pg[groupby]}') as time, 
+SELECT to_char(index, '{ftime_pg[groupby]}') as time,
 avg(biomass) as bio,
 avg("hydro_water_reservoir"+"hydro_run-of-river_and_poundage") as water,
 avg("wind_offshore"+"wind_onshore") as wind,
@@ -65,7 +65,7 @@ order by time
 
     def get_price_in_land(self, land, begin, end, groupby='hour'):
         query = f"""
-select to_char(index, '{ftime_pg[groupby]}') as time, avg("0") as "da_price" 
+select to_char(index, '{ftime_pg[groupby]}') as time, avg("0") as "da_price"
 from query_day_ahead_prices
 where country like '{land}%%' and index >= '{begin}' and index < '{end}'
 group by time

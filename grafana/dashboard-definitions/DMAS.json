@@ -2023,7 +2023,7 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(dem.time,1h),\n  sum(dem.power) - sum(gen.solar) as \"demand\"\nFROM demand dem\nJOIN generation gen on gen.agent = dem.agent and $__timeFilter(dem.time) \n  and time_bucket('1h', dem.time) = time_bucket('1h', gen.time)\nWHERE dem.step = 'post_dayAhead' and gen.step = 'post_dayAhead' and dem.agent LIKE '%dem%' \n  \nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(dem.time,1h),\n  sum(dem.power) - sum(gen.solar) as \"demand\"\nFROM demand dem\nJOIN generation gen on gen.agent = dem.agent and $__timeFilter(dem.time) \n  and time_bucket('1h', dem.time) = time_bucket('1h', gen.time)\nWHERE dem.step = 'post_dayAhead' and gen.step = 'post_dayAhead' and dem.agent LIKE 'de%' \n  \nGROUP BY 1\nORDER BY 1",
           "refId": "B",
           "select": [
             [
@@ -2148,7 +2148,7 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1h),\n  sum(nuclear) + sum(coal) + sum(lignite) + sum(gas) as \"fossil energy\",\n  \n  sum(water) + sum(bio) + sum(wind) +  sum(solar) AS \"renewable energy\",\n  sum(storage) AS \"storage energy\"\n  \nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead' AND\n  agent not like '%dem%'\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1h),\n  sum(nuclear) + sum(coal) + sum(lignite) + sum(gas) as \"fossil energy\",\n  \n  sum(water) + sum(bio) + sum(wind) +  sum(solar) AS \"renewable energy\",\n  sum(storage) AS \"storage energy\"\n  \nFROM generation\nWHERE\n  $__timeFilter(\"time\") AND\n  step = 'post_dayAhead' AND\n  agent not like 'de%'\nGROUP BY 1\nORDER BY 1",
           "refId": "D",
           "select": [
             [

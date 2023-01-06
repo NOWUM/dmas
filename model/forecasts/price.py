@@ -39,7 +39,7 @@ hourly_prices = pd.read_csv('./forecasts/data/hourly_prices.csv', index_col='hou
 
 exog = pd.read_pickle(r'./forecasts/data/historic_exog.pkl')
 exog['demand'] = exog['demand'] / exog['demand'].max()
-y = pd.read_pickle(r'./forecasts/data/historic_y.pkl') / 1e3    # prices in €/MWh elek -> convert to €/kWh
+historic_y_price = pd.read_pickle(r'./forecasts/data/historic_y.pkl') / 1e3    # prices in €/MWh elek -> convert to €/kWh
 
 real_prices = pd.read_csv(r'./forecasts/data/history_price_15_22.csv', sep=',', decimal='.', parse_dates=True,
                           index_col=0)
@@ -68,12 +68,11 @@ class PriceForecast:
         self.use_real_prices = use_real_data
 
         if use_historic_data:
-            np.unique(exog.index.date)
-            for date in np.unique(exog.index.date):
-                if date < starting_date.date():
-                    self.input.append(exog.loc[exog.index.date == date])
-                    self.output.append(y.loc[y.index.date == date, 'price'])
-                    self._historic_range.append(date)
+            additional_train_data = exog[exog.index < starting_date]
+            for date in np.unique(additional_train_data.index.date):
+                self.input.append(exog.loc[exog.index.date == date])
+                self.output.append(historic_y_price.loc[historic_y_price.index.date == date, 'price'])
+                self._historic_range.append(date)
 
     def _get_dummies(self, date: pd.Timestamp):
         d_range = pd.date_range(start=date - td(days=200), end=date + td(days=200), freq='h')

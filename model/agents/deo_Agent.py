@@ -9,6 +9,7 @@ from aggregation.basic_portfolio import PortfolioModel
 from agents.basic_Agent import BasicAgent
 from interfaces.import_export import EntsoeInfrastructureInterface
 
+
 class DemEntsoeAgent(BasicAgent):
 
     def __init__(self, *args, **kwargs):
@@ -17,6 +18,7 @@ class DemEntsoeAgent(BasicAgent):
         start_time = time.time()
         self.entsoe_interface = EntsoeInfrastructureInterface(self.name, kwargs['entsoe_database_uri'])
         self.portfolio = PortfolioModel(name=self.name)
+        self.actual_generation = kwargs.get('entsoe_generation', 'True').lower() == 'true'
 
         self.logger.info(f'setup of the agent completed in {time.time() - start_time:.2f} seconds')
 
@@ -35,7 +37,10 @@ class DemEntsoeAgent(BasicAgent):
         start_time = time.time()
 
         end = pd.to_datetime(self.date) + timedelta(hours=self.portfolio.T)
-        demand = self.entsoe_interface.get_demand_in_land('DE', self.date, end)['actual_load']
+        if self.actual_generation:
+            demand = self.entsoe_interface.get_generation_in_land('DE', self.date, end).sum(axis=1)
+        else:
+            demand = self.entsoe_interface.get_demand_in_land('DE', self.date, end)['actual_load']
 
         empty = pd.DataFrame(index=pd.date_range(start=self.date, freq='h', periods=24), data=np.zeros(24))
         self.portfolio.optimize(self.date, empty.copy(), empty.copy())
