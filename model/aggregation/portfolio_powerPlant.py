@@ -37,7 +37,7 @@ class PowerPlantPortfolio(PortfolioModel):
 
         self._reset_data()
 
-        allocation = committed_power.groupby('hour').sum().fillna(0)
+        allocation = committed_power.groupby('hour').sum(numeric_only=True).fillna(0)
 
         alloc = np.zeros(24)
         if not allocation.empty:

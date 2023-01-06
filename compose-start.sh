@@ -9,6 +9,11 @@ do
   echo "$(docker compose logs --tail=1 | grep 'waiting for instructions' | wc -l) of $CONTAINER_COUNT ready"
   sleep 7;
 done
-curl -X POST http://localhost:5000/start -d "begin=2020-01-01" -d "end=2020-02-01"
+BEGIN=2020-01-01
+END=2020-03-01
 
-xdg-open http://localhost:3001/d/VdwbNAX72/dmas?orgId=1&refresh=5s
+curl -X POST http://localhost:5000/start -d "begin=$BEGIN" -d "end=$END"
+
+BEGIN_UNIX=$(date --date=$BEGIN '+%s')
+END_UNIX=$(date --date=$END '+%s')
+xdg-open "http://localhost:3001/d/VdwbNAX72/dmas?orgId=1&refresh=5s&from=${BEGIN_UNIX}000&to=${END_UNIX}000"

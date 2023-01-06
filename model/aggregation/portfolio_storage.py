@@ -52,7 +52,7 @@ class StrPort(PortfolioModel):
         for model in self.energy_systems:
             model.optimize_post_market(get_committed_power(model), power_prices)
 
-        allocation = committed_power.groupby('hour').sum().fillna(0)
+        allocation = committed_power.groupby('hour').sum(numeric_only=True).fillna(0)
 
         alloc = np.zeros(24)
         if not allocation.empty:

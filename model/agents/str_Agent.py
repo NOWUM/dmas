@@ -28,6 +28,9 @@ class StrAgent(BasicAgent):
         self.storage_names = []
 
         storages = self.infrastructure_interface.get_water_storage_systems(self.area)
+        # storages are usually doing half of their max power
+        storages['PMinus_max'] *= 0.5
+        storages['PPlus_max'] *= 0.5
         if storages is not None:
             for _, data in storages.iterrows():
                 system = data.to_dict()

@@ -35,7 +35,7 @@ default_prices = pd.read_csv('./forecasts/data/monthly_generation_cost.csv')
 # hourly_prices.index.name='hour'
 # hourly_prices.to_csv('./forecasts/data/hourly_prices.csv')
 
-hourly_prices = pd.read_csv('./forecasts/data/hourly_prices.csv')
+hourly_prices = pd.read_csv('./forecasts/data/hourly_prices.csv', index_col='hour')
 
 exog = pd.read_pickle(r'./forecasts/data/historic_exog.pkl')
 exog['demand'] = exog['demand'] / exog['demand'].max()
@@ -159,7 +159,7 @@ class PriceForecast:
             return pd.Series(price * (np.ones(steps)) * noise(steps))
         m = date.month - 1
         prices = default_prices.iloc[m, :].apply(make_day_price).T
-        prices['power'] = power_price
+        prices['power'] = np.array(power_price)
         prices.index = pd.date_range(start=date, periods=steps, freq='h')
         prices.index.name = 'time'
         return prices
@@ -167,6 +167,9 @@ class PriceForecast:
 
 if __name__ == "__main__":
     pf = PriceForecast()
-    pf.collect_data('2018-01-01')
+    empty = pd.DataFrame(columns=['volume', 'price', 'hour'])
+    pf.collect_data('2018-01-01', empty, empty)
     pf.fit_model()
     forecast = pf.forecast('2018-01-02')
+    steps = 24
+    date = pd.to_datetime('2018-01-02')
