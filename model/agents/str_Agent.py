@@ -22,7 +22,7 @@ class StrAgent(BasicAgent):
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 weather_interface=self.weather_interface)
-        self.price_forecast = PriceForecast(use_historic_data=False, use_real_data=False)
+        self.price_forecast = PriceForecast(use_historic_data=True, use_real_data=False)
         self.demand_forecast = DemandForecast()
 
         self.storage_names = []
