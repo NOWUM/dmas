@@ -17,6 +17,8 @@ weather_database = os.getenv('WEATHER_DATABASE', 'weather')
 entsoe_database = os.getenv('ENTSOE_DATABASE', 'entsoe')
 weather_database_uri = f'postgresql://{weather_credential}@{weather_server}/{weather_database}'
 entsoe_database_uri = f'postgresql://{weather_credential}@{weather_server}/{entsoe_database}'
+real_prices = os.getenv('REAL_PRICES', 'False').lower() == 'true'
+
 init_dict = {
     'date': os.getenv('SIMULATION_START_DATE', '1995-01-01'),
     'area': os.getenv('AREA_CODE', 'DEA2D'),
@@ -34,6 +36,7 @@ init_dict = {
     # weather data server default parameter
     'weather_database_uri': weather_database_uri,
     'entsoe_database_uri': entsoe_database_uri,
+    'real_prices': real_prices,
 }
 
 type_mapping = {

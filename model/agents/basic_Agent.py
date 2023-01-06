@@ -19,7 +19,10 @@ class BasicAgent:
         # declare meta data
         self.area = area
         self.type = type
-        self.name = f'{self.type}_{self.area}'.lower() if 'mrk' not in type.lower() else 'market'
+        if 'mrk' in type.lower():
+            self.name = 'market'
+        else:
+            self.name = f'{self.type}_{self.area}'.lower()
         self.date = pd.to_datetime(date)
 
         # declare logging options

@@ -197,6 +197,7 @@ for agent in agents['pwp'][:counter]:
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
       STRUCTURE_SERVER: '{structure_server()}'
+      REAL_PRICES: 'True'
 ''')
 # Build Renewable Energy Agents
 for agent in agents['res'][:counter]:
@@ -225,6 +226,7 @@ for agent in agents['str'][:counter]:
       SIMULATION_SOURCE: 'simulationdb:5432'
       WS_HOST: 'controller'
       STRUCTURE_SERVER: '{structure_server()}'
+      REAL_PRICES: 'True'
     depends_on:
       - controller
 ''')

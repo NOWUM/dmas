@@ -21,7 +21,7 @@ class PwpAgent(BasicAgent):
 
         self.weather_forecast = WeatherForecast(position=dict(lat=self.latitude, lon=self.longitude),
                                                 weather_interface=self.weather_interface)
-        self.price_forecast = PriceForecast(use_historic_data=True, use_real_data=False)
+        self.price_forecast = PriceForecast(use_historic_data=False, use_real_data=kwargs.get('real_prices'))
         self.demand_forecast = DemandForecast()
 
         self.pwp_names = []
@@ -29,6 +29,9 @@ class PwpAgent(BasicAgent):
         for fuel in tqdm(['lignite', 'coal', 'gas', 'nuclear']):
             power_plants = self.infrastructure_interface.get_power_plant_in_area(self.area, fuel_type=fuel)
             if not power_plants.empty:
+                if fuel=='gas':
+                    # reduction to due entsoe empiric values
+                    power_plants['maxPower'] *= 0.6
                 for system in power_plants.to_dict(orient='records'):
                     self.pwp_names.append(system['unitID'])
                     self.portfolio.add_energy_system(system)

@@ -76,7 +76,7 @@ class ResAgent(BasicAgent):
         run_river_data['type'] = 'water'
         # somehow all countries run no more than half of the river production capacity
         if not run_river_data.empty:
-            run_river_data['maxPower'] *= 0.45
+            run_river_data['maxPower'] *= 0.55
             for system in tqdm(run_river_data.to_dict(orient='records')):
                 self.portfolio_mrk.add_energy_system(system)
         self.logger.info(f'Added {run_river_data.size} Run River Power Plants')
