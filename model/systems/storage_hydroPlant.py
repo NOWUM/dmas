@@ -114,6 +114,7 @@ class Storage(EnergySystem):
         self.demand['power'][self.power > 0] = self.power[self.power > 0]
         self.generation['storage'] = self.power
 
+        self.cash_flow['profit'] = -self.prices['power'] * self.power
         self.generation_system['VO'] = self.volume[-1]
 
         return self.power
@@ -194,7 +195,8 @@ if __name__ == "__main__":
     # plt.plot(sys.generation['storage'])
     orders = sys.get_exclusive_orders()
     market_result = orders.loc[orders.index.get_level_values('block_id') == 0, 'volume'].values
-    # pw2 = sys.optimize_post_market(market_result * 0.8)
+    pw2 = sys.optimize_post_market(market_result * 0.8)
+    sys.cash_flow['profit'].cumsum().plot()
     # plt.plot(sys.generation['storage'])
 
     for k in range(20, 39):

@@ -7046,7 +7046,7 @@
         "options": [],
         "query": "Select distinct agent from capacities",
         "refresh": 1,
-        "regex": "/pwp_de.*/",
+        "regex": "/((str|pwp)_de.*)/",
         "skipUrlSync": false,
         "sort": 2,
         "type": "query"
