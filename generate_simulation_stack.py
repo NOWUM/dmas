@@ -11,19 +11,17 @@ else:
     max_connections = 500
     structure_servers = ['10.13.10.41:5432']
 
-structure_index = 0
+NUTS_LEVEL = int(sys.argv[2]) # which aggregation should we use?
+NET = False
+ENTSOE = False # should we take the actual ENTSO-E demand or oep data?
 
+structure_index = 0
 
 def structure_server():
     global structure_index
     idx = structure_index % len(structure_servers)
     structure_index += 1
     return structure_servers[idx]
-
-
-NUTS_LEVEL = int(sys.argv[2])
-NET = False
-ENTSOE = True
 
 # Build Demand Agents
 with open('./agents.json', 'r') as f:

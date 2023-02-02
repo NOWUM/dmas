@@ -10,18 +10,38 @@ This repository contains a distributed multi agent simulation.
 
 # Configuration
 
+First, we need to configure the first lines of `generate_simulation_stack.py` to use the right structure database.
+
 The best way to run the simulation is to configure `compose-start.sh` and run it.
 This creates a docker-compose.yml which is then started.
 
+A Grafana is started as well and is available on http://localhost:3001/d/VdwbNAX72/dmas
+
 # Agent Classes
 
-DEM - Demand Agent
+DEM - Demand Agent 
+    
+* creates demand for its area
 
-RES - Renewable Agents for Wind and Solar
+RES - Renewable Agents for Wind and Solar 
+    
+* bids renewables forecast
 
 PWP - Powerplant Agent
+    
+* creates bidding with linked orders
 
-MRK - Market Agent
+MRK - Market Agent 
+    
+* clears market with linked and exclusive orders
+
+STR - Storage Agent
+    
+* creates bidding with exclusive orders
+
+# Scale-Out overview
+
+![Scaleout](./docs/dmas-scale-out.svg)
 
 # Literature from Libraries
 
