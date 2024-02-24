@@ -87,8 +87,8 @@ class Prosumer(EnergySystem):
         self.storage_system['vt'] = np.asarray(volume)
         self.volume = self.storage_system['vt']
 
-        # gird usage in [kW]
-        self.power = np.asarray(grid_use, np.float).reshape((-1,))
+        # grid usage in [kW]
+        self.power = np.asarray(grid_use, float).reshape((-1,))
 
     def optimize(self, date: pd.Timestamp = None, weather: pd.DataFrame = None, prices: pd.DataFrame = None,
                  steps=None) -> np.array:

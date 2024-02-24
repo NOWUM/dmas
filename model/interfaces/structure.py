@@ -5,7 +5,8 @@ import numpy as np
 
 geo_information = gpd.read_file(r'./interfaces/data/NUTS_EU.shp')
 plz_nuts = pd.read_csv(r'./interfaces/data/plz_to_nuts.csv', sep=';')
-plz_nuts['CODE'] = [int(str_.replace("'", "")) for str_ in plz_nuts['CODE']]
+# plz is str in mastr db
+#plz_nuts['CODE'] = [int(str_.replace("'", "")) for str_ in plz_nuts['CODE']]
 plz_nuts['NUTS3'] = [str_.replace("'", "") for str_ in plz_nuts['NUTS3']]
 
 mastr_codes_fossil = pd.read_csv(r'./interfaces/data/mastr_codes_fossil.csv', index_col=0)

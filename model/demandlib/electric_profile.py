@@ -88,7 +88,7 @@ class StandardLoadProfile:
                 demand = self.profile[:, 6] * f
 
         if self.hourly:
-            return np.asarray([np.mean(demand[i:i + 3]) for i in range(0, 96, 4)], np.float).reshape((-1,))
+            return np.asarray([np.mean(demand[i:i + 3]) for i in range(0, 96, 4)], float).reshape((-1,))
         else:
             return demand
 
