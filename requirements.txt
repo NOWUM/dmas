@@ -15,7 +15,7 @@ requests
 flask
 scipy
 tqdm
-pyomo<=6.4.2
+pyomo
 geopandas
 glpk
 websockets

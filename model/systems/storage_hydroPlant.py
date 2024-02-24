@@ -79,7 +79,7 @@ class Storage(EnergySystem):
 
         # if no day ahead power known run standard optimization
         if committed_power is None:
-            profit = [-power[t] * self.prices['power'][t] for t in self.t]
+            profit = [-power[t] * self.prices['power'].iloc[t] for t in self.t]
 
         # if day ahead power is known minimize the difference
         else:
@@ -155,7 +155,7 @@ class Storage(EnergySystem):
             ask_hours = np.argwhere(power > 0).flatten()
             max_charging_price = power_prices.values[bid_hours].max()
             min_discharging_price = max_charging_price / (self.storage_system['eta+'] * self.storage_system['eta-'])
-            prc[ask_hours] = (power_prices[ask_hours] + min_discharging_price) / 2
+            prc[ask_hours] = (power_prices.iloc[ask_hours] + min_discharging_price) / 2
             prc[bid_hours] = power_prices.values[bid_hours]
             add = True
             for orders in total_orders.values():

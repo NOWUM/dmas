@@ -2,7 +2,7 @@
 # or to recreate: conda env create -f environment.yml --force
 name: dmas
 dependencies:
-- python=3.9
+- python=3.10
 - numpy
 - pandas
 - matplotlib

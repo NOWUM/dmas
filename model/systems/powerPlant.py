@@ -146,7 +146,7 @@ class PowerPlant(EnergySystem):
             for t in self.t:
                 self.model.difference.add(committed_power[t] - self.model.p_out[t]
                                           == -self.model.minus[t] + self.model.plus[t])
-            difference_cost = [difference[t] * np.abs(self.prices['power'][t] * 2) for t in self.t]
+            difference_cost = [difference[t] * np.abs(self.prices['power'].iloc[t] * 2) for t in self.t]
 
             # set new objective
             self.model.obj = Objective(expr=quicksum(cashflow[t] - difference_cost[t] for t in self.t), sense=maximize)

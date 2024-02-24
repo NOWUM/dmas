@@ -109,7 +109,8 @@ def test_market():
     my_market.set_parameter({}, hourly_bid, linked_orders, exclusive_orders)
     # optimize and unpack
     result = my_market.optimize()
-    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = result
+    assert result, "no result"
+    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders, merit_order = result
     my_market.model.use_linked_order.pprint()
 
     committed_power = used_linked_orders.groupby('hour').sum()['volume']
@@ -125,7 +126,7 @@ def test_market():
     power = pwp.optimize_post_market(comm, prices_market['price'].values)
     ############### second day ##############
 
-    power = pwp.optimize(date='2018-01-02', weather=None,
+    power = pwp.optimize(date=pd.Timestamp(2018, 1, 2), weather=None,
                          prices=prices)
     o_book = pwp.get_ask_orders()
     visualize_orderbook(o_book)
@@ -139,7 +140,7 @@ def test_market():
         linked_orders[key] = (value['price'], value['volume'], value['link'])
 
     my_market.set_parameter({}, hourly_bid, linked_orders, {})
-    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders = my_market.optimize()
+    prices_market, used_ask_orders, used_linked_orders, used_exclusive_orders, used_bid_orders, merit_order = my_market.optimize()
 
     committed_power = used_linked_orders.groupby('hour').sum()['volume']
     comm = np.zeros(24)

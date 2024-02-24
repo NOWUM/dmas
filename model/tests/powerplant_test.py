@@ -4,11 +4,9 @@
 import numpy as np
 import pandas as pd
 from systems.powerPlant import PowerPlant
-
+from pytest import approx
 # @pytest.fixture(scope='module')
 
-def is_eq(a,b):
-    return all(abs(a - b) < 1e-10)
 
 def create_pwp(max_p=1500):
     min_p = max_p * .4
@@ -50,15 +48,15 @@ def test_pwp():
     steps = (-10, 0, 10, 1e6)
 
     pwp = PowerPlant(T=24, steps=steps, **plant)
-    result = pwp.optimize('2018-01-01', None, prices)
+    result = pwp.optimize(pd.Timestamp(2018, 1, 1), None, prices)
     assert max(pwp.power) == max_p
     committed = pwp.optimize_post_market(result)
     test_committed = [
         600., 1200., 1500., 1500., 1500., 1500., 1500., 1500., 1500.,
         1500., 1500., 1500., 1500., 1500., 1500., 1500., 1500., 1500.,
         900.,    0.,    0.,    0.,    0.,    0.]
-    assert is_eq(test_committed, committed)
-    assert is_eq(committed, pwp.power)
+    assert test_committed == approx(committed)
+    assert committed == approx(pwp.power)
     assert len(committed) == 24
 
 def test_pwp_run_through():
@@ -71,20 +69,20 @@ def test_pwp_run_through():
     steps = (-10, 0, 10, 1e6)
 
     pwp = PowerPlant(T=24, steps=steps, **plant)
-    result = pwp.optimize('2018-01-01', None, prices)
-    assert is_eq(pwp.power, max_p)
+    result = pwp.optimize(pd.Timestamp(2018, 1, 1), None, prices)
+    assert pwp.power == approx(max_p)
     committed = pwp.optimize_post_market(result)
     test_committed = np.ones(24)*1500
-    assert is_eq(test_committed, committed)
-    assert is_eq(committed, pwp.power)
+    assert test_committed == approx(committed)
+    assert committed == approx(pwp.power)
     assert len(committed) == 24
 
-    result = pwp.optimize('2018-01-02', None, prices)
-    assert is_eq(pwp.power, max_p)
+    result = pwp.optimize(pd.Timestamp(2018, 1, 2), None, prices)
+    assert pwp.power == approx(max_p)
     committed = pwp.optimize_post_market(result)
     test_committed = np.ones(24)*1500
-    assert is_eq(test_committed, committed)
-    assert is_eq(committed, pwp.power)
+    assert test_committed == approx(committed)
+    assert committed == approx(pwp.power)
     assert len(committed) == 24
 
 
@@ -97,7 +95,7 @@ def test_minimize_diff():
        300., 300., 300., 300.,
        300., 300., 300., 300., 300., 300., 300., 180.,   0.,   0.,   0.,
          0.,   0.])
-    assert is_eq(power, expected)
+    assert power == approx(expected)
     # power plant has to minimize loss, when market did something weird
     p = power.copy()
     p[4:10] = 0
@@ -106,7 +104,7 @@ def test_minimize_diff():
     expected_opt_result = np.array([120., 240., 300., 300., 180., 120., 120., 120., 120., 180., 300.,
        300., 300., 300., 300., 300., 300., 300., 180.,   0.,   0.,   0.,
          0.,   0.])
-    assert is_eq(power_day2, expected_opt_result)
+    assert power_day2  == approx(expected_opt_result)
 
 
 def test_run_twice():
@@ -114,9 +112,11 @@ def test_run_twice():
     steps = (-10, 0, 10)
 
     pwp = PowerPlant(T=24, steps=steps, **plant)
-    result = pwp.optimize('2018-01-01', None, prices)
-    result2 = pwp.optimize('2018-01-01', None, prices)
-    assert is_eq(result, result2)
+    result = pwp.optimize(pd.Timestamp(2018, 1, 1), None, prices)
+    result2 = pwp.optimize(pd.Timestamp(2018, 1, 1), None, prices)
+    assert result == approx(result2)
     committed = pwp.optimize_post_market(result)
     committed2 = pwp.optimize_post_market(result)
-    assert is_eq(committed2, committed)
+    print(committed)
+    print(committed2)
+    assert committed2 == approx(committed)

@@ -22,7 +22,6 @@ def get_holidays(year):
     holidays.append(date(year, 1, 1))                           # -- Neujahr
     holidays.append(date(year, 5, 1))                           # -- 1. Mai
     holidays.append(date(year, 10, 3))                          # -- Tag der deutschen Einheit
-    holidays.append(date(year, 10, 31))                         # -- Reformationstag
 
     return np.asarray([h.timetuple().tm_yday for h in holidays])
 
