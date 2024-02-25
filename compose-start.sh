@@ -2,11 +2,11 @@
 docker compose down --remove-orphans && docker compose build && docker compose up -d
 
 sleep 10;
-CONTAINER_COUNT=`echo $(docker compose ps | wc -l) - 5 | bc`
+CONTAINER_COUNT=$(echo $(docker compose ps | wc -l) - 5 | bc)
 
-while test " $(curl -s http://localhost:5000/agent_count)" -lt $CONTAINER_COUNT
+while test " $(curl -s http://localhost:5000/agent_count)" -lt "$CONTAINER_COUNT"
 do
-  echo "$(docker compose logs --tail=1 | grep 'waiting for instructions' | wc -l) of $CONTAINER_COUNT ready"
+  echo "$(docker compose logs --tail=1 | grep -c 'waiting for instructions') of $CONTAINER_COUNT ready"
   sleep 7;
 done
 BEGIN=2020-01-01

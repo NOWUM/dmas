@@ -2,7 +2,7 @@ import pandas as pd
 
 from main import init_dict, type_mapping
 import numpy as np
-# run docker-compose up -d simulationdb rabbitmq grafana
+# run docker compose up -d simulationdb rabbitmq grafana
 
 
 if __name__ == '__main__':

@@ -17,6 +17,7 @@ ENTSOE = False # should we take the actual ENTSO-E demand or oep data?
 
 structure_index = 0
 
+
 def structure_server():
     global structure_index
     idx = structure_index % len(structure_servers)
@@ -66,7 +67,7 @@ output.append(f'''
       - POSTGRES_DB=dmas
       - TS_TUNE_MAX_CONNS={max_connections}
     ports:
-      - 5432:5432
+      - 5433:5432
     volumes:
         - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     deploy:
@@ -234,5 +235,5 @@ for config, location in configs.items():
   {config}:
     file: {location}
 ''')
-with open('docker-compose.yml', 'w') as f:
+with open('compose.yml', 'w') as f:
     f.writelines(output)

@@ -1,5 +1,5 @@
 import numpy as np
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import pandas as pd
 
 
@@ -23,7 +23,7 @@ class WeatherInterface:
                     if area is not None:
                         query += f" AND nuts_id LIKE '{area.upper()}%%' ;"
 
-                res = connection.execute(query)
+                res = connection.execute(text(query))
                 value = res.fetchall()[0][0]
                 data_avg.append({'time': timestamp, param: value})
 
@@ -37,20 +37,17 @@ class WeatherInterface:
                     query = f"SELECT avg(wind_meridional), avg(wind_zonal) FROM cosmo WHERE time = '{timestamp.isoformat()}'"
                     if area is not None:
                         query += f" AND nuts LIKE '{area.upper()}%%' ;"
-                    res = connection.execute(query)
+                    res = connection.execute(text(query))
                     values = res.fetchall()[0]
                     wind_speed = (values[0] ** 2 + values[1] ** 2) ** 0.5
-                    direction = np.arctan2(values[0] / wind_speed, values[1] / wind_speed) * 180 / np.pi
-                    direction += 180
-                    direction = 90 - direction
                 else:
-                    query = f"SELECT avg(wind_speed), avg(direction) FROM ecmwf_eu WHERE time = '{timestamp.isoformat()}' "
+                    query = f"SELECT avg(wind_speed) FROM ecmwf_eu WHERE time = '{timestamp.isoformat()}' "
                     if area is not None:
                         query += f" AND nuts_id LIKE '{area.upper()}%%' ;"
-                    res = connection.execute(query)
-                    wind_speed, direction = res.fetchall()[0]
+                    res = connection.execute(text(query))
+                    wind_speed = res.fetchall()[0]
 
-                data_avg.append({'time': timestamp, 'wind_speed': wind_speed, 'direction': direction})
+                data_avg.append({'time': timestamp, 'wind_speed': wind_speed})
         return pd.DataFrame(data_avg).set_index('time', drop=True)
 
     def get_direct_radiation(self, date=pd.to_datetime('1995-01-01'), area=None):

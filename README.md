@@ -13,7 +13,7 @@ This repository contains a distributed multi agent simulation.
 First, we need to configure the first lines of `generate_simulation_stack.py` to use the right structure database.
 
 The best way to run the simulation is to configure `compose-start.sh` and run it.
-This creates a docker-compose.yml which is then started.
+This creates a `compose.yml` which is then started.
 
 A Grafana is started as well and is available on http://localhost:3001/d/VdwbNAX72/dmas
 

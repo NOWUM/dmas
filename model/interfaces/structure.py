@@ -201,7 +201,7 @@ class InfrastructureInterface:
                 # If the response Dataframe is not empty set technical parameter
                 if not df.empty:
                     # all PVs with are implemented in 2018
-                    df['startDate'] = pd.to_datetime(df['startDate'], infer_datetime_format=True)
+                    df['startDate'] = pd.to_datetime(df['startDate'])
                     # all PVs with nan are south oriented assets
                     df['azimuth'] = [mastr_codes_solar.loc[str(code), 'value'] for code in df['azimuthCode'].to_numpy(int)]
                     del df['azimuthCode']
@@ -585,7 +585,8 @@ if __name__ == "__main__":
             agents = json.load(f)
 
     dem = interface.get_demand_in_area(area='DE91C')
-    # solar = interface.get_solar_storage_systems_in_area('DE7')
+    # solar_str = interface.get_solar_storage_systems_in_area('DE7')
+    # sol = interface.get_solar_systems_in_area('DE91C')
 
 
     ## test DEM from NUTS2 vs NUTS3:

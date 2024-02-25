@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
 import pandas as pd
 import numpy as np
@@ -57,22 +57,22 @@ class SimulationInterface:
               DROP TABLE IF EXISTS linked_results;
               DROP TABLE IF EXISTS exclusive_results;
             '''
-            connection.execute(query)
+            connection.execute(text(query))
 
             query = '''CREATE TABLE hourly_orders (hour bigint, block_id bigint , order_id bigint, name text,
                                                 price double precision, volume double precision, type text)'''
-            connection.execute(query)
-            connection.execute('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
+            connection.execute(text(query))
+            connection.execute(text('ALTER TABLE "hourly_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")'))
             # linked block orders
             query = '''CREATE TABLE linked_orders (block_id bigint, hour bigint, order_id bigint, name text, price double precision,
                                                 volume double precision, link bigint, type text)'''
-            connection.execute(query)
-            connection.execute('ALTER TABLE "linked_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
+            connection.execute(text(query))
+            connection.execute(text('ALTER TABLE "linked_orders" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");'))
             # exclusive block orders
             query = '''CREATE TABLE exclusive_orders (block_id bigint, hour bigint, name text, price double precision,
                                                     volume double precision)'''
-            connection.execute(query)
-            connection.execute('ALTER TABLE "exclusive_orders" ADD PRIMARY KEY ("block_id", "hour", "name");')
+            connection.execute(text(query))
+            connection.execute(text('ALTER TABLE "exclusive_orders" ADD PRIMARY KEY ("block_id", "hour", "name");'))
 
             # Generation and Demand Data
             # installed capacities
@@ -81,13 +81,13 @@ class SimulationInterface:
                                                 nuclear double precision, solar double precision, water double precision,
                                                 wind double precision, storage double precision, agent text,
                                                 area text)'''
-            connection.execute(query)
-            connection.execute('ALTER TABLE "capacities" ADD PRIMARY KEY ("time", "agent");')
+            connection.execute(text(query))
+            connection.execute(text('ALTER TABLE "capacities" ADD PRIMARY KEY ("time", "agent");'))
             # total demand of each agent
             query = '''CREATE TABLE demand ("time" timestamp without time zone, power double precision,
                                             heat double precision, step text, agent text, area text)'''
-            connection.execute(query)
-            connection.execute('ALTER TABLE "demand" ADD PRIMARY KEY ("time", "step", "agent");')
+            connection.execute(text(query))
+            connection.execute(text('ALTER TABLE "demand" ADD PRIMARY KEY ("time", "step", "agent");'))
             # total generation of each agent
             query = '''CREATE TABLE generation ("time" timestamp without time zone, total double precision,
                                                 solar double precision, wind double precision, water double precision,
@@ -95,35 +95,35 @@ class SimulationInterface:
                                                 gas double precision, nuclear double precision,
                                                 allocation double precision, step text,
                                                 agent text, area text)'''
-            connection.execute(query)
-            connection.execute(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");')
+            connection.execute(text(query))
+            connection.execute(text(f'ALTER TABLE "generation" ADD PRIMARY KEY ("time", "step", "agent");'))
 
             query = '''CREATE TABLE auction_results ("time" timestamp without time zone, price double precision,
                                                     volume double precision)'''
-            connection.execute(query)
-            connection.execute(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");')
+            connection.execute(text(query))
+            connection.execute(text(f'ALTER TABLE "auction_results" ADD PRIMARY KEY ("time");'))
 
             # hourly orders
             query = '''CREATE TABLE hourly_results (hour bigint, block_id bigint , order_id bigint, name text,
                                                     price double precision, volume double precision, type text)'''
-            connection.execute(query)
+            connection.execute(text(query))
             connection.execute('ALTER TABLE "hourly_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name")')
             # linked block orders
             query = '''CREATE TABLE linked_results(block_id bigint, hour bigint, order_id bigint, name text, price double precision,
                                                     volume double precision, link bigint, type text)'''
-            connection.execute(query)
+            connection.execute(text(query))
             connection.execute('ALTER TABLE "linked_results" ADD PRIMARY KEY ("block_id", "hour", "order_id", "name");')
             # exclusive block orders
             query = '''CREATE TABLE exclusive_results (block_id bigint, hour bigint, name text, price double precision,
                                                         volume double precision)'''
-            connection.execute(query)
+            connection.execute(text(query))
             connection.execute('ALTER TABLE "exclusive_results" ADD PRIMARY KEY ("block_id", "hour", "name");')
 
             query = '''CREATE TABLE orders ("time" timestamp without time zone, total double precision,
                                             volume double precision, price double precision, block_id integer,
                                             agent text, area text)'''
-            connection.execute(query)
-            connection.execute(f'ALTER TABLE orders ADD PRIMARY KEY ("time","agent","block_id");')
+            connection.execute(text(query))
+            connection.execute(text(f'ALTER TABLE orders ADD PRIMARY KEY ("time","agent","block_id");'))
 
         hypertables = ['orders', 'auction_results', 'capacities', 'generation', 'demand']
 
@@ -135,9 +135,9 @@ class SimulationInterface:
 
     def reset_order_book(self):
         with self.database.begin() as connection:
-            connection.execute("DELETE FROM hourly_orders")
-            connection.execute("DELETE FROM linked_orders")
-            connection.execute("DELETE FROM exclusive_orders")
+            connection.execute(text("DELETE FROM hourly_orders"))
+            connection.execute(text("DELETE FROM linked_orders"))
+            connection.execute(text("DELETE FROM exclusive_orders"))
 
     def set_capacities(self, portfolio, area, date):
         if isinstance(portfolio, list):

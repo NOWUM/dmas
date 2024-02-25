@@ -9,7 +9,7 @@ echo "removal finished, sleeping"
 sleep 10;
 
 ./generate_simulation_stack.py 500 1
-docker stack deploy --with-registry-auth -c docker-compose.yml dmas
+docker stack deploy --with-registry-auth -c compose.yml dmas
 
 while test "$(docker service ls | grep 0/1 | wc -l)" -gt 3
 do

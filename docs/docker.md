@@ -1,6 +1,6 @@
 This simulation heavily relies on docker to run multiple agents at once.
 
-This can either be configured through Docker Swarm or Docker-Compose
+This can either be configured through Docker Swarm or Docker Compose
 
 # Docker Install
 
@@ -52,7 +52,7 @@ This also builds the image fresh from the current source
 
 ### starting the simulation
 
-`docker stack deploy --with-registry-auth -c docker-compose.yml dmas`
+`docker stack deploy --with-registry-auth -c compose.yml dmas`
 
 
 ### show logs

@@ -9,7 +9,7 @@ from collections import defaultdict
 
 
 WEATHER_PARAMS_COSMO = ['temp_air', 'wind_speed', 'dhi', 'dni']
-WEATHER_PARAMS_ECMWF = ['temp_air', 'wind_speed', 'ghi']  # 'direction' not needed
+WEATHER_PARAMS_ECMWF = ['temp_air', 'wind_speed', 'ghi']
 
 
 class WeatherForecast:
@@ -69,10 +69,10 @@ class WeatherForecast:
             print(f'ERROR getting WeatherForecast {repr(e)} - using previous weather')
             # use last weather on exception (incomplete data in database)
             weather = self._previous_weather
-
-        for column in weather.columns:
-            if column not in ['azimuth', 'zenith']:
-                weather[column] *= np.random.uniform(low=0.95, high=1.05, size=len(weather[column]))
+        # # disable noise for now
+        # for column in weather.columns:
+        #     if column not in ['azimuth', 'zenith']:
+        #         weather[column] *= np.random.uniform(low=0.95, high=1.05, size=len(weather[column]))
         return weather
 
     def get_last(self):
