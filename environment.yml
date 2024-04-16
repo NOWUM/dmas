@@ -2,7 +2,7 @@
 # or to recreate: conda env create -f environment.yml --force
 name: dmas
 dependencies:
-- python=3.10
+- python=3.11
 - numpy
 - pandas
 - matplotlib
@@ -10,10 +10,5 @@ dependencies:
 - SQLAlchemy
 - pip
 - pip:
-  - -r requirements/requirements_mrk.txt
-- pip:
-  - -r requirements/requirements_dem.txt
-- spyder<5
-- jupyter
-- pytest
+  - -r requirements.txt
 - pytest-cov

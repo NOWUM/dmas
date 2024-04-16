@@ -318,7 +318,7 @@ class PowerPlant(EnergySystem):
                 if p > max_profit:
                     max_profit = p
                     start_hour = t
-            return [*range(start_hour, min(start_hour + self.generation_system['runTime'], self.T))]
+            return [*range(start_hour, min(start_hour + run_time, self.T))]
 
         order_book, last_power, block_number = {}, np.zeros(self.T), 0
         links = {i: None for i in self.t}

@@ -560,7 +560,7 @@ def get_dem_agents(areas):
 
 if __name__ == "__main__":
     import os
-    x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.55:4321')
+    x = os.getenv('INFRASTRUCTURE_SOURCE', '10.13.10.41:5432')
     y = os.getenv('INFRASTRUCTURE_LOGIN', 'readonly:readonly')
     uri = f'postgresql://{y}@{x}'
     interface = InfrastructureInterface('test', uri)
