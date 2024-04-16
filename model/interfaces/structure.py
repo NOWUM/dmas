@@ -293,7 +293,13 @@ class InfrastructureInterface:
                     df['nordicSea'] = df['nordicSea'].fillna(0)
                     df['balticSea'] = df['balticSea'].fillna(0)
                     # get name of manufacturer
-                    df['manufacturer'] = [mastr_codes_wind.loc[str(x), 'value'] for x in df['manufacturer'].to_numpy(int)]
+                    manufacturer_ids = df['manufacturer'].to_numpy(int).astype(str)
+                    manufacturer_names= []
+                    for x in manufacturer_ids:
+                        if x not in mastr_codes_wind.index:
+                            x = "-1"
+                        manufacturer_names.append(mastr_codes_wind.loc[x, 'value'])
+                    df['manufacturer'] = manufacturer_names
                     # try to find the correct type TODO: Check Pattern of new turbines
                     #df['typ'] = [str(typ).replace(' ', '').replace('-', '').upper() for typ in df['typ']]
                     #df['typ'] = [None if re.search(self.pattern_wind, typ) is None else re.search(self.pattern_wind, typ).group()
