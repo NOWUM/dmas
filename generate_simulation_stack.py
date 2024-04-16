@@ -58,7 +58,7 @@ configs['compute_config'] = './gurobi.lic'
 output.append(f'''
   simulationdb:
     container_name: simulationdb
-    image: timescale/timescaledb:latest-pg14
+    image: timescale/timescaledb:latest-pg16
     #command: postgres -c 'max_connections=500' -B 4096MB
     restart: always
     environment:
