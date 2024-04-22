@@ -307,6 +307,8 @@ class PowerPlant(EnergySystem):
             return (p / self.generation_system['eta']) * (f + e * self.generation_system['chi'])
 
         def get_marginal(p0: float, p1: float, t: int):
+            if p0 == p1:
+                return 1, 0
             marginal = (get_cost(p=p0, t=t) - get_cost(p=p1, t=t)) / (p0-p1)
             return marginal, p1-p0
 
